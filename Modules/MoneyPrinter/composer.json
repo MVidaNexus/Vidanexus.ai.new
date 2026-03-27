@@ -1,0 +1,17 @@
+{
+    "name": "nwidart/moneyprinter",
+    "description": "",
+    "extra": {
+        "laravel": {
+            "providers": [],
+            "aliases": {}
+        }
+    },
+    "autoload": {
+        "psr-4": {
+            "Modules\\MoneyPrinter\\": "app/",
+            "Modules\\MoneyPrinter\\Database\\Factories\\": "database/factories/",
+            "Modules\\MoneyPrinter\\Database\\Seeders\\": "database/seeders/"
+        }
+    }
+}

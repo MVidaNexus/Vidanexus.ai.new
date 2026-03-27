@@ -1,0 +1,242 @@
+[
+    {
+        "name": "رأس الأفعى",
+        "lead": "شريف منير وأمير كرارة",
+        "company": "المتحدة",
+        "episodes": 30,
+        "searchKeyword": "رأس الأفعى",
+        "isBaseline": false
+    },
+    {
+        "name": "علي كلاي",
+        "lead": "أحمد العوضي",
+        "company": "المتحدة",
+        "episodes": 30,
+        "searchKeyword": "مسلسل علي كلاي احمد العوضي",
+        "isBaseline": true
+    },
+    {
+        "name": "درش",
+        "lead": "مصطفى شعبان",
+        "company": "المتحدة",
+        "episodes": 30,
+        "searchKeyword": "مسلسل درش مصطفى شعبان",
+        "isBaseline": false
+    },
+    {
+        "name": "فن الحرب",
+        "lead": "يوسف الشريف",
+        "company": "المتحدة",
+        "episodes": 30,
+        "searchKeyword": "مسلسل فن الحرب يوسف الشريف",
+        "isBaseline": false
+    },
+    {
+        "name": "فخر الدلتا",
+        "lead": "أحمد رمزي",
+        "company": "المتحدة",
+        "episodes": 30,
+        "searchKeyword": "مسلسل فخر الدلتا احمد رمزي",
+        "isBaseline": false
+    },
+    {
+        "name": "أولاد الراعي",
+        "lead": "ماجد المصري وخالد الصاوي",
+        "company": "المتحدة",
+        "episodes": 30,
+        "searchKeyword": "مسلسل ولاد الراعي ماجد المصري خالد الصاوي",
+        "isBaseline": false
+    },
+    {
+        "name": "على قد الحب",
+        "lead": "نيللي كريم وشريف سلامة",
+        "company": "المتحدة",
+        "episodes": 30,
+        "searchKeyword": "مسلسل على قد الحب نيللي كريم شريف سلامة",
+        "isBaseline": false
+    },
+    {
+        "name": "أب ولكن..",
+        "lead": "محمد فراج",
+        "company": "المتحدة",
+        "episodes": 15,
+        "searchKeyword": "مسلسل اب ولكن محمد فراج",
+        "isBaseline": false
+    },
+    {
+        "name": "بيبو",
+        "lead": "أحمد بحر كزبرة",
+        "company": "المتحدة",
+        "episodes": 15,
+        "searchKeyword": "مسلسل بيبو كزبرة",
+        "isBaseline": false
+    },
+    {
+        "name": "النص التاني",
+        "lead": "أحمد أمين",
+        "company": "المتحدة",
+        "episodes": 15,
+        "searchKeyword": "مسلسل النص التاني احمد امين",
+        "isBaseline": false
+    },
+    {
+        "name": "اتنين غيرنا",
+        "lead": "آسر ياسين ودينا الشربيني",
+        "company": "المتحدة",
+        "episodes": 15,
+        "searchKeyword": "مسلسل اتنين غيرنا اسر ياسين دينا الشربيني",
+        "isBaseline": false
+    },
+    {
+        "name": "صحاب الأرض",
+        "lead": "إياد نصار ومنة شلبي",
+        "company": "المتحدة",
+        "episodes": 15,
+        "searchKeyword": "مسلسل صحاب الارض منه شلبي اياد نصار",
+        "isBaseline": false
+    },
+    {
+        "name": "مناعة",
+        "lead": "هند صبري",
+        "company": "المتحدة",
+        "episodes": 15,
+        "searchKeyword": "مسلسل مناعة هند صبري",
+        "isBaseline": false
+    },
+    {
+        "name": "عين سحرية",
+        "lead": "عصام عمر وباسم سمرة",
+        "company": "المتحدة",
+        "episodes": 15,
+        "searchKeyword": "مسلسل عين سحرية عصام عمر باسم سمرة",
+        "isBaseline": false
+    },
+    {
+        "name": "حكاية نرجس",
+        "lead": "ريهام عبد الغفور وحمزة العيلي",
+        "company": "المتحدة",
+        "episodes": 15,
+        "searchKeyword": "مسلسل حكاية نرجس ريهام عبدالغفور حمزة العيلي",
+        "isBaseline": false
+    },
+    {
+        "name": "عرض وطلب",
+        "lead": "سلمى أبو ضيف",
+        "company": "المتحدة",
+        "episodes": 15,
+        "searchKeyword": "مسلسل عرض وطلب سلمى ابو ضيف",
+        "isBaseline": false
+    },
+    {
+        "name": "فرصة أخيرة",
+        "lead": "محمود حميدة وطارق لطفي",
+        "company": "المتحدة",
+        "episodes": 15,
+        "searchKeyword": "مسلسل فرصة اخيرة محمود حميدة طارق لطفي",
+        "isBaseline": false
+    },
+    {
+        "name": "حد أقصى",
+        "lead": "روجينا",
+        "company": "المتحدة",
+        "episodes": 15,
+        "searchKeyword": "مسلسل حد اقصى روجينا",
+        "isBaseline": false
+    },
+    {
+        "name": "كان ياما كان",
+        "lead": "ماجد الكدواني ويسرا اللوزي",
+        "company": "المتحدة",
+        "episodes": 15,
+        "searchKeyword": "مسلسل كان ياما كان ماجد الكدواني يسرا اللوزي",
+        "isBaseline": false
+    },
+    {
+        "name": "اللون الأزرق",
+        "lead": "جومانا مراد وأحمد رزق",
+        "company": "المتحدة",
+        "episodes": 15,
+        "searchKeyword": "مسلسل اللون الازرق جومانا مراد احمد رزق",
+        "isBaseline": false
+    },
+    {
+        "name": "توابع",
+        "lead": "ريهام حجاج",
+        "company": "المتحدة",
+        "episodes": 15,
+        "searchKeyword": "مسلسل توابع ريهام حجاج",
+        "isBaseline": false
+    },
+    {
+        "name": "كلهم بيحبوا مودي",
+        "lead": "ياسر جلال",
+        "company": "المتحدة",
+        "episodes": 15,
+        "searchKeyword": "مسلسل كلهم بيحبوا مودي ياسر جلال",
+        "isBaseline": false
+    },
+    {
+        "name": "المداح 6",
+        "lead": "حمادة هلال",
+        "company": "MBC مصر",
+        "episodes": 30,
+        "searchKeyword": "المداح الجزء السادس حمادة هلال",
+        "isBaseline": false
+    },
+    {
+        "name": "وننسى اللي كان",
+        "lead": "ياسمين عبد العزيز",
+        "company": "MBC مصر",
+        "episodes": 30,
+        "searchKeyword": "مسلسل وننسى اللي كان ياسمين عبدالعزيز",
+        "isBaseline": false
+    },
+    {
+        "name": "الكينج",
+        "lead": "محمد إمام",
+        "company": "MBC مصر",
+        "episodes": 30,
+        "searchKeyword": "مسلسل الكينج محمد امام",
+        "isBaseline": false
+    },
+    {
+        "name": "المتر سمير",
+        "lead": "كريم محمود عبد العزيز",
+        "company": "MBC مصر",
+        "episodes": 30,
+        "searchKeyword": "مسلسل المتر سمير كريم محمود عبدالعزيز",
+        "isBaseline": false
+    },
+    {
+        "name": "الست موناليزا",
+        "lead": "مي عمر",
+        "company": "MBC مصر",
+        "episodes": 30,
+        "searchKeyword": "مسلسل الست موناليزا مي عمر",
+        "isBaseline": false
+    },
+    {
+        "name": "إفراج",
+        "lead": "عمرو سعد",
+        "company": "MBC مصر",
+        "episodes": 30,
+        "searchKeyword": "مسلسل افراج عمرو سعد",
+        "isBaseline": false
+    },
+    {
+        "name": "بابا وماما جيران",
+        "lead": "أحمد داود",
+        "company": "MBC مصر",
+        "episodes": 15,
+        "searchKeyword": "مسلسل بابا وماما جيران احمد داود",
+        "isBaseline": false
+    },
+    {
+        "name": "هي كيميا",
+        "lead": "دياب ومصطفى غريب",
+        "company": "MBC مصر",
+        "episodes": 15,
+        "searchKeyword": "مسلسل هي كيميا دياب مصطفى غريب",
+        "isBaseline": false
+    }
+]

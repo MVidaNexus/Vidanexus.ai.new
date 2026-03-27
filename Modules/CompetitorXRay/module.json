@@ -1,0 +1,11 @@
+{
+    "name": "CompetitorXRay",
+    "alias": "competitorxray",
+    "description": "",
+    "keywords": [],
+    "priority": 0,
+    "providers": [
+        "Modules\\CompetitorXRay\\Providers\\CompetitorXRayServiceProvider"
+    ],
+    "files": []
+}

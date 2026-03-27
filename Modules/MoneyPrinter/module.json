@@ -1,0 +1,11 @@
+{
+    "name": "MoneyPrinter",
+    "alias": "moneyprinter",
+    "description": "",
+    "keywords": [],
+    "priority": 0,
+    "providers": [
+        "Modules\\MoneyPrinter\\Providers\\MoneyPrinterServiceProvider"
+    ],
+    "files": []
+}

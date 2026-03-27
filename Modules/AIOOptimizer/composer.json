@@ -1,0 +1,17 @@
+{
+    "name": "nwidart/aiooptimizer",
+    "description": "AI Overviews (AIO) Optimizer Module",
+    "extra": {
+        "laravel": {
+            "providers": [],
+            "aliases": {}
+        }
+    },
+    "autoload": {
+        "psr-4": {
+            "Modules\\AIOOptimizer\\": "app/",
+            "Modules\\AIOOptimizer\\Database\\Factories\\": "database/factories/",
+            "Modules\\AIOOptimizer\\Database\\Seeders\\": "database/seeders/"
+        }
+    }
+}

@@ -1,0 +1,11 @@
+{
+    "name": "DramaTrends",
+    "alias": "dramatrends",
+    "description": "Drama Trends - Entertainment analytics dashboard",
+    "keywords": [],
+    "priority": 0,
+    "providers": [
+        "Modules\\DramaTrends\\Providers\\DramaTrendsServiceProvider"
+    ],
+    "files": []
+}

@@ -1,0 +1,30 @@
+{
+    "name": "nwidart/aikeywordradar",
+    "description": "",
+    "authors": [
+        {
+            "name": "Nicolas Widart",
+            "email": "n.widart@gmail.com"
+        }
+    ],
+    "extra": {
+        "laravel": {
+            "providers": [],
+            "aliases": {
+
+            }
+        }
+    },
+    "autoload": {
+        "psr-4": {
+            "Modules\\AIKeywordRadar\\": "app/",
+            "Modules\\AIKeywordRadar\\Database\\Factories\\": "database/factories/",
+            "Modules\\AIKeywordRadar\\Database\\Seeders\\": "database/seeders/"
+        }
+    },
+    "autoload-dev": {
+        "psr-4": {
+            "Modules\\AIKeywordRadar\\Tests\\": "tests/"
+        }
+    }
+}

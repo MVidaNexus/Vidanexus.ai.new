@@ -1,0 +1,11 @@
+{
+    "name": "GlobalNewsMonitor",
+    "alias": "globalnewsmonitor",
+    "description": "",
+    "keywords": [],
+    "priority": 0,
+    "providers": [
+        "Modules\\GlobalNewsMonitor\\Providers\\GlobalNewsMonitorServiceProvider"
+    ],
+    "files": []
+}

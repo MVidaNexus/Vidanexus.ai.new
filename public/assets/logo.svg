@@ -1,0 +1,43 @@
+<svg width="200" height="200" viewBox="0 0 200 200" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="mainGrad" x1="30" y1="180" x2="170" y2="20" gradientUnits="userSpaceOnUse">
+      <stop offset="0%" stop-color="#0284c7"/>
+      <stop offset="40%" stop-color="#0ea5e9"/>
+      <stop offset="70%" stop-color="#38bdf8"/>
+      <stop offset="100%" stop-color="#22d3ee"/>
+    </linearGradient>
+    <linearGradient id="streakGrad" x1="0" y1="0" x2="100" y2="0" gradientUnits="userSpaceOnUse">
+      <stop offset="0%" stop-color="#0ea5e9" stop-opacity="0"/>
+      <stop offset="100%" stop-color="#22d3ee"/>
+    </linearGradient>
+  </defs>
+  
+  <!-- Main N shape with arrow-like top -->
+  <path d="
+    M 55 170 
+    L 55 60 
+    L 60 60 
+    L 130 140 
+    L 130 60 
+    L 100 20 
+    L 155 20 
+    L 155 170 
+    L 150 170 
+    L 80 90 
+    L 80 170 
+    Z
+  " fill="url(#mainGrad)"/>
+  
+  <!-- Arrow tip at top right -->
+  <path d="
+    M 155 20 
+    L 175 20
+    L 155 45
+    Z
+  " fill="#22d3ee"/>
+  
+  <!-- Speed streaks on the left -->
+  <rect x="15" y="125" width="30" height="5" rx="2.5" fill="url(#mainGrad)" opacity="0.9"/>
+  <rect x="20" y="140" width="25" height="5" rx="2.5" fill="url(#mainGrad)" opacity="0.7"/>
+  <rect x="25" y="155" width="20" height="5" rx="2.5" fill="url(#mainGrad)" opacity="0.5"/>
+</svg>

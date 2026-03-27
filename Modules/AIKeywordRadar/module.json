@@ -1,0 +1,11 @@
+{
+    "name": "AIKeywordRadar",
+    "alias": "aikeywordradar",
+    "description": "",
+    "keywords": [],
+    "priority": 0,
+    "providers": [
+        "Modules\\AIKeywordRadar\\Providers\\AIKeywordRadarServiceProvider"
+    ],
+    "files": []
+}

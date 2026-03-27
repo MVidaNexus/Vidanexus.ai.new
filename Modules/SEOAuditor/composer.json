@@ -1,0 +1,17 @@
+{
+    "name": "nwidart/seoauditor",
+    "description": "",
+    "extra": {
+        "laravel": {
+            "providers": [],
+            "aliases": {}
+        }
+    },
+    "autoload": {
+        "psr-4": {
+            "Modules\\SEOAuditor\\": "app/",
+            "Modules\\SEOAuditor\\Database\\Factories\\": "database/factories/",
+            "Modules\\SEOAuditor\\Database\\Seeders\\": "database/seeders/"
+        }
+    }
+}

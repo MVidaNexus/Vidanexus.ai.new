@@ -1,0 +1,11 @@
+{
+    "name": "FolioOCR",
+    "alias": "folioocr",
+    "description": "",
+    "keywords": [],
+    "priority": 0,
+    "providers": [
+        "Modules\\FolioOCR\\Providers\\FolioOCRServiceProvider"
+    ],
+    "files": []
+}

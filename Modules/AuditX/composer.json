@@ -1,0 +1,17 @@
+{
+    "name": "nwidart/auditx",
+    "description": "",
+    "extra": {
+        "laravel": {
+            "providers": [],
+            "aliases": {}
+        }
+    },
+    "autoload": {
+        "psr-4": {
+            "Modules\\AuditX\\": "app/",
+            "Modules\\AuditX\\Database\\Factories\\": "database/factories/",
+            "Modules\\AuditX\\Database\\Seeders\\": "database/seeders/"
+        }
+    }
+}

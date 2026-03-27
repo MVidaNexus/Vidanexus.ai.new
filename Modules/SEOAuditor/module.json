@@ -1,0 +1,11 @@
+{
+    "name": "SEOAuditor",
+    "alias": "seoauditor",
+    "description": "",
+    "keywords": [],
+    "priority": 0,
+    "providers": [
+        "Modules\\SEOAuditor\\Providers\\SEOAuditorServiceProvider"
+    ],
+    "files": []
+}

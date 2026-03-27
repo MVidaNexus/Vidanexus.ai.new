@@ -1,0 +1,23 @@
+{
+    "name": "nwidart/trendingsearchmonitor",
+    "description": "",
+    "authors": [
+        {
+            "name": "VidaNexus",
+            "email": "info@vidanexus.net"
+        }
+    ],
+    "extra": {
+        "laravel": {
+            "providers": [],
+            "aliases": {
+
+            }
+        }
+    },
+    "autoload": {
+        "psr-4": {
+            "Modules\\TrendingSearchMonitor\\": "app/"
+        }
+    }
+}

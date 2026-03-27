@@ -1,0 +1,11 @@
+{
+    "name": "TrendingSearchMonitor",
+    "alias": "trendingsearchmonitor",
+    "description": "Trending search monitor and analysis tool.",
+    "keywords": [],
+    "priority": 0,
+    "providers": [
+        "Modules\\TrendingSearchMonitor\\Providers\\TrendingSearchServiceProvider"
+    ],
+    "files": []
+}

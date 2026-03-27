@@ -1,0 +1,17 @@
+{
+    "name": "nwidart/webtoapp",
+    "description": "",
+    "extra": {
+        "laravel": {
+            "providers": [],
+            "aliases": {}
+        }
+    },
+    "autoload": {
+        "psr-4": {
+            "Modules\\WebToApp\\": "app/",
+            "Modules\\WebToApp\\Database\\Factories\\": "database/factories/",
+            "Modules\\WebToApp\\Database\\Seeders\\": "database/seeders/"
+        }
+    }
+}

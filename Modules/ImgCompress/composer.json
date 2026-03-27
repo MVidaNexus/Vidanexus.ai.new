@@ -1,0 +1,17 @@
+{
+    "name": "nwidart/imgcompress",
+    "description": "",
+    "extra": {
+        "laravel": {
+            "providers": [],
+            "aliases": {}
+        }
+    },
+    "autoload": {
+        "psr-4": {
+            "Modules\\ImgCompress\\": "app/",
+            "Modules\\ImgCompress\\Database\\Factories\\": "database/factories/",
+            "Modules\\ImgCompress\\Database\\Seeders\\": "database/seeders/"
+        }
+    }
+}

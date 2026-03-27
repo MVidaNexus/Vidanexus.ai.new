@@ -1,0 +1,18 @@
+{
+    "AIKeywordRadar": true,
+    "ArticleWriter": true,
+    "DiscoverHeadlines": true,
+    "TrendingSearchMonitor": true,
+    "GlobalNewsMonitor": true,
+    "SEOAnalyzer": true,
+    "DramaTrends": true,
+    "CompetitorXRay": true,
+    "SEOAuditor": true,
+    "WebToApp": true,
+    "AuditX": true,
+    "FolioOCR": true,
+    "ImgCompress": true,
+    "MoneyPrinter": true,
+    "NLPEntitiesAnalysis": false,
+    "AIOOptimizer": true
+}

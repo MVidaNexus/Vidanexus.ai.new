@@ -1,0 +1,17 @@
+{
+    "name": "nwidart/folioocr",
+    "description": "",
+    "extra": {
+        "laravel": {
+            "providers": [],
+            "aliases": {}
+        }
+    },
+    "autoload": {
+        "psr-4": {
+            "Modules\\FolioOCR\\": "app/",
+            "Modules\\FolioOCR\\Database\\Factories\\": "database/factories/",
+            "Modules\\FolioOCR\\Database\\Seeders\\": "database/seeders/"
+        }
+    }
+}

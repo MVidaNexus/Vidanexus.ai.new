@@ -1,0 +1,11 @@
+{
+    "name": "SEOAnalyzer",
+    "alias": "seoanalyzer",
+    "description": "",
+    "keywords": [],
+    "priority": 0,
+    "providers": [
+        "Modules\\SEOAnalyzer\\Providers\\SEOAnalyzerServiceProvider"
+    ],
+    "files": []
+}

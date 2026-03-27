@@ -1,0 +1,11 @@
+{
+    "name": "ArticleWriter",
+    "alias": "articlewriter",
+    "description": "",
+    "keywords": [],
+    "priority": 0,
+    "providers": [
+        "Modules\\ArticleWriter\\Providers\\ArticleWriterServiceProvider"
+    ],
+    "files": []
+}

@@ -1,0 +1,11 @@
+{
+    "name": "ImgCompress",
+    "alias": "imgcompress",
+    "description": "",
+    "keywords": [],
+    "priority": 0,
+    "providers": [
+        "Modules\\ImgCompress\\Providers\\ImgCompressServiceProvider"
+    ],
+    "files": []
+}

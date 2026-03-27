@@ -1,0 +1,11 @@
+{
+    "name": "DiscoverHeadlines",
+    "alias": "discoverheadlines",
+    "description": "",
+    "keywords": [],
+    "priority": 0,
+    "providers": [
+        "Modules\\DiscoverHeadlines\\Providers\\DiscoverHeadlinesServiceProvider"
+    ],
+    "files": []
+}

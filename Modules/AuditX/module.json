@@ -1,0 +1,11 @@
+{
+    "name": "AuditX",
+    "alias": "auditx",
+    "description": "",
+    "keywords": [],
+    "priority": 0,
+    "providers": [
+        "Modules\\AuditX\\Providers\\AuditXServiceProvider"
+    ],
+    "files": []
+}

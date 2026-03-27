@@ -1,0 +1,11 @@
+{
+    "name": "WebToApp",
+    "alias": "webtoapp",
+    "description": "",
+    "keywords": [],
+    "priority": 0,
+    "providers": [
+        "Modules\\WebToApp\\Providers\\WebToAppServiceProvider"
+    ],
+    "files": []
+}

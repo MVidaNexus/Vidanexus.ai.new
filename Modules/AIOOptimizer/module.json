@@ -1,0 +1,11 @@
+{
+    "name": "AIOOptimizer",
+    "alias": "aiooptimizer",
+    "description": "AI Overviews (AIO) Optimizer — NLP-powered content gap analysis for Google AI Overviews visibility.",
+    "keywords": ["aio", "seo", "nlp", "ai-overviews"],
+    "priority": 0,
+    "providers": [
+        "Modules\\AIOOptimizer\\Providers\\AIOOptimizerServiceProvider"
+    ],
+    "files": []
+}

@@ -1,0 +1,30 @@
+{
+    "name": "nwidart/competitorxray",
+    "description": "",
+    "authors": [
+        {
+            "name": "Nicolas Widart",
+            "email": "n.widart@gmail.com"
+        }
+    ],
+    "extra": {
+        "laravel": {
+            "providers": [],
+            "aliases": {
+
+            }
+        }
+    },
+    "autoload": {
+        "psr-4": {
+            "Modules\\CompetitorXRay\\": "app/",
+            "Modules\\CompetitorXRay\\Database\\Factories\\": "database/factories/",
+            "Modules\\CompetitorXRay\\Database\\Seeders\\": "database/seeders/"
+        }
+    },
+    "autoload-dev": {
+        "psr-4": {
+            "Modules\\CompetitorXRay\\Tests\\": "tests/"
+        }
+    }
+}
