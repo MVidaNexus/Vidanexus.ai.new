@@ -36,7 +36,7 @@ class OpenRouterProvider implements AIProvider
                 ['role' => 'user', 'content' => $prompt]
             ],
             'temperature' => $options['temperature'] ?? 0.8,
-            'max_tokens' => $options['max_tokens'] ?? 2048,
+            'max_tokens' => $options['max_tokens'] ?? 1000,
             'response_format' => ($options['json_mode'] ?? false) ? ['type' => 'json_object'] : null,
         ]);
 

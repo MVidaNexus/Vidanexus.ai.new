@@ -115,6 +115,10 @@ class AIManager
 
         // Handle OpenRouter-style names (e.g. google/gemini-2.0-flash-001)
         if (str_contains($model, '/')) {
+            if ($provider === 'openrouter') {
+                return $model;
+            }
+
             [$prefix, $name] = explode('/', $model, 2);
             
             if ($provider === 'google' && ($prefix === 'google' || str_contains($name, 'gemini'))) {
