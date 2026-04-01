@@ -108,10 +108,12 @@ class KeywordService
      */
     public function syncKeywords(int $limit = 500, string $lang = 'ar', $userId = null)
     {
-        ini_set('max_execution_time', 120);
+        ini_set('max_execution_time', 180);
+        set_time_limit(180);
+        $syncStart = microtime(true);
         $user = \App\Models\User::find($userId);
         
-        $results = $this->getTargetKeywordsFromCompetitors($lang, $userId);
+        $results = $this->getTargetKeywordsFromCompetitors($lang, $userId, $syncStart);
         $newKeywords = $results['keywords'] ?? [];
         $headlinesCount = $results['headlines_count'] ?? 0;
         
@@ -156,7 +158,7 @@ class KeywordService
                 // Similarity check (prevents saving almost identical keywords)
                 foreach ($existingTexts as $existing => $val) {
                     similar_text($textLower, mb_strtolower($existing, 'UTF-8'), $percent);
-                    if ($percent >= 92) { // Increased from 85 to 92 to allow more variations
+                    if ($percent >= 96) { // Further increased to allow more subtle variations
                         $isDuplicate = true;
                         break;
                     }
@@ -218,6 +220,7 @@ class KeywordService
         return [
             'saved' => $addedCount,
             'found' => count($newKeywords),
+            'duplicates' => count($newKeywords) - $addedCount,
             'added_to_cache' => $addedCount,
             'total_in_cache' => count($existingKeywords),
             'headlines' => $headlinesCount
@@ -227,19 +230,29 @@ class KeywordService
     /**
      * Fetch competitor headlines and extract keywords using AI
      */
-    public function getTargetKeywordsFromCompetitors($lang = 'ar', $userId = null)
+    public function getTargetKeywordsFromCompetitors($lang = 'ar', $userId = null, $syncStart = null)
     {
-        $headlines = $this->fetchCompetitorsHeadlines($lang, $userId);
+        $syncStart = $syncStart ?? microtime(true);
+        $headlines = $this->fetchCompetitorsHeadlines($lang, $userId, $syncStart);
         
         if (empty($headlines)) {
             return ['keywords' => [], 'headlines_count' => 0];
         }
 
-        // Chunk headlines to avoid exceeding AI output token limits (max 40 headlines per batch)
-        $keywordBatches = array_chunk($headlines, 40);
+        // Highly constrained batch size (15) to ensure large LLMs (GPT-4, Claude) 
+        // can finish generating all Arabic output well within the 60s HTTP limit without timing out.
+        $keywordBatches = array_chunk($headlines, 15);
         $allKeywords = [];
         
-        foreach ($keywordBatches as $batch) {
+        foreach ($keywordBatches as $batchIndex => $batch) {
+            // Time safety: abort if sync has been running too long (45s budget before NEXT batch)
+            // This prevents Nginx/Cloudflare 60-second strict timeouts!
+            $elapsed = microtime(true) - $syncStart;
+            if ($elapsed > 45) {
+                Log::warning("[Keyword Radar] AI extraction time budget reached (" . round($elapsed) . "s elapsed). Returning partial batch results to avoid 504 Gateway Timeout.");
+                break;
+            }
+
             $batchKeywords = $this->extractKeywordsWithAI($batch, $lang, $userId);
             if (!empty($batchKeywords)) {
                 $allKeywords = array_merge($allKeywords, $batchKeywords);
@@ -511,8 +524,9 @@ class KeywordService
         ];
     }
 
-    protected function fetchCompetitorsHeadlines($lang = 'ar', $userId = null)
+    public function fetchCompetitorsHeadlines($lang = 'ar', $userId = null, $syncStart = null)
     {
+        $syncStart = $syncStart ?? microtime(true);
         $competitorUrls = $this->getMergedCompetitorUrls($userId, $lang);
         
         if (empty($competitorUrls)) {
@@ -520,49 +534,131 @@ class KeywordService
             return [];
         }
 
-        $headlines = [];
-        
-        // Multi-layered Time Filters (Tiered approach)
-        $windows = [
-            ['hours' => 1, 'label' => 'Very Fresh'],
-            ['hours' => 2, 'label' => 'Fresh'],
-            ['hours' => 4, 'label' => 'Recent']
-        ];
-
-        foreach ($competitorUrls as $url) {
-            $result = $this->testUrl($url, $lang, $userId);
-            $currentFetchedCount = 0;
-            $seenLocalTitles = [];
-
-            foreach ($windows as $window) {
-                $freshnessLimit = now()->subHours($window['hours']);
-                
-                foreach ($result['headlines'] as $item) {
-                    $title = $item['title'];
-                    if (isset($seenLocalTitles[$title])) continue;
-
-                    $pubDate = !empty($item['pubDate']) ? \Carbon\Carbon::parse($item['pubDate']) : null;
-                    
-                    if ($pubDate && $pubDate->lt($freshnessLimit)) continue;
-
-                    $headlines[] = [
-                        'title' => $title,
-                        'source' => $result['domain'],
-                        'pubDate' => $item['pubDate'] ?? null,
-                    ];
-                    $seenLocalTitles[$title] = true;
-                    $currentFetchedCount++;
-                }
-                
-                // If we found enough headlines in the most recent window, skip wider windows
-                // No limit - get everything
-            }
-            
-            Log::info("[Competitor Fetch] {$result['domain']}: got {$currentFetchedCount} headlines via {$result['strategy']}");
+        // Cap competitors per sync to prevent timeout (each takes ~2-4s)
+        $maxCompetitors = 8;
+        if (count($competitorUrls) > $maxCompetitors) {
+            $rotationIndex = (int)(time() / 3600) % max(1, ceil(count($competitorUrls) / $maxCompetitors));
+            $chunks = array_chunk($competitorUrls, $maxCompetitors);
+            $competitorUrls = $chunks[$rotationIndex] ?? $chunks[0];
+            Log::info("[Keyword Radar] Competitor rotation: using set #{$rotationIndex} (" . count($competitorUrls) . " of " . count($competitorUrls) . ")");
         }
 
-        shuffle($headlines);
-        return $headlines;
+        $allHeadlines = [];
+        $userAgent = $this->getRandomUserAgent();
+
+        Log::info("[Keyword Radar] Starting Parallel Fetch for " . count($competitorUrls) . " competitors.");
+
+        // Phase 1: Parallel Fetch (Sitemap and RSS)
+        // This is where we get 80% of our wins in efficiency
+        $responses = Http::pool(function ($pool) use ($competitorUrls, $userAgent) {
+            $reqs = [];
+            foreach ($competitorUrls as $url) {
+                $url = rtrim(trim($url), '/');
+                $domain = parse_url($url, PHP_URL_HOST) ?: $url;
+                
+                // Try Sitemap News for each
+                $reqs["{$domain}_sitemap"] = $pool->withHeaders(['User-Agent' => $userAgent])
+                    ->timeout(10)->get($url . '/sitemap-news.xml');
+                
+                // Try common RSS paths
+                $reqs["{$domain}_rss"] = $pool->withHeaders(['User-Agent' => $userAgent])
+                    ->timeout(10)->get($url . '/rss');
+            }
+            return $reqs;
+        });
+
+        foreach ($competitorUrls as $url) {
+            // Time safety check
+            if ((microtime(true) - $syncStart) > 60) break;
+
+            $url = rtrim(trim($url), '/');
+            $domain = parse_url($url, PHP_URL_HOST) ?: $url;
+            $currentFetchedCount = 0;
+            $siteHeadlines = [];
+
+            // 1. Check Parallel Responses first (Sitemap then RSS)
+            $sitemapResp = $responses["{$domain}_sitemap"] ?? null;
+            if ($sitemapResp && $sitemapResp->successful()) {
+                $siteHeadlines = $this->parseSimpleSitemap($sitemapResp->body());
+                if (!empty($siteHeadlines)) Log::info("[Parallel Fetch] Fast Sitemap Match: {$domain}");
+            }
+
+            if (empty($siteHeadlines)) {
+                $rssResp = $responses["{$domain}_rss"] ?? null;
+                if ($rssResp && $rssResp->successful() && (str_contains($rssResp->body(), '<rss') || str_contains($rssResp->body(), '<feed'))) {
+                    $siteHeadlines = $this->parseSimpleRss($rssResp->body());
+                    if (!empty($siteHeadlines)) Log::info("[Parallel Fetch] Fast RSS Match: {$domain}");
+                }
+            }
+
+            // 2. Fallback to full sequential testUrl if parallel attempts failed or returned nothing
+            if (empty($siteHeadlines)) {
+                $testResult = $this->testUrl($url, $lang, $userId);
+                $siteHeadlines = $testResult['headlines'] ?? [];
+            }
+
+            // Processing and Filtering By Freshness (Strictly Last Hour as requested)
+            $freshnessLimit = now()->subHour();
+            $seenLocalTitles = [];
+
+            foreach ($siteHeadlines as $item) {
+                $title = $item['title'];
+                if (isset($seenLocalTitles[$title])) continue;
+
+                $pubDate = !empty($item['pubDate']) ? \Carbon\Carbon::parse($item['pubDate']) : null;
+                if ($pubDate && $pubDate->lt($freshnessLimit)) continue;
+
+                $allHeadlines[] = [
+                    'title' => $title,
+                    'source' => $domain,
+                    'pubDate' => $item['pubDate'] ?? null,
+                ];
+                $seenLocalTitles[$title] = true;
+                $currentFetchedCount++;
+            }
+            
+            Log::info("[Competitor Sync] {$domain}: identified {$currentFetchedCount} fresh headlines.");
+        }
+
+        shuffle($allHeadlines);
+        return $allHeadlines;
+    }
+
+    /**
+     * Helpers for fast parallel parsing
+     */
+    protected function parseSimpleSitemap($xmlBody): array {
+        try {
+            $xml = @simplexml_load_string($xmlBody);
+            if (!$xml) return [];
+            $items = [];
+            foreach ($xml->url as $url) {
+                if ($url->children('n', true)->news) {
+                    $news = $url->children('n', true)->news;
+                    $items[] = [
+                        'title' => (string)$news->title,
+                        'pubDate' => (string)$news->publication_date
+                    ];
+                }
+            }
+            return $items;
+        } catch (\Exception $e) { return []; }
+    }
+
+    protected function parseSimpleRss($xmlBody): array {
+        try {
+            $xml = @simplexml_load_string($xmlBody);
+            if (!$xml) return [];
+            $items = [];
+            $channel = $xml->channel ?? $xml;
+            foreach ($channel->item ?? $channel->entry ?? [] as $item) {
+                $items[] = [
+                    'title' => (string)($item->title ?? ''),
+                    'pubDate' => (string)($item->pubDate ?? $item->published ?? $item->updated ?? '')
+                ];
+            }
+            return $items;
+        } catch (\Exception $e) { return []; }
     }
 
 
@@ -592,7 +688,7 @@ class KeywordService
 
         foreach ($queries as $q) {
             $encodedQ = urlencode($q);
-            $googleNewsUrl = "https://news.google.com/rss/search?q={$encodedQ}+when:12h&hl={$hl}&gl=EG&ceid=EG:{$hl}";
+            $googleNewsUrl = "https://news.google.com/rss/search?q={$encodedQ}+when:1h&hl={$hl}&gl=EG&ceid=EG:{$hl}";
 
             try {
                 $response = Http::withHeaders($headers)->timeout(12)->get($googleNewsUrl);
@@ -796,28 +892,28 @@ class KeywordService
             $titlesText .= ($idx + 1) . ". [{$sourceName}] " . $h['title'] . "\n";
         }
 
+        $count = count($headlines);
         $langInstruction = ($lang === 'en') ? "English" : "Arabic";
         
         $dbPrompt = \App\Models\Setting::get('ai-keyword-radar_prompt');
         if ($dbPrompt) {
             $prompt = str_replace(['[Headlines]', '[headlines]', '[lang]'], [$titlesText, $titlesText, $langInstruction], $dbPrompt);
+            if (!str_contains($prompt, 'Return ONLY a JSON array')) {
+                $prompt .= "\n\nCRITICAL: You must process ALL {$count} headlines provided and return exactly {$count} keywords. Return ONLY a valid JSON array: [{\"index\": 1, \"keyword\": \"...\"}]";
+            }
         } else {
-            $prompt = "أنت خبير SEO ومحلل بيانات محترف. مهمتك هي تحويل عناوين أخبار ومقالات المنافسين إلى 'كلمات بحث مستهدفة' (Target Search Queries) ذكية وعالية الجودة.
-
-العناوين:
+            $prompt = "You are an expert SEO specialist. Your task is to transform EVERY SINGLE competitor headline provided below into a highly searched, high-intent 'Target Search Query'. You MUST output exactly ONE search query for EACH headline, meaning you must return exactly {$count} keywords.
+            
+Headlines:
 {$titlesText}
 
-الشروط والقواعد الصارمة (STRICT RULES):
-1- **يمنع تماماً إضافة أي \"تاريخ\" أو \"عام\" (مثل 2024 أو 2025) للكلمات ما لم يكن مذكوراً صراحةً في العنوان الأصلي**.
-2- **التحويل (TRANSFORM)**: لا تقم بنسخ الكلمات كما هي، بل حول العنوان إلى استعلام بحثي دقيق يبحث عنه الناس (مثلاً: 'تراجع الذهب' يصبح 'أسباب انخفاض أسعار الذهب اليوم').
-3- **التفصيل (SPECIFICITY)**: يجب أن تحتوي الكلمة على الكيانات (Entities) المذكورة بدقة (أسماء أشخاص، جهات، بطولات) دون أي اختصار.
-4- **يمنع استخدام الرموز أو الهاشتاجات**.
-5- **اللغة**: يجب أن تكون المخرجات باللغة {$langInstruction}.
-6- **الكمية**: استخرج 3 كلمات بحثية مختلفة لكل عنوان لضمان تغطية كل نوايا البحث.
-
-التنسيق المطلوب (Format):
-أخرج فقط مصفوفة JSON صالحة دون أي نصوص إضافية:
-[{\"index\": 1, \"keyword\": \"...\"}]";
+Rules:
+1. NO dates or years (like 2025) unless inherently part of the entity.
+2. TRANSFORM each title into a short, popular search query (e.g. 'Gold price drops' -> 'why gold prices are falling today', or 'Gold price analysis').
+3. Keep the keyword specific to the main entities (names, brands, events) in the title.
+4. Output language MUST be: {$langInstruction}.
+5. You MUST process ALL {$count} headlines provided.
+6. Return ONLY a valid JSON array of objects, with each object containing the exact 'index' of the headline and the transformed 'keyword': [{\"index\": 1, \"keyword\": \"...\"}]";
         }
 
         try {
@@ -830,40 +926,83 @@ class KeywordService
                 'provider' => ($provider === 'gemini') ? 'google' : $provider,
                 'model' => $model,
                 'temperature' => 0.1,
-                'json_mode' => true,
+                'json_mode' => false,
+                'max_tokens' => 4000,
             ]);
             
+            Log::info("AI Keyword Radar [{$lang}] Prompt Snippet: " . substr($prompt, 0, 400));
             $response = $aiResult['text'] ?? '';
-            $keywords = $this->parseKeywordsResponse($response, $headlines);
+            $parsedKeywords = $this->parseKeywordsResponse($response, $headlines, $userId);
             
-            if (empty($keywords)) {
-                \App\Models\ToolError::log('ai-keyword-radar', new \Exception("AI returned 0 valid keywords from " . count($headlines) . " headlines. Raw response: " . substr($response, 0, 100)), 'AI Keyword Extraction', $userId, ['headline_count' => count($headlines)]);
+            if (empty($parsedKeywords)) {
+                $rawSnippet = substr($response, 0, 800);
+                Log::emergency("[Keyword Radar] AI Raw Response (Empty Arrays): {$rawSnippet}");
+                
+                \App\Models\ToolError::log('ai-keyword-radar', "AI returned 0 valid keywords from " . count($headlines) . " headlines. Check raw response for potential API errors or formatting issues.", 'AI Keyword Extraction', $userId, [
+                    'provider' => $provider,
+                    'model' => $model,
+                    'raw_response' => $response ?: ($aiResult['raw_response'] ?? 'EMPTY_RESPONSE')
+                ]);
+                return [];
             }
+
+            // Apply global Quality Filters
+            $keywords = $this->filterSimilarKeywords($parsedKeywords, 0.6, $userId);
+            
+            Log::info("[Keyword Radar] AI generated " . count($parsedKeywords) . " keywords. Filter kept " . count($keywords));
 
             return $keywords;
 
         } catch (\Exception $e) {
             Log::error("[Competitor Keywords] AI Failed: " . $e->getMessage());
-            ToolError::log('ai-keyword-radar', $e, 'AI Keyword Extraction', $userId, ['headline_count' => count($headlines)]);
+            ToolError::log('ai-keyword-radar', $e, 'AI Keyword Extraction', $userId, [
+                'headline_count' => count($headlines),
+                'provider' => $provider ?? 'unknown',
+                'model' => $model ?? 'unknown'
+            ]);
             return [];
         }
     }
 
-    protected function parseKeywordsResponse($response, $headlines)
+    public function parseKeywordsResponse($response, $headlines, $userId = null)
     {
         $uniqueResults = [];
         
-        // 1. Clean response: Remove markdown code blocks if present
-        $cleanResponse = $response;
-        if (preg_match('/```(?:json)?\s*(.*?)```/s', $response, $matches)) {
+        // 1. Clean response: Remove markdown code blocks and 'Thinking' signatures
+        $cleanResponse = preg_replace('/<think>.*?<\/think>/s', '', $response);
+
+        if (preg_match('/```(?:json)?\s*(.*?)```/s', $cleanResponse, $matches)) {
             $cleanResponse = $matches[1];
         }
 
-        // 2. Try to find any JSON array
-        if (preg_match('/\[.*\]/s', $cleanResponse, $matches)) {
+        // 2. Try to find any JSON array [...]
+        $decoded = null;
+        if (preg_match('/\[\s*\{.*\}\s*\]/s', $cleanResponse, $matches)) {
             $decoded = json_decode($matches[0], true);
         } else {
             $decoded = json_decode(trim($cleanResponse), true);
+        }
+
+        // 2.2 Radical Fallback: If JSON is completely broken or truncated due to token limits, 
+        // aggressively extract any valid complete JSON objects from the string.
+        if (!$decoded && preg_match_all('/\{[^{}]*"keyword"\s*:[^{}]*\}/s', $cleanResponse, $objMatches)) {
+            $decoded = [];
+            foreach ($objMatches[0] as $strObj) {
+                // Ensure it ends cleanly
+                if (substr(trim($strObj), -1) !== '}') $strObj .= '}';
+                $parsedObj = json_decode($strObj, true);
+                if ($parsedObj) $decoded[] = $parsedObj;
+            }
+        }
+
+        // 2.5 Handle cases where the model wraps the array in an object (e.g. { "keywords": [...] })
+        if (is_array($decoded) && !isset($decoded[0]) && count($decoded) > 0) {
+            foreach (['keywords', 'results', 'data', 'suggestions', 'list'] as $key) {
+                if (isset($decoded[$key]) && is_array($decoded[$key])) {
+                    $decoded = $decoded[$key];
+                    break;
+                }
+            }
         }
 
         if (is_array($decoded)) {
@@ -909,13 +1048,23 @@ class KeywordService
                 ];
             }
         }
-        
-        return $this->filterSimilarKeywords(array_values($uniqueResults));
+        // We return the raw parsed unique results here. 
+        // Filtering is done separately so we can accurately diagnose AI output.
+        return array_values($uniqueResults);
     }
 
-    protected function filterSimilarKeywords(array $keywords, float $threshold = 0.6): array
+    protected function filterSimilarKeywords(array $keywords, float $threshold = 0.6, $userId = null): array
     {
         if (count($keywords) <= 1) return $keywords;
+        
+        $minChars = (int)\App\Models\Setting::get('ai-keyword-radar_min_chars', 8);
+        $minWords = (int)\App\Models\Setting::get('ai-keyword-radar_min_words', 2);
+        $maxWords = (int)\App\Models\Setting::get('ai-keyword-radar_max_words', 12);
+        
+        $similarity = \App\Models\Setting::get('ai-keyword-radar_similarity_threshold');
+        if ($similarity !== null && is_numeric($similarity)) {
+            $threshold = (float)$similarity / 100.0;
+        }
         
         $filtered = [];
         $usedTexts = [];
@@ -937,25 +1086,21 @@ class KeywordService
             $text = is_array($kw) ? ($kw['text'] ?? '') : $kw;
             $text = trim($text);
             
-            // Stricter quality filters
-            if (empty($text) || mb_strlen($text) < 12) continue;
+            // Dynamic length filter
+            if (empty($text) || mb_strlen($text) < $minChars) continue;
             
             $words = array_filter(explode(' ', $text));
             $wordCount = count($words);
             
-            // Skip keywords shorter than 3 words or longer than 10 words
-            if ($wordCount < 3 || $wordCount > 10) continue;
-            
-            // Skip if it contains too many filler words or generic terms at the start/end
-            $firstWord = $words[0] ?? '';
-            if (in_array($firstWord, ['أخبار', 'عاجل', 'شاهد', 'بث', 'تعرف', 'عاجل:', 'فيديو'])) continue;
+            // Dynamic word count filter
+            if ($wordCount < $minWords || $wordCount > $maxWords) continue;
 
             $normalizedText = $this->normalizeForComparison($text);
             $currentWords = $this->extractSignificantWords($normalizedText, $fillerWords);
             
-            // At least 2 significant words for meaningful context
+            // If the keyword is mostly filler words, still keep it if it meets the minWords criteria
             if (count($currentWords) < 2) {
-                if (!in_array($normalizedText, $usedTexts) && $wordCount >= 2) {
+                if (!in_array($normalizedText, $usedTexts) && $wordCount >= $minWords) {
                     $filtered[] = $kw;
                     $usedTexts[] = $normalizedText;
                 }

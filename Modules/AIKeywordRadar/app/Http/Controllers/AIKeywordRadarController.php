@@ -63,7 +63,7 @@ class AIKeywordRadarController extends Controller
                              ->where('created_at', '>=', $retentionLimit);
                       });
                 })
-                ->latest()
+                ->orderByRaw('COALESCE(published_at, created_at) DESC')
                 ->take(100)
                 ->get();
 
@@ -95,7 +95,7 @@ class AIKeywordRadarController extends Controller
                                  ->where('created_at', '>=', $retentionLimit);
                           });
                     })
-                    ->latest()
+                    ->orderByRaw('COALESCE(published_at, created_at) DESC')
                     ->take(100)
                     ->get();
 
@@ -138,6 +138,10 @@ class AIKeywordRadarController extends Controller
             'keywords_competitors' => 'nullable|string',
             'keywords_competitors_en' => 'nullable|string',
             'enable_keywords_en' => 'nullable|boolean',
+            'keywords_min_chars' => 'nullable|integer|min:1|max:50',
+            'keywords_min_words' => 'nullable|integer|min:1|max:20',
+            'keywords_max_words' => 'nullable|integer|min:3|max:50',
+            'keywords_similarity_threshold' => 'nullable|integer|min:50|max:100',
         ]);
 
         $user = auth()->user();
@@ -162,6 +166,19 @@ class AIKeywordRadarController extends Controller
      */
     public function sync(Request $request)
     {
+        // Prevent web server proxy timeout (the root cause of "Unexpected token '<'" error)
+        // The sync process can take 60-120s with many competitors + AI calls
+        ignore_user_abort(true);
+        set_time_limit(180);
+        ini_set('max_execution_time', 180);
+        
+        // Tell proxy servers to wait longer
+        if (!headers_sent()) {
+            header('X-Accel-Buffering: no');  // Nginx
+            header('Connection: keep-alive');
+            header('X-Vida-Agent: Probe-v3');
+        }
+
         $user = auth()->user();
         
         if (!$user->canUseTool('ai-keyword-radar')) {
@@ -223,7 +240,12 @@ class AIKeywordRadarController extends Controller
                 $successMsg = "Competitor analysis (" . ($lang === 'en' ? 'EN' : 'AR') . ") updated successfully. Added " . $result['saved'] . " new keywords.";
             } else {
                 if ($result['headlines'] > 0) {
-                    $successMsg = "Scanned " . $result['headlines'] . " headlines from competitors, but no new search keywords were found.";
+                    $found = $result['found'] ?? 0;
+                    if ($found > 0) {
+                        $successMsg = "Scanned " . $result['headlines'] . " headlines. AI extracted " . $found . " keywords, but ALL of them were already in your list (duplicates).";
+                    } else {
+                        $successMsg = "Scanned " . $result['headlines'] . " headlines from competitors, but no new search patterns were found this time.";
+                    }
                 } else {
                     $successMsg = "No new news found at competitors in the last few hours. Try again later or check your competitor URLs in settings.";
                 }

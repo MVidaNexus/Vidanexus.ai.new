@@ -178,6 +178,18 @@ class HorizonController extends Controller
             if ($request->has('sync_credits')) {
                 Setting::set("{$slug}_sync_credits", $request->sync_credits, 'number', 'tool_settings');
             }
+            if ($request->has('min_chars')) {
+                Setting::set("{$slug}_min_chars", $request->min_chars, 'number', 'tool_settings');
+            }
+            if ($request->has('min_words')) {
+                Setting::set("{$slug}_min_words", $request->min_words, 'number', 'tool_settings');
+            }
+            if ($request->has('max_words')) {
+                Setting::set("{$slug}_max_words", $request->max_words, 'number', 'tool_settings');
+            }
+            if ($request->has('similarity_threshold')) {
+                Setting::set("{$slug}_similarity_threshold", $request->similarity_threshold, 'number', 'tool_settings');
+            }
 
             // Clear relevant caches
             \Illuminate\Support\Facades\Cache::forget('competitor_urls_ar');

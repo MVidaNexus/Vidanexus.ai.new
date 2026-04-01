@@ -18,6 +18,7 @@ class AIManager
 
     public function generate(string $tool, string $prompt, array $options = []): array
     {
+        \Illuminate\Support\Facades\Log::emergency("AGENT_PROBE_3: {$tool}");
         // Enforce Global Absolute Mode Instruction as requested by User
         $prompt = self::ABSOLUTE_MODE_INSTRUCTION . $prompt;
 
@@ -45,7 +46,11 @@ class AIManager
                     
                     if (!empty($link['api_key'])) {
                         $currentOptions['api_key'] = $link['api_key'];
+                    } else {
+                        $currentOptions['api_key'] = $this->resolveApiKeyFromSettings($providerName);
                     }
+
+                    Log::info("AI: Tool '{$tool}' calling '{$providerName}/{$currentOptions['model']}' with key ending in " . substr($currentOptions['api_key'] ?? 'NONE', -4));
 
                     $response = $provider->generate($prompt, $currentOptions);
                     $latency = (int) ((microtime(true) - $startTime) * 1000);
@@ -81,6 +86,11 @@ class AIManager
                 
                 $currentOptions = $options;
                 $currentOptions['model'] = $this->normalizeModelForProvider($providerName, $options['model'] ?? null);
+
+                // Fetch "General Key" from settings if not set in environment or specific options
+                if (empty($currentOptions['api_key'])) {
+                    $currentOptions['api_key'] = $this->resolveApiKeyFromSettings($providerName);
+                }
 
                 $response = $provider->generate($prompt, $currentOptions);
                 $latency = (int) ((microtime(true) - $startTime) * 1000);
@@ -139,6 +149,34 @@ class AIManager
         }
 
         return $model;
+    }
+
+    protected function resolveApiKeyFromSettings(string $providerName): ?string
+    {
+        $settingKey = match ($providerName) {
+            'openrouter' => 'openrouter_api_key',
+            'google' => 'gemini_api_key', // Also check 'google_api_key' if gemini is missing
+            'openai' => 'openai_api_key',
+            'anthropic' => 'anthropic_api_key',
+            default => null
+        };
+
+        if ($settingKey) {
+            $key = \App\Models\Setting::get($settingKey);
+            
+            if ($key) {
+                Log::info("AI: Resolved key for [{$providerName}] from setting [{$settingKey}]");
+            }
+            
+            // Fallback for Gemini specifically if 'gemini_api_key' wasn't the right one
+            if (!$key && $providerName === 'google') {
+                $key = \App\Models\Setting::get('google_api_key');
+            }
+            
+            return $key;
+        }
+
+        return null;
     }
 
     protected function getDefaultModelForProvider(string $provider): string

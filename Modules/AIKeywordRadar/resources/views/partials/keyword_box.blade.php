@@ -24,6 +24,42 @@
         <a href="{{ route('dashboard.ai-keyword-radar.settings') }}" class="px-3 py-1.5 rounded-xl text-[11px] font-bold transition flex items-center gap-1.5 border border-purple-500/30 text-purple-400 hover:bg-purple-500/20 hover:border-purple-500/50 shadow-sm" style="background: rgba(168, 85, 247, 0.05);">
             <i class="fas fa-cog text-[10px]"></i> Settings
         </a>
+        
+        <div class="relative" x-data="{ sortOpen: false, currentSort: 'Newest Publish' }" @click.away="sortOpen = false">
+            <button @click="sortOpen = !sortOpen" class="px-3 py-1.5 rounded-xl text-[11px] font-bold transition flex items-center gap-1.5 border shadow-sm" style="background: rgba(15, 23, 42, 0.9) !important; border-color: rgba(255, 255, 255, 0.2) !important; color: #ffffff !important; backdrop-filter: blur(10px);">
+                <i class="fas fa-sort-amount-down text-[10px]" style="color: {{ $colorVar }};"></i> 
+                <span x-text="currentSort">Newest Publish</span>
+                <i class="fas fa-chevron-down text-[8px] opacity-60 ml-0.5 transition-transform" :class="{'rotate-180': sortOpen}"></i>
+            </button>
+            <div x-show="sortOpen" 
+                 x-transition:enter="transition ease-out duration-100"
+                 x-transition:enter-start="opacity-0 scale-95"
+                 x-transition:enter-end="opacity-100 scale-100"
+                 x-transition:leave="transition ease-in duration-75"
+                 x-transition:leave-start="opacity-100 scale-100"
+                 x-transition:leave-end="opacity-0 scale-95"
+                 style="display: none; background: rgba(15, 23, 42, 0.98) !important; backdrop-filter: blur(15px); border-color: rgba(255,255,255,0.2) !important;" 
+                 class="absolute top-full mt-2 {{ $isAr ? 'left-0' : 'right-0' }} w-44 rounded-xl shadow-2xl border overflow-hidden z-20">
+                <button @click="window.executeKeywordSort('{{ $lang }}', 'pulldate'); currentSort = 'Newest Sync'; sortOpen = false" class="w-full text-left px-4 py-3 text-xs font-bold transition flex items-center justify-between group" style="color: #ffffff !important; background: transparent;" onmouseover="this.style.background='rgba(255,255,255,0.1)'" onmouseout="this.style.background='transparent'">
+                    <div class="flex items-center gap-2.5">
+                        <i class="fas fa-satellite-dish text-[10px] text-amber-500 group-hover:scale-125 transition-transform"></i> 
+                        <span>Newest Sync</span>
+                    </div>
+                </button>
+                <button @click="window.executeKeywordSort('{{ $lang }}', 'pubdate'); currentSort = 'Newest Publish'; sortOpen = false" class="w-full text-left px-4 py-3 text-xs font-bold transition flex items-center justify-between border-t group" style="border-top-color: rgba(255,255,255,0.1) !important; color: #ffffff !important; background: transparent;" onmouseover="this.style.background='rgba(255,255,255,0.1)'" onmouseout="this.style.background='transparent'">
+                    <div class="flex items-center gap-2.5">
+                        <i class="fas fa-history text-[10px] text-cyan-500 group-hover:scale-125 transition-transform"></i> 
+                        <span>Newest Publish</span>
+                    </div>
+                </button>
+                <button @click="window.executeKeywordSort('{{ $lang }}', 'alphabetical'); currentSort = 'Alphabetical (A-Z)'; sortOpen = false" class="w-full text-left px-4 py-3 text-xs font-bold transition flex items-center justify-between border-t group" style="border-top-color: rgba(255,255,255,0.1) !important; color: #ffffff !important; background: transparent;" onmouseover="this.style.background='rgba(255,255,255,0.1)'" onmouseout="this.style.background='transparent'">
+                    <div class="flex items-center gap-2.5">
+                        <i class="fas fa-sort-alpha-down text-[10px] text-purple-500 group-hover:scale-125 transition-transform"></i> 
+                        <span>Alphabetical (A-Z)</span>
+                    </div>
+                </button>
+            </div>
+        </div>
         <button @click="syncCompetitors('{{ $lang }}')" :disabled="{{ $loadingModel }}" class="px-4 py-1.5 text-black rounded-xl text-[11px] font-black tracking-tight shadow-md transition-all flex items-center gap-1.5 border border-white/10 hover:scale-105 active:scale-95" style="background: {{ $colorVar }}; box-shadow: 0 4px 15px {{ $colorVar }}30;">
             <i class="fas fa-sync-alt text-[10px]" :class="{ 'fa-spin': {{ $loadingModel }} }"></i> 
             <span x-text="{{ $loadingModel }} ? 'Syncing...' : 'Sync {{ strtoupper($lang) }}'"></span>
@@ -71,7 +107,7 @@
         <div id="sync-notification-{{ $lang }}" style="display: none;" class="mb-4"></div>
 
         @if(!empty($targetKeywords))
-            <div class="space-y-3">
+            <div class="space-y-3 keyword-container-{{ $lang }}">
                 @foreach($targetKeywords as $kw)
                     @php
                         $text = is_array($kw) ? ($kw['text'] ?? $kw['keyword'] ?? '') : $kw;
@@ -79,7 +115,7 @@
                         $createdAt = is_array($kw) && isset($kw['created_at']) ? \Carbon\Carbon::parse($kw['created_at']) : null;
                     @endphp
                     @if(!empty($text))
-                    <div class="flex items-start justify-between p-3 sm:p-4 rounded-2xl border transition-all duration-300 group gap-2.5 keyword-row relative overflow-hidden" style="background: var(--glass-bg); border-color: var(--glass-border);">
+                    <div data-pulldate="{{ $createdAt ? $createdAt->timestamp : 0 }}" data-pubdate="{{ isset($kw['published_at']) ? \Carbon\Carbon::parse($kw['published_at'])->timestamp : 0 }}" class="flex items-start justify-between p-3 sm:p-4 rounded-2xl border transition-all duration-300 group gap-2.5 keyword-row relative overflow-hidden" style="background: var(--glass-bg); border-color: var(--glass-border);">
                         <div class="flex items-start gap-2.5 flex-1 min-w-0">
                             <!-- Selection & Index -->
                             <div class="flex flex-col items-center gap-2 mt-1">

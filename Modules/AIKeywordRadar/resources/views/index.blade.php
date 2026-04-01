@@ -15,7 +15,7 @@
     }
 </style>
 @endpush
-<div x-data="keywordRadar()" x-init="init()" class="max-w-7xl mx-auto">
+<div x-data="keywordRadar()" x-init="init()" @sort-keywords.window="sortKeywords($event.detail.lang, $event.detail.criteria)" class="max-w-7xl mx-auto">
     <!-- Header Section -->
     <div class="text-center mb-10">
         <h1 class="text-4xl md:text-5xl font-black mb-2 flex items-center justify-center gap-4" style="color: var(--text-main);">
@@ -89,6 +89,14 @@ function keywordRadar() {
                 }, 500);
                 window.history.replaceState({}, document.title, window.location.pathname);
             }
+            
+            // Set default sorting to newest publish after a tick for the DOM
+            setTimeout(() => {
+                this.sortKeywords('ar', 'pubdate');
+                if (document.querySelector('.keyword-container-en')) {
+                    this.sortKeywords('en', 'pubdate');
+                }
+            }, 100);
         },
 
         showSyncNotification(lang, message, type = 'error') {
@@ -143,7 +151,20 @@ function keywordRadar() {
                 },
                 body: formData
             })
-            .then(res => {
+            .then(async res => {
+                const contentType = res.headers.get('content-type') || '';
+                
+                // Guard: If server returned HTML instead of JSON (proxy timeout / 502 / 504)
+                if (!contentType.includes('application/json')) {
+                    const rawText = await res.text();
+                    console.error('Non-JSON response:', res.status, rawText.substring(0, 200));
+                    
+                    if (res.status >= 500 || rawText.startsWith('<!') || rawText.startsWith('<html')) {
+                        throw new Error('Server timeout — the sync is processing too many competitors. Please try again in a moment, the server may still be working in the background.');
+                    }
+                    throw new Error('Unexpected server response (Status: ' + res.status + ')');
+                }
+                
                 return res.json().then(d => ({ ok: res.ok, status: res.status, data: d }));
             })
             .then(({ ok, status, data }) => {
@@ -184,9 +205,72 @@ function keywordRadar() {
             if (this[prop].length === 0) return;
             const textToCopy = this[prop].join('\n');
             copyToClipboard(textToCopy);
+        },
+
+        sortKeywords(lang, criteria) {
+            const container = document.querySelector(`.keyword-container-${lang}`);
+            if (!container) return;
+            
+            const rows = Array.from(container.querySelectorAll('.keyword-row'));
+            
+            rows.sort((a, b) => {
+                if (criteria === 'alphabetical') {
+                    // Get text content of the keyword string
+                    const elA = a.querySelector('.font-bold');
+                    const elB = b.querySelector('.font-bold');
+                    const textA = elA ? elA.textContent.trim() : '';
+                    const textB = elB ? elB.textContent.trim() : '';
+                    return textA.localeCompare(textB, lang); // Ascending A-Z
+                } else {
+                    const valA = parseFloat(a.dataset[criteria]) || 0;
+                    const valB = parseFloat(b.dataset[criteria]) || 0;
+                    return valB - valA; // Descending order for dates
+                }
+            });
+
+            // Re-append to container to change the order visually
+            rows.forEach((row, index) => {
+                container.appendChild(row);
+                // Update numerical indicator to match new visual order
+                const numSpan = row.querySelector('.keyword-num');
+                if (numSpan) {
+                    numSpan.textContent = String(index + 1).padStart(2, '0');
+                }
+            });
         }
     }
 }
+
+// Bind to window to avoid any Alpine nesting/scope issues
+document.addEventListener('alpine:init', () => {
+    // We bind a fallback in case the internal method isn't reachable
+});
+
+window.executeKeywordSort = function(lang, criteria) {
+    const container = document.querySelector(`.keyword-container-${lang}`);
+    if (!container) return;
+    const rows = Array.from(container.querySelectorAll('.keyword-row'));
+    rows.sort((a, b) => {
+        if (criteria === 'alphabetical') {
+            const elA = a.querySelector('.font-bold');
+            const elB = b.querySelector('.font-bold');
+            const textA = elA ? elA.textContent.trim() : '';
+            const textB = elB ? elB.textContent.trim() : '';
+            return textA.localeCompare(textB, lang);
+        } else {
+            const valA = parseFloat(a.dataset[criteria]) || 0;
+            const valB = parseFloat(b.dataset[criteria]) || 0;
+            return valB - valA;
+        }
+    });
+    rows.forEach((row, index) => {
+        container.appendChild(row);
+        const numSpan = row.querySelector('.keyword-num');
+        if (numSpan) {
+            numSpan.textContent = String(index + 1).padStart(2, '0');
+        }
+    });
+};
 
 function copyToClipboard(text) {
     navigator.clipboard.writeText(text).then(() => {

@@ -35,9 +35,9 @@
 
 @section('content')
 <style>
-    .horizon-tabs { display: flex; gap: 0.5rem; margin-bottom: 2rem; border-bottom: 1px solid var(--horizon-border); padding-bottom: 1rem; overflow-x: auto; scrollbar-width: none; }
+    .horizon-tabs { display: flex; gap: 0.25rem; margin-bottom: 2rem; border-bottom: 1px solid var(--horizon-border); padding-bottom: 1rem; overflow-x: auto; scrollbar-width: none; }
     .horizon-tabs::-webkit-scrollbar { display: none; }
-    .horizon-tab-btn { background: none; border: 1px solid transparent; color: var(--text-muted); font-size: 0.85rem; font-weight: 600; padding: 0.6rem 1.2rem; cursor: pointer; transition: all 0.3s; border-radius: 8px; font-family: 'Inter', sans-serif; display: flex; align-items: center; gap: 0.5rem; white-space: nowrap; }
+    .horizon-tab-btn { background: none; border: 1px solid transparent; color: var(--text-muted); font-size: 0.8rem; font-weight: 600; padding: 0.6rem 0.8rem; cursor: pointer; transition: all 0.3s; border-radius: 8px; font-family: 'Inter', sans-serif; display: flex; align-items: center; gap: 0.4rem; white-space: nowrap; }
     .horizon-tab-btn:hover { color: var(--text-main); background: rgba(255,255,255,0.05); }
     .horizon-tab-btn.active { color: var(--primary-admin); background: rgba(14, 165, 233, 0.1); border-color: rgba(14, 165, 233, 0.3); }
     .horizon-tab-pane { display: none; animation: fadeIn 0.3s ease; }
@@ -57,6 +57,7 @@
         <div class="horizon-tabs" style="overflow-x: auto; white-space: nowrap; padding-bottom: 5px;">
             <button type="button" class="horizon-tab-btn active" onclick="switchHorizonTab('ai', this)"><i class="fas fa-brain"></i> Intelligence</button>
             <button type="button" class="horizon-tab-btn" onclick="switchHorizonTab('sources', this)"><i class="fas fa-satellite-dish"></i> Sources</button>
+            <button type="button" class="horizon-tab-btn" onclick="switchHorizonTab('filters', this)"><i class="fas fa-filter"></i> Filters</button>
             <button type="button" class="horizon-tab-btn" onclick="switchHorizonTab('strategy', this)"><i class="fas fa-layer-group"></i> Strategy Engine</button>
             <button type="button" class="horizon-tab-btn" onclick="switchHorizonTab('credits', this)"><i class="fas fa-coins"></i> Credit System</button>
             <button type="button" class="horizon-tab-btn" onclick="switchHorizonTab('apis', this)"><i class="fas fa-network-wired"></i> AI Routing</button>
@@ -110,6 +111,57 @@
 
                 <button type="submit" class="btn-save" style="width: 100%;">
                     <i class="fas fa-save"></i> Save Global Sources
+                </button>
+            </div>
+
+            <div id="pane-filters" class="horizon-tab-pane">
+                <div style="background: rgba(168, 85, 247, 0.05); border: 1px solid rgba(168, 85, 247, 0.2); border-radius: 12px; padding: 1.25rem; margin-bottom: 2rem;">
+                    <p style="margin: 0; font-size: 0.85rem; color: var(--text-main); line-height: 1.5;">
+                        <i class="fas fa-sliders-h" style="color: var(--secondary-admin); margin-right: 0.5rem;"></i>
+                        Define the global quality rules for Keyword Extraction. These boundaries filter out poor results (like single letters or full paragraphs) before saving them to the database.
+                    </p>
+                </div>
+
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 2rem; margin-bottom: 2.5rem; padding: 2rem; background: rgba(0,0,0,0.15); border: 1px solid var(--horizon-border); border-radius: 20px;">
+                    <div>
+                        <label style="display: block; font-size: 0.75rem; color: var(--text-muted); text-transform: uppercase; letter-spacing: 1px; margin-bottom: 1rem;">Minimum Characters</label>
+                        <div class="ai-input-base" style="display: flex; align-items: center; gap: 0.75rem; border-radius: 12px; padding: 0 1rem; background: rgba(0,0,0,0.2) !important;">
+                            <i class="fas fa-text-width" style="color: var(--primary-admin); font-size: 0.9rem;"></i>
+                            <input type="number" min="1" max="50" name="min_chars" value="{{ App\Models\Setting::get('ai-keyword-radar_min_chars', 8) }}" style="flex: 1; background: transparent; border: none; color: #fff; padding: 1.25rem 0; outline: none; font-size: 1rem; font-weight: 600;">
+                        </div>
+                        <p style="font-size: 0.7rem; color: var(--text-muted); margin-top: 0.75rem;">Any keyword with fewer characters than this number will be rejected and not saved.</p>
+                    </div>
+
+                    <div>
+                        <label style="display: block; font-size: 0.75rem; color: var(--text-muted); text-transform: uppercase; letter-spacing: 1px; margin-bottom: 1rem;">Minimum Words</label>
+                        <div class="ai-input-base" style="display: flex; align-items: center; gap: 0.75rem; border-radius: 12px; padding: 0 1rem; background: rgba(0,0,0,0.2) !important;">
+                            <i class="fas fa-grip-lines" style="color: var(--primary-admin); font-size: 0.9rem;"></i>
+                            <input type="number" min="1" max="20" name="min_words" value="{{ App\Models\Setting::get('ai-keyword-radar_min_words', 2) }}" style="flex: 1; background: transparent; border: none; color: #fff; padding: 1.25rem 0; outline: none; font-size: 1rem; font-weight: 600;">
+                        </div>
+                        <p style="font-size: 0.7rem; color: var(--text-muted); margin-top: 0.75rem;">Avoid catching generic 1-word tags like "The". Set to 2 or more to capture precise phrases.</p>
+                    </div>
+
+                    <div>
+                        <label style="display: block; font-size: 0.75rem; color: var(--text-muted); text-transform: uppercase; letter-spacing: 1px; margin-bottom: 1rem;">Maximum Words</label>
+                        <div class="ai-input-base" style="display: flex; align-items: center; gap: 0.75rem; border-radius: 12px; padding: 0 1rem; background: rgba(0,0,0,0.2) !important;">
+                            <i class="fas fa-align-justify" style="color: var(--primary-admin); font-size: 0.9rem;"></i>
+                            <input type="number" min="3" max="50" name="max_words" value="{{ App\Models\Setting::get('ai-keyword-radar_max_words', 12) }}" style="flex: 1; background: transparent; border: none; color: #fff; padding: 1.25rem 0; outline: none; font-size: 1rem; font-weight: 600;">
+                        </div>
+                        <p style="font-size: 0.7rem; color: var(--text-muted); margin-top: 0.75rem;">Stop the AI from accidentally capturing entire sentences. 12 is recommended.</p>
+                    </div>
+
+                    <div>
+                        <label style="display: block; font-size: 0.75rem; color: var(--text-muted); text-transform: uppercase; letter-spacing: 1px; margin-bottom: 1rem;">Duplicate Sensitivity (%)</label>
+                        <div class="ai-input-base" style="display: flex; align-items: center; gap: 0.75rem; border-radius: 12px; padding: 0 1rem; background: rgba(0,0,0,0.2) !important;">
+                            <i class="fas fa-clone" style="color: var(--primary-admin); font-size: 0.9rem;"></i>
+                            <input type="number" min="50" max="100" name="similarity_threshold" value="{{ App\Models\Setting::get('ai-keyword-radar_similarity_threshold', 96) }}" style="flex: 1; background: transparent; border: none; color: #fff; padding: 1.25rem 0; outline: none; font-size: 1rem; font-weight: 600;">
+                        </div>
+                        <p style="font-size: 0.7rem; color: var(--text-muted); margin-top: 0.75rem;">How strict the system is matching similar words. 100% means exact match; 90% merges singular/plural terms.</p>
+                    </div>
+                </div>
+
+                <button type="submit" class="btn-save" style="width: 100%;">
+                    <i class="fas fa-save"></i> Save Global Filters
                 </button>
             </div>
 
