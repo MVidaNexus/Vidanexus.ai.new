@@ -11,4 +11,5 @@ Route::prefix('dashboard/ai-keyword-radar')->middleware(['auth', 'tool.access:ai
     Route::post('/delete-all', [AIKeywordRadarController::class, 'deleteAll'])->name('dashboard.ai-keyword-radar.delete-all');
     Route::post('/test-connection', [AIKeywordRadarController::class, 'testConnection'])->name('dashboard.ai-keyword-radar.test-connection');
     Route::post('/suggest-competitors', [AIKeywordRadarController::class, 'suggestCompetitors'])->name('dashboard.ai-keyword-radar.suggest-competitors');
+    Route::get('/get-keywords', [AIKeywordRadarController::class, 'getKeywordsJSON'])->name('dashboard.ai-keyword-radar.get-keywords');
 });

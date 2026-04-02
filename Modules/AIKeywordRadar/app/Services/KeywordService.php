@@ -106,18 +106,18 @@ class KeywordService
     /**
      * Sync and Save Keywords (Manual Trigger)
      */
-    public function syncKeywords(int $limit = 500, string $lang = 'ar', $userId = null)
+    public function syncKeywords(int $limit = 500, string $lang = 'ar', $userId = null, string $timeFilter = '60m', ?string $boxId = null)
     {
-        ini_set('max_execution_time', 180);
-        set_time_limit(180);
+        ini_set('max_execution_time', 600);
+        set_time_limit(600);
         $syncStart = microtime(true);
         $user = \App\Models\User::find($userId);
         
-        $results = $this->getTargetKeywordsFromCompetitors($lang, $userId, $syncStart);
+        $results = $this->getTargetKeywordsFromCompetitors($lang, $userId, $syncStart, $timeFilter, $boxId);
         $newKeywords = $results['keywords'] ?? [];
         $headlinesCount = $results['headlines_count'] ?? 0;
         
-        $cacheKey = "target_keywords_{$userId}_{$lang}";
+        $cacheKey = $boxId ? "target_keywords_{$userId}_{$boxId}" : "target_keywords_{$userId}_{$lang}";
         $existingKeywords = Cache::get($cacheKey, []);
         
         if (!empty($existingKeywords)) {
@@ -179,8 +179,9 @@ class KeywordService
                     }
                 }
 
+                $keywordCategory = $boxId ? "Target:{$boxId}" : 'Target';
                 $keywordObj = Keyword::updateOrCreate(
-                    ['keyword' => $text, 'category' => 'Target', 'lang' => $lang, 'user_id' => $userId],
+                    ['keyword' => $text, 'category' => $keywordCategory, 'lang' => $lang, 'user_id' => $userId],
                     [
                         'source' => $kw['source'] ?? 'AI', 
                         'synced_at' => now(), 
@@ -230,26 +231,42 @@ class KeywordService
     /**
      * Fetch competitor headlines and extract keywords using AI
      */
-    public function getTargetKeywordsFromCompetitors($lang = 'ar', $userId = null, $syncStart = null)
+    public function getTargetKeywordsFromCompetitors($lang = 'ar', $userId = null, $syncStart = null, string $timeFilter = '60m', ?string $boxId = null)
     {
         $syncStart = $syncStart ?? microtime(true);
-        $headlines = $this->fetchCompetitorsHeadlines($lang, $userId, $syncStart);
+        $rawHeadlines = $this->fetchCompetitorsHeadlines($lang, $userId, $syncStart, $timeFilter, $boxId);
         
+        if (empty($rawHeadlines)) {
+            return ['keywords' => [], 'headlines_count' => 0];
+        }
+
+        // === STEP 1: Deduplicate headlines BEFORE sending to AI ===
+        // Multiple competitors often cover the same story.
+        // Sending duplicates wastes AI tokens and produces redundant keywords.
+        $headlines = $this->deduplicateHeadlines($rawHeadlines);
+        $removedDupes = count($rawHeadlines) - count($headlines);
+        
+        Log::info("[Keyword Radar] Dedup: {$removedDupes} duplicate headlines removed. {" . count($rawHeadlines) . " raw → " . count($headlines) . " unique}");
+
         if (empty($headlines)) {
             return ['keywords' => [], 'headlines_count' => 0];
         }
 
-        // Highly constrained batch size (15) to ensure large LLMs (GPT-4, Claude) 
-        // can finish generating all Arabic output well within the 60s HTTP limit without timing out.
-        $keywordBatches = array_chunk($headlines, 15);
+        // === STEP 2: AI Keyword Extraction in batches ===
+        // Batch size of 30 — balanced between speed (fewer API calls) and reliability
+        $keywordBatches = array_chunk($headlines, 30);
         $allKeywords = [];
         
+        // AI extraction time budget — background job has 600s timeout,
+        // headlines may take up to 120s, so we give AI extraction 400s.
+        $aiExtractionStart = microtime(true);
+        
+        Log::info("[Keyword Radar] Sending " . count($headlines) . " unique headlines to AI in " . count($keywordBatches) . " batches.");
+        
         foreach ($keywordBatches as $batchIndex => $batch) {
-            // Time safety: abort if sync has been running too long (45s budget before NEXT batch)
-            // This prevents Nginx/Cloudflare 60-second strict timeouts!
-            $elapsed = microtime(true) - $syncStart;
-            if ($elapsed > 45) {
-                Log::warning("[Keyword Radar] AI extraction time budget reached (" . round($elapsed) . "s elapsed). Returning partial batch results to avoid 504 Gateway Timeout.");
+            $aiElapsed = microtime(true) - $aiExtractionStart;
+            if ($aiElapsed > 400) {
+                Log::warning("[Keyword Radar] AI extraction time budget reached (" . round($aiElapsed) . "s elapsed, " . count($allKeywords) . " keywords so far). Returning partial batch results.");
                 break;
             }
 
@@ -261,8 +278,73 @@ class KeywordService
 
         return [
             'keywords' => $allKeywords,
-            'headlines_count' => count($headlines)
+            'headlines_count' => count($headlines),
+            'raw_headlines' => count($rawHeadlines),
+            'duplicates_removed' => $removedDupes
         ];
+    }
+
+    /**
+     * Remove duplicate and near-duplicate headlines before AI processing.
+     * Uses normalized text matching + Arabic/English word-overlap similarity.
+     * This prevents wasting AI tokens on similar headlines from multiple sources.
+     */
+    protected function deduplicateHeadlines(array $headlines): array
+    {
+        $unique = [];
+        $seenNormalized = [];  // Exact match after normalization
+        $seenWords = [];       // For word-overlap similarity check
+
+        foreach ($headlines as $h) {
+            $title = $h['title'] ?? '';
+            if (empty($title)) continue;
+
+            // Step 1: Normalize — lowercase, remove punctuation/diacritics, collapse whitespace
+            $normalized = mb_strtolower($title, 'UTF-8');
+            // Remove Arabic diacritics (tashkeel)
+            $normalized = preg_replace('/[\x{064B}-\x{065F}\x{0670}]/u', '', $normalized);
+            // Remove common punctuation
+            $normalized = preg_replace('/[\p{P}\p{S}]+/u', ' ', $normalized);
+            // Collapse whitespace
+            $normalized = preg_replace('/\s+/u', ' ', trim($normalized));
+
+            // Step 2: Exact normalized match
+            if (isset($seenNormalized[$normalized])) {
+                continue;
+            }
+
+            // Step 3: Word-overlap similarity
+            // Split into meaningful words (3+ chars to skip prepositions)
+            $words = array_filter(
+                preg_split('/\s+/u', $normalized),
+                fn($w) => mb_strlen($w, 'UTF-8') >= 3
+            );
+            $wordSet = array_flip($words);
+            $wordCount = count($words);
+
+            if ($wordCount >= 3) {
+                $isDuplicate = false;
+                foreach ($seenWords as $idx => $existingWordSet) {
+                    // Calculate word overlap
+                    $commonWords = count(array_intersect_key($wordSet, $existingWordSet));
+                    $maxWords = max($wordCount, count($existingWordSet));
+                    $overlapRatio = $maxWords > 0 ? ($commonWords / $maxWords) : 0;
+
+                    if ($overlapRatio >= 0.60) {
+                        $isDuplicate = true;
+                        break;
+                    }
+                }
+                if ($isDuplicate) continue;
+            }
+
+            // This headline is unique — keep it
+            $seenNormalized[$normalized] = true;
+            $seenWords[] = $wordSet;
+            $unique[] = $h;
+        }
+
+        return $unique;
     }
 
     /**
@@ -524,102 +606,189 @@ class KeywordService
         ];
     }
 
-    public function fetchCompetitorsHeadlines($lang = 'ar', $userId = null, $syncStart = null)
+    public function fetchCompetitorsHeadlines($lang = 'ar', $userId = null, $syncStart = null, string $timeFilter = '60m', ?string $boxId = null)
     {
         $syncStart = $syncStart ?? microtime(true);
-        $competitorUrls = $this->getMergedCompetitorUrls($userId, $lang);
+        $competitorUrls = $this->getMergedCompetitorUrls($userId, $lang, $boxId);
         
         if (empty($competitorUrls)) {
             Log::warning("[Keyword Radar] No competitors found for user #{$userId} in lang {$lang}.");
             return [];
         }
 
-        // Cap competitors per sync to prevent timeout (each takes ~2-4s)
-        $maxCompetitors = 8;
-        if (count($competitorUrls) > $maxCompetitors) {
-            $rotationIndex = (int)(time() / 3600) % max(1, ceil(count($competitorUrls) / $maxCompetitors));
-            $chunks = array_chunk($competitorUrls, $maxCompetitors);
-            $competitorUrls = $chunks[$rotationIndex] ?? $chunks[0];
-            Log::info("[Keyword Radar] Competitor rotation: using set #{$rotationIndex} (" . count($competitorUrls) . " of " . count($competitorUrls) . ")");
-        }
+        // Process ALL competitors — no cap, no rotation.
+        Log::info("[Keyword Radar] Processing ALL " . count($competitorUrls) . " competitors.");
 
         $allHeadlines = [];
         $userAgent = $this->getRandomUserAgent();
 
-        Log::info("[Keyword Radar] Starting Parallel Fetch for " . count($competitorUrls) . " competitors.");
-
-        // Phase 1: Parallel Fetch (Sitemap and RSS)
-        // This is where we get 80% of our wins in efficiency
+        // === PHASE 1: MASSIVE PARALLEL FETCH ===
+        // Fire ALL request variants at once — sitemap, RSS (/rss, /feed, /rss.xml), and homepage HTML.
+        // This eliminates the slow sequential fallback for most competitors.
         $responses = Http::pool(function ($pool) use ($competitorUrls, $userAgent) {
             $reqs = [];
             foreach ($competitorUrls as $url) {
                 $url = rtrim(trim($url), '/');
                 $domain = parse_url($url, PHP_URL_HOST) ?: $url;
                 
-                // Try Sitemap News for each
+                // Sitemap News
                 $reqs["{$domain}_sitemap"] = $pool->withHeaders(['User-Agent' => $userAgent])
-                    ->timeout(10)->get($url . '/sitemap-news.xml');
+                    ->timeout(6)->get($url . '/sitemap-news.xml');
                 
-                // Try common RSS paths
+                // RSS variants — try multiple paths in parallel
                 $reqs["{$domain}_rss"] = $pool->withHeaders(['User-Agent' => $userAgent])
-                    ->timeout(10)->get($url . '/rss');
+                    ->timeout(6)->get($url . '/rss');
+                $reqs["{$domain}_feed"] = $pool->withHeaders(['User-Agent' => $userAgent])
+                    ->timeout(6)->get($url . '/feed');
+                
+                // Homepage HTML — for scraping fallback
+                $reqs["{$domain}_html"] = $pool->withHeaders(['User-Agent' => $userAgent])
+                    ->timeout(6)->get($url);
             }
             return $reqs;
         });
 
+        Log::info("[Keyword Radar] Parallel pool completed for " . count($competitorUrls) . " competitors. Processing responses...");
+
+        // Track which competitors need sequential fallback
+        $needsFallback = [];
+
         foreach ($competitorUrls as $url) {
             // Time safety check
-            if ((microtime(true) - $syncStart) > 60) break;
+            if ((microtime(true) - $syncStart) > 300) {
+                Log::warning("[Keyword Radar] Headline fetch budget reached (" . round(microtime(true) - $syncStart) . "s). " . count($allHeadlines) . " headlines collected.");
+                break;
+            }
 
             $url = rtrim(trim($url), '/');
             $domain = parse_url($url, PHP_URL_HOST) ?: $url;
-            $currentFetchedCount = 0;
             $siteHeadlines = [];
 
-            // 1. Check Parallel Responses first (Sitemap then RSS)
+            // Try Sitemap first (best quality — has dates)
             $sitemapResp = $responses["{$domain}_sitemap"] ?? null;
             if ($sitemapResp && $sitemapResp->successful()) {
                 $siteHeadlines = $this->parseSimpleSitemap($sitemapResp->body());
-                if (!empty($siteHeadlines)) Log::info("[Parallel Fetch] Fast Sitemap Match: {$domain}");
             }
 
+            // Try RSS variants
             if (empty($siteHeadlines)) {
-                $rssResp = $responses["{$domain}_rss"] ?? null;
-                if ($rssResp && $rssResp->successful() && (str_contains($rssResp->body(), '<rss') || str_contains($rssResp->body(), '<feed'))) {
-                    $siteHeadlines = $this->parseSimpleRss($rssResp->body());
-                    if (!empty($siteHeadlines)) Log::info("[Parallel Fetch] Fast RSS Match: {$domain}");
+                foreach (["{$domain}_rss", "{$domain}_feed"] as $key) {
+                    $rssResp = $responses[$key] ?? null;
+                    if ($rssResp && $rssResp->successful()) {
+                        $body = $rssResp->body();
+                        if (str_contains($body, '<rss') || str_contains($body, '<feed') || str_contains($body, '<channel')) {
+                            $siteHeadlines = $this->parseSimpleRss($body);
+                            if (!empty($siteHeadlines)) break;
+                        }
+                    }
                 }
             }
 
-            // 2. Fallback to full sequential testUrl if parallel attempts failed or returned nothing
+            // Try HTML scraping from homepage (already fetched in parallel)
             if (empty($siteHeadlines)) {
-                $testResult = $this->testUrl($url, $lang, $userId);
-                $siteHeadlines = $testResult['headlines'] ?? [];
+                $htmlResp = $responses["{$domain}_html"] ?? null;
+                if ($htmlResp && $htmlResp->successful()) {
+                    $siteHeadlines = $this->extractHeadlinesFromHtml($htmlResp->body(), $domain);
+                }
             }
 
-            // Processing and Filtering By Freshness (Strictly Last Hour as requested)
-            $freshnessLimit = now()->subHour();
-            $seenLocalTitles = [];
+            // If ALL parallel attempts failed, queue for sequential fallback
+            if (empty($siteHeadlines)) {
+                $needsFallback[] = $url;
+                continue;
+            }
 
-            foreach ($siteHeadlines as $item) {
-                $title = $item['title'];
-                if (isset($seenLocalTitles[$title])) continue;
-
-                $pubDate = !empty($item['pubDate']) ? \Carbon\Carbon::parse($item['pubDate']) : null;
-                if ($pubDate && $pubDate->lt($freshnessLimit)) continue;
-
-                $allHeadlines[] = [
-                    'title' => $title,
-                    'source' => $domain,
-                    'pubDate' => $item['pubDate'] ?? null,
-                ];
-                $seenLocalTitles[$title] = true;
-                $currentFetchedCount++;
+            // === STRICT TIME FILTER ===
+            $freshnessLimit = null;
+            if ($timeFilter === '60m') {
+                $freshnessLimit = now()->subMinutes(60);
+            } elseif ($timeFilter === '24h') {
+                $freshnessLimit = now()->subHours(24);
             }
             
-            Log::info("[Competitor Sync] {$domain}: identified {$currentFetchedCount} fresh headlines.");
+            $seenLocalTitles = [];
+            $totalFoundOnSite = count($siteHeadlines);
+            $freshOnSite = 0;
+            $skippedNoDate = 0;
+            $skippedTooOld = 0;
+
+            foreach ($siteHeadlines as $item) {
+                $title = $item['title'] ?? '';
+                $title = mb_convert_encoding($title, 'UTF-8', 'UTF-8');
+                $title = preg_replace('/[\x00-\x08\x0B\x0C\x0E-\x1F\x7F]/u', '', $title);
+                $title = trim($title);
+                if (empty($title) || mb_strlen($title) < 5 || isset($seenLocalTitles[$title])) continue;
+
+                $pubDate = null;
+                if (!empty($item['pubDate'])) {
+                    try { $pubDate = \Carbon\Carbon::parse($item['pubDate']); } catch (\Exception $e) { $pubDate = null; }
+                }
+
+                if ($freshnessLimit) {
+                    if (!$pubDate) {
+                        $hasSourceDate = !empty($item['pubDate']);
+                        if ($hasSourceDate) { $skippedNoDate++; continue; }
+                    } else {
+                        if ($pubDate->lt($freshnessLimit)) { $skippedTooOld++; continue; }
+                    }
+                }
+
+                $allHeadlines[] = ['title' => $title, 'source' => $domain, 'pubDate' => $item['pubDate'] ?? null];
+                $seenLocalTitles[$title] = true;
+                $freshOnSite++;
+            }
+            
+            Log::info("[Competitor Sync] {$domain}: {$totalFoundOnSite} total → {$freshOnSite} fresh (skipped: {$skippedTooOld} old, {$skippedNoDate} no-date) [Filter: {$timeFilter}]");
         }
 
+        // === PHASE 2: FAST SEQUENTIAL FALLBACK ===
+        // Only for competitors that returned NOTHING from parallel fetch.
+        // Try Google News/Search as fallback (these can't be parallelized easily).
+        if (!empty($needsFallback)) {
+            Log::info("[Keyword Radar] Phase 2: Sequential fallback for " . count($needsFallback) . " competitors.");
+            foreach ($needsFallback as $url) {
+                if ((microtime(true) - $syncStart) > 350) {
+                    Log::warning("[Keyword Radar] Fallback time budget reached. Skipping remaining " . count($needsFallback) . " competitors.");
+                    break;
+                }
+
+                $url = rtrim(trim($url), '/');
+                $domain = parse_url($url, PHP_URL_HOST) ?: $url;
+                $testResult = $this->testUrl($url, $lang, $userId);
+                $siteHeadlines = $testResult['headlines'] ?? [];
+
+                if (empty($siteHeadlines)) continue;
+
+                $freshnessLimit = null;
+                if ($timeFilter === '60m') { $freshnessLimit = now()->subMinutes(60); }
+                elseif ($timeFilter === '24h') { $freshnessLimit = now()->subHours(24); }
+
+                $freshOnSite = 0;
+                $totalFoundOnSite = count($siteHeadlines);
+                foreach ($siteHeadlines as $item) {
+                    $title = $item['title'] ?? '';
+                    $title = mb_convert_encoding($title, 'UTF-8', 'UTF-8');
+                    $title = preg_replace('/[\x00-\x08\x0B\x0C\x0E-\x1F\x7F]/u', '', $title);
+                    $title = trim($title);
+                    if (empty($title) || mb_strlen($title) < 5) continue;
+
+                    $pubDate = null;
+                    if (!empty($item['pubDate'])) {
+                        try { $pubDate = \Carbon\Carbon::parse($item['pubDate']); } catch (\Exception $e) { $pubDate = null; }
+                    }
+                    if ($freshnessLimit) {
+                        if (!$pubDate && !empty($item['pubDate'])) continue;
+                        if ($pubDate && $pubDate->lt($freshnessLimit)) continue;
+                    }
+
+                    $allHeadlines[] = ['title' => $title, 'source' => $domain, 'pubDate' => $item['pubDate'] ?? null];
+                    $freshOnSite++;
+                }
+                Log::info("[Fallback Sync] {$domain}: {$totalFoundOnSite} total → {$freshOnSite} fresh [Filter: {$timeFilter}]");
+            }
+        }
+
+        Log::info("[Keyword Radar] Total headlines collected: " . count($allHeadlines) . " in " . round(microtime(true) - $syncStart) . "s");
         shuffle($allHeadlines);
         return $allHeadlines;
     }
@@ -632,17 +801,32 @@ class KeywordService
             $xml = @simplexml_load_string($xmlBody);
             if (!$xml) return [];
             $items = [];
-            foreach ($xml->url as $url) {
-                if ($url->children('n', true)->news) {
-                    $news = $url->children('n', true)->news;
-                    $items[] = [
-                        'title' => (string)$news->title,
-                        'pubDate' => (string)$news->publication_date
-                    ];
+            
+            // Register namespaces to handle news sitemaps properly
+            $namespaces = $xml->getNamespaces(true);
+            $newsNs = $namespaces['news'] ?? $namespaces['n'] ?? 'http://www.google.com/schemas/sitemap-news/0.9';
+            
+            foreach ($xml->url ?? [] as $url) {
+                $newsNode = $url->children($newsNs);
+                if (isset($newsNode->news)) {
+                    $news = $newsNode->news;
+                    $title = (string)($news->title ?? '');
+                    $pubDate = (string)($news->publication_date ?? '');
+                    if (!empty($title)) {
+                        $items[] = [
+                            'title' => $title,
+                            'pubDate' => $pubDate,
+                        ];
+                    }
                 }
             }
+            
+            Log::debug("[parseSimpleSitemap] Parsed " . count($items) . " items from news sitemap.");
             return $items;
-        } catch (\Exception $e) { return []; }
+        } catch (\Exception $e) { 
+            Log::debug("[parseSimpleSitemap] Parse error: " . $e->getMessage());
+            return []; 
+        }
     }
 
     protected function parseSimpleRss($xmlBody): array {
@@ -822,6 +1006,51 @@ class KeywordService
         }
     }
 
+    /**
+     * Extract headlines from already-fetched HTML body (no HTTP request needed).
+     * Used by the parallel pool phase for fast HTML fallback.
+     */
+    protected function extractHeadlinesFromHtml(string $html, string $domain): array
+    {
+        $depth = (int)\App\Models\Setting::get('ai-keyword-radar_scraping_depth', 20);
+        $items = [];
+        $seen = [];
+
+        // Extract from <h1>, <h2>, <h3> tags
+        if (preg_match_all('/<h[1-3][^>]*>(.*?)<\/h[1-3]>/si', $html, $matches)) {
+            foreach ($matches[1] as $rawTitle) {
+                $title = trim(strip_tags($rawTitle));
+                $title = html_entity_decode($title, ENT_QUOTES, 'UTF-8');
+                $title = preg_replace('/\s+/', ' ', $title);
+                if (!empty($title) && mb_strlen($title) >= 15 && mb_strlen($title) <= 200 && !isset($seen[$title])) {
+                    $items[] = ['title' => $title, 'pubDate' => now()->toDateTimeString()];
+                    $seen[$title] = true;
+                    if (count($items) >= $depth) break;
+                }
+            }
+        }
+
+        // Fallback: <a> tags with long text
+        if (count($items) < 5) {
+            if (preg_match_all('/<a[^>]+>([^<]{20,150})<\/a>/u', $html, $linkMatches)) {
+                foreach ($linkMatches[1] as $linkText) {
+                    $title = trim(html_entity_decode($linkText, ENT_QUOTES, 'UTF-8'));
+                    if (!empty($title) && mb_strlen($title) >= 20 && !isset($seen[$title])
+                        && !str_contains($title, 'http') && !str_contains($title, '@')) {
+                        $items[] = ['title' => $title, 'pubDate' => now()->toDateTimeString()];
+                        $seen[$title] = true;
+                        if (count($items) >= $depth) break;
+                    }
+                }
+            }
+        }
+
+        if (!empty($items)) {
+            Log::info("[Parallel HTML] Scraped " . count($items) . " headlines from: {$domain}");
+        }
+        return $items;
+    }
+
     protected function guessRssUrl($url)
     {
         $url = rtrim($url, '/');
@@ -889,7 +1118,14 @@ class KeywordService
         $titlesText = "";
         foreach ($headlines as $idx => $h) {
             $sourceName = $h['source'] ?? 'Site';
-            $titlesText .= ($idx + 1) . ". [{$sourceName}] " . $h['title'] . "\n";
+            // Sanitize title — force valid UTF-8 to prevent json_encode failures
+            $title = $h['title'] ?? '';
+            $title = mb_convert_encoding($title, 'UTF-8', 'UTF-8');
+            $title = preg_replace('/[\x00-\x08\x0B\x0C\x0E-\x1F\x7F]/u', '', $title); // Remove control chars
+            $title = preg_replace('/[^\p{L}\p{N}\p{P}\p{Z}\p{S}]/u', '', $title); // Keep only valid unicode
+            $title = trim($title);
+            if (empty($title)) continue;
+            $titlesText .= ($idx + 1) . ". [{$sourceName}] " . $title . "\n";
         }
 
         $count = count($headlines);
@@ -917,17 +1153,72 @@ Rules:
         }
 
         try {
-            // Check settings and default to VidaNexus AI settings if module specific aren't set
+            // === TOOL AI SETTINGS RESOLUTION ===
+            // Priority: User settings → Tool settings (DB) → Hardcoded defaults
             $userSettings = \App\Models\User::find($userId)?->settings ?? [];
-            $provider = $userSettings['keywords_ai_provider'] ?? \App\Models\Setting::get('ai-keyword-radar_provider', 'openrouter');
-            $model = $userSettings['keywords_ai_model'] ?? \App\Models\Setting::get('ai-keyword-radar_model', 'google/gemini-2.0-flash-001');
             
+            // 1. Resolve Provider (tool-specific → user-specific → default)
+            $provider = \App\Models\Setting::get('ai-keyword-radar_provider')
+                        ?? $userSettings['keywords_ai_provider'] 
+                        ?? 'openrouter';
+            // Normalize: 'gemini' → 'google'
+            if ($provider === 'gemini') $provider = 'google';
+            
+            // 2. Resolve Model (tool-specific → user-specific → default per provider)
+            $model = \App\Models\Setting::get('ai-keyword-radar_model')
+                     ?? $userSettings['keywords_ai_model'] 
+                     ?? null;
+            // If no model specified, use a sensible default for the chosen provider
+            if (empty($model)) {
+                $model = match ($provider) {
+                    'openrouter' => 'openai/gpt-4o-mini',
+                    'google'     => 'gemini-2.0-flash',
+                    'openai'     => 'gpt-4o-mini',
+                    'anthropic'  => 'claude-3-haiku-20240307',
+                    default      => 'openai/gpt-4o-mini',
+                };
+            }
+            
+            // 3. Resolve API Key: Tool-specific key → Global key for same provider
+            $toolApiKey = \App\Models\Setting::get('ai-keyword-radar_api_key');
+            if (empty($toolApiKey)) {
+                // Check the ai_chain for a stored key (legacy support)
+                $chainData = \App\Models\Setting::get('ai-keyword-radar_ai_chain');
+                $chain = is_array($chainData) ? $chainData : ($chainData ? json_decode($chainData, true) : null);
+                if (!empty($chain[0]['api_key'])) {
+                    $toolApiKey = $chain[0]['api_key'];
+                }
+            }
+            // If still no key, resolve global key for the provider
+            if (empty($toolApiKey)) {
+                $globalKeyName = match ($provider) {
+                    'openrouter' => 'openrouter_api_key',
+                    'google'     => 'gemini_api_key',
+                    'openai'     => 'openai_api_key',
+                    'anthropic'  => 'anthropic_api_key',
+                    default      => null,
+                };
+                if ($globalKeyName) {
+                    $toolApiKey = trim(\App\Models\Setting::get($globalKeyName) ?? '');
+                    // Final fallback: check .env
+                    if (empty($toolApiKey)) {
+                        $toolApiKey = trim(env(strtoupper($globalKeyName)) ?? '');
+                        if (empty($toolApiKey) && $provider === 'google') {
+                            $toolApiKey = trim(env('GOOGLE_API_KEY') ?? '');
+                        }
+                    }
+                }
+            }
+
+            Log::info("[Keyword Radar AI] Provider: {$provider}, Model: {$model}, Key: " . (empty($toolApiKey) ? 'MISSING' : '...' . substr($toolApiKey, -4)));
+
             $aiResult = $this->aiManager->generate('ai-keyword-radar', $prompt, [
-                'provider' => ($provider === 'gemini') ? 'google' : $provider,
-                'model' => $model,
+                'provider'    => $provider,
+                'model'       => $model,
+                'api_key'     => $toolApiKey,
                 'temperature' => 0.1,
-                'json_mode' => false,
-                'max_tokens' => 4000,
+                'json_mode'   => false,
+                'max_tokens'  => 4000,
             ]);
             
             Log::info("AI Keyword Radar [{$lang}] Prompt Snippet: " . substr($prompt, 0, 400));
@@ -1188,16 +1479,18 @@ Rules:
     /**
      * Use AI to suggest top competitors for a given language
      */
-    public function getSuggestedCompetitors(string $lang = 'ar'): array
+    public function getSuggestedCompetitors(string $lang = 'ar', ?string $topic = null): array
     {
         $langName = ($lang === 'en') ? 'English' : 'Arabic';
         $region = ($lang === 'en') ? 'Global/US/UK' : 'Middle East/Egypt/Gulf';
+        
+        $topicPhrase = $topic ? "specifically focused on '{$topic}' (or closely related fields)" : "high-authority, high-traffic news websites, trending blogs, or viral content platforms";
 
-        $prompt = "As an SEO and Digital Marketing expert, suggest a list of 15 high-authority, high-traffic news websites, trending blogs, or viral content platforms in {$langName} language (targeting {$region}) that would be excellent sources for extracting trending search keywords and breaking news headlines.
+        $prompt = "As an SEO and Digital Marketing expert, suggest a list of 15 {$topicPhrase} in {$langName} language (targeting {$region}) that would be excellent sources for extracting trending search keywords and breaking news headlines.
 
 Rules:
 1. Return ONLY a JSON array of complete URLs (starting with https://).
-2. The sources must be reliable and frequently updated (news portals, major sports sites, tech blogs, etc.).
+2. The sources must be reliable and frequently updated.
 3. No social media platforms (Twitter, Facebook, etc.).
 4. Do not include any text, explanations, or markdown formatting outside the JSON array.
 
@@ -1233,7 +1526,7 @@ Example Output:
     /**
      * Get merged list of competitors (User specific + Global Admin)
      */
-    public function getMergedCompetitorUrls($userId, $lang = 'ar')
+    public function getMergedCompetitorUrls($userId, $lang = 'ar', ?string $boxId = null)
     {
         $user = \App\Models\User::find($userId);
         if (!$user) {
@@ -1243,6 +1536,19 @@ Example Output:
         }
         
         $settings = $user->settings ?? [];
+
+        // Custom Box: return only that box's competitors
+        if ($boxId) {
+            $customBoxes = $settings['keywords_custom_boxes'] ?? [];
+            foreach ($customBoxes as $box) {
+                if (($box['id'] ?? '') === $boxId) {
+                    $text = $box['competitors'] ?? '';
+                    return array_values(array_filter(array_map('trim', explode("\n", $text))));
+                }
+            }
+            Log::warning("[Keyword Radar] Custom box '{$boxId}' not found for user #{$userId}");
+            return [];
+        }
         
         // 1. User Competitors
         $userCompetitorsText = ($lang === 'en') ? ($settings['keywords_competitors_en'] ?? '') : ($settings['keywords_competitors'] ?? '');

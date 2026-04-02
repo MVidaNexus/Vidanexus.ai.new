@@ -127,6 +127,29 @@
     @include('partials.footer')
 
     <script src="{{ asset('script.js?v=15') }}"></script>
+    <script>
+        // Global SweetAlert2 Defaults
+        const Toast = Swal.mixin({
+            toast: true,
+            position: 'top-end',
+            showConfirmButton: false,
+            timer: 3000,
+            timerProgressBar: true,
+            background: '#0f172a',
+            color: '#fff',
+            didOpen: (toast) => {
+                toast.addEventListener('mouseenter', Swal.stopTimer)
+                toast.addEventListener('mouseleave', Swal.resumeTimer)
+            }
+        });
+
+        // Set global Swal defaults
+        window.SwalConfig = {
+            background: '#0f172a',
+            color: '#fff',
+            confirmButtonColor: '#0ea5e9'
+        };
+    </script>
     @stack('scripts')
 </body>
 </html>

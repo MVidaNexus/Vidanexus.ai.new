@@ -23,7 +23,7 @@ class GoogleProvider implements AIProvider
     public function generate(string $prompt, array $options = []): array
     {
         $apiKey = !empty($options['api_key']) ? $options['api_key'] : $this->apiKey;
-        $model = $options['model'] ?? 'gemini-1.5-flash';
+        $model = $options['model'] ?? 'gemini-2.0-flash';
         $url = "https://generativelanguage.googleapis.com/v1beta/models/{$model}:generateContent?key={$apiKey}";
 
         $response = Http::timeout(45)->post($url, [

@@ -25,10 +25,12 @@ class AIManager
         $defaultProviders = config('vidanexus.ai.failover_order', ['openai', 'google', 'anthropic']);
         
         // --- TOOL-SPECIFIC OVERRIDE (Dynamic Chain) ---
+        // Skip the chain if the caller already resolved the API key (tool handled its own settings)
+        $callerResolvedKey = !empty($options['api_key']);
         $aiChainJson = \App\Models\Setting::get("{$tool}_ai_chain");
         $aiChain = is_array($aiChainJson) ? $aiChainJson : ($aiChainJson ? json_decode($aiChainJson, true) : null);
 
-        if ($aiChain && is_array($aiChain) && count($aiChain) > 0) {
+        if (!$callerResolvedKey && $aiChain && is_array($aiChain) && count($aiChain) > 0) {
             // New Flexible Multi-Provider Routing
             $lastError = null;
             foreach ($aiChain as $link) {
@@ -63,7 +65,8 @@ class AIManager
                     Log::warning("AI Failover (Chain): Provider [{$providerName}] failed. Error: " . $e->getMessage());
                 }
             }
-            throw new \Exception("All Tool-Specific AI Providers failed. Last error: " . ($lastError ? $lastError->getMessage() : 'Unknown'));
+            // Chain exhausted — fall through to global fallback instead of hard-failing
+            Log::warning("AI Chain: All tool-specific providers for '{$tool}' failed. Falling through to global providers.");
         }
 
         // --- GLOBAL FALLBACK BEHAVIOR ---
@@ -77,9 +80,14 @@ class AIManager
         }
 
         $lastError = null;
+        $primaryError = null;
+        $attemptCount = 0;
+
         foreach ($defaultProviders as $providerName) {
             $provider = $this->providers[$providerName] ?? null;
             if (!$provider) continue;
+
+            $attemptCount++;
 
             try {
                 $startTime = microtime(true);
@@ -100,11 +108,23 @@ class AIManager
                 return $response;
             } catch (\Exception $e) {
                 $lastError = $e;
+                if ($attemptCount === 1) {
+                    $primaryError = $e;
+                }
                 Log::warning("AI Failover: Provider [{$providerName}] failed. Error: " . $e->getMessage());
             }
         }
 
-        throw new \Exception("All AI Providers failed. Last error: " . ($lastError ? $lastError->getMessage() : 'Unknown'));
+        $finalMsg = "All AI Providers failed.";
+        if ($primaryError) {
+            $primaryProvider = $options['provider'] ?? ($defaultProviders[0] ?? 'primary');
+            $finalMsg .= " [{$primaryProvider} Error]: " . $primaryError->getMessage();
+        }
+        if ($lastError && $lastError->getMessage() !== ($primaryError ? $primaryError->getMessage() : '')) {
+            $finalMsg .= " (Fallback also failed: " . $lastError->getMessage() . ")";
+        }
+
+        throw new \Exception($finalMsg);
     }
 
     /**
@@ -143,8 +163,18 @@ class AIManager
             if ($provider === 'anthropic' && ($prefix === 'anthropic' || str_contains($name, 'claude'))) {
                 return $name;
             }
+        }
 
-            // If it's a completely foreign model (e.g. gpt-4 requested but provider is google), use default
+        // Handle cross-provider model leakage
+        $modelLower = strtolower($model);
+        
+        if ($provider === 'google' && (str_contains($modelLower, 'gpt') || str_contains($modelLower, 'claude'))) {
+            return $this->getDefaultModelForProvider($provider);
+        }
+        if ($provider === 'openai' && (str_contains($modelLower, 'gemini') || str_contains($modelLower, 'claude'))) {
+            return $this->getDefaultModelForProvider($provider);
+        }
+        if ($provider === 'anthropic' && (str_contains($modelLower, 'gpt') || str_contains($modelLower, 'gemini'))) {
             return $this->getDefaultModelForProvider($provider);
         }
 
@@ -155,25 +185,37 @@ class AIManager
     {
         $settingKey = match ($providerName) {
             'openrouter' => 'openrouter_api_key',
-            'google' => 'gemini_api_key', // Also check 'google_api_key' if gemini is missing
+            'google' => 'gemini_api_key',
             'openai' => 'openai_api_key',
             'anthropic' => 'anthropic_api_key',
             default => null
         };
 
         if ($settingKey) {
-            $key = \App\Models\Setting::get($settingKey);
-            
-            if ($key) {
-                Log::info("AI: Resolved key for [{$providerName}] from setting [{$settingKey}]");
-            }
+            $key = trim(\App\Models\Setting::get($settingKey) ?? '');
             
             // Fallback for Gemini specifically if 'gemini_api_key' wasn't the right one
             if (!$key && $providerName === 'google') {
-                $key = \App\Models\Setting::get('google_api_key');
+                $key = trim(\App\Models\Setting::get('google_api_key') ?? '');
+            }
+
+            // Fallback to Environment variables if not in Database, 
+            // OR if the database key is suspiciously short (placeholder)
+            if (empty($key) || strlen($key) < 5) {
+                $envKey = strtoupper($settingKey);
+                $key = trim(env($envKey) ?? '');
+                
+                // Extra check for OPENROUTER key specifically in env
+                if (!$key && $providerName === 'openrouter') {
+                    $key = trim(env('OPEN_ROUTER_API_KEY') ?? '');
+                }
             }
             
-            return $key;
+            if ($key) {
+                Log::info("AI: Resolved key for [{$providerName}] (Length: " . strlen($key) . ")");
+            }
+            
+            return !empty($key) ? $key : null;
         }
 
         return null;
@@ -182,7 +224,7 @@ class AIManager
     protected function getDefaultModelForProvider(string $provider): string
     {
         return match ($provider) {
-            'google' => 'gemini-1.5-flash',
+            'google' => 'gemini-2.0-flash',
             'openai' => 'gpt-4o-mini',
             'anthropic' => 'claude-3-haiku-20240307',
             'openrouter' => 'google/gemini-2.0-flash-001',
