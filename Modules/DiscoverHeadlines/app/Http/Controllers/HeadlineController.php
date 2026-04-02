@@ -52,10 +52,7 @@ class HeadlineController extends Controller
         $currentCountry = $countryMap[$region];
         $currentCountry['code'] = $region;
 
-        $trendingSuggestions = $this->getTrendingSuggestions($region);
-        
         $data = array_merge([
-            'trendingSuggestions' => $trendingSuggestions,
             'currentCountry' => $currentCountry,
             'countryMap' => $countryMap,
             'region' => $region,
@@ -189,44 +186,50 @@ class HeadlineController extends Controller
             }
             $generatedText = trim($generatedText);
 
-            // SUPPORT FOR JSON FORMAT (Handle array, object, or multi-line objects like Gemini sometimes returns)
+            // SUPPORT FOR RICH JSON FORMAT
             $extracted = [];
-            $decoded = @json_decode($generatedText, true);
             
-            if (is_array($decoded)) {
-                // Case 1: Standard JSON Array (e.g., [{"headline": "..."}])
-                foreach ($decoded as $item) {
+            // Try to extract JSON from within markdown blocks or raw text
+            $jsonTarget = $generatedText;
+            if (preg_match('/\{(?:[^{}]|(?R))*\}/s', $generatedText, $matches)) {
+                $jsonTarget = $matches[0];
+            }
+
+            $decoded = @json_decode($jsonTarget, true);
+            
+            if (is_array($decoded) && (isset($decoded['headlines']) || isset($decoded[0]))) {
+                $items = $decoded['headlines'] ?? $decoded;
+                foreach ($items as $item) {
                     if (is_array($item)) {
-                        $val = $item['headline'] ?? $item['title'] ?? $item['text'] ?? $item['keyword'] ?? null;
-                        if ($val) $extracted[] = $val;
-                    } elseif (is_string($item)) {
-                        $extracted[] = $item;
+                        $extracted[] = [
+                            'headline' => $item['headline'] ?? $item['title'] ?? $item['text'] ?? $item['keyword'] ?? '',
+                            'sentiment' => $item['sentiment'] ?? 'Neutral',
+                            'entities' => $item['entities'] ?? $item['keywords'] ?? [],
+                            'lsi_keywords' => $item['lsi_keywords'] ?? $item['lsi'] ?? [],
+                            'thumbnail_suggestion' => $item['thumbnail_suggestion'] ?? $item['thumbnail'] ?? $item['visual_angle'] ?? $item['image_logic'] ?? '',
+                            'schema_type' => $item['schema_type'] ?? 'NewsArticle'
+                        ];
                     }
                 }
             } else {
-                // Case 2: Multi-line JSON objects (e.g., {"headline": "..."} \n {"headline": "..."})
+                // Ultra Fallback: Raw text lines if JSON fails completely
                 $lines = explode("\n", $generatedText);
                 foreach ($lines as $line) {
                     $line = trim($line);
-                    if (empty($line)) continue;
-                    
-                    $lineDecoded = @json_decode($line, true);
-                    if (is_array($lineDecoded)) {
-                        $val = $lineDecoded['headline'] ?? $lineDecoded['title'] ?? $lineDecoded['text'] ?? null;
-                        if ($val) $extracted[] = $val;
-                    }
+                    if (empty($line) || mb_strlen($line) < 10) continue;
+                    $extracted[] = [
+                        'headline' => preg_replace('/^\d+[\.\)]\s*/', '', $line),
+                        'sentiment' => 'Factual',
+                        'entities' => [],
+                        'lsi_keywords' => [],
+                        'thumbnail_suggestion' => '',
+                        'schema_type' => 'NewsArticle'
+                    ];
                 }
             }
 
-            if (!empty($extracted)) {
-                $generatedText = implode("\n", $extracted);
-            }
-
-            // ENCODING ENFORCEMENT
-            $generatedText = iconv('UTF-8', 'UTF-8//IGNORE', $generatedText);
-
             // 4. Advanced Scoring (The "Laws")
-            $scoredHeadlines = $this->scoreHeadlines($generatedText, $keyword ?? '');
+            $scoredHeadlines = $this->scoreHeadlines($extracted, $keyword ?? '');
 
             // STRICT BILLING: Deduct Credit ONLY if AI actually produced scored headlines!
             if (!empty($scoredHeadlines)) {
@@ -371,39 +374,15 @@ class HeadlineController extends Controller
     /**
      * The "Laws": Scoring headlines based on 12 criteria.
      */
-    protected function scoreHeadlines($headlinesText, $keyword = '')
+    protected function scoreHeadlines($headlinesData, $keyword = '')
     {
-        $headlinesText = preg_replace('/[\x{2028}\x{2029}]/u', '', $headlinesText);
-        $lines = explode("\n", str_replace("\r\n", "\n", str_replace("\r", "\n", trim($headlinesText))));
-        $lines = array_filter($lines, function($l) { return mb_strlen(trim($l)) > 4; });
         $scored = [];
 
-        foreach ($lines as $line) {
-            $headline = trim($line);
-            
-            // Clean prefixes and JSON noise
-            $headline = preg_replace('/^\s*\d{1,2}[\.\)]\s+/u', '', $headline);
-            $headline = preg_replace('/^\s*[\-\*•]\s+/u', '', $headline);
-            
-            // JSON stripping: If line looks like {"key": "value"}, try to extract the likely headline
-            if (Str::startsWith($headline, '{') && Str::endsWith($headline, '}')) {
-                $json = @json_decode($headline, true);
-                if (is_array($json)) {
-                    $headline = $json['headline'] ?? $json['title'] ?? $json['text'] ?? $headline;
-                }
-            }
-
-            $headline = preg_replace('/\*\*/u', '', $headline);
-            $headline = preg_replace('/\.+$/u', '', trim($headline));
-            
+        foreach ($headlinesData as $data) {
+            $headline = $data['headline'] ?? '';
             if (empty($headline) || mb_strlen($headline) < 8) continue;
             
-            // Filter conversational filler/intro text
-            if (preg_match('/^(إليك|فيما يلي|هذه|نعرض|عناوين|في سياق|بناءً على)/ui', $headline)) {
-                continue;
-            }
-
-            $score = 50; 
+            $score = 40; // Base score
             $feedback = [];
             $len = mb_strlen($headline);
 
@@ -412,104 +391,90 @@ class HeadlineController extends Controller
                 $score += 20;
                 $feedback[] = ['type' => 'success', 'text' => 'Ideal Discover Length (' . $len . ' chars)'];
             } elseif ($len >= 45 && $len <= 100) {
-                $score += 12;
-                $feedback[] = ['type' => 'info', 'text' => 'Acceptable Length (' . $len . ' chars)'];
+                $score += 10;
+                $feedback[] = ['type' => 'info', 'text' => 'Acceptable Length'];
             } else {
                 $score -= 15;
-                $feedback[] = ['type' => 'danger', 'text' => $len < 40 ? 'Too Short' : 'Too Long'];
+                $feedback[] = ['type' => 'danger', 'text' => 'Sub-optimal Length'];
             }
 
-            // 2. Keyword
-            if (!empty($keyword) && mb_stripos($headline, $keyword) !== false) {
+            // 2. Keyword & Entities (RELEVANCE CORE)
+            $isRelevant = false;
+            if (!empty($keyword)) {
+                $keywordLower = mb_strtolower(trim($keyword));
+                $headlineLower = mb_strtolower($headline);
+                
+                // 2a. Direct Match (+30)
+                if (mb_stripos($headline, $keywordLower) !== false) {
+                    $score += 30;
+                    $feedback[] = ['type' => 'success', 'text' => 'Target Keyword Included (+30)'];
+                    $isRelevant = true;
+                } else {
+                    // 2b. Fuzzy Word Overlap (At least 60% of words must appear)
+                    $keywordWords = array_filter(explode(' ', $keywordLower), fn($w) => mb_strlen($w) > 2);
+                    $matchCount = 0;
+                    foreach ($keywordWords as $word) {
+                        if (mb_stripos($headlineLower, $word) !== false) $matchCount++;
+                    }
+                    
+                    $ratio = count($keywordWords) > 0 ? $matchCount / count($keywordWords) : 0;
+                    if ($ratio >= 0.6) {
+                        $score += 15;
+                        $feedback[] = ['type' => 'info', 'text' => 'Strong Topical Relevance'];
+                        $isRelevant = true;
+                    }
+                }
+            }
+
+            // 2c. SEVERE RELEVANCE PENALTY (-50)
+            if (!$isRelevant && !empty($keyword)) {
+                $score -= 50;
+                $feedback[] = ['type' => 'danger', 'text' => 'Irrelevant Content Penalty (-50)'];
+            }
+            
+            if (!empty($data['entities'])) {
                 $score += 10;
-                $feedback[] = ['type' => 'success', 'text' => 'Contains Target Keyword'];
+                $feedback[] = ['type' => 'success', 'text' => 'Entity Mapping (+10)'];
             }
 
-            // 3. Power Words
+            // 3. Sentiment & Engagement
+            $sentiment = strtolower($data['sentiment'] ?? '');
+            if (in_array($sentiment, ['surprise', 'positive', 'breaking', 'urgent'])) {
+                $score += 10;
+                $feedback[] = ['type' => 'success', 'text' => 'High-Engagement Sentiment'];
+            }
+
+            // 4. Power Words
             $powerWords = ['يكشف', 'يفاجئ', 'يُعلن', 'يحسم', 'يتراجع', 'يصدر', 'عاجل', 'حصري', 'حقيقة', 'سر', 'رسمياً', 'reveals', 'surprises', 'announces', 'declares', 'drops', 'issues', 'urgent', 'exclusive', 'truth', 'secret', 'officially'];
             foreach ($powerWords as $word) {
                 if (mb_stripos($headline, $word) !== false) {
                     $score += 5;
-                    $feedback[] = ['type' => 'success', 'text' => 'Action Verb: «' . $word . '»'];
+                    $feedback[] = ['type' => 'success', 'text' => 'Action Verb: ' . $word];
                     break;
                 }
             }
 
-            // 4. Curiosity Gap
-            if (preg_match('/(لماذا|كيف|ماذا|هل|سبب|بالفيديو|شاهد|why|how|what|is|reason|video|watch)/ui', $headline)) {
-                $score += 8;
-                $feedback[] = ['type' => 'success', 'text' => 'Curiosity Gap'];
-            }
-
-            // 5. Numbers
-            if (preg_match('/\d+/', $headline)) {
-                $score += 8;
-                $feedback[] = ['type' => 'success', 'text' => 'Contains Numbers (Boosts CTR)'];
-            }
-
-            // 6. Entity-First
-            $entityPatterns = ['ال', 'محمد', 'أحمد', 'رئيس', 'وزير', 'شركة', 'نادي', 'the', 'president', 'minister', 'company', 'club', 'mr', 'dr'];
-            $firstWord = mb_strtolower(mb_substr($headline, 0, mb_strpos($headline, ' ') ?: mb_strlen($headline)));
-            $isEntity = false;
-            foreach ($entityPatterns as $ep) { if (mb_strpos($firstWord, mb_strtolower($ep)) === 0) { $isEntity = true; break; } }
-            
-            // Allow capitalized English words to count as Entity-first heavily if first letter is capitalized
-            if (preg_match('/^[A-Z][a-z]+/', $headline)) {
-                $isEntity = true;
-            }
-
-            if ($isEntity) {
-                $score += 7;
-                $feedback[] = ['type' => 'success', 'text' => 'Entity-First Headline'];
-            }
-
-            // 7. Freshness
-            if (preg_match('/(الآن|اليوم|لأول مرة|عاجل|now|today|first time|breaking)/ui', $headline)) {
+            // 5. Semantic Density (LSI Keywords)
+            if (!empty($data['lsi_keywords'])) {
                 $score += 5;
-                $feedback[] = ['type' => 'success', 'text' => 'Freshness Signal'];
+                $feedback[] = ['type' => 'success', 'text' => 'Semantic SEO (LSI Presence)'];
             }
 
-            // 8. Brackets
-            if (preg_match('/\[.+?\]/u', $headline)) {
-                $score += 5;
-                $feedback[] = ['type' => 'success', 'text' => 'Bracket Classification [Exclusive]'];
-            }
-
-            // 9. Clickbait Penalty
+            // 6. Clickbait Penalty
             $clickbait = ['لن تصدق', 'شاهد قبل الحذف', 'فضيحة', 'اضغط هنا', 'you won\'t believe', 'watch before deleted', 'scandal', 'click here'];
             foreach ($clickbait as $cb) {
                 if (mb_stripos($headline, $cb) !== false) {
-                    $score -= 20;
-                    $feedback[] = ['type' => 'danger', 'text' => 'Clickbait Forbidden: «' . $cb . '»'];
+                    $score -= 30;
+                    $feedback[] = ['type' => 'danger', 'text' => 'Clickbait Penalty'];
                 }
             }
 
-            // 10. Emoji Penalty
-            if (preg_match('/[\x{1F600}-\x{1F64F}]/u', $headline)) {
-                $score -= 15;
-                $feedback[] = ['type' => 'danger', 'text' => 'Contains Emoji (Rejected)'];
-            }
-
-            // 11. Punctuation Penalty
-            if (preg_match('/[!؟?]{2,}/', $headline)) {
-                $score -= 10;
-                $feedback[] = ['type' => 'warning', 'text' => 'Excessive Punctuation'];
-            }
-
-            // 12. Repetition Penalty
-            $words = preg_split('/\s+/u', mb_strtolower($headline));
-            if (count($words) !== count(array_unique($words))) {
-                $score -= 8;
-                $feedback[] = ['type' => 'warning', 'text' => 'Word Repetition'];
-            }
-
             $finalScore = max(0, min(100, $score));
-            $scored[] = [
-                'headline' => $headline,
+            $scored[] = array_merge($data, [
                 'score' => $finalScore,
                 'grade' => $this->gradeHeadline($finalScore),
                 'feedback' => $feedback,
-            ];
+            ]);
         }
 
         usort($scored, fn($a, $b) => $b['score'] <=> $a['score']);
@@ -529,19 +494,19 @@ class HeadlineController extends Controller
     {
         if ($isArabic) {
             return "🔹 قواعد امتثال Google Discover (صارمة جداً):\n" .
-                   "1. **الفضول المبني على الحقائق:** اثارة الاهتمام باستخدام حقائق دقيقة من السياق. لا تستخدم العناوين المُضللة.\n" .
-                   "2. **الكيان أولاً:** إعطاء الأولوية لأسماء الأشخاص، الأماكن، أو المنظمات في بداية العنوان.\n" .
-                   "3. **قيمة مقترحة واضحة:** يجب أن يعرف القارئ تماماً ما سيقرأه.\n" .
-                   "4. **لا للتهويل:** تجنب المبالغات التي لا يدعمها المصدر.\n" .
-                   "5. **أنماط بـ CTR عالي:** استخدم 'السبب وراء'، 'كيف'، 'الكشف عن'، أو 'تفاصيل أولية'.";
+                   "1. **الارتباط التام (Strict Relevance):** يجب أن يكون العنوان مرتبطاً حصرياً وبالكامل بالكلمة المستهدفة [Keyword]. ارفض أي سياق خارجي.\n" .
+                   "2. **الكيان أولاً (Entity-First):** إعطاء الأولوية لأسماء الأشخاص، الأماكن، أو المنظمات في بداية العنوان.\n" .
+                   "3. **تطابق الـ Sentiment:** يجب أن يعكس العنوان الشعور الحقيقي للمحتوى لجذب الجمهور المستهدف.\n" .
+                   "4. **السياق الدلالي (Semantic Context):** استخدم كيانات مرتبطة لتعزيز Topical Authority.\n" .
+                   "5. **منع التضليل:** التزم بالحقائق المذكورة في السياق المرفق فقط.";
         }
 
         return "🔹 Google Discover STRICT Compliance Rules:\n" .
-               "1. **Fact-Based Curiosity:** Generate interest using specific facts from the context. NO vague clickbait (e.g. avoid 'You won't believe what happened').\n" .
+               "1. **Strict Relevance Mandate:** The headline MUST be exclusively about [Keyword]. Reject unrelated context.\n" .
                "2. **Entity-First Headlines:** Prioritize names of people, places, or organizations at the start.\n" .
-               "3. **Clear Value Proposition:** The reader must know exactly what they are clicking into.\n" .
-               "4. **No Sensationalism:** Avoid excessive adjectives or hyperbolic claims not found in the source.\n" .
-               "5. **High CTR Patterns:** Use 'The reason why', 'How to', 'Secret revealed', or 'Initial details'.";
+               "3. **Sentiment Alignment:** Ensure the headline tone matches the content's emotional core.\n" .
+               "4. **Semantic Authority:** Use related entities to build Topical Authority.\n" .
+               "5. **No Clickbait:** Stick strictly to facts found in the provided context.";
     }
 
     protected function getDefaultHeadlinesStyle($isArabic = true)
@@ -591,43 +556,30 @@ class HeadlineController extends Controller
 
     protected function getHeadlinesTechnicalWrapper($count, $region, $isArabic = true)
     {
-        return "🔹 FINAL OUTPUT REQUIREMENTS (STRICT):
-- Generate EXACTLY {$count} headlines.
-- Output ONLY the headlines, absolutely nothing else.
-- DO NOT add conversational text.
-- NO intro text, NO numbering, NO quotes, NO markdown, NO asterisks, NO emoji.
-- ONE HEADLINE PER LINE.
-- **LANGUAGE ENFORCEMENT: You MUST write the output in " . ($isArabic ? "ARABIC" : "ENGLISH") . ". This is ABSOLUTELY MANDATORY.**
-- **Target Length: EACH headline MUST be between 55 and 85 characters long.**
-- MANDATORY pattern variety across the {$count} headlines:
-    • 1 Entity-first factual (Name + Action verb + Detail)
-    • 1 Analytical/Why (Why/How + Surprising fact)
-    • 1 Number-driven (Number + Exciting facts)
-    • 1 With bracket tag (" . ($isArabic ? "[تقرير] أو [حصري]" : "[Report] or [Exclusive]") . ")
-- **MANDATORY Angle Diversity**: Every headline MUST take a completely different narrative angle OF THE SAME TARGET KEYWORD. DO NOT jump to unrelated topics found in the context.";
-    }
+        $jsonExample = [
+            'headlines' => [
+                [
+                    'headline' => 'Sample Headline text here',
+                    'sentiment' => 'Positive/Surprise/Neutral',
+                    'entities' => ['Entity1', 'Entity2'],
+                    'lsi_keywords' => ['keyword1', 'keyword2'],
+                    'thumbnail_suggestion' => 'Description of the perfect complementary image',
+                    'schema_type' => 'NewsArticle/BlogPosting/Review'
+                ]
+            ]
+        ];
+        $jsonStr = json_encode($jsonExample, JSON_UNESCAPED_UNICODE | JSON_PRETTY_PRINT);
 
-    protected function getTrendingSuggestions($region)
-    {
-        $cacheKey = 'headline_trending_' . $region;
-        return Cache::remember($cacheKey, 10, function() use ($region) {
-            try {
-                $url = "https://trends.google.com/trending/rss?geo=" . $region . "&sort=recency";
-                $response = Http::timeout(5)->get($url);
-                if ($response->successful()) {
-                    $xml = @simplexml_load_string($response->body());
-                    if ($xml && isset($xml->channel->item)) {
-                        $suggestions = [];
-                        foreach ($xml->channel->item as $item) {
-                            $suggestions[] = ['keyword' => (string)$item->title];
-                            if (count($suggestions) >= 10) break;
-                        }
-                        return $suggestions;
-                    }
-                }
-            } catch (\Exception $e) {}
-            return [];
-        });
+        return "🔹 FINAL OUTPUT REQUIREMENTS (STRICT JSON ONLY):
+- Generate EXACTLY {$count} headlines.
+- Output ONLY a valid JSON object following the structure below.
+- NO conversational text, NO intro, NO markdown outside the JSON.
+- **LANGUAGE ENFORCEMENT: All headline text, sentiment, and suggestions MUST be in " . ($isArabic ? "ARABIC" : "ENGLISH") . ".**
+- **Target Length: EACH headline MUST be between 55 and 85 characters long.**
+- MANDATORY Angle Diversity: Every headline MUST take a unique narrative angle.
+
+🔹 MANDATORY JSON STRUCTURE:
+{$jsonStr}";
     }
 
     protected function getCountryMap()

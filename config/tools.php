@@ -108,11 +108,68 @@ return [
             'credit_cost_per_action' => 1,
             'initial_bonus_credits' => 10,
             'description' => 'Get more clicks without the guesswork. Create stunning headlines that capture your audience’s curiosity and ensure your content gets the attention it deserves.',
-            'marketing_content' => '<h3>Master the Art of the Click</h3><p>Your content could be world-class, but if the headline fails, nobody will ever know. <b>Discover Headlines</b> combines psychology with data from millions of high-performing articles to craft titles that are impossible to ignore.</p><ul><li><b>Curiosity Gap Triggering:</b> Use proven psychological frameworks like "The Open Loop" to drive clicks.</li><li><b>Bilingual Mastery:</b> Generates high-conversion headlines in both English and Arabic with perfect cultural nuance.</li><li><b>Platform Optimization:</b> Tailors lengths and tones specifically for Google Discover, Social, or Search.</li></ul>',
+            'marketing_content' => '<h3 style="color: #f59e0b; font-size: 2rem; font-weight: 800; margin-bottom: 24px; letter-spacing: -0.025em;">Semantic Headline Intelligence</h3>
+                <p style="font-size: 1.25rem; line-height: 1.7; color: rgba(255,255,255,0.9); margin-bottom: 32px;">
+                    Stop fighting the algorithm and start mastering it. <strong>Discover Headlines</strong> is a semantic powerhouse that fuses high-level psychology with Google’s Knowledge Graph to ensure your content dominates Google Discover, News, and Search.
+                </p>
+
+                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 24px; margin-bottom: 40px;">
+                    <div style="background: rgba(15, 23, 42, 0.6); border: 1px solid rgba(245, 158, 11, 0.2); padding: 28px; border-radius: 16px; position: relative; overflow: hidden;">
+                        <div style="position: absolute; top: 0; left: 0; width: 4px; height: 100%; background: #f59e0b;"></div>
+                        <h4 style="color: #fff; font-size: 1.3rem; margin-bottom: 12px; display: flex; align-items: center; gap: 10px; font-weight: 900;">
+                            <span style="font-size: 1.5rem; color: #f59e0b;"><i class="fas fa-fingerprint"></i></span> Entity Authority
+                        </h4>
+                        <p style="color: rgba(255,255,255,0.7); line-height: 1.6; margin: 0; font-style: italic; font-size: 0.9rem;">Automatically inject high-value entities and LSI keywords that signal Expertise (E-E-A-T) to search engines instantly.</p>
+                    </div>
+
+                    <div style="background: rgba(15, 23, 42, 0.6); border: 1px solid rgba(16, 185, 129, 0.2); padding: 28px; border-radius: 16px; position: relative; overflow: hidden;">
+                        <div style="position: absolute; top: 0; left: 0; width: 4px; height: 100%; background: #10b981;"></div>
+                        <h4 style="color: #fff; font-size: 1.3rem; margin-bottom: 12px; display: flex; align-items: center; gap: 10px; font-weight: 900;">
+                            <span style="font-size: 1.5rem; color: #10b981;"><i class="fas fa-bolt-lightning"></i></span> Sentiment Sync
+                        </h4>
+                        <p style="color: rgba(255,255,255,0.7); line-height: 1.6; margin: 0; font-style: italic; font-size: 0.9rem;">Analyze audience emotional cues to craft triggers that resonate, shock, or satisfy—driving record-breaking click-through rates.</p>
+                    </div>
+
+                    <div style="background: rgba(15, 23, 42, 0.6); border: 1px solid rgba(14, 165, 233, 0.2); padding: 28px; border-radius: 16px; position: relative; overflow: hidden;">
+                        <div style="position: absolute; top: 0; left: 0; width: 4px; height: 100%; background: #0ea5e9;"></div>
+                        <h4 style="color: #fff; font-size: 1.3rem; margin-bottom: 12px; display: flex; align-items: center; gap: 10px; font-weight: 900;">
+                            <span style="font-size: 1.5rem; color: #0ea5e9;"><i class="fas fa-image"></i></span> Visual Synergy
+                        </h4>
+                        <p style="color: rgba(255,255,255,0.7); line-height: 1.6; margin: 0; font-style: italic; font-size: 0.9rem;">Beyond text, we suggest the exact "Visual Angle" for your thumbnails, creating a unified, high-performance click-magnet.</p>
+                    </div>
+
+                    <div style="background: rgba(15, 23, 42, 0.6); border: 1px solid rgba(168, 85, 247, 0.2); padding: 28px; border-radius: 16px; position: relative; overflow: hidden;">
+                        <div style="position: absolute; top: 0; left: 0; width: 4px; height: 100%; background: #a855f7;"></div>
+                        <h4 style="color: #fff; font-size: 1.3rem; margin-bottom: 12px; display: flex; align-items: center; gap: 10px; font-weight: 900;">
+                            <span style="font-size: 1.5rem; color: #a855f7;"><i class="fas fa-code"></i></span> Schema Logic
+                        </h4>
+                        <p style="color: rgba(255,255,255,0.7); line-height: 1.6; margin: 0; font-style: italic; font-size: 0.9rem;">Instantly generate Google-compliant JSON-LD markup that ensures your headlines are structurally prioritized by news crawlers.</p>
+                    </div>
+                </div>
+
+                <div style="background: linear-gradient(135deg, rgba(245, 158, 11, 0.1), rgba(16, 185, 129, 0.1)); border-radius: 20px; padding: 40px; text-align: center; border: 1px solid rgba(255,255,255,0.1);">
+                    <h3 style="color: #fff; margin-bottom: 24px; font-size: 1.5rem; font-weight: 800;">Why Settle for Basic Titles?</h3>
+                    <ul style="list-style: none; padding: 0; margin: 0 auto; max-width: 650px; text-align: left; display: grid; gap: 20px;">
+                        <li style="display: flex; gap: 16px; align-items: flex-start; color: rgba(255,255,255,0.85); background: rgba(255,255,255,0.03); padding: 15px; border-radius: 12px; border: 1px solid rgba(255,255,255,0.05);">
+                            <span style="background: #f59e0b22; color: #f59e0b; width: 32px; height: 32px; border-radius: 8px; display: flex; align-items: center; justify-content: center; flex-shrink: 0; font-size: 0.9rem;"><i class="fas fa-microchip"></i></span>
+                            <div>
+                                <strong style="color: #fff; display: block; margin-bottom: 2px;">Semantic Precision</strong>
+                                <span style="font-size: 0.9rem; color: rgba(255,255,255,0.6);">Automatically aligns with Google Discover quality guidelines for maximum exposure.</span>
+                            </div>
+                        </li>
+                        <li style="display: flex; gap: 16px; align-items: flex-start; color: rgba(255,255,255,0.85); background: rgba(255,255,255,0.03); padding: 15px; border-radius: 12px; border: 1px solid rgba(255,255,255,0.05);">
+                            <span style="background: #10b98122; color: #10b981; width: 32px; height: 32px; border-radius: 8px; display: flex; align-items: center; justify-content: center; flex-shrink: 0; font-size: 0.9rem;"><i class="fas fa-code"></i></span>
+                            <div>
+                                <strong style="color: #fff; display: block; margin-bottom: 2px;">One-Click News Schema</strong>
+                                <span style="font-size: 0.9rem; color: rgba(255,255,255,0.6);">Instantly generate JSON-LD headlines that search robots crave and understand.</span>
+                            </div>
+                        </li>
+                    </ul>
+                </div>',
             'features' => [
-                ['icon' => 'fa-language', 'title' => 'Perfect Language Mastery', 'desc' => 'Create compelling titles in both Arabic and English that sound natural and professional.'],
-                ['icon' => 'fa-brain', 'title' => 'Audience-Centric Design', 'desc' => 'Headlines designed to spark curiosity and drive engagement without sounding like spam.'],
-                ['icon' => 'fa-chart-line', 'title' => 'Proven Success', 'desc' => 'Uses structures used by the world’s biggest viral publishers to guarantee results.']
+                ['icon' => 'fa-fingerprint', 'title' => 'Semantic Entity Mapping', 'desc' => 'Sync your titles with Google\'s Knowledge Graph for maximum topical authority.'],
+                ['icon' => 'fa-bolt-lightning', 'title' => 'Emotional Pulse Sync', 'desc' => 'Leverage psychological triggers like Surprise and Urgency to stop the scroll.'],
+                ['icon' => 'fa-code', 'title' => 'One-Click Compliance', 'desc' => 'Instant News Schema (JSON-LD) generation for perfect search indexing.']
             ],
             'meta_title' => 'Discover Headlines | VidaNexus AI',
             'meta_desc' => 'Generate high-engagement headlines in Arabic and English to maximize your reach.',

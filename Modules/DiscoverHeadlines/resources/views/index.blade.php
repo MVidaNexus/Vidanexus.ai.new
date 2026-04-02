@@ -95,21 +95,6 @@
                     </div>
                 </div>
 
-                {{-- Trending Suggestions --}}
-                <div x-show="mode === 'keyword'" class="space-y-4">
-                    <div class="flex items-center gap-3 px-2">
-                        <div class="w-2 h-2 rounded-full bg-primary-purple animate-pulse"></div>
-                        <p class="text-xs font-black text-gray-500 uppercase tracking-widest">Trending Suggestions</p>
-                    </div>
-                    <div class="flex flex-wrap gap-2.5">
-                        <template x-for="item in trendingSuggestions" :key="item.keyword">
-                            <button @click="keyword = item.keyword; generate()"
-                                    class="px-5 py-2.5 bg-white/5 border border-white/10 text-gray-400 rounded-full text-xs font-bold hover:bg-primary-cyan/10 hover:text-primary-cyan hover:border-primary-cyan/30 transition-all duration-300">
-                                <span x-text="item.keyword"></span>
-                            </button>
-                        </template>
-                    </div>
-                </div>
 
                 {{-- Content Input --}}
                 <div x-show="mode === 'content'" x-cloak x-transition:enter="transition ease-out duration-300">
@@ -151,66 +136,94 @@
             </button>
         </div>
 
-        <div class="grid grid-cols-1 gap-4">
+        <div class="grid grid-cols-1 gap-6">
             <template x-for="(headline, index) in parsedHeadlines" :key="index">
-                <div class="glass-card p-4 sm:p-5 group hover:border-primary-cyan/30 transition-all duration-500">
-                    <div class="flex flex-col lg:flex-row gap-4 sm:gap-6">
-                        <div class="flex-1 space-y-4">
-                            {{-- Meta Info --}}
-                            <div class="flex items-center justify-between">
+                <div class="glass-card p-6 sm:p-8 group hover:border-primary-cyan/30 transition-all duration-500 relative overflow-hidden">
+                    {{-- Decorative sentiment glow --}}
+                    <div class="absolute -right-20 -top-20 w-40 h-40 blur-[80px] opacity-10 transition-all duration-500 group-hover:opacity-20"
+                         :class="getSentimentGlow(headline.sentiment)"></div>
+
+                    <div class="flex flex-col lg:flex-row gap-6 sm:gap-10">
+                        <div class="flex-1 space-y-6">
+                            {{-- Meta Info & Sentiment --}}
+                            <div class="flex flex-wrap items-center justify-between gap-4">
                                 <div class="flex items-center gap-3">
-                                    <div class="w-7 h-7 rounded-md bg-white/5 flex items-center justify-center text-[10px] font-black text-gray-500">
-                                        0<span x-text="index + 1"></span>
+                                    <div class="w-8 h-8 rounded-lg bg-white/5 flex items-center justify-center text-xs font-black text-gray-500 border border-white/5">
+                                        <span x-text="index + 1"></span>
                                     </div>
                                     <div class="flex items-center gap-2">
                                         <template x-if="headline.score">
-                                            <div class="flex items-center gap-2 px-2.5 py-1 rounded-full bg-white/5 border border-white/10">
-                                                <div class="w-1.5 h-1.5 rounded-full" :class="getScoreColor(headline.score)"></div>
-                                                <span class="text-[9px] font-black text-gray-400 uppercase tracking-tighter" x-text="headline.grade.label"></span>
-                                                <span class="text-[9px] font-black text-primary-cyan ml-1" x-text="headline.score + '%'"></span>
+                                            <div class="flex items-center gap-2 px-3 py-1.5 rounded-full bg-white/5 border border-white/10 shadow-inner">
+                                                <div class="w-2 h-2 rounded-full" :class="getScoreColor(headline.score)"></div>
+                                                <span class="text-[10px] font-black text-gray-300 uppercase tracking-wider" x-text="headline.grade.label"></span>
+                                                <span class="text-[10px] font-black text-primary-cyan ml-1" x-text="headline.score + '%'"></span>
                                             </div>
                                         </template>
+                                        
+                                        {{-- Sentiment Badge --}}
+                                        <div class="flex items-center gap-1.5 px-3 py-1.5 rounded-full border border-white/5 text-[10px] font-black uppercase tracking-widest shadow-lg"
+                                             :class="getSentimentClass(headline.sentiment)">
+                                            <i class="fas" :class="getSentimentIcon(headline.sentiment)"></i>
+                                            <span x-text="headline.sentiment"></span>
+                                        </div>
                                     </div>
                                 </div>
-                                <div class="text-[10px] font-bold text-gray-600 hidden sm:block">Option <span x-text="index + 1"></span></div>
+                                <div class="text-[10px] font-bold text-gray-600 uppercase tracking-[0.2em]">Intel ID: HL-<span x-text="100 + index"></span></div>
                             </div>
 
-                            {{-- Headline Headline --}}
-                            <h4 class="text-lg sm:text-xl font-bold text-white group-hover:text-primary-cyan transition-colors duration-300 leading-snug" x-text="headline.text"></h4>
+                            {{-- Result Headline --}}
+                            <h4 class="text-xl sm:text-2xl font-black text-white group-hover:text-primary-cyan transition-colors duration-300 leading-tight tracking-tight" x-text="headline.text"></h4>
 
-                            {{-- Quality Bar --}}
-                            <div class="w-full h-1 bg-white/5 rounded-full overflow-hidden border border-white/5">
-                                <div class="h-full transition-all duration-1000 ease-out rounded-full" 
-                                     :style="'width: ' + headline.score + '%'"
-                                     :class="getScoreBarColor(headline.score)"></div>
+                            {{-- SEO Semantic Cloud --}}
+                            <div class="space-y-2 pt-2" x-show="headline.entities?.length || headline.lsi_keywords?.length">
+                                <p class="text-[9px] font-black text-gray-600 uppercase tracking-widest pl-1">Semantic Intelligence</p>
+                                <div class="flex flex-wrap gap-2">
+                                    <template x-for="entity in headline.entities">
+                                        <span class="px-2.5 py-1 rounded bg-primary-cyan/5 border border-primary-cyan/20 text-primary-cyan text-[9px] font-black uppercase tracking-tighter hover:bg-primary-cyan/20 cursor-default transition-colors">
+                                            <i class="fas fa-fingerprint mr-1"></i> <span x-text="entity"></span>
+                                        </span>
+                                    </template>
+                                    <template x-for="lsi in headline.lsi_keywords">
+                                        <span class="px-2.5 py-1 rounded bg-primary-purple/5 border border-primary-purple/20 text-primary-purple text-[9px] font-black uppercase tracking-tighter hover:bg-primary-purple/20 cursor-default transition-colors">
+                                            <i class="fas fa-microchip mr-1"></i> <span x-text="lsi"></span>
+                                        </span>
+                                    </template>
+                                </div>
                             </div>
 
                             {{-- Intelligence Feedback --}}
-                            <div class="flex flex-wrap gap-1.5" x-show="headline.feedback?.length">
+                            <div class="flex flex-wrap gap-2" x-show="headline.feedback?.length">
                                 <template x-for="fb in headline.feedback">
-                                    <div class="flex items-center gap-1.5 px-2 py-1 rounded-md bg-white/5 border border-white/5 transform hover:scale-105 transition-transform cursor-default">
-                                        <i class="fas fa-check-circle text-green-500 text-[9px]" x-show="fb.type === 'success'"></i>
-                                        <i class="fas fa-info-circle text-blue-500 text-[9px]" x-show="fb.type === 'info'"></i>
-                                        <i class="fas fa-exclamation-circle text-yellow-500 text-[9px]" x-show="fb.type === 'warning' || fb.type === 'danger'"></i>
-                                        <span class="text-[9px] font-bold text-gray-400" x-text="fb.text"></span>
+                                    <div class="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-white/[0.03] border border-white/5 transform hover:scale-[1.02] transition-transform cursor-help">
+                                        <i class="fas fa-check-circle text-green-500 text-[10px]" x-show="fb.type === 'success'"></i>
+                                        <i class="fas fa-info-circle text-blue-500 text-[10px]" x-show="fb.type === 'info'"></i>
+                                        <i class="fas fa-exclamation-circle text-yellow-500 text-[10px]" x-show="fb.type === 'warning' || fb.type === 'danger'"></i>
+                                        <span class="text-[10px] font-bold text-gray-400" x-text="fb.text"></span>
                                     </div>
                                 </template>
                             </div>
                         </div>
 
-                        {{-- Action Vertical Menu --}}
-                        <div class="lg:w-40 shrink-0 flex flex-col justify-center">
-                            <div class="flex lg:flex-col gap-2.5">
-                                <button @click="copyToClipboard(headline.text)" class="flex-1 p-2.5 sm:p-3 rounded-xl bg-white/5 border border-white/10 hover:bg-primary-cyan hover:text-black transition-all duration-300 group/btn flex flex-row lg:flex-col items-center justify-center gap-2">
-                                    <i class="fas fa-copy sm:text-lg"></i>
-                                    <span class="text-[10px] sm:text-[9px] font-black uppercase tracking-widest hidden sm:block">Copy Title</span>
-                                    <span class="text-[10px] font-black uppercase tracking-widest sm:hidden">Copy</span>
+                        {{-- Advanced SEO Toolbox --}}
+                        <div class="lg:w-48 shrink-0 flex flex-col justify-center border-l lg:border-white/5 lg:pl-10">
+                            <div class="flex lg:flex-col gap-3">
+                                <button @click="copyToClipboard(headline.text)" 
+                                        class="flex-1 p-4 rounded-2xl bg-white/5 border border-white/10 hover:bg-primary-cyan hover:text-black hover:border-primary-cyan transition-all duration-300 group/btn flex flex-col items-center justify-center gap-1.5 shadow-xl">
+                                    <i class="fas fa-copy text-lg"></i>
+                                    <span class="text-[9px] font-black uppercase tracking-widest text-center">Copy Title</span>
                                 </button>
-                                <a :href="'https://www.google.com/search?q=' + encodeURIComponent(headline.text)" target="_blank" class="flex-1 p-2.5 sm:p-3 rounded-xl bg-white/5 border border-white/10 hover:bg-primary-cyan hover:text-black transition-all duration-300 flex flex-row lg:flex-col items-center justify-center gap-2 group/btn">
-                                    <i class="fab fa-google sm:text-lg"></i>
-                                    <span class="text-[10px] sm:text-[9px] font-black uppercase tracking-widest hidden sm:block">Google Search</span>
-                                    <span class="text-[10px] font-black uppercase tracking-widest sm:hidden">Search</span>
-                                </a>
+                                
+                                <button @click="showVisualAngle(headline)" 
+                                        class="flex-1 p-4 rounded-2xl bg-white/5 border border-white/10 hover:bg-primary-purple hover:text-white hover:border-primary-purple transition-all duration-300 flex flex-col items-center justify-center gap-1.5 shadow-xl">
+                                    <i class="fas fa-image text-lg"></i>
+                                    <span class="text-[9px] font-black uppercase tracking-widest text-center">Visual Angle</span>
+                                </button>
+
+                                <button @click="showSchemaHelper(headline)" 
+                                        class="flex-1 p-4 rounded-2xl bg-white/5 border border-white/10 hover:bg-emerald-500 hover:text-black hover:border-emerald-500 transition-all duration-300 flex flex-col items-center justify-center gap-1.5 shadow-xl">
+                                    <i class="fas fa-code text-lg"></i>
+                                    <span class="text-[9px] font-black uppercase tracking-widest text-center">News Schema</span>
+                                </button>
                             </div>
                         </div>
                     </div>
@@ -266,16 +279,86 @@
             },
 
             getScoreColor(score) {
-                if (score >= 85) return 'bg-green-500 shadow-[0_0_10px_rgba(34,197,94,0.5)]';
-                if (score >= 70) return 'bg-emerald-500 shadow-[0_0_10px_rgba(16,185,129,0.5)]';
+                if (score >= 85) return 'bg-emerald-500 shadow-[0_0_10px_rgba(16,185,129,0.5)]';
+                if (score >= 70) return 'bg-blue-500 shadow-[0_0_10px_rgba(59,130,246,0.5)]';
                 if (score >= 40) return 'bg-yellow-400 shadow-[0_0_10px_rgba(250,204,21,0.5)]';
-                return 'bg-red-400 shadow-[0_0_10px_rgba(248,113,113,0.5)]';
+                return 'bg-red-500 shadow-[0_0_10px_rgba(239,68,68,0.5)]';
             },
-            getScoreGradientClass(score) {
-                if (score >= 85) return 'bg-gradient-to-r from-emerald-600 to-emerald-500';
-                if (score >= 70) return 'bg-gradient-to-r from-emerald-500 to-blue-400';
-                if (score >= 55) return 'bg-gradient-to-r from-blue-600 to-blue-400';
-                return 'bg-gradient-to-r from-red-600 to-red-400';
+
+            getScoreBarColor(score) {
+                if (score >= 85) return 'bg-emerald-500 shadow-[0_0_10px_rgba(16,185,129,0.3)]';
+                if (score >= 70) return 'bg-blue-500 shadow-[0_0_10px_rgba(59,130,246,0.3)]';
+                if (score >= 40) return 'bg-yellow-400 shadow-[0_0_10px_rgba(250,204,21,0.3)]';
+                return 'bg-red-500 shadow-[0_0_10px_rgba(239,68,68,0.3)]';
+            },
+
+            getSentimentClass(sentiment) {
+                const s = (sentiment || '').toLowerCase();
+                if (s.includes('positive')) return 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20';
+                if (s.includes('surprise') || s.includes('shock')) return 'bg-primary-purple/10 text-primary-purple border-primary-purple/20';
+                if (s.includes('negative')) return 'bg-red-500/10 text-red-400 border-red-500/20';
+                return 'bg-blue-500/10 text-blue-400 border-blue-500/20';
+            },
+
+            getSentimentIcon(sentiment) {
+                const s = (sentiment || '').toLowerCase();
+                if (s.includes('positive')) return 'fa-smile-beam';
+                if (s.includes('surprise')) return 'fa-bolt-lightning';
+                if (s.includes('negative')) return 'fa-face-frown';
+                return 'fa-newspaper';
+            },
+
+            getSentimentGlow(sentiment) {
+                const s = (sentiment || '').toLowerCase();
+                if (s.includes('positive')) return 'bg-emerald-500';
+                if (s.includes('surprise')) return 'bg-primary-purple';
+                if (s.includes('negative')) return 'bg-red-500';
+                return 'bg-primary-cyan';
+            },
+
+            showVisualAngle(headline) {
+                Swal.fire({
+                    title: '<span class="text-white font-black uppercase tracking-widest">Visual Angle Discovery</span>',
+                    html: `
+                        <div class="text-left space-y-4 p-4 font-tajawal">
+                            <div class="p-4 bg-white/5 rounded-2xl border border-white/10">
+                                <p class="text-gray-400 text-xs font-black uppercase tracking-widest mb-2">AI Image Logic</p>
+                                <p class="text-white text-sm leading-relaxed font-bold italic">"${headline.thumbnail_suggestion || 'Capture a dynamic high-contrast image representing the core entity and the news action.'}"</p>
+                            </div>
+                            <div class="flex items-center gap-3 text-emerald-400 text-[10px] font-black uppercase tracking-widest">
+                                <i class="fas fa-check-circle"></i> Best for Google Discover CTR
+                            </div>
+                        </div>
+                    `,
+                    background: '#0d0e12',
+                    confirmButtonText: 'Understood',
+                    confirmButtonColor: '#0ea5e9'
+                });
+            },
+
+            showSchemaHelper(headline) {
+                const schema = {
+                    "@context": "https://schema.org",
+                    "@type": headline.schema_type || "NewsArticle",
+                    "headline": headline.text,
+                    "datePublished": new Date().toISOString(),
+                    "author": { "@type": "Person", "name": "VidaNexus Editor" }
+                };
+                
+                Swal.fire({
+                    title: '<span class="text-white font-black uppercase tracking-widest">SEO Schema Generator</span>',
+                    html: `
+                        <div class="text-left space-y-4 p-4 font-tajawal">
+                            <p class="text-gray-400 text-xs font-black uppercase tracking-widest">Recommended JSON-LD (NewsArticle)</p>
+                            <pre class="p-4 bg-[#050505] rounded-2xl border border-white/10 text-emerald-400 text-[10px] overflow-x-auto whitespace-pre-wrap font-mono">${JSON.stringify(schema, null, 2)}</pre>
+                            <button onclick="navigator.clipboard.writeText('${JSON.stringify(schema).replace(/'/g, "\\'")}')" class="w-full py-3 bg-white/5 border border-white/10 text-white rounded-xl text-xs font-bold hover:bg-white/10 transition-all uppercase tracking-widest">
+                                <i class="fas fa-copy mr-2"></i> Copy Schema Code
+                            </button>
+                        </div>
+                    `,
+                    background: '#0d0e12',
+                    showConfirmButton: false
+                });
             },
 
             async generate() {
@@ -397,6 +480,11 @@
                     grade: s.grade,
                     score: s.score,
                     feedback: s.feedback,
+                    sentiment: s.sentiment || 'Factual',
+                    entities: s.entities || [],
+                    lsi_keywords: s.lsi_keywords || [],
+                    thumbnail_suggestion: s.thumbnail_suggestion || '',
+                    schema_type: s.schema_type || 'NewsArticle',
                     generating: false,
                     categoryId: ''
                 }));
