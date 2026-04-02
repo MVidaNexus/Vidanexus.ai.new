@@ -46,6 +46,14 @@
                     </div>
                 </div>
             </div>
+
+            {{-- Minimize Button --}}
+            <div class="pt-6 border-t border-white/5">
+                <button type="button" @click="minimizeProgress()"
+                        class="w-full py-3 rounded-xl bg-white/5 border border-white/10 text-gray-400 hover:text-primary-cyan hover:border-primary-cyan/50 text-[10px] font-black uppercase tracking-[0.2em] transition-all duration-300 flex items-center justify-center gap-2">
+                    <i class="fas fa-external-link-alt"></i> Run in Background
+                </button>
+            </div>
         </div>
     </div>
 </div>
@@ -343,8 +351,9 @@
                 // Show Progress
                 const overlay = document.getElementById('generation-progress-overlay');
                 if (overlay) {
-                    overlay.classList.remove('hidden');
-                    setTimeout(() => overlay.classList.replace('opacity-0', 'opacity-100'), 50);
+                    overlay.classList.remove('hidden', 'pointer-events-none');
+                    overlay.classList.replace('opacity-0', 'opacity-100');
+                    overlay.classList.add('flex');
                 }
 
                 this.startPolling(pid);
@@ -372,43 +381,39 @@
                     
                     const data = await response.json();
                     
-                    if (!response.ok) {
-                        throw new Error(data.message || data.error || 'Generation failed');
-                    }
+                    if (!response.ok) throw new Error(data.message || 'Generation failed');
                     
-                    if (data.status === 'success') {
-                        this.handleResults(data);
-                    } else {
-                        throw new Error(data.message);
-                    }
+                    // Note: We don't call handleResults here because it's just 'processing'
+                    // The poller will handle the actual completion.
+
                 } catch (e) {
                     this.stopProgress();
                     console.error('Generation Error:', e);
                     const msg = e.message || 'Unexpected error occurred';
-                    
-                    // Lenient check for balance/limit issues
-                    const isBalanceError = msg.toLowerCase().includes('balance') || 
-                                         msg.toLowerCase().includes('credit');
-
-                    if (isBalanceError) {
-                        if (window.showInsufficientBalanceAlert) {
-                            showInsufficientBalanceAlert(msg);
-                        } else {
-                            // Fallback if global helper fails but SweetAlert is available
-                            Swal.fire({
-                                title: 'Insufficient Balance',
-                                text: msg,
-                                icon: 'warning',
-                                confirmButtonText: 'Recharge Balance',
-                                showCancelButton: true
-                            }).then(res => {
-                                if (res.isConfirmed) window.location.href = '/pricing';
-                            });
-                        }
+                    if (msg.includes('balance') || msg.includes('credit')) {
+                        if (window.showInsufficientBalanceAlert) showInsufficientBalanceAlert(msg);
+                        else Swal.fire('Insufficient Balance', msg, 'warning');
                     } else {
                         Swal.fire('Error', msg, 'error');
                     }
                 }
+            },
+
+            minimizeProgress() {
+                const overlay = document.getElementById('generation-progress-overlay');
+                if (overlay) {
+                    overlay.classList.add('opacity-0', 'pointer-events-none');
+                    setTimeout(() => overlay.classList.add('hidden'), 500);
+                }
+                Swal.fire({
+                    toast: true,
+                    position: 'bottom-end',
+                    icon: 'info',
+                    title: 'Processing in background...',
+                    text: 'You will be notified once headlines are ready.',
+                    showConfirmButton: false,
+                    timer: 4000
+                });
             },
 
             startPolling(pid) {
@@ -418,10 +423,25 @@
                         if (!r.ok) return;
                         const data = await r.json();
                         this.updateUI(data);
+                        
                         if (data.stage === 'completed' || data.stage === 'error') {
                             clearInterval(this.pInterval);
-                            if (data.stage === 'completed' && !this.results) {
+                            if (data.stage === 'completed') {
                                 this.handleResults(data);
+                                // Show success toast if overlay was minimized
+                                if (document.getElementById('generation-progress-overlay').classList.contains('hidden')) {
+                                    Swal.fire({
+                                        icon: 'success',
+                                        title: 'Extraction Complete!',
+                                        text: 'New headlines have been generated successfully.',
+                                        confirmButtonText: 'View Now'
+                                    }).then(() => {
+                                        document.getElementById('results-section-anchor').scrollIntoView({behavior: 'smooth'});
+                                    });
+                                }
+                            } else {
+                                this.stopProgress();
+                                Swal.fire('Error', data.message || 'Background processing failed', 'error');
                             }
                         }
                     } catch (e) { }
@@ -429,7 +449,7 @@
             },
 
             updateUI(data) {
-                const stages = { 'starting': 15, 'searching': 40, 'ai_processing': 80, 'completed': 100 };
+                const stages = { 'starting': 10, 'searching': 35, 'ai_processing': 75, 'completed': 100 };
                 const p = stages[data.stage] || 50;
                 
                 const titleEl = document.getElementById('progress-title');
@@ -438,7 +458,7 @@
                 const percentEl = document.getElementById('progress-percent');
                 const circleEl = document.getElementById('progress-circle');
 
-                if (titleEl) titleEl.innerText = data.stage === 'completed' ? 'Completed!' : 'Working...';
+                if (titleEl) titleEl.innerText = data.stage === 'completed' ? 'Success!' : (data.stage === 'error' ? 'Failed' : 'Processing...');
                 if (msgEl) msgEl.innerText = data.message;
                 if (barEl) barEl.style.width = p + '%';
                 if (percentEl) percentEl.innerText = p + '%';
@@ -461,7 +481,12 @@
                     categoryId: ''
                 }));
                 this.stopProgress();
-                setTimeout(() => document.getElementById('results-section-anchor').scrollIntoView({behavior: 'smooth'}), 500);
+                setTimeout(() => {
+                    const el = document.getElementById('results-section-anchor');
+                    if (el && !el.classList.contains('hidden')) {
+                        el.scrollIntoView({behavior: 'smooth'});
+                    }
+                }, 500);
             },
 
             stopProgress() {
@@ -470,10 +495,8 @@
                 const overlay = document.getElementById('generation-progress-overlay');
                 if (overlay) {
                     overlay.classList.add('opacity-0', 'pointer-events-none');
-                    overlay.classList.remove('opacity-100');
                     setTimeout(() => {
                         overlay.classList.add('hidden');
-                        overlay.classList.remove('flex');
                     }, 500);
                 }
             },

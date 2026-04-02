@@ -141,45 +141,26 @@ return [
                     <div style="background: rgba(15, 23, 42, 0.6); border: 1px solid rgba(168, 85, 247, 0.2); padding: 28px; border-radius: 16px; position: relative; overflow: hidden;">
                         <div style="position: absolute; top: 0; left: 0; width: 4px; height: 100%; background: #a855f7;"></div>
                         <h4 style="color: #fff; font-size: 1.3rem; margin-bottom: 12px; display: flex; align-items: center; gap: 10px; font-weight: 900;">
-                            <span style="font-size: 1.5rem; color: #a855f7;"><i class="fas fa-code"></i></span> Schema Logic
+                            <span style="font-size: 1.5rem; color: #a855f7;"><i class="fas fa-brain"></i></span> Curiosity Engine
                         </h4>
-                        <p style="color: rgba(255,255,255,0.7); line-height: 1.6; margin: 0; font-style: italic; font-size: 0.9rem;">Instantly generate Google-compliant JSON-LD markup that ensures your headlines are structurally prioritized by news crawlers.</p>
+                        <p style="color: rgba(255,255,255,0.7); line-height: 1.6; margin: 0; font-style: italic; font-size: 0.9rem;">Analyze psychological triggers and search intent to craft headlines that naturally attract clicks without clickbait.</p>
                     </div>
-                </div>
-
-                <div style="background: linear-gradient(135deg, rgba(245, 158, 11, 0.1), rgba(16, 185, 129, 0.1)); border-radius: 20px; padding: 40px; text-align: center; border: 1px solid rgba(255,255,255,0.1);">
-                    <h3 style="color: #fff; margin-bottom: 24px; font-size: 1.5rem; font-weight: 800;">Why Settle for Basic Titles?</h3>
-                    <ul style="list-style: none; padding: 0; margin: 0 auto; max-width: 650px; text-align: left; display: grid; gap: 20px;">
-                        <li style="display: flex; gap: 16px; align-items: flex-start; color: rgba(255,255,255,0.85); background: rgba(255,255,255,0.03); padding: 15px; border-radius: 12px; border: 1px solid rgba(255,255,255,0.05);">
-                            <span style="background: #f59e0b22; color: #f59e0b; width: 32px; height: 32px; border-radius: 8px; display: flex; align-items: center; justify-content: center; flex-shrink: 0; font-size: 0.9rem;"><i class="fas fa-microchip"></i></span>
-                            <div>
-                                <strong style="color: #fff; display: block; margin-bottom: 2px;">Semantic Precision</strong>
-                                <span style="font-size: 0.9rem; color: rgba(255,255,255,0.6);">Automatically aligns with Google Discover quality guidelines for maximum exposure.</span>
-                            </div>
-                        </li>
-                        <li style="display: flex; gap: 16px; align-items: flex-start; color: rgba(255,255,255,0.85); background: rgba(255,255,255,0.03); padding: 15px; border-radius: 12px; border: 1px solid rgba(255,255,255,0.05);">
-                            <span style="background: #10b98122; color: #10b981; width: 32px; height: 32px; border-radius: 8px; display: flex; align-items: center; justify-content: center; flex-shrink: 0; font-size: 0.9rem;"><i class="fas fa-code"></i></span>
-                            <div>
-                                <strong style="color: #fff; display: block; margin-bottom: 2px;">One-Click News Schema</strong>
-                                <span style="font-size: 0.9rem; color: rgba(255,255,255,0.6);">Instantly generate JSON-LD headlines that search robots crave and understand.</span>
-                            </div>
-                        </li>
-                    </ul>
                 </div>',
             'features' => [
                 ['icon' => 'fa-fingerprint', 'title' => 'Semantic Entity Mapping', 'desc' => 'Sync your titles with Google\'s Knowledge Graph for maximum topical authority.'],
                 ['icon' => 'fa-bolt-lightning', 'title' => 'Emotional Pulse Sync', 'desc' => 'Leverage psychological triggers like Surprise and Urgency to stop the scroll.'],
-                ['icon' => 'fa-code', 'title' => 'One-Click Compliance', 'desc' => 'Instant News Schema (JSON-LD) generation for perfect search indexing.']
+                ['icon' => 'fa-brain', 'title' => 'Curiosity Optimization', 'desc' => 'Fine-tune headlines for maximum click-through rates based on AI psychological modeling.']
             ],
             'meta_title' => 'Discover Headlines | VidaNexus AI',
             'meta_desc' => 'Generate high-engagement headlines in Arabic and English to maximize your reach.',
             'route' => 'headlines.index',
             'daily_limit' => 2,
+
         ],
         [
-            'name' => 'Global Intelligence',
+            'name' => 'News Intelligence',
             'tagline' => 'Stay ahead of the world\'s pulse.',
-            'icon' => 'fa-globe',
+            'icon' => 'fa-newspaper',
             'slug' => 'global-news-monitor',
             'color' => '#ffcc00',
             'required_tier' => 'beginner',
@@ -187,14 +168,14 @@ return [
             'unlock_price' => 99,
             'credit_cost_per_action' => 1,
             'initial_bonus_credits' => 10,
-            'description' => 'Be the first to know about the stories that matter. This dashboard keeps you connected to breaking news and emerging trends from across the globe.',
-            'marketing_content' => '<h3>Real-Time Planetary Awareness</h3><p>The <b>Global Intelligence</b> monitor provides an eagle-eye view of world events as they happen. Filtered by precision AI, it identifies emerging stories in your niche across multiple continents and languages.</p><ul><li><b>Multi-Region Coverage:</b> Monitor the US, UK, France, Poland, and the Middle East simultaneously.</li><li><b>Trend Prediction:</b> See which news stories are likely to become viral search trends within the next 24 hours.</li><li><b>Noise Filtering:</b> Our algorithms strip away irrelevant local clutter, leaving you with pure actionable intel.</li></ul>',
+            'description' => 'Real-time AI logic to monitor global news feeds and identifying emerging trending angles.',
+            'marketing_content' => '<h3>Real-Time Global News Intelligence</h3><p>The <b>News Intelligence</b> monitor provides an eagle-eye view of world events as they happen. Filtered by precision AI, it identifies emerging stories in your niche across multiple continents and languages.</p><ul><li><b>Multi-Region Coverage:</b> Monitor the US, UK, France, Poland, and the Middle East simultaneously.</li><li><b>Trend Prediction:</b> See which news stories are likely to become viral search trends within the next 24 hours.</li><li><b>Noise Filtering:</b> Our algorithms strip away irrelevant local clutter, leaving you with pure actionable intel.</li></ul>',
             'features' => [
                 ['icon' => 'fa-earth-americas', 'title' => 'Personalized News Feed', 'desc' => 'Follow only the regions and languages that are important to your goals.'],
                 ['icon' => 'fa-filter-circle-xmark', 'title' => 'Distraction-Free Reading', 'desc' => 'Our smart filters remove duplicates and clutter, saving you hours of manual research.'],
                 ['icon' => 'fa-bell', 'title' => 'Alerts for what matters', 'desc' => 'Get notified immediately when a topic starts gaining major traction internationally.']
             ],
-            'meta_title' => 'Global Intelligence | VidaNexus AI',
+            'meta_title' => 'News Intelligence | VidaNexus AI',
             'meta_desc' => 'Real-time news and viral trend monitoring across global markets.',
             'route' => 'dashboard.global-news-monitor.index',
             'daily_limit' => 10,
@@ -221,6 +202,29 @@ return [
             'meta_desc' => 'Track viral queries and emerging search trends in real-time.',
             'route' => 'dashboard.trending-searches.index',
             'daily_limit' => 10,
+        ],
+        [
+            'name' => 'Pro AI Article Writer',
+            'tagline' => 'Generate fully optimized articles in seconds.',
+            'icon' => 'fa-file-lines',
+            'slug' => 'article-writer',
+            'color' => '#14b8a6',
+            'required_tier' => 'pro',
+            'category' => 'content',
+            'unlock_price' => 499,
+            'credit_cost_per_action' => 5,
+            'initial_bonus_credits' => 10,
+            'description' => 'Create high-quality, long-form articles that target your exact keywords and rank quickly on Google.',
+            'marketing_content' => '<h3>High-Volume Production, Zero Compromise</h3><p>Stop paying expensive writers for average content. The <b>Pro AI Article Writer</b> generates fully structured, deeply researched articles designed to rank.</p><ul><li><b>LSI Integration:</b> Automatically weaves secondary keywords naturally throughout the text.</li><li><b>EEAT Structured:</b> Follows Google\'s quality guidelines for helpful content.</li><li><b>Ready to Publish:</b> Generates HTML formatting so you can paste directly into WordPress.</li></ul>',
+            'features' => [
+                ['icon' => 'fa-paragraph', 'title' => 'Long-Form Mastery', 'desc' => 'Generate articles exceeding 2000+ words with perfect coherence.'],
+                ['icon' => 'fa-list-ol', 'title' => 'Structural Perfection', 'desc' => 'Perfect H1, H2, and H3 tagging optimized for the algorithm.'],
+                ['icon' => 'fa-clock', 'title' => 'Instant Turnaround', 'desc' => 'What takes a human 4 hours takes our AI 4 seconds.']
+            ],
+            'meta_title' => 'Pro AI Article Writer | VidaNexus AI',
+            'meta_desc' => 'Generate high-quality, SEO-optimized articles in seconds.',
+            'route' => 'dashboard.article-writer.index',
+            'daily_limit' => 5,
         ],
 
         // ---------- THE REST OF THE TOOLS ----------
@@ -594,29 +598,7 @@ return [
             'route' => 'dashboard.marketing.video-script',
             'daily_limit' => 5,
         ],
-        [
-            'name' => 'SEO Article Architect',
-            'tagline' => 'Generate fully optimized articles in seconds.',
-            'icon' => 'fa-file-lines',
-            'slug' => 'article-writer',
-            'color' => '#14b8a6',
-            'required_tier' => 'pro',
-            'category' => 'content',
-            'unlock_price' => 499,
-            'credit_cost_per_action' => 5,
-            'initial_bonus_credits' => 10,
-            'description' => 'Create high-quality, long-form articles that target your exact keywords and rank quickly on Google.',
-            'marketing_content' => '<h3>High-Volume Production, Zero Compromise</h3><p>Stop paying expensive writers for average content. The <b>SEO Article Architect</b> generates fully structured, deeply researched articles designed to rank.</p><ul><li><b>LSI Integration:</b> Automatically weaves secondary keywords naturally throughout the text.</li><li><b>EEAT Structured:</b> Follows Google\'s quality guidelines for helpful content.</li><li><b>Ready to Publish:</b> Generates HTML formatting so you can paste directly into WordPress.</li></ul>',
-            'features' => [
-                ['icon' => 'fa-paragraph', 'title' => 'Long-Form Mastery', 'desc' => 'Generate articles exceeding 2000+ words with perfect coherence.'],
-                ['icon' => 'fa-list-ol', 'title' => 'Structural Perfection', 'desc' => 'Perfect H1, H2, and H3 tagging optimized for the algorithm.'],
-                ['icon' => 'fa-clock', 'title' => 'Instant Turnaround', 'desc' => 'What takes a human 4 hours takes our AI 4 seconds.']
-            ],
-            'meta_title' => 'SEO Article Architect | VidaNexus AI',
-            'meta_desc' => 'Generate high-quality, SEO-optimized articles in seconds.',
-            'route' => 'dashboard.article-writer.index',
-            'daily_limit' => 5,
-        ],
+
         [
             'name' => 'AuditX Core Scanner',
             'tagline' => 'Deep technical SEO auditing.',

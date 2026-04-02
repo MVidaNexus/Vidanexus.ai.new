@@ -65,15 +65,18 @@ class HeadlineController extends Controller
     /**
      * Generate headlines using AI.
      */
+    /**
+     * Generate headlines using AI (Asynchronous Dispatcher).
+     */
     public function generate(Request $request)
     {
         $keyword = $request->input('keyword');
         $content = $request->input('content');
         $type = $request->input('type', 'keyword');
         $region = strtoupper($request->input('country', 'EG'));
-        $progressId = $request->input('progress_id');
-        $isAjax = $request->ajax() || $request->wantsJson();
-        
+        $progressId = $request->input('progress_id') ?: 'hl_' . time();
+        $variantsCount = $request->input('variants', 7);
+
         $request->validate([
             'keyword' => 'nullable|string|max:255',
             'content' => 'nullable|string',
@@ -81,208 +84,42 @@ class HeadlineController extends Controller
             'variants' => 'nullable|integer|min:3|max:15',
         ]);
 
-        $variantsCount = $request->input('variants', 7);
-
         // Credit Check
         $user = auth()->user();
 
         if (!$user->canUseTool('discover-headlines')) {
             $msg = $user->getLimitReachedMessage('Discover Headlines', 'discover-headlines');
-            if ($isAjax) return response()->json(['status' => 'error', 'message' => $msg], 403);
-            return redirect()->back()->with(['headlineError' => $msg]);
+            return response()->json(['status' => 'error', 'message' => $msg], 403);
         }
 
         if (!$user->wallet || $user->wallet->balance_credits < 1) {
             $msg = 'Insufficient balance to generate headlines.';
-            if (!$isAjax) return redirect()->back()->with(['headlineError' => $msg]);
             return response()->json(['status' => 'error', 'message' => $msg], 402);
         }
 
-        if ($progressId) {
-            Cache::put("gen_progress_{$progressId}", [
-                'stage' => 'starting',
-                'message' => 'Starting process and analyzing inputs...'
-            ], 300);
-        }
+        // Initialize Progress
+        Cache::put("gen_progress_{$progressId}", [
+            'stage' => 'starting',
+            'message' => 'Job queued. Starting background intelligence engine...'
+        ], 300);
 
-        try {
-            // 1. Prepare Context
-            if ($type === 'keyword') {
-                if ($progressId) {
-                    Cache::put("gen_progress_{$progressId}", [
-                        'stage' => 'searching',
-                        'message' => 'Searching Google for the latest updates...'
-                    ], 300);
-                }
-                
-                $newsContext = $this->fetchNewsContext($keyword, $region, $progressId);
-                
-                if (empty($newsContext)) {
-                    // Fallback for VidaNexus as per user suggestion to avoid empty results
-                    $newsContext = "موضوع البحث: " . ($keyword ?: 'عام');
-                    Log::info("[Headlines] Using fallback context for keyword: " . $keyword);
-                }
-            } else {
-                $newsContext = $content;
-            }
+        // Dispatch Job
+        \Modules\DiscoverHeadlines\Jobs\GenerateHeadlinesJob::dispatch($user->id, [
+            'keyword' => $keyword,
+            'content' => $content,
+            'type' => $type,
+            'country' => $region,
+            'variants' => $variantsCount,
+            'progress_id' => $progressId,
+        ]);
 
-            if ($progressId) {
-                Cache::put("gen_progress_{$progressId}", [
-                    'stage' => 'ai_processing',
-                    'message' => 'Drafting creative headlines using Artificial Intelligence...'
-                ], 300);
-            }
-
-            // 2. Prepare Detailed Prompt (Sync with EahelQesa Laws)
-            $isArabic = preg_match('/[\x{0600}-\x{06FF}]/u', $keyword . $content);
-            $discoverRules = $this->getDiscoverRules($isArabic);
-            $technicalWrapper = $this->getHeadlinesTechnicalWrapper($variantsCount, $region, $isArabic);
-
-            if ($type === 'keyword') {
-                $userStyle = $this->getDefaultHeadlinesStyle($isArabic);
-                $sysRole = $isArabic ? "أنت محترف صياغة عناوين إخبارية." : "You are a professional news headline specialist. Follow the style and rules below:";
-                $prompt = "{$sysRole}\n\n" . $userStyle;
-                $prompt .= "\n\n" . $discoverRules;
-                $prompt .= "\n\n" . $technicalWrapper;
-                $prompt = str_replace(['[Keyword]', '[keyword]'], $keyword, $prompt);
-                $prompt = str_replace('[NewsContext]', $newsContext, $prompt);
-            } else {
-                $sysRole = $isArabic ? "أنت محرر صحفي خبير في تحليل المحتوى الإخباري لـ Google Discover.\nمهمتك هي تحليل المحتوى التالي واستخراج {$variantsCount} عناوين احترافية مبنية على الحقائق ولكن بصياغة تجذب الملايين." 
-                                     : "You are an expert journalist analyzing news content for Google Discover.\nYour task is to analyze the following content and extract {$variantsCount} factual but highly engaging headlines.";
-                $prompt = "{$sysRole}\n\n" .
-                          $discoverRules . "\n\n" .
-                          ($isArabic ? "🔹 المحتوى المراد تحليله:\n" : "🔹 Content to analyze:\n") . $newsContext . "\n\n" .
-                          $technicalWrapper;
-            }
-
-            // 3. Call AI Proxy (VidaNexus AIManager)
-            $dbProvider = Setting::get("discover-headlines_provider", 'openrouter');
-            $dbModel = Setting::get("discover-headlines_model", 'google/gemini-2.0-flash-001');
-            $dbPrompt = Setting::get("discover-headlines_prompt");
-
-            if ($dbPrompt) {
-                $finalPrompt = str_replace(
-                    ['[Keyword]', '[keyword]', '[NewsContext]', '[variants]'], 
-                    [$keyword, $keyword, $newsContext, $variantsCount], 
-                    $dbPrompt
-                );
-                // Enforce technical requirements even with custom prompts
-                $finalPrompt .= "\n\n" . $technicalWrapper;
-            } else {
-                $finalPrompt = $prompt;
-            }
-
-            // AI Routing Chain
-            $aiChain = Setting::get("discover-headlines_ai_chain", []);
-            $aiConfig = [
-                'provider' => $dbProvider,
-                'model' => $dbModel,
-                'temperature' => 0.8,
-            ];
-
-            if (!empty($aiChain)) {
-                $aiConfig['chain'] = $aiChain;
-            }
-
-            $aiResponse = $this->aiManager->generate('discover-headlines', $finalPrompt, $aiConfig);
-
-            $generatedText = $aiResponse['text'];
-            
-            // CLEANING: Strip Markdown code blocks if any
-            if (preg_match('/```(?:json|markdown|text|)?\s*(.*?)\s*```/s', $generatedText, $matches)) {
-                $generatedText = $matches[1];
-            }
-            $generatedText = trim($generatedText);
-
-            // SUPPORT FOR RICH JSON FORMAT
-            $extracted = [];
-            
-            // Try to extract JSON from within markdown blocks or raw text
-            $jsonTarget = $generatedText;
-            if (preg_match('/\{(?:[^{}]|(?R))*\}/s', $generatedText, $matches)) {
-                $jsonTarget = $matches[0];
-            }
-
-            $decoded = @json_decode($jsonTarget, true);
-            
-            if (is_array($decoded) && (isset($decoded['headlines']) || isset($decoded[0]))) {
-                $items = $decoded['headlines'] ?? $decoded;
-                foreach ($items as $item) {
-                    if (is_array($item)) {
-                        $extracted[] = [
-                            'headline' => $item['headline'] ?? $item['title'] ?? $item['text'] ?? $item['keyword'] ?? '',
-                            'sentiment' => $item['sentiment'] ?? 'Neutral',
-                            'entities' => $item['entities'] ?? $item['keywords'] ?? [],
-                            'lsi_keywords' => $item['lsi_keywords'] ?? $item['lsi'] ?? [],
-                            'thumbnail_suggestion' => $item['thumbnail_suggestion'] ?? $item['thumbnail'] ?? $item['visual_angle'] ?? $item['image_logic'] ?? '',
-                        ];
-                    }
-                }
-            } else {
-                // Ultra Fallback: Raw text lines if JSON fails completely
-                $lines = explode("\n", $generatedText);
-                foreach ($lines as $line) {
-                    $line = trim($line);
-                    if (empty($line) || mb_strlen($line) < 10) continue;
-                    $extracted[] = [
-                        'headline' => preg_replace('/^\d+[\.\)]\s*/', '', $line),
-                        'sentiment' => 'Factual',
-                        'entities' => [],
-                        'lsi_keywords' => [],
-                        'thumbnail_suggestion' => '',
-                    ];
-                }
-            }
-
-            // 4. Advanced Scoring (The "Laws")
-            $scoredHeadlines = $this->scoreHeadlines($extracted, $keyword ?? '');
-
-            // STRICT BILLING: Deduct Credit ONLY if AI actually produced scored headlines!
-            if (!empty($scoredHeadlines)) {
-                $user->wallet->decrement('balance_credits', 1);
-                \App\Models\AiUsage::create([
-                    'user_id' => $user->id,
-                    'tool' => 'discover-headlines',
-                    'provider' => $dbProvider,
-                    'model' => $dbModel,
-                    'status' => 'success',
-                ]);
-            } else {
-                \App\Models\ToolError::log('discover-headlines', new \Exception("AI produced 0 scored headlines. Raw response: " . substr($generatedText, 0, 100)), 'Content Formatting', $user->id);
-            }
-
-            if ($progressId) {
-                $finalData = [
-                    'stage' => 'completed',
-                    'message' => 'Headlines generated successfully!',
-                    'headlines' => $generatedText,
-                    'scored' => $scoredHeadlines,
-                    'keyword' => $keyword
-                ];
-                Cache::put("gen_progress_{$progressId}", $finalData, 1200);
-            }
-
-            Log::info("[Headlines] Generation completed successfully", ['pid' => $progressId]);
-
-            return response()->json([
-                'status' => 'success',
-                'headlines' => $generatedText,
-                'scored' => $scoredHeadlines,
-                'keyword' => $keyword,
-                'type' => $type
-            ]);
-
-        } catch (\Exception $e) {
-            Log::error("Headline Generation Error: " . $e->getMessage());
-            if ($progressId) {
-                Cache::put("gen_progress_{$progressId}", [
-                    'stage' => 'error',
-                    'message' => 'Failed to generate headlines: ' . $e->getMessage()
-                ], 300);
-            }
-            return response()->json(['status' => 'error', 'message' => $e->getMessage()], 500);
-        }
+        return response()->json([
+            'status' => 'processing',
+            'message' => 'Intelligence extraction started in the background.',
+            'progress_id' => $progressId
+        ]);
     }
+
 
     /**
      * Get Progress Polling
