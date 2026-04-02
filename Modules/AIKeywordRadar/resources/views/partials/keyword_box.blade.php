@@ -39,7 +39,7 @@
             <button type="button" @click="sortOpen = !sortOpen" 
                 style="display:inline-flex;align-items:center;gap:6px;padding:6px 14px;border-radius:12px;font-size:11px;font-weight:700;white-space:nowrap;background:#0f172a;border:1px solid rgba(255,255,255,0.15);color:#fff;cursor:pointer;">
                 <i class="fas fa-sort-amount-down text-[10px]" style="color: {{ $colorVar }};"></i> 
-                <span x-text="currentSort">Newest Publish</span>
+                <span x-text="currentSort">Latest Published</span>
                 <i class="fas fa-chevron-down text-[8px] opacity-60 transition-transform duration-200" :class="{'rotate-180': sortOpen}"></i>
             </button>
             <div x-show="sortOpen" x-cloak
@@ -51,19 +51,19 @@
                  x-transition:leave-end="opacity-0"
                  style="position:absolute;top:calc(100% + 6px);{{ $isAr ? 'right:0' : 'left:0' }};width:220px;background:#0f172a;border:1px solid rgba(255,255,255,0.12);border-radius:14px;overflow:hidden;z-index:9999;box-shadow:0 15px 40px rgba(0,0,0,0.6);">
                 <div style="padding:8px 14px;font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:0.08em;color:rgba(255,255,255,0.3);border-bottom:1px solid rgba(255,255,255,0.06);">
-                    <i class="fas fa-sort text-[8px] mr-1 opacity-40"></i> Sort Keywords By
+                    <i class="fas fa-satellite-dish text-[8px] mr-1 opacity-40"></i> Sort Radar Findings
                 </div>
                 <button type="button" @click="sortOpen = false; currentSort = 'Newest Sync'; window.executeKeywordSort('{{ $lang }}', 'pulldate');"
                     style="display:flex;align-items:center;gap:10px;width:100%;text-align:{{ $isAr ? 'right' : 'left' }};padding:10px 14px;background:transparent;color:#fff;border:none;cursor:pointer;font-size:12px;font-weight:600;transition:background 0.15s;"
                     onmouseover="this.style.background='rgba(255,255,255,0.08)'" onmouseout="this.style.background='transparent'">
                     <span style="display:flex;align-items:center;justify-content:center;width:26px;height:26px;border-radius:7px;background:rgba(245,158,11,0.15);color:#f59e0b;flex-shrink:0;font-size:10px;"><i class="fas fa-satellite-dish"></i></span>
-                    <span>Newest Sync</span>
+                    <span>Radar Detection</span>
                 </button>
                 <button type="button" @click="sortOpen = false; currentSort = 'Newest Publish'; window.executeKeywordSort('{{ $lang }}', 'pubdate');"
                     style="display:flex;align-items:center;gap:10px;width:100%;text-align:{{ $isAr ? 'right' : 'left' }};padding:10px 14px;background:transparent;color:#fff;border:none;border-top:1px solid rgba(255,255,255,0.04);cursor:pointer;font-size:12px;font-weight:600;transition:background 0.15s;"
                     onmouseover="this.style.background='rgba(255,255,255,0.08)'" onmouseout="this.style.background='transparent'">
-                    <span style="display:flex;align-items:center;justify-content:center;width:26px;height:26px;border-radius:7px;background:rgba(14,165,233,0.15);color:#0ea5e9;flex-shrink:0;font-size:10px;"><i class="fas fa-history"></i></span>
-                    <span>Newest Publish</span>
+                    <span style="display:flex;align-items:center;justify-content:center;width:26px;height:26px;border-radius:7px;background:rgba(14,165,233,0.15);color:#0ea5e9;flex-shrink:0;font-size:10px;"><i class="fas fa-clock"></i></span>
+                    <span>Market Timestamp</span>
                 </button>
                 <button type="button" @click="sortOpen = false; currentSort = 'A → Z'; window.executeKeywordSort('{{ $lang }}', 'alphabetical');"
                     style="display:flex;align-items:center;gap:10px;width:100%;text-align:{{ $isAr ? 'right' : 'left' }};padding:10px 14px;background:transparent;color:#fff;border:none;border-top:1px solid rgba(255,255,255,0.04);cursor:pointer;font-size:12px;font-weight:600;transition:background 0.15s;"
@@ -90,7 +90,7 @@
                     style="display:inline-flex;align-items:center;gap:6px;padding:6px 16px;border-radius:12px;font-size:11px;font-weight:900;color:#000;white-space:nowrap;border:1px solid rgba(255,255,255,0.1);background:{{ $colorVar }};box-shadow:0 4px 20px {{ $colorVar }}35;cursor:pointer;transition:transform 0.15s;"
                     onmouseover="if(!this.disabled)this.style.transform='scale(1.05)'" onmouseout="this.style.transform='scale(1)'">
                     <i class="fas fa-sync-alt text-[10px]" :class="{ 'fa-spin': {{ $loadingModel }} }"></i> 
-                    <span x-text="{{ $loadingModel }} ? 'Syncing...' : 'Sync {{ $customBoxId ? $title : strtoupper($lang) }}'"></span>
+                    <span x-text="{{ $loadingModel }} ? 'Initial Scanning...' : 'Refresh Radar'"></span>
                 </button>
             </div>
 
@@ -316,8 +316,8 @@
                     <div style="width:80px;height:80px;border-radius:20px;display:flex;align-items:center;justify-content:center;margin:0 auto 24px;border:1px solid {{ $colorVar }}30;background:var(--card-bg);color:{{ $colorVar }};box-shadow:0 0 30px {{ $colorVar }}15;">
                         <i class="fas fa-robot text-3xl"></i>
                     </div>
-                    <h4 class="font-black text-xl mb-3" style="color: var(--text-main);">Ready to extract smart keywords</h4>
-                    <p class="text-sm mb-8 max-w-sm mx-auto leading-relaxed" style="color: var(--text-muted);">Competitors added successfully. Click Sync to extract hidden trends.</p>
+                    <h4 class="font-black text-xl mb-3" style="color: var(--text-main);">Radar Intelligence Active</h4>
+                    <p class="text-sm mb-8 max-w-sm mx-auto leading-relaxed" style="color: var(--text-muted);">Competitors configured. Capture current market shifts and hidden trends now.</p>
                     <div class="flex items-center gap-2">
                         <button @click="syncCompetitors('{{ $lang }}', timeValue, '{{ $customBoxId ?? '' }}')" :disabled="{{ $loadingModel }}" 
                             class="flex items-center gap-2 px-3 py-1.5 rounded-lg border border-primary-cyan/30 text-primary-cyan hover:bg-primary-cyan/10 transition-all text-xs disabled:opacity-50">
@@ -326,12 +326,12 @@
                         </button>
                         <div x-show="syncStatus['{{ $lang === 'ar' ? 'syncAr' : ($lang === 'en' ? 'syncEn' : 'sync_' . ($customBoxId ?? '')) }}'] === 'syncing'" class="flex items-center gap-3" x-cloak>
                             <span class="text-[10px] text-primary-cyan animate-pulse">
-                                 <i class="fas fa-circle text-[6px] mr-1"></i> Syncing...
+                                 <i class="fas fa-circle text-[6px] mr-1"></i> Running Intel Scanning...
                             </span>
                             <button @click="refreshBoxData('{{ $lang }}', '{{ $customBoxId ?? '' }}')" 
                                 class="text-[10px] bg-primary-cyan/20 px-2 py-0.5 rounded border border-primary-cyan/50 text-primary-cyan hover:bg-primary-cyan/30 transition-all flex items-center gap-1">
                                 <i class="fas fa-redo-alt text-[8px]" :class="{{ $loadingModel }} ? 'fa-spin' : ''"></i>
-                                <span>Check for Updates</span>
+                                <span>Fetch Updates</span>
                             </button>
                         </div>
                     </div>
@@ -339,10 +339,10 @@
                     <div class="w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4 border" style="background: var(--card-bg); border-color: var(--glass-border); color: var(--text-muted);">
                         <i class="fas fa-satellite-dish text-2xl"></i>
                     </div>
-                    <h4 class="font-bold mb-2 text-sm" style="color: var(--text-main);">No Competitor Keywords</h4>
-                    <p class="text-sm mb-6 max-w-xs" style="color: var(--text-muted);">Add competitor links and sync to extract keywords.</p>
+                    <h4 class="font-bold mb-2 text-sm" style="color: var(--text-main);">Intelligence Standby</h4>
+                    <p class="text-sm mb-6 max-w-xs" style="color: var(--text-muted);">No competitors tracked yet. Add domains to start receiving market intelligence.</p>
                     <a href="{{ route('dashboard.ai-keyword-radar.settings') }}" class="inline-block px-5 py-2.5 rounded-xl text-sm font-bold transition border" style="background: {{ $colorVar }}20; color: {{ $colorVar }}; border-color: {{ $colorVar }}30;">
-                        <i class="fas fa-cog me-2"></i> Setup Competitors
+                        <i class="fas fa-cog me-2"></i> Configure Intel Sources
                     </a>
                 @endif
             </div>

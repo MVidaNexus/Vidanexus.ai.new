@@ -11,11 +11,14 @@
     </div>
 
     <div class="p-6">
-        <div class="mb-4 p-4 bg-primary-cyan/5 border border-primary-cyan/10 rounded-xl flex items-start gap-3">
-            <i class="fas fa-info-circle text-primary-cyan mt-1"></i>
+        <div class="mb-4 p-4 bg-primary-cyan/[0.03] border border-primary-cyan/10 rounded-xl flex items-start gap-4">
+            <div class="w-8 h-8 rounded-lg bg-primary-cyan/10 flex items-center justify-center text-primary-cyan flex-shrink-0">
+                <i class="fas fa-satellite-dish text-sm"></i>
+            </div>
             <p class="text-xs text-gray-400 leading-relaxed">
-                You can directly add main site URLs (e.g. <code class="text-primary-cyan">https://youm7.com</code>). 
-                The system is smart enough to extract news even if you don't provide a direct RSS link.
+                <strong class="text-primary-cyan block mb-1">Radar Intelligence Injection</strong>
+                Enter direct URLs (e.g., <code class="text-white">https://techcrunch.com</code>). 
+                The Radar's extraction engine performs deep-content analysis to identify high-velocity feeds automatically—no manual setup required.
             </p>
         </div>
 

@@ -8,10 +8,10 @@
     <div class="flex items-center justify-between mb-8">
         <div>
             <h1 class="text-3xl font-black flex items-center gap-3" style="color: var(--text-main);">
-                <i class="fas fa-cog text-primary-cyan animate-spin-slow"></i>
-                AI Keyword Radar Settings
+                <i class="fas fa-satellite-dish text-primary-cyan animate-pulse"></i>
+                Radar Configuration
             </h1>
-            <p class="mt-2" style="color: var(--text-muted);">Customize monitoring sources and AI providers to extract emerging trends</p>
+            <p class="mt-2 text-sm max-w-2xl" style="color: var(--text-muted);">Configure your global surveillance parameters. Manage intelligence sources, temporal tracking, and topical authority clusters from this central command center.</p>
         </div>
         <a href="{{ route('dashboard.ai-keyword-radar.index') }}" class="px-5 py-2.5 bg-white/5 hover:bg-white/10 text-white rounded-xl font-bold transition flex items-center gap-2">
             <i class="fas fa-arrow-right"></i> Back to Radar
@@ -26,17 +26,31 @@
             {{ session('success') }}
         </div>
     @endif
+    <!-- Strategic Intelligence Protocol Info -->
+    <div class="glass-card p-6 mb-10 border-primary-cyan/20 bg-primary-cyan/[0.02]">
+        <div class="flex items-start gap-4">
+            <div class="w-12 h-12 rounded-2xl bg-primary-cyan/10 flex items-center justify-center text-primary-cyan shrink-0">
+                <i class="fas fa-shield-virus text-xl"></i>
+            </div>
+            <div>
+                <h3 class="text-lg font-black text-white mb-1">Radar Surveillance Protocol</h3>
+                <p class="text-xs text-gray-400 leading-relaxed max-w-3xl">
+                    The Keyword Spy Radar performs deep-analysis on every source added. By configuring these "Surveillance Gateways," you enable the AI to perform predictive scans, semantic gap analysis, and cross-market correlation. 
+                </p>
+            </div>
+        </div>
+    </div>
 
     <form id="settingsForm" action="{{ route('dashboard.ai-keyword-radar.settings.update') }}" method="POST">
         @csrf
-        <div class="space-y-6">
+        <div class="space-y-8">
 
             {{-- Arabic Competitors --}}
             @include('aikeywordradar::partials.settings_competitor_section', [
                 'sectionId' => 'ar',
-                'title' => 'Monitor Competitors (Ar - Arabic)',
-                'subtitle' => 'Add direct news site URLs or RSS links.',
-                'icon' => 'fas fa-globe-africa',
+                'title' => 'Arabic Market Intelligence',
+                'subtitle' => 'Track direct news URLs, authority sites, or RSS feeds.',
+                'icon' => 'fas fa-flag',
                 'color' => 'orange',
                 'colorHex' => '#f97316',
                 'placeholder' => 'https://youm7.com',
@@ -53,7 +67,7 @@
                         </div>
                         <div class="flex-1">
                             <div class="flex items-center gap-3">
-                                <h3 class="text-lg font-bold" style="color: var(--text-main);">Monitor Competitors (En - English)</h3>
+                                <h3 class="text-lg font-bold" style="color: var(--text-main);">English Market Intelligence</h3>
                                 <label class="inline-flex items-center cursor-pointer">
                                     <input type="checkbox" name="enable_keywords_en" value="1" class="sr-only peer" 
                                            {{ !empty($settings['enable_keywords_en']) ? 'checked' : '' }} 
@@ -62,7 +76,7 @@
                                     <span class="ms-2 text-xs font-bold" style="color: var(--text-main);">Enable</span>
                                 </label>
                             </div>
-                            <p class="text-[10px]" style="color: var(--text-muted);">Add English news site URLs.</p>
+                            <p class="text-[10px]" style="color: var(--text-muted);">Track news sites and global authority domains.</p>
                         </div>
                     </div>
                 </div>
@@ -86,8 +100,8 @@
                         <i class="fas fa-layer-group text-lg"></i>
                     </div>
                     <div class="flex-1">
-                        <h3 class="text-lg font-bold" style="color: var(--text-main);">Custom Competitor Groups</h3>
-                        <p class="text-[10px]" style="color: var(--text-muted);">Create topic-specific monitoring groups (e.g. Sports, Health, Tech)</p>
+                        <h3 class="text-lg font-bold" style="color: var(--text-main);">Custom Intelligence Clusters</h3>
+                        <p class="text-[10px]" style="color: var(--text-muted);">Create isolated monitoring silos for micro-niches, client projects, or specific trend categories.</p>
                     </div>
                     <button type="button" onclick="showCreateBoxModal()" 
                             class="px-5 py-2.5 rounded-xl font-bold text-sm transition-all hover:scale-105 flex items-center gap-2"
@@ -106,14 +120,14 @@
 
             {{-- Submit --}}
             <div class="flex justify-end pt-4">
-                <button type="submit" class="px-8 py-3.5 rounded-xl text-lg flex items-center gap-3 font-bold transition-all hover:scale-105 active:scale-95" style="
-                    background: linear-gradient(135deg, var(--primary-cyan), #0066ff);
-                    color: #000;
-                    box-shadow: 0 4px 20px rgba(14, 165, 233,0.3), 0 0 30px rgba(14, 165, 233,0.1);
-                    border: 1px solid rgba(14, 165, 233,0.3);
-                ">
-                    <i class="fas fa-save"></i> Save All Settings
-                </button>
+                    <button type="submit" class="px-8 py-3.5 rounded-xl text-lg flex items-center gap-3 font-bold transition-all hover:scale-105 active:scale-95" style="
+                        background: linear-gradient(135deg, var(--primary-cyan), #0066ff);
+                        color: #000;
+                        box-shadow: 0 4px 20px rgba(14, 165, 233,0.3), 0 0 30px rgba(14, 165, 233,0.1);
+                        border: 1px solid rgba(14, 165, 233,0.3);
+                    ">
+                        <i class="fas fa-save"></i> Apply Configuration
+                    </button>
             </div>
             
         </div>
@@ -124,13 +138,13 @@
 <div id="createBoxModal" style="display:none; position:fixed; inset:0; z-index:9999; background:rgba(0,0,0,0.7); backdrop-filter:blur(8px);" onclick="if(event.target===this)this.style.display='none'">
     <div style="position:absolute; top:50%; left:50%; transform:translate(-50%,-50%); width:90%; max-width:460px; background:var(--card-bg); border:1px solid var(--glass-border); border-radius:20px; padding:28px; box-shadow: 0 25px 60px rgba(0,0,0,0.5);">
         <h3 id="modal_title" style="color:var(--text-main); font-size:1.25rem; font-weight:800; margin-bottom:20px; display:flex; align-items:center; gap:10px;">
-            <i class="fas fa-layer-group text-purple-500"></i> <span id="modal_title_text">Create Competitor Group</span>
+            <i class="fas fa-satellite-dish text-purple-500"></i> <span id="modal_title_text">Initialize Radar Cluster</span>
         </h3>
         
         <div style="margin-bottom:16px;">
-            <label style="display:block; font-size:0.8rem; font-weight:700; color:var(--text-main); margin-bottom:6px;">Group Name</label>
-            <input type="text" id="new_box_name" placeholder="e.g. Sports, Health, News" 
-                   style="width:100%; padding:12px 16px; background:rgba(255,255,255,0.05); border:1px solid var(--glass-border); border-radius:12px; color:var(--text-main); font-size:0.9rem; outline:none;"
+            <label style="display:block; font-size:0.8rem; font-weight:700; color:var(--text-main); margin-bottom:6px;">Cluster Title</label>
+            <input type="text" id="new_box_name" placeholder="e.g. Crypto Intel, Global News, Tech Pulse" 
+                   style="width:100% border:1px solid var(--glass-border); border-radius:12px; color:var(--text-main); font-size:0.9rem; outline:none; padding:12px 16px; background:rgba(255,255,255,0.05);"
                    onfocus="this.style.borderColor='#a855f7'" onblur="this.style.borderColor='var(--glass-border)'">
         </div>
         
@@ -154,7 +168,7 @@
             </button>
             <button type="button" id="modal_submit_btn" onclick="saveCustomBox()" 
                     style="padding:10px 24px; background:linear-gradient(135deg,#a855f7,#6366f1); border:none; border-radius:12px; color:white; font-weight:700; font-size:0.85rem; cursor:pointer; box-shadow:0 4px 15px rgba(168,85,247,0.3);">
-                <i class="fas fa-save"></i> <span id="modal_submit_text">Create</span>
+                <i class="fas fa-save"></i> <span id="modal_submit_text">Initialize</span>
             </button>
         </div>
     </div>
@@ -349,8 +363,8 @@
             container.innerHTML = `
                 <div class="text-center py-10 border border-dashed border-white/10 rounded-2xl">
                     <i class="fas fa-layer-group text-3xl text-purple-500/30 mb-3"></i>
-                    <p class="text-gray-500 text-sm font-bold">No custom groups yet</p>
-                    <p class="text-gray-600 text-xs mt-1">Click "New Group" to create topic-specific monitoring</p>
+                    <p class="text-gray-500 text-sm font-bold">No High-Active Intel Clusters found</p>
+                    <p class="text-gray-600 text-xs mt-1">Initialize customized clusters to track specific market segments with precision.</p>
                 </div>`;
             return;
         }

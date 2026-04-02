@@ -28,12 +28,106 @@
 
 <div x-data="keywordRadar()" x-init="init()" class="max-w-7xl mx-auto">
     <!-- Header Section -->
-    <div class="text-center mb-10">
-        <h1 class="text-4xl md:text-5xl font-black mb-2 flex items-center justify-center gap-4" style="color: var(--text-main);">
-            <i class="fas fa-satellite-dish text-primary-cyan animate-pulse"></i>
-            <span>AI Keyword Radar</span>
+    <div class="text-center mb-16 pt-10">
+        <div class="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-primary-cyan/10 border border-primary-cyan/20 text-primary-cyan text-xs font-bold mb-6 animate-pulse">
+            <i class="fas fa-satellite-dish"></i> RADAR SURVEILLANCE ACTIVE
+        </div>
+        <h1 class="text-6xl md:text-8xl font-black mb-6 tracking-tighter text-white" style="text-shadow: 0 0 30px rgba(0, 243, 255, 0.4); line-height: 1.1;">
+            KEYWORD <span style="color: var(--primary-cyan);">SPY RADAR</span>
         </h1>
-        <p class="text-lg font-medium" style="color: var(--text-muted);">Intelligence engine for emerging high-value keywords.</p>
+        <p class="text-xl md:text-2xl font-bold opacity-90 max-w-3xl mx-auto" style="color: var(--text-muted);">
+            Spot your next big win before everyone else.
+        </p>
+    </div>
+
+    <!-- Professional Keyword Surveillance Protocol (Redesigned) -->
+    <div class="glass-card mb-16 border-white/5 bg-[#0f172a]/60 backdrop-blur-xl overflow-hidden shadow-2xl shadow-primary-cyan/5">
+        <div class="p-6 md:p-10">
+            <!-- Sleek Header -->
+            <div class="flex flex-col md:flex-row items-start md:items-center justify-between gap-6 mb-10 border-b border-white/5 pb-8">
+                <div class="flex items-center gap-5">
+                    <div class="w-14 h-14 rounded-2xl bg-gradient-to-br from-primary-cyan/20 to-blue-500/5 flex items-center justify-center text-primary-cyan border border-primary-cyan/30 shadow-[0_0_20px_rgba(0,243,255,0.15)]">
+                        <i class="fas fa-satellite-dish text-2xl animate-pulse"></i>
+                    </div>
+                    <div>
+                        <div class="flex items-center gap-2 mb-1">
+                            <span class="text-[10px] font-black tracking-[0.2em] text-primary-cyan uppercase opacity-70">Extraction Protocol</span>
+                            <div class="w-2 h-2 rounded-full bg-primary-cyan animate-pulse"></div>
+                        </div>
+                        <h2 class="text-3xl md:text-4xl font-black text-white tracking-tight">
+                            Keyword <span class="bg-clip-text text-transparent bg-gradient-to-r from-primary-cyan to-blue-400">Surveillance</span>
+                        </h2>
+                    </div>
+                </div>
+                
+                <div class="flex items-center gap-8 pr-4">
+                    <div class="text-right">
+                        <span class="block text-[10px] font-black text-gray-500 uppercase tracking-widest mb-1">System Status</span>
+                        <span class="text-xs font-bold text-emerald-400 flex items-center gap-2 justify-end">
+                            <span class="w-1.5 h-1.5 rounded-full bg-emerald-400"></span> ACTIVE
+                        </span>
+                    </div>
+                    <div class="h-12 w-px bg-white/10 hidden md:block"></div>
+                    <div class="flex items-center gap-4 bg-white/5 px-6 py-3 rounded-2xl border border-white/10">
+                        <div class="text-right">
+                            <span class="block text-2xl font-black text-primary-cyan tabular-nums leading-none">12s</span>
+                            <span class="text-[9px] uppercase tracking-tighter text-gray-400 font-bold">Extraction Speed</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Compact 4-Column Grid -->
+            <div class="grid grid-cols-2 lg:grid-cols-4 gap-4 md:gap-6">
+                <!-- Module 01: Competitor Gaps -->
+                <div class="group p-5 md:p-6 rounded-2xl bg-white/[0.02] border border-white/5 hover:bg-white/[0.04] hover:border-primary-cyan/30 transition-all duration-300">
+                    <div class="flex items-center gap-3 mb-4">
+                        <div class="w-8 h-8 rounded-lg bg-primary-cyan/10 flex items-center justify-center text-primary-cyan text-sm group-hover:scale-110 transition-transform">
+                            <i class="fas fa-user-secret"></i>
+                        </div>
+                        <span class="text-[10px] font-black text-gray-500 tracking-wider">INTEL-01</span>
+                    </div>
+                    <h3 class="font-black text-white text-sm md:text-base mb-2 group-hover:text-primary-cyan transition-colors">Competitor Gaps</h3>
+                    <p class="text-[11px] text-gray-500 leading-relaxed line-clamp-2 italic">Dissect rival content footprints to move in first.</p>
+                </div>
+
+                <!-- Module 02: Trend Velocity -->
+                <div class="group p-5 md:p-6 rounded-2xl bg-white/[0.02] border border-white/5 hover:bg-white/[0.04] hover:border-purple-500/30 transition-all duration-300">
+                    <div class="flex items-center gap-3 mb-4">
+                        <div class="w-8 h-8 rounded-lg bg-purple-500/10 flex items-center justify-center text-purple-400 text-sm group-hover:scale-110 transition-transform">
+                            <i class="fas fa-chart-line"></i>
+                        </div>
+                        <span class="text-[10px] font-black text-gray-500 tracking-wider">INTEL-02</span>
+                    </div>
+                    <h3 class="font-black text-white text-sm md:text-base mb-2 group-hover:text-purple-400 transition-colors">Trend Velocity</h3>
+                    <p class="text-[11px] text-gray-500 leading-relaxed line-clamp-2 italic">Catch shifts in real-time before saturation.</p>
+                </div>
+
+                <!-- Module 03: Niche Intelligence -->
+                <div class="group p-5 md:p-6 rounded-2xl bg-white/[0.02] border border-white/5 hover:bg-white/[0.04] hover:border-emerald-500/30 transition-all duration-300">
+                    <div class="flex items-center gap-3 mb-4">
+                        <div class="w-8 h-8 rounded-lg bg-emerald-500/10 flex items-center justify-center text-emerald-400 text-sm group-hover:scale-110 transition-transform">
+                            <i class="fas fa-landmark"></i>
+                        </div>
+                        <span class="text-[10px] font-black text-gray-500 tracking-wider">INTEL-03</span>
+                    </div>
+                    <h3 class="font-black text-white text-sm md:text-base mb-2 group-hover:text-emerald-400 transition-colors">Niche Intelligence</h3>
+                    <p class="text-[11px] text-gray-500 leading-relaxed line-clamp-2 italic">Map underlying sub-topic silos automatically.</p>
+                </div>
+
+                <!-- Module 04: Pulse Detection -->
+                <div class="group p-5 md:p-6 rounded-2xl bg-white/[0.02] border border-white/5 hover:bg-white/[0.04] hover:border-orange-500/30 transition-all duration-300">
+                    <div class="flex items-center gap-3 mb-4">
+                        <div class="w-8 h-8 rounded-lg bg-orange-500/10 flex items-center justify-center text-orange-400 text-sm group-hover:scale-110 transition-transform">
+                            <i class="fas fa-wave-square"></i>
+                        </div>
+                        <span class="text-[10px] font-black text-gray-500 tracking-wider">INTEL-04</span>
+                    </div>
+                    <h3 class="font-black text-white text-sm md:text-base mb-2 group-hover:text-orange-400 transition-colors">Pulse Detection</h3>
+                    <p class="text-[11px] text-gray-500 leading-relaxed line-clamp-2 italic">Identify 0-day opportunities from news feeds.</p>
+                </div>
+            </div>
+        </div>
     </div>
 
     @if(session('success'))
@@ -89,6 +183,14 @@
             @endforeach
         </div>
     @endif
+
+    <!-- Footer Action -->
+    <div class="mt-16 mb-20 flex justify-center">
+        <a href="{{ route('dashboard.ai-keyword-radar.settings') }}" class="px-8 py-4 bg-white/5 border border-white/10 text-gray-400 font-bold rounded-2xl hover:border-primary-cyan/50 hover:text-white transition-all flex items-center gap-3">
+            <i class="fas fa-cog"></i>
+            Radar Settings
+        </a>
+    </div>
 </div>
 
 @push('scripts')
@@ -185,7 +287,7 @@ function keywordRadar() {
                 
                 // Job dispatched to background — show toast and start polling
                 Swal.fire({
-                    title: '🔄 Sync Running',
+                    title: '📡 Radar Scanning',
                     text: data.message,
                     icon: 'info',
                     toast: true,
@@ -207,8 +309,8 @@ function keywordRadar() {
                 this.loading[prop] = false;
                 console.error('[Sync Error]', error);
                 Swal.fire({
-                    title: 'Sync Error',
-                    text: error.message || 'Failed to start sync. Please try again.',
+                    title: 'Radar Error',
+                    text: error.message || 'Failed to initialize radar scanning.',
                     icon: 'error',
                     background: '#0f172a',
                     color: '#fff',
@@ -229,8 +331,8 @@ function keywordRadar() {
                 if (pollCount > maxPolls) {
                     this.loading[prop] = false;
                     Swal.fire({
-                        title: 'Sync Timeout',
-                        text: 'Sync is taking longer than expected. Please refresh the page in a few minutes.',
+                        title: 'Radar Timeout',
+                        text: 'Intelligence scan is taking longer than usual. Please refresh shortly.',
                         icon: 'warning',
                         background: '#0f172a',
                         color: '#fff',
@@ -253,8 +355,8 @@ function keywordRadar() {
                             this.loading[prop] = false;
                             const added = newCount - initialCount;
                             await Swal.fire({
-                                title: `✅ ${added} New Keywords!`,
-                                text: `Sync complete. Found ${added} new keywords. Reloading...`,
+                                title: `🎯 ${added} New Leads!`,
+                                text: `Intelligence update complete. Found ${added} high-value keywords.`,
                                 icon: 'success',
                                 timer: 3500,
                                 timerProgressBar: true,
@@ -271,8 +373,8 @@ function keywordRadar() {
                         if (!syncRunning && pollCount > 1) { 
                             this.loading[prop] = false;
                             Swal.fire({
-                                title: 'Sync Finished',
-                                text: 'No new keywords found in the selected time range.',
+                                title: 'Insight Update Complete',
+                                text: 'No new market shifts detected in the selected timeframe.',
                                 icon: 'info',
                                 timer: 3000,
                                 timerProgressBar: true,
