@@ -74,6 +74,17 @@ class HorizonController extends Controller
             $settings['available_topics'] = Setting::get("{$slug}_available_topics", "GENERAL:أخبار عامة\nWORLD:عالمية\nNATION:محلية\nBUSINESS:أعمال\nTECHNOLOGY:تكنولوجيا\nENTERTAINMENT:ترفيه\nSPORTS:رياضة\nSCIENCE:علوم\nHEALTH:صحة");
         }
 
+        // Specific settings for Discover Headlines
+        if ($slug === 'discover-headlines') {
+            $settings['suggestions_prompt'] = Setting::get("{$slug}_suggestions_prompt", '');
+            $settings['min_chars'] = Setting::get("{$slug}_min_chars", 55);
+            $settings['max_chars'] = Setting::get("{$slug}_max_chars", 85);
+            $settings['power_words'] = Setting::get("{$slug}_power_words", "يكشف, يفاجئ, يُعلن, يحسم, يتراجع, يصدر, عاجل, حصري, حقيقة, سر, رسمياً");
+            $settings['rss_region'] = Setting::get("{$slug}_rss_region", 'EG');
+            $settings['rss_time_window'] = Setting::get("{$slug}_rss_time_window", '12h');
+            $settings['cache_ttl'] = Setting::get("{$slug}_cache_ttl", 1800);
+        }
+
         $fromDate = request('from_date', now()->subDays(30)->toDateString());
         $toDate = request('to_date', now()->toDateString());
 
@@ -218,6 +229,34 @@ class HorizonController extends Controller
                 foreach (['GENERAL','WORLD','NATION','BUSINESS','TECHNOLOGY','ENTERTAINMENT','SPORTS','SCIENCE','HEALTH'] as $tp) {
                     \Illuminate\Support\Facades\Cache::forget("google_news_radar_{{$cc}}_{$tp}");
                 }
+            }
+        }
+
+        if ($slug === 'discover-headlines') {
+            if ($request->has('suggestions_prompt')) {
+                Setting::set("{$slug}_suggestions_prompt", $request->suggestions_prompt, 'textarea', 'tool_settings');
+            }
+            if ($request->has('min_chars')) {
+                Setting::set("{$slug}_min_chars", $request->min_chars, 'number', 'tool_settings');
+            }
+            if ($request->has('max_chars')) {
+                Setting::set("{$slug}_max_chars", $request->max_chars, 'number', 'tool_settings');
+            }
+            if ($request->has('power_words')) {
+                Setting::set("{$slug}_power_words", $request->power_words, 'textarea', 'tool_settings');
+            }
+            if ($request->has('rss_region')) {
+                Setting::set("{$slug}_rss_region", $request->rss_region, 'text', 'tool_settings');
+            }
+            if ($request->has('rss_time_window')) {
+                Setting::set("{$slug}_rss_time_window", $request->rss_time_window, 'text', 'tool_settings');
+            }
+            if ($request->has('cache_ttl')) {
+                Setting::set("{$slug}_cache_ttl", $request->cache_ttl, 'number', 'tool_settings');
+            }
+            
+            if ($request->has('is_active')) {
+                Setting::set("tool_available_{$slug}", $request->is_active == '1', 'boolean', 'tool_settings');
             }
         }
 

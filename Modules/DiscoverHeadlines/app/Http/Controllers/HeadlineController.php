@@ -156,9 +156,9 @@ class HeadlineController extends Controller
             }
 
             // 3. Call AI Proxy (VidaNexus AIManager)
-            $dbProvider = Setting::where('key', 'discover-headlines_provider')->first()?->value ?? 'openrouter';
-            $dbModel = Setting::where('key', 'discover-headlines_model')->first()?->value ?? 'google/gemini-2.0-flash-001';
-            $dbPrompt = Setting::where('key', 'discover-headlines_prompt')->first()?->value;
+            $dbProvider = Setting::get("discover-headlines_provider", 'openrouter');
+            $dbModel = Setting::get("discover-headlines_model", 'google/gemini-2.0-flash-001');
+            $dbPrompt = Setting::get("discover-headlines_prompt");
 
             if ($dbPrompt) {
                 $finalPrompt = str_replace(
@@ -172,11 +172,19 @@ class HeadlineController extends Controller
                 $finalPrompt = $prompt;
             }
 
-            $aiResponse = $this->aiManager->generate('discover-headlines', $finalPrompt, [
+            // AI Routing Chain
+            $aiChain = Setting::get("discover-headlines_ai_chain", []);
+            $aiConfig = [
                 'provider' => $dbProvider,
                 'model' => $dbModel,
                 'temperature' => 0.8,
-            ]);
+            ];
+
+            if (!empty($aiChain)) {
+                $aiConfig['chain'] = $aiChain;
+            }
+
+            $aiResponse = $this->aiManager->generate('discover-headlines', $finalPrompt, $aiConfig);
 
             $generatedText = $aiResponse['text'];
             
@@ -207,7 +215,6 @@ class HeadlineController extends Controller
                             'entities' => $item['entities'] ?? $item['keywords'] ?? [],
                             'lsi_keywords' => $item['lsi_keywords'] ?? $item['lsi'] ?? [],
                             'thumbnail_suggestion' => $item['thumbnail_suggestion'] ?? $item['thumbnail'] ?? $item['visual_angle'] ?? $item['image_logic'] ?? '',
-                            'schema_type' => $item['schema_type'] ?? 'NewsArticle'
                         ];
                     }
                 }
@@ -223,7 +230,6 @@ class HeadlineController extends Controller
                         'entities' => [],
                         'lsi_keywords' => [],
                         'thumbnail_suggestion' => '',
-                        'schema_type' => 'NewsArticle'
                     ];
                 }
             }
@@ -323,7 +329,12 @@ class HeadlineController extends Controller
 
         // Tiered Strategy: Google News RSS (Staged by time for maximum relevance)
         $tempContext = "";
-        $windows = ['when:24h', 'when:7d', 'when:30d', 'broad'];
+        $configuredWindow = Setting::get("discover-headlines_rss_time_window", '12h');
+        
+        // Build windows: prioritized start with configured window, then fall back to broader ones
+        $windows = ["when:{$configuredWindow}", 'when:24h', 'when:7d', 'when:30d', 'broad'];
+        // Remove duplicates if configured window is already in the list
+        $windows = array_values(array_unique($windows));
         
         foreach ($windows as $window) {
             $timeParam = ($window === 'broad') ? "" : " " . $window;
@@ -360,7 +371,8 @@ class HeadlineController extends Controller
 
         $context = $tempContext;
         if (!empty($context)) {
-            Cache::put($cacheKey, $context, 1800);
+            $ttl = Setting::get("discover-headlines_cache_ttl", 1800);
+            Cache::put($cacheKey, $context, (int) $ttl);
             return $context;
         }
         
@@ -386,11 +398,15 @@ class HeadlineController extends Controller
             $feedback = [];
             $len = mb_strlen($headline);
 
-            // 1. Length (55-85)
-            if ($len >= 55 && $len <= 85) {
+            // 1. Length (Dynamic limits from Admin)
+            $minChars = (int) Setting::get("discover-headlines_min_chars", 55);
+            $maxChars = (int) Setting::get("discover-headlines_max_chars", 85);
+            $margin = 15; // Info range margin
+
+            if ($len >= $minChars && $len <= $maxChars) {
                 $score += 20;
                 $feedback[] = ['type' => 'success', 'text' => 'Ideal Discover Length (' . $len . ' chars)'];
-            } elseif ($len >= 45 && $len <= 100) {
+            } elseif ($len >= ($minChars - $margin) && $len <= ($maxChars + $margin)) {
                 $score += 10;
                 $feedback[] = ['type' => 'info', 'text' => 'Acceptable Length'];
             } else {
@@ -444,13 +460,16 @@ class HeadlineController extends Controller
                 $feedback[] = ['type' => 'success', 'text' => 'High-Engagement Sentiment'];
             }
 
-            // 4. Power Words
-            $powerWords = ['يكشف', 'يفاجئ', 'يُعلن', 'يحسم', 'يتراجع', 'يصدر', 'عاجل', 'حصري', 'حقيقة', 'سر', 'رسمياً', 'reveals', 'surprises', 'announces', 'declares', 'drops', 'issues', 'urgent', 'exclusive', 'truth', 'secret', 'officially'];
+            // 4. Power Words (Dynamic list from Admin)
+            $powerWordsRaw = Setting::get("discover-headlines_power_words", "يكشف, يفاجئ, يُعلن, يحسم, يتراجع, يصدر, عاجل, حصري, حقيقة, سر, رسمياً");
+            $powerWords = array_map('trim', explode(',', $powerWordsRaw));
+
             foreach ($powerWords as $word) {
+                if (empty($word)) continue;
                 if (mb_stripos($headline, $word) !== false) {
                     $score += 5;
                     $feedback[] = ['type' => 'success', 'text' => 'Action Verb: ' . $word];
-                    break;
+                    break; // Only award once
                 }
             }
 
@@ -564,7 +583,6 @@ class HeadlineController extends Controller
                     'entities' => ['Entity1', 'Entity2'],
                     'lsi_keywords' => ['keyword1', 'keyword2'],
                     'thumbnail_suggestion' => 'Description of the perfect complementary image',
-                    'schema_type' => 'NewsArticle/BlogPosting/Review'
                 ]
             ]
         ];

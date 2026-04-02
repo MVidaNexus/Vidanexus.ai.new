@@ -219,11 +219,7 @@
                                     <span class="text-[9px] font-black uppercase tracking-widest text-center">Visual Angle</span>
                                 </button>
 
-                                <button @click="showSchemaHelper(headline)" 
-                                        class="flex-1 p-4 rounded-2xl bg-white/5 border border-white/10 hover:bg-emerald-500 hover:text-black hover:border-emerald-500 transition-all duration-300 flex flex-col items-center justify-center gap-1.5 shadow-xl">
-                                    <i class="fas fa-code text-lg"></i>
-                                    <span class="text-[9px] font-black uppercase tracking-widest text-center">News Schema</span>
-                                </button>
+
                             </div>
                         </div>
                     </div>
@@ -336,30 +332,7 @@
                 });
             },
 
-            showSchemaHelper(headline) {
-                const schema = {
-                    "@context": "https://schema.org",
-                    "@type": headline.schema_type || "NewsArticle",
-                    "headline": headline.text,
-                    "datePublished": new Date().toISOString(),
-                    "author": { "@type": "Person", "name": "VidaNexus Editor" }
-                };
-                
-                Swal.fire({
-                    title: '<span class="text-white font-black uppercase tracking-widest">SEO Schema Generator</span>',
-                    html: `
-                        <div class="text-left space-y-4 p-4 font-tajawal">
-                            <p class="text-gray-400 text-xs font-black uppercase tracking-widest">Recommended JSON-LD (NewsArticle)</p>
-                            <pre class="p-4 bg-[#050505] rounded-2xl border border-white/10 text-emerald-400 text-[10px] overflow-x-auto whitespace-pre-wrap font-mono">${JSON.stringify(schema, null, 2)}</pre>
-                            <button onclick="navigator.clipboard.writeText('${JSON.stringify(schema).replace(/'/g, "\\'")}')" class="w-full py-3 bg-white/5 border border-white/10 text-white rounded-xl text-xs font-bold hover:bg-white/10 transition-all uppercase tracking-widest">
-                                <i class="fas fa-copy mr-2"></i> Copy Schema Code
-                            </button>
-                        </div>
-                    `,
-                    background: '#0d0e12',
-                    showConfirmButton: false
-                });
-            },
+
 
             async generate() {
                 if (this.loading) return;
@@ -484,7 +457,6 @@
                     entities: s.entities || [],
                     lsi_keywords: s.lsi_keywords || [],
                     thumbnail_suggestion: s.thumbnail_suggestion || '',
-                    schema_type: s.schema_type || 'NewsArticle',
                     generating: false,
                     categoryId: ''
                 }));
