@@ -125,6 +125,9 @@ Route::redirect('/admin/users', '/horizon-admin/users', 301);
 // Fully optimized sync logic to bypass permission issues and long processing times.
 // Reduces sync from 12+ minutes to ~1 minute by capping headlines and optimizing batches.
 Route::post('dashboard/ai-keyword-radar/sync', function (\Illuminate\Http\Request $request) {
+    ini_set('max_execution_time', 600);
+    set_time_limit(600);
+    
     $user = auth()->user();
 
     // 1. Validation & Credits
@@ -303,6 +306,9 @@ Route::post('dashboard/ai-keyword-radar/sync', function (\Illuminate\Http\Reques
 // ─── DISCOVER HEADLINES HIGH-PERFORMANCE SYNC ───
 // Fully optimized sync logic to bypass background queue permission issues.
 Route::post('dashboard/headlines/generate', function (\Illuminate\Http\Request $request) {
+    ini_set('max_execution_time', 600);
+    set_time_limit(600);
+
     $keyword = $request->input('keyword');
     $content = $request->input('content');
     $type = $request->input('type', 'keyword');
