@@ -21,12 +21,18 @@ class GlobalNewsMonitorController extends Controller
         $isAjax = $request->ajax();
         
         // Professional Dynamic Filters from Settings & Config
+        // Always generate the canonical list from config('keywords.countries') as the fallback
         $defaultFallbackMap = config('keywords.countries', []);
         $fallbackText = [];
         foreach($defaultFallbackMap as $code => $data) {
-            $fallbackText[] = $code . ':' . $data['name'] . ' ' . $data['flag'];
+            $fallbackText[] = $code . ':' . $data['name'] . ' ' . ($data['flag'] ?? '🌐');
         }
-        $availableCountriesText = \App\Models\Setting::get('global-news-monitor_available_countries', implode("\n", $fallbackText));
+        $configDefault = implode("\n", $fallbackText);
+        $availableCountriesText = \App\Models\Setting::get('global-news-monitor_available_countries', '');
+        // If setting is empty/missing, use the canonical config list
+        if (empty(trim($availableCountriesText))) {
+            $availableCountriesText = $configDefault;
+        }
         $activeCountriesRaw = \App\Models\Setting::get('global-news-monitor_countries', '[]');
         $activeCountries = is_array($activeCountriesRaw) ? $activeCountriesRaw : json_decode($activeCountriesRaw, true);
         

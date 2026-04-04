@@ -9,215 +9,109 @@ use Illuminate\Support\Facades\Cache;
 class NewsMonitorService
 {
     /**
-     * Fetch News from Google News RSS
+     * Fetch News from Google News RSS — Direct Pull, No Keyword Filtering
+     * Pulls from multiple Google News RSS endpoints for maximum coverage
      */
     public function fetchGoogleNews($country = 'EG', $topic = 'WORLD', $lang = 'ar', $timeWindow = '12h', $countryName = '')
     {
         $country = strtoupper($country);
         $topic = strtoupper($topic);
-        
-        // Topic to Search Query Mapping (High-Precision synonyms)
-        $isArabic = ($lang === 'ar');
-        
-        $topicQueries = $isArabic ? [
-            'WORLD' => 'أخبار العالم OR دولية OR "أحداث عالمية" OR "عاجل دولي" OR دبلوماسية',
-            'NATION' => 'أخبار محلية OR عاجل OR حوادث OR "أخبار الوطن"',
-            'BUSINESS' => 'اقتصاد OR أعمال OR شركات OR استثمار OR أسواق OR بنوك',
-            'TECHNOLOGY' => 'تكنولوجيا OR تقنية OR ذكاء اصطناعي OR تطبيقات OR آبل OR جوجل OR مايكروسوفت',
-            'ENTERTAINMENT' => 'فن OR مشاهير OR سينما OR أفلام OR مسلسلات OR نجوم',
-            'SPORTS' => 'رياضة OR كورة OR دوري أبطال OR مباريات OR أهداف OR فيفا',
-            'SCIENCE' => 'علوم OR فضاء OR اكتشافات OR ناسا OR بحث علمي',
-            'HEALTH' => 'صحة OR طب OR طبيب OR أمراض OR علاج OR رعاية صحية',
-        ] : [
-            'WORLD' => 'World News OR International OR Global Events OR Breaking News OR Diplomacy',
-            'NATION' => 'Local News OR National OR Breaking OR Home News',
-            'BUSINESS' => 'Business OR Economy OR Markets OR Finance OR Investing OR Startup OR Banking',
-            'TECHNOLOGY' => 'Technology OR Tech OR AI OR Artificial Intelligence OR Software OR Apple OR Google OR Microsoft',
-            'ENTERTAINMENT' => 'Entertainment OR Movies OR Celebrity OR Music OR Cinema OR TV Shows OR Netflix',
-            'SPORTS' => 'Sports OR Football OR Soccer OR NBA OR Premier League OR Champions League OR Match',
-            'SCIENCE' => 'Science OR Research OR Space OR Discovery OR Environment OR NASA',
-            'HEALTH' => 'Health OR Medicine OR Wellness OR Hospitals OR Treatment OR Medical News',
-        ];
-        
-        $hasTranslation = in_array($lang, ['ar', 'en']);
 
-        // Cross-Category Inhibition Map (Hard blocks for specific sections)
-        $inhibitionKeywords = $isArabic ? [
-            'ENTERTAINMENT' => ['مباراة', 'دوري', 'كورة', 'هدف', 'مدرب', 'لاعب', 'نادي'],
-            'TECHNOLOGY' => ['وزير', 'رئيس', 'مقتل', 'جريمة', 'حرب', 'اعتقال'],
-            'BUSINESS' => ['مهرجان', 'حفلة', 'فيلم', 'مسلسل', 'مباراة'],
-        ] : [
-            'ENTERTAINMENT' => ['match', 'league', 'score', 'football', 'soccer', 'nba', 'player', 'team'],
-            'TECHNOLOGY' => ['minister', 'president', 'police', 'crime', 'murder', 'war', 'killed'],
-            'BUSINESS' => ['entertainment', 'concert', 'movie', 'actor', 'football'],
-        ];
-
-        // High-Ambiguity Terms (Penalty unless verified)
-        $ambiguityTerms = $isArabic 
-            ? ['نجوم', 'بطل', 'أسطورة', 'ملك', 'ملكة', 'نمو', 'تراجع']
-            : ['stars', 'hero', 'legend', 'king', 'queen'];
-
-        // Geography Database for Isolation (Radical Strictness)
-        $geoDb = [
-            'EG' => ['name' => 'مصر', 'cities' => ['القاهرة', 'الإسكندرية', 'الجيزة']],
-            'SA' => ['name' => 'السعودية', 'cities' => ['الرياض', 'جدة', 'مكة', 'المدينة']],
-            'AE' => ['name' => 'الإمارات', 'cities' => ['دبي', 'أبوظبي', 'الشارقة']],
-            'DZ' => ['name' => 'الجزائر', 'cities' => ['الجزائر', 'وهران', 'قسنطينة']],
-            'MA' => ['name' => 'المغرب', 'cities' => ['الرباط', 'الدار البيضاء', 'مراكش']],
-            'LY' => ['name' => 'ليبيا', 'cities' => ['طرابلس', 'بنغازي']],
-            'TN' => ['name' => 'تونس', 'cities' => ['تونس العاصمة', 'سوسة']],
-            'PS' => ['name' => 'فلسطين', 'cities' => ['غزة', 'القدس', 'رام الله']],
-            'LB' => ['name' => 'لبنان', 'cities' => ['بيروت', 'طرابلس']],
-            'SY' => ['name' => 'سوريا', 'cities' => ['دمشق', 'حلب']],
-            'JO' => ['name' => 'الأردن', 'cities' => ['عمان', 'إربد']],
-            'IQ' => ['name' => 'العراق', 'cities' => ['بغداد', 'البصرة', 'الموصل']],
-            'KW' => ['name' => 'الكويت', 'cities' => ['الكويت العاصمة']],
-            'QA' => ['name' => 'قطر', 'cities' => ['الدوحة']],
-            'BH' => ['name' => 'البحرين', 'cities' => ['المنامة']],
-            'OM' => ['name' => 'عمان', 'cities' => ['مسقط', 'صلالة']],
-            'YE' => ['name' => 'اليمن', 'cities' => ['صنعاء', 'عدن', 'المكلا']],
-            'US' => ['name' => 'USA', 'cities' => ['New York', 'Washington', 'California', 'Texas', 'Florida', 'Chicago', 'America']],
-            'GB' => ['name' => 'UK', 'cities' => ['London', 'Manchester', 'United Kingdom', 'England', 'Birmingham']],
-            'FR' => ['name' => 'France', 'cities' => ['Paris', 'Lyon', 'Marseille', 'French']],
-            'PL' => ['name' => 'Poland', 'cities' => ['Warsaw', 'Krakow', 'Lodz', 'Wroclaw', 'Poznan', 'Gdansk']],
-        ];
-
-        $targetCountry = $geoDb[$country] ?? ['name' => $countryName, 'cities' => []];
-        $allArabicCountries = array_column($geoDb, 'name');
-        $blacklistCountries = array_diff($allArabicCountries, [$targetCountry['name']]);
-
-        $searchQuery = $topicQueries[$topic] ?? $topic;
         $rawNews = [];
         
-        // Strategy 1: Topic-Specific Headlines (Official Categorical RSS)
-        if ($topic === 'GENERAL') {
+        // Source 1: Direct Topic RSS from Google News (Primary — most relevant)
+        if ($topic === 'GENERAL' || $topic === 'TOP_STORIES') {
             $urlTopic = "https://news.google.com/rss?hl={$lang}&gl={$country}&ceid={$country}:{$lang}";
         } else {
             $urlTopic = "https://news.google.com/rss/headlines/section/topic/{$topic}?hl={$lang}&gl={$country}&ceid={$country}:{$lang}";
         }
         $rawNews = $this->fetchFromUrl($urlTopic, $rawNews);
 
-        // Strategy 2: Keyword-Based Search (with Tiered Time Windows & Soft Geo-Anchoring)
-        // Skip keyword search for unsupported languages (like Polish) to prevent zero-results from English keyword injection.
-        if ($hasTranslation) {
-            $windows = [$timeWindow, '24h', '48h', '7d'];
-            foreach ($windows as $window) {
-                $geoPrefix = !empty($targetCountry['name']) ? "{$targetCountry['name']} " : "";
-                $cleanGeoPrefix = preg_replace('/[\x{1F1E6}-\x{1F1FF}]{2}/u', '', $geoPrefix);
-                $urlSearch = "https://news.google.com/rss/search?q=" . urlencode(trim($cleanGeoPrefix) . " ({$searchQuery}) when:{$window}") . "&hl={$lang}&gl={$country}&ceid={$country}:{$lang}";
-                $rawNews = $this->fetchFromUrl($urlSearch, $rawNews);
-                if (count($rawNews) >= 60) break;
-            }
-        }
-
-        // Strategy 3: RADICAL CROSS-CATEGORY VALIDATION
-        $validatedNews = [];
-        $topicKeywords = array_map(function($k) {
-            return mb_strtolower(trim(str_replace(['(', ')', '"'], '', $k)));
-        }, explode(' OR ', $topicQueries[$topic] ?? ''));
-
-        $blockKeywords = $inhibitionKeywords[$topic] ?? [];
+        // Source 2: Search RSS using topic name directly (Google's own classification)
+        $topicSearchTerms = [
+            'WORLD' => ['ar' => ['أخبار عالمية', 'أخبار دولية', 'أحداث عاجلة'], 'en' => ['world news', 'international news', 'global events'], 'pl' => ['wiadomości ze świata']],
+            'NATION' => ['ar' => ['أخبار محلية', 'أخبار اليوم', 'حوادث'], 'en' => ['local news', 'national news', 'breaking news'], 'pl' => ['wiadomości krajowe']],
+            'BUSINESS' => ['ar' => ['اقتصاد', 'أسواق مال', 'بورصة', 'استثمار'], 'en' => ['business news', 'economy', 'stock market', 'finance'], 'pl' => ['biznes']],
+            'TECHNOLOGY' => ['ar' => ['تكنولوجيا', 'تقنية', 'ذكاء اصطناعي', 'هواتف'], 'en' => ['technology', 'tech news', 'AI', 'smartphones'], 'pl' => ['technologia']],
+            'ENTERTAINMENT' => ['ar' => ['فن وترفيه', 'مشاهير', 'سينما', 'دراما', 'أفلام', 'مسلسلات', 'نجوم الفن', 'حفلات'], 'en' => ['entertainment', 'movies', 'celebrities', 'TV shows', 'Netflix', 'music'], 'pl' => ['rozrywka']],
+            'SPORTS' => ['ar' => ['رياضة', 'كرة قدم', 'دوري', 'مباريات اليوم'], 'en' => ['sports', 'football', 'soccer', 'NBA'], 'pl' => ['sport']],
+            'SCIENCE' => ['ar' => ['علوم', 'فضاء', 'اكتشافات علمية', 'بيئة'], 'en' => ['science', 'space', 'environment', 'research'], 'pl' => ['nauka']],
+            'HEALTH' => ['ar' => ['صحة', 'طب', 'أدوية', 'مستشفيات'], 'en' => ['health', 'medicine', 'hospitals', 'wellness'], 'pl' => ['zdrowie']],
+        ];
         
-        foreach ($rawNews as $link => $item) {
-            $geoScore = 0;
-            $topicalScore = 0;
-            $titleText = mb_strtolower($item['title']);
-            $descText = mb_strtolower($item['description']);
-            $fullText = $titleText . ' ' . $descText;
-            
-            // 1. Geographic Check
-            $cleanTargetName = preg_replace('/[\x{1F1E6}-\x{1F1FF}]{2}/u', '', $targetCountry['name']);
-            if (!empty($cleanTargetName) && str_contains($fullText, mb_strtolower(trim($cleanTargetName)))) {
-                $geoScore += 15;
-            }
-            foreach ($targetCountry['cities'] as $city) {
-                if (str_contains($fullText, mb_strtolower($city))) {
-                    $geoScore += 10;
-                }
-            }
-            
-            // 2. Cross-Category INHIBITION (Hard Block)
-            foreach ($blockKeywords as $block) {
-                if (str_contains($fullText, $block)) {
-                    // Critical Leak Detection: If matching a block word from a competing niche, discard immediately.
-                    continue 2; 
-                }
-            }
+        $searchTerms = $topicSearchTerms[$topic][$lang] ?? $topicSearchTerms[$topic]['en'] ?? [$topic];
+        
+        // Search using primary term
+        $urlSearch = "https://news.google.com/rss/search?q=" . urlencode($searchTerms[0]) . "&hl={$lang}&gl={$country}&ceid={$country}:{$lang}";
+        $rawNews = $this->fetchFromUrl($urlSearch, $rawNews);
 
-            // 3. Ambiguity Resolution
-            $ambiguityDetected = false;
-            foreach ($ambiguityTerms as $term) {
-                if (str_contains($fullText, $term)) {
-                    $ambiguityDetected = true;
-                    break;
-                }
+        // Source 3: General top stories (fills remaining slots with fresh news from same country)
+        $urlGeneral = "https://news.google.com/rss?hl={$lang}&gl={$country}&ceid={$country}:{$lang}";
+        $rawNews = $this->fetchFromUrl($urlGeneral, $rawNews);
+
+        // Source 4: Additional search terms to fill low-volume topics
+        if (count($rawNews) < 80) {
+            foreach (array_slice($searchTerms, 1) as $altTerm) {
+                $urlAlt = "https://news.google.com/rss/search?q=" . urlencode($altTerm) . "&hl={$lang}&gl={$country}&ceid={$country}:{$lang}";
+                $rawNews = $this->fetchFromUrl($urlAlt, $rawNews);
+                if (count($rawNews) >= 100) break;
             }
-
-            // 4. ULTRA-STRICT MANDATORY TOPICAL CHECK
-            $isSpecialized = !in_array($topic, ['WORLD', 'NATION']);
-            $hasPrimaryQualifier = false;
-
-            foreach ($topicKeywords as $kw) {
-                if (str_contains($titleText, $kw)) {
-                    // Only count as primary if it's not a generic ambiguity term
-                    if (!in_array($kw, $ambiguityTerms)) {
-                        $hasPrimaryQualifier = true;
-                        $topicalScore += 25;
-                    } else {
-                        $topicalScore += 5; // Weak match
-                    }
-                } elseif (str_contains($descText, $kw)) {
-                    $topicalScore += 5;
-                }
-            }
-
-            // --- RADICAL ACCURACY POLICY ---
-            // Only apply strict policy if we have a translation dictionary for this language
-            if ($hasTranslation) {
-                if ($isSpecialized) {
-                    // Specialized category MUST have at least one UNAMBIGUOUS primary qualifier in the Title
-                    if (!$hasPrimaryQualifier) {
-                        continue; 
-                    }
-                    // Penalty for general noise (Politics) in Tech/Entertainment/Health
-                    $noiseKeywords = $isArabic ? ['وزير', 'رئيس', 'حكومة'] : ['minister', 'president', 'government'];
-                    foreach ($noiseKeywords as $noise) {
-                        if (str_contains($fullText, $noise)) {
-                            $topicalScore -= 20;
-                        }
-                    }
-                    
-                    if ($topicalScore < 15) {
-                        continue;
-                    }
-                }
-                
-                if (($geoScore + $topicalScore) < 5 && $topic !== 'WORLD') {
-                    continue;
-                }
-            }
-
-            $validatedNews[] = $item;
         }
 
-        // Final Sort from newest to oldest based on pubDate
-        usort($validatedNews, function($a, $b) {
+        // Source 5: NATION subtopic as fallback for WORLD (they overlap heavily)
+        if (count($rawNews) < 60 && $topic === 'WORLD') {
+            $urlNation = "https://news.google.com/rss/headlines/section/topic/NATION?hl={$lang}&gl={$country}&ceid={$country}:{$lang}";
+            $rawNews = $this->fetchFromUrl($urlNation, $rawNews);
+        }
+
+        // Freshness Filter: Only keep articles within the configured time window
+        // Use at least 24h to ensure enough articles
+        $maxAge = max($this->parseTimeWindow($timeWindow), 86400); // minimum 24h
+        $cutoffTime = time() - $maxAge;
+
+        $freshNews = [];
+        foreach ($rawNews as $link => $item) {
+            $pubTime = strtotime($item['pubDate']);
+            if ($pubTime && $pubTime >= $cutoffTime) {
+                $freshNews[] = $item;
+            }
+        }
+
+        // Sort from newest to oldest
+        usort($freshNews, function($a, $b) {
             return strtotime($b['pubDate']) <=> strtotime($a['pubDate']);
         });
 
-        // Final Deduplication by Title
+        // Deduplication by Title
         $seenTitles = [];
         $finalNews = [];
-        foreach ($validatedNews as $item) {
+        foreach ($freshNews as $item) {
             $titleKey = mb_strtolower(preg_replace('/\s+/', '', $item['title']));
             if (!in_array($titleKey, $seenTitles)) {
                 $seenTitles[] = $titleKey;
                 $finalNews[] = $item;
             }
-            if (count($finalNews) >= 60) break;
+            if (count($finalNews) >= 100) break;
         }
 
         return $finalNews;
+    }
+
+    /**
+     * Parse time window string to seconds
+     */
+    protected function parseTimeWindow($window)
+    {
+        $map = [
+            '1h' => 3600,
+            '3h' => 10800,
+            '6h' => 21600,
+            '12h' => 43200,
+            '24h' => 86400,
+            '48h' => 172800,
+            '7d' => 604800,
+        ];
+        return $map[$window] ?? 43200; // Default 12h
     }
 
     /**

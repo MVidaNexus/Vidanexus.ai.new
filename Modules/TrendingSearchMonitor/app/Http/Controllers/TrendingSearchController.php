@@ -29,11 +29,12 @@ class TrendingSearchController extends Controller
         }
 
         // Apply Country Whitelist if Admin configured it
+        // When empty, generate the canonical list from config('keywords.countries') — same source as News Monitor
         if (!empty($settings['available_countries'])) {
             $countryMap = [];
             foreach(explode("\n", trim($settings['available_countries'])) as $line) {
                 $parts = explode(':', trim($line));
-                if(count($parts) === 2) {
+                if(count($parts) >= 2) {
                     $code = strtoupper(trim($parts[0]));
                     $nameStr = trim($parts[1]);
                     
@@ -60,6 +61,7 @@ class TrendingSearchController extends Controller
                 }
             }
         }
+        // If countryMap is still the full config (no admin override), it's already correct
         
         $activeCountries = json_decode($settings['countries'] ?? 'null', true);
         if (is_array($activeCountries) && count($activeCountries) > 0) {
@@ -362,6 +364,7 @@ class TrendingSearchController extends Controller
     }
     /**
      * Fetch Trends from X (Twitter) via Trends24 Mirror
+     * Falls back to Google Trends RSS if Trends24 doesn't support the country
      */
     protected function fetchXTrends($region, $countryName, $forceRefresh = false, $maxTrends = 50)
     {
@@ -369,75 +372,109 @@ class TrendingSearchController extends Controller
         if ($forceRefresh) Cache::forget($cacheKey);
 
         $trends = Cache::remember($cacheKey, 300, function () use ($region, $countryName, $maxTrends) {
-            $slug = str_replace(' ', '-', strtolower($countryName));
-            // Special mappings for country slugs
-            $map = [
-                'EG' => 'egypt', 'SA' => 'saudi-arabia', 'AE' => 'united-arab-emirates',
-                'US' => 'united-states', 'GB' => 'united-kingdom', 'KW' => 'kuwait',
-                'QA' => 'qatar', 'BH' => 'bahrain', 'OM' => 'oman', 'JO' => 'jordan',
-                'IQ' => 'iraq', 'LB' => 'lebanon', 'MA' => 'morocco', 'DZ' => 'algeria',
-                'TN' => 'tunisia', 'PL' => 'poland', 'TR' => 'turkey', 'DE' => 'germany',
-                'FR' => 'france', 'IN' => 'india', 'JP' => 'japan', 'BR' => 'brazil',
-            ];
-            $slug = $map[strtoupper($region)] ?? $slug;
+            // Step 1: Try Trends24
+            $items = $this->tryTrends24($region, $countryName, $maxTrends);
+            if (!empty($items)) return $items;
 
-            $url = "https://trends24.in/{$slug}/";
-            Log::info("X Trends: Fetching from {$url}");
+            // Step 2: Fallback — use Google Trends RSS for this country
+            Log::info("X Trends: Trends24 unavailable for {$region}, falling back to Google Trends RSS");
+            $lang = config("keywords.countries.{$region}.lang", 'ar');
+            $googleItems = $this->fetchDailyFresh($region, $lang);
             
-            try {
-                $response = Http::withHeaders([
-                    'User-Agent' => 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
-                    'Accept' => 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
-                    'Accept-Language' => 'en-US,en;q=0.9',
-                ])->timeout(10)->get($url);
-
-                if ($response->failed()) {
-                    Log::warning("X Trends: HTTP failed for {$region}, status: " . $response->status());
-                    return [];
-                }
-
-                $html = $response->body();
-                $items = [];
-                $seen = [];
-                
-                // Correct pattern: Trends24 uses <a class=trend-link href="...">TrendName</a>
-                preg_match_all('/<a[^>]*class=["\']?trend-link["\']?[^>]*>([^<]+)<\/a>/iu', $html, $matches);
-
-                if (!empty($matches[1])) {
-                    foreach ($matches[1] as $title) {
-                        $title = html_entity_decode(trim($title), ENT_QUOTES, 'UTF-8');
-                        if (empty($title)) continue;
-                        
-                        // Deduplicate (Trends24 repeats trends across time blocks)
-                        $lower = mb_strtolower($title);
-                        if (isset($seen[$lower])) continue;
-                        $seen[$lower] = true;
-
-                        $items[] = [
-                            'title' => $title,
-                            'traffic' => 'Trending',
-                            'image' => null,
-                            'news' => [],
-                            'subtitle' => "🔥 Viral on X in {$countryName}",
-                            'platform' => 'x'
-                        ];
-                        if (count($items) >= $maxTrends) break;
-                    }
-                }
-
-                Log::info("X Trends: SUCCESS. Fetched " . count($items) . " unique trends for {$region}");
-                return $items;
-            } catch (\Exception $e) {
-                Log::error("X Trends Error for {$region}: " . $e->getMessage());
-                return [];
+            // Re-format Google trends as X-style entries
+            $items = [];
+            foreach ($googleItems as $gt) {
+                $items[] = [
+                    'title' => $gt['title'],
+                    'traffic' => $gt['traffic'] ?? 'Trending',
+                    'image' => $gt['image'] ?? null,
+                    'news' => $gt['news'] ?? [],
+                    'subtitle' => "🔥 Trending in {$countryName}",
+                    'platform' => 'x'
+                ];
+                if (count($items) >= $maxTrends) break;
             }
+            
+            if (!empty($items)) {
+                Log::info("X Trends: Google fallback SUCCESS. {$region} → " . count($items) . " trends");
+            }
+            return $items;
         });
 
         return $trends;
     }
+
+    /**
+     * Try fetching X trends from Trends24.in
+     */
+    protected function tryTrends24($region, $countryName, $maxTrends)
+    {
+        $slug = str_replace(' ', '-', strtolower($countryName));
+        $map = [
+            'EG' => 'egypt', 'SA' => 'saudi-arabia', 'AE' => 'united-arab-emirates',
+            'KW' => 'kuwait', 'QA' => 'qatar', 'BH' => 'bahrain', 'OM' => 'oman',
+            'JO' => 'jordan', 'IQ' => 'iraq', 'LB' => 'lebanon',
+            'MA' => 'morocco', 'DZ' => 'algeria', 'TN' => 'tunisia',
+            'YE' => 'yemen', 'LY' => 'libya', 'SY' => 'syria',
+            'PS' => 'palestine', 'SD' => 'sudan',
+            'US' => 'united-states', 'GB' => 'united-kingdom',
+            'PL' => 'poland', 'TR' => 'turkey', 'DE' => 'germany',
+            'FR' => 'france', 'IN' => 'india', 'JP' => 'japan', 'BR' => 'brazil',
+        ];
+        $slug = $map[strtoupper($region)] ?? $slug;
+
+        $url = "https://trends24.in/{$slug}/";
+        Log::info("X Trends: Fetching from {$url}");
+        
+        try {
+            $response = Http::withHeaders([
+                'User-Agent' => 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+                'Accept' => 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
+                'Accept-Language' => 'en-US,en;q=0.9',
+            ])->timeout(10)->get($url);
+
+            if ($response->failed() || $response->status() === 404) {
+                Log::warning("X Trends: Trends24 returned {$response->status()} for {$region}");
+                return [];
+            }
+
+            $html = $response->body();
+            $items = [];
+            $seen = [];
+            
+            preg_match_all('/<a[^>]*class=["\']?trend-link["\']?[^>]*>([^<]+)<\/a>/iu', $html, $matches);
+
+            if (!empty($matches[1])) {
+                foreach ($matches[1] as $title) {
+                    $title = html_entity_decode(trim($title), ENT_QUOTES, 'UTF-8');
+                    if (empty($title)) continue;
+                    
+                    $lower = mb_strtolower($title);
+                    if (isset($seen[$lower])) continue;
+                    $seen[$lower] = true;
+
+                    $items[] = [
+                        'title' => $title,
+                        'traffic' => 'Trending',
+                        'image' => null,
+                        'news' => [],
+                        'subtitle' => "🔥 Viral on X in {$countryName}",
+                        'platform' => 'x'
+                    ];
+                    if (count($items) >= $maxTrends) break;
+                }
+            }
+
+            Log::info("X Trends [Trends24]: Fetched " . count($items) . " unique trends for {$region}");
+            return $items;
+        } catch (\Exception $e) {
+            Log::error("X Trends Error for {$region}: " . $e->getMessage());
+            return [];
+        }
+    }
     /**
      * Fetch YouTube Trending Videos for a specific country
-     * Strategy: Invidious API → Piped API → Google Fallback
+     * Strategy: YouTube Direct Scraping → Google Fallback
      */
     protected function fetchYouTubeTrends($region, $countryName, $forceRefresh = false, $maxTrends = 50)
     {
@@ -446,37 +483,14 @@ class TrendingSearchController extends Controller
 
         $trends = Cache::remember($cacheKey, 3600, function () use ($region, $countryName, $maxTrends) {
             
-            // Strategy 1: Invidious API (public YouTube mirror with JSON endpoints)
-            $invidiousInstances = [
-                'https://vid.puffyan.us',
-                'https://invidious.fdn.fr',
-                'https://y.com.sb',
-                'https://invidious.nerdvpn.de',
-            ];
-
-            foreach ($invidiousInstances as $instance) {
-                $items = $this->tryInvidiousAPI($instance, $region, $countryName, $maxTrends);
-                if (!empty($items)) {
-                    Log::info("YouTube Trends [Invidious]: SUCCESS via {$instance}. Fetched " . count($items) . " for {$region}");
-                    return $items;
-                }
+            // Strategy 1: Direct YouTube Trending Page Scraping
+            $items = $this->tryYouTubeDirectScrape($region, $countryName, $maxTrends);
+            if (!empty($items)) {
+                Log::info("YouTube Trends [Direct]: SUCCESS. Fetched " . count($items) . " for {$region}");
+                return $items;
             }
 
-            // Strategy 2: Piped API (another YouTube mirror)
-            $pipedInstances = [
-                'https://pipedapi.kavin.rocks',
-                'https://api.piped.yt',
-            ];
-
-            foreach ($pipedInstances as $instance) {
-                $items = $this->tryPipedAPI($instance, $region, $countryName, $maxTrends);
-                if (!empty($items)) {
-                    Log::info("YouTube Trends [Piped]: SUCCESS via {$instance}. Fetched " . count($items) . " for {$region}");
-                    return $items;
-                }
-            }
-
-            // Strategy 3: Google video search fallback
+            // Strategy 2: Google video search fallback
             $items = $this->tryYouTubeGoogleFallback($region, $countryName, $maxTrends);
             if (!empty($items)) {
                 Log::info("YouTube Trends [Google]: SUCCESS. Fetched " . count($items) . " for {$region}");
@@ -491,108 +505,89 @@ class TrendingSearchController extends Controller
     }
 
     /**
-     * Try Invidious API for YouTube trending videos
+     * YouTube Trending via Search Results
+     * YouTube's trending page requires JS rendering, but search results include
+     * ytInitialData with full video metadata embedded in the HTML
      */
-    protected function tryInvidiousAPI($instance, $region, $countryName, $maxTrends)
+    protected function tryYouTubeDirectScrape($region, $countryName, $maxTrends)
     {
         try {
-            $url = "{$instance}/api/v1/trending?region=" . strtoupper($region);
+            $lang = config("keywords.countries.{$region}.lang", 'ar');
+            $searchTerms = $lang === 'ar' 
+                ? urlencode("ترند اليوم {$countryName}")
+                : urlencode("trending {$countryName} today");
+            
+            // sp=CAMSAhAB means sort by view count, filter by today
+            $url = "https://www.youtube.com/results?search_query={$searchTerms}&gl=" . strtoupper($region) . "&sp=CAMSAhAB";
             
             $response = Http::withHeaders([
-                'Accept' => 'application/json',
-            ])->timeout(10)->get($url);
+                'User-Agent' => 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+                'Accept-Language' => "{$lang},en;q=0.9",
+                'Accept' => 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
+            ])->timeout(15)->get($url);
 
-            if ($response->failed()) return [];
-
-            $videos = $response->json();
-            if (!is_array($videos) || empty($videos)) return [];
-
-            $items = [];
-            foreach ($videos as $video) {
-                $title = $video['title'] ?? '';
-                if (empty($title) || mb_strlen($title) < 5) continue;
-
-                $videoId = $video['videoId'] ?? '';
-                $channel = $video['author'] ?? '';
-                $views = $video['viewCount'] ?? 0;
-                $viewsFormatted = $views > 0 ? number_format($views) . ' views' : 'Trending';
-                
-                // Use best available thumbnail
-                $thumbnail = null;
-                if (!empty($video['videoThumbnails'])) {
-                    foreach ($video['videoThumbnails'] as $thumb) {
-                        if (($thumb['quality'] ?? '') === 'medium' || ($thumb['quality'] ?? '') === 'default') {
-                            $thumbnail = $thumb['url'] ?? null;
-                            break;
-                        }
-                    }
-                    if (!$thumbnail) {
-                        $thumbnail = $video['videoThumbnails'][0]['url'] ?? null;
-                    }
-                }
-                if (!$thumbnail && $videoId) {
-                    $thumbnail = "https://i.ytimg.com/vi/{$videoId}/mqdefault.jpg";
-                }
-
-                $items[] = [
-                    'title' => $title,
-                    'traffic' => $viewsFormatted,
-                    'image' => $thumbnail,
-                    'news' => [[
-                        'title' => $channel ?: 'Watch on YouTube',
-                        'url' => "https://www.youtube.com/watch?v={$videoId}",
-                        'source' => 'YouTube'
-                    ]],
-                    'subtitle' => "🔥 Trending on YouTube in {$countryName}",
-                    'platform' => 'youtube'
-                ];
-
-                if (count($items) >= $maxTrends) break;
+            if ($response->failed()) {
+                Log::warning("YouTube Search: HTTP failed for {$region}");
+                return [];
             }
 
-            return $items;
+            $html = $response->body();
+
+            // Extract ytInitialData JSON
+            if (!preg_match('/var\s+ytInitialData\s*=\s*({.+?});\s*<\/script>/s', $html, $jsonMatch)) {
+                Log::warning("YouTube Search: No ytInitialData found for {$region}");
+                return [];
+            }
+
+            $data = json_decode($jsonMatch[1], true);
+            if (!$data) {
+                Log::warning("YouTube Search: JSON parse failed for {$region}");
+                return [];
+            }
+
+            return $this->extractVideosFromSearchResults($data, $countryName, $maxTrends);
         } catch (\Exception $e) {
-            Log::warning("Invidious API ({$instance}) failed: " . $e->getMessage());
+            Log::warning("YouTube Search failed for {$region}: " . $e->getMessage());
             return [];
         }
     }
 
     /**
-     * Try Piped API for YouTube trending videos
+     * Extract videos from YouTube search results ytInitialData
      */
-    protected function tryPipedAPI($instance, $region, $countryName, $maxTrends)
+    protected function extractVideosFromSearchResults($data, $countryName, $maxTrends)
     {
-        try {
-            $url = "{$instance}/trending?region=" . strtoupper($region);
+        $items = [];
+        $seen = [];
+        
+        // Navigate: contents → twoColumnSearchResultsRenderer → primaryContents → sectionListRenderer → contents
+        $sections = $data['contents']['twoColumnSearchResultsRenderer']['primaryContents']['sectionListRenderer']['contents'] ?? [];
+        
+        foreach ($sections as $section) {
+            $sectionContents = $section['itemSectionRenderer']['contents'] ?? [];
             
-            $response = Http::withHeaders([
-                'Accept' => 'application/json',
-            ])->timeout(10)->get($url);
-
-            if ($response->failed()) return [];
-
-            $videos = $response->json();
-            if (!is_array($videos) || empty($videos)) return [];
-
-            $items = [];
-            foreach ($videos as $video) {
-                $title = $video['title'] ?? '';
-                if (empty($title) || mb_strlen($title) < 5) continue;
-
-                $videoUrl = $video['url'] ?? '';
-                $videoId = '';
-                if (preg_match('/\/watch\?v=([a-zA-Z0-9_-]{11})/', $videoUrl, $m)) {
-                    $videoId = $m[1];
+            foreach ($sectionContents as $item) {
+                $video = $item['videoRenderer'] ?? [];
+                if (empty($video)) continue;
+                
+                $videoId = $video['videoId'] ?? '';
+                $title = $video['title']['runs'][0]['text'] ?? ($video['title']['simpleText'] ?? '');
+                $channel = $video['ownerText']['runs'][0]['text'] ?? '';
+                $viewsText = $video['viewCountText']['simpleText'] ?? '';
+                
+                if (empty($videoId) || empty($title) || isset($seen[$videoId])) continue;
+                if (mb_strlen($title) < 5) continue;
+                $seen[$videoId] = true;
+                
+                $thumbnail = "https://i.ytimg.com/vi/{$videoId}/mqdefault.jpg";
+                if (!empty($video['thumbnail']['thumbnails'])) {
+                    $lastThumb = end($video['thumbnail']['thumbnails']);
+                    $thumbnail = $lastThumb['url'] ?? $thumbnail;
                 }
-
-                $channel = $video['uploaderName'] ?? $video['uploader'] ?? '';
-                $views = $video['views'] ?? 0;
-                $viewsFormatted = $views > 0 ? number_format($views) . ' views' : 'Trending';
-                $thumbnail = $video['thumbnail'] ?? ($videoId ? "https://i.ytimg.com/vi/{$videoId}/mqdefault.jpg" : null);
 
                 $items[] = [
                     'title' => $title,
-                    'traffic' => $viewsFormatted,
+                    'traffic' => $viewsText ?: 'Trending',
                     'image' => $thumbnail,
                     'news' => [[
                         'title' => $channel ?: 'Watch on YouTube',
@@ -602,15 +597,12 @@ class TrendingSearchController extends Controller
                     'subtitle' => "🔥 Trending on YouTube in {$countryName}",
                     'platform' => 'youtube'
                 ];
-
-                if (count($items) >= $maxTrends) break;
+                
+                if (count($items) >= $maxTrends) return $items;
             }
-
-            return $items;
-        } catch (\Exception $e) {
-            Log::warning("Piped API ({$instance}) failed: " . $e->getMessage());
-            return [];
         }
+        
+        return $items;
     }
 
     /**
@@ -619,8 +611,12 @@ class TrendingSearchController extends Controller
     protected function tryYouTubeGoogleFallback($region, $countryName, $maxTrends)
     {
         try {
-            $query = urlencode("most popular youtube videos {$countryName} today 2026");
-            $url = "https://www.google.com/search?q={$query}&gl=" . strtolower($region) . "&num=30";
+            $lang = config("keywords.countries.{$region}.lang", 'ar');
+            $searchTerms = $lang === 'ar' 
+                ? "اشهر فيديوهات يوتيوب {$countryName} اليوم"
+                : "most popular youtube videos {$countryName} today";
+            $query = urlencode($searchTerms . " site:youtube.com/watch");
+            $url = "https://www.google.com/search?q={$query}&gl=" . strtolower($region) . "&num=50";
 
             $response = Http::withHeaders([
                 'User-Agent' => 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
@@ -632,17 +628,29 @@ class TrendingSearchController extends Controller
             $items = [];
             $seen = [];
 
-            // Extract YouTube video IDs and titles from Google results
+            // Extract YouTube video IDs from Google results
             preg_match_all('/youtube\.com\/watch\?v=([a-zA-Z0-9_-]{11})/', $html, $idMatches);
             
+            // Try to extract titles from Google result snippets
+            preg_match_all('/<h3[^>]*>([^<]+)<\/h3>/', $html, $titleMatches);
+            $titles = $titleMatches[1] ?? [];
+            
             $ids = array_unique($idMatches[1] ?? []);
+            $titleIdx = 0;
 
             foreach ($ids as $videoId) {
                 if (isset($seen[$videoId])) continue;
                 $seen[$videoId] = true;
 
+                $title = isset($titles[$titleIdx]) 
+                    ? html_entity_decode(trim($titles[$titleIdx]), ENT_QUOTES, 'UTF-8')
+                    : "Trending Video";
+                // Clean Google's "... - YouTube" suffix
+                $title = preg_replace('/\s*-\s*YouTube\s*$/i', '', $title);
+                $titleIdx++;
+
                 $items[] = [
-                    'title' => "YouTube Video #{$videoId}",
+                    'title' => $title,
                     'traffic' => 'Trending',
                     'image' => "https://i.ytimg.com/vi/{$videoId}/mqdefault.jpg",
                     'news' => [[
@@ -666,7 +674,7 @@ class TrendingSearchController extends Controller
 
     /**
      * Fetch Trending Hashtags from TikTok
-     * Strategy Chain: RapidAPI → Creative Center → Google Fallback → Empty
+     * Strategy Chain: RapidAPI → Creative Center → Google Fallback → Google Trends RSS → Empty
      */
     protected function fetchTikTokTrends($region, $countryName, $forceRefresh = false, $maxTrends = 50)
     {
@@ -703,7 +711,35 @@ class TrendingSearchController extends Controller
                 return $items;
             }
 
-            // Strategy 3: Return empty with a clear message — no fake data
+            // Strategy 3: Use Google Trends RSS and format as TikTok hashtags
+            Log::info("TikTok Trends: Primary strategies failed for {$region}, using Google Trends RSS fallback");
+            $lang = config("keywords.countries.{$region}.lang", 'ar');
+            $googleItems = $this->fetchDailyFresh($region, $lang);
+            
+            $items = [];
+            foreach ($googleItems as $gt) {
+                $title = $gt['title'] ?? '';
+                if (empty($title)) continue;
+                
+                // Format as hashtag if it's not already one
+                $hashtag = str_starts_with($title, '#') ? $title : '#' . str_replace(' ', '_', $title);
+                
+                $items[] = [
+                    'title' => $hashtag,
+                    'traffic' => $gt['traffic'] ?? 'Trending',
+                    'image' => $gt['image'] ?? null,
+                    'news' => $gt['news'] ?? [],
+                    'subtitle' => "🔥 Trending in {$countryName}",
+                    'platform' => 'tiktok'
+                ];
+                if (count($items) >= $maxTrends) break;
+            }
+            
+            if (!empty($items)) {
+                Log::info("TikTok Trends: Google Trends RSS SUCCESS. {$region} → " . count($items) . " trends");
+                return $items;
+            }
+
             Log::warning("TikTok Trends: All strategies failed for {$region}. No data available.");
             return [];
         });
