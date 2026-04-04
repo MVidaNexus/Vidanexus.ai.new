@@ -99,6 +99,13 @@ class ServeMarkdownToAI
             return false;
         }
 
+        // Allow overriding via Setting model if available
+        if (class_exists(\App\Models\Setting::class)) {
+            if (!\App\Models\Setting::get('markdown_ai_enabled', true)) {
+                return false;
+            }
+        }
+
         // 1. Check .md suffix
         if (str_ends_with($request->getPathInfo(), '.md')) {
             return true;
@@ -112,7 +119,19 @@ class ServeMarkdownToAI
 
         // 3. Check User-Agent for AI bots
         $userAgent = $request->header('User-Agent', '');
-        $bots = config('markdown_ai.crawlers', []);
+        
+        // Fetch bots from setting or fallback to config
+        $bots = [];
+        if (class_exists(\App\Models\Setting::class)) {
+            $botsStr = \App\Models\Setting::get('markdown_ai_crawlers', '');
+            if ($botsStr) {
+                $bots = array_map('trim', explode(',', $botsStr));
+            }
+        }
+        
+        if (empty($bots)) {
+            $bots = config('markdown_ai.crawlers', []);
+        }
 
         foreach ($bots as $bot) {
             if ($userAgent && stripos($userAgent, $bot) !== false) {
@@ -128,39 +147,46 @@ class ServeMarkdownToAI
      */
     protected function convertToMarkdown(string $html): string
     {
-        // Extract the page title from <title> tag
-        $pageTitle = '';
-        if (preg_match('/<title[^>]*>(.*?)<\/title>/is', $html, $titleMatch)) {
-            $pageTitle = trim(strip_tags($titleMatch[1]));
+        // Extract meta info (title, description, canonical)
+        $meta = $this->extractMetaInfo($html);
+
+        // Fetch selectors from setting or fallback to config
+        $selectors = [];
+        if (class_exists(\App\Models\Setting::class)) {
+            $selectorsStr = \App\Models\Setting::get('markdown_ai_selectors', '');
+            if ($selectorsStr) {
+                $selectors = array_map('trim', explode(',', $selectorsStr));
+            }
+        }
+        
+        if (empty($selectors)) {
+            $selectors = config('markdown_ai.strip_selectors', ['script', 'style', 'canvas', 'svg', 'nav', 'header', 'footer']);
         }
 
-        // Extract meta description
-        $metaDesc = '';
-        if (preg_match('/<meta\s+name="description"\s+content="([^"]+)"/i', $html, $metaMatch)) {
-            $metaDesc = $metaMatch[1];
-        }
-
-        // Extract canonical URL
-        $canonical = '';
-        if (preg_match('/<link\s+rel="canonical"\s+href="([^"]+)"/i', $html, $canonMatch)) {
-            $canonical = $canonMatch[1];
-        }
-
-        // Pre-process: Remove elements that add noise for AI using config selectors
-        $selectors = config('markdown_ai.strip_selectors', ['script', 'style', 'canvas', 'svg', 'nav', 'header', 'footer']);
+        // Pre-process: Strip noise elements using aggressive regex
         foreach ($selectors as $selector) {
-            // Very basic tag removal for common tags
             if (preg_match('/^[a-z0-9]+$/i', $selector)) {
-                $html = preg_replace('/<' . $selector . '\b[^>]*>(.*?)<\/' . $selector . '>/is', '', $html);
+                // Remove the whole tag and its content (single-level or simple nesting)
+                $html = preg_replace('/<' . $selector . '\b[^>]*>.*?<\/' . $selector . '>/is', '', $html);
             }
         }
 
-        // Explicitly remove VidaNexus noise patterns
-        $html = preg_replace('/<div\s+id="bg-layer"[^>]*>(.*?)<\/div>\s*/is', '', $html);
-        $html = preg_replace('/<div\s+class="[^"]*whatsapp[^"]*"[^>]*>(.*?)<\/div>/is', '', $html);
-        $html = preg_replace('/<a[^>]*class="[^"]*logo-link[^"]*"[^>]*>.*?<\/a>/is', '', $html);
+        // Target specific IDs and classes that usually contain navigation/noise
+        $html = preg_replace('/<header\b[^>]*id="site-header"[^>]*>.*?<\/header>/is', '', $html);
+        $html = preg_replace('/<div\b[^>]*id="bg-layer"[^>]*>.*?<\/div>\s*/is', '', $html);
+        $html = preg_replace('/<div\b[^>]*class="[^"]*mobile-sidebar[^"]*"[^>]*>.*?<\/div>/is', '', $html);
+        $html = preg_replace('/<div\b[^>]*class="[^"]*whatsapp[^"]*"[^>]*>.*?<\/div>/is', '', $html);
         
-        // Remove images with local paths (not useful for AI)
+        // Remove common nav patterns
+        $html = preg_replace('/<nav\b[^>]*>.*?<\/nav>/is', '', $html);
+        
+        // Remove individual logo and auth links that might have escaped
+        $html = preg_replace('/<a[^>]*class="[^"]*logo-link[^"]*"[^>]*>.*?<\/a>/is', '', $html);
+        $html = preg_replace('/<a[^>]*href="\/login"[^>]*>.*?<\/a>/is', '', $html);
+        $html = preg_replace('/<a[^>]*href="\/register"[^>]*>.*?<\/a>/is', '', $html);
+        $html = preg_replace('/<a[^>]*href="\/dashboard"[^>]*>.*?<\/a>/is', '', $html);
+        
+        // Remove local/relative images
         $html = preg_replace('/<img[^>]*src="http:\/\/(?:127\.0\.0\.1|localhost)[^"]*"[^>]*>/is', '', $html);
 
         $converter = new HtmlConverter([
@@ -174,15 +200,18 @@ class ServeMarkdownToAI
 
         $markdown = $converter->convert($html);
 
-        // Post-process: Clean up the output
+        // Post-process: Clean up Markdown noise
         $markdown = preg_replace('/\n{4,}/', "\n\n", $markdown);
         $markdown = preg_replace('/!\[[^\]]*\]\((?:http:\/\/127\.0\.0\.1|http:\/\/localhost)[^\)]*\)/', '', $markdown);
         $markdown = preg_replace('/\[\s*\]\([^\)]*\)/', '', $markdown);
         
-        // Remove common navigation noise lines
-        $navTerms = ['Login', 'Get Started', 'Home', 'Tools', 'Pricing', 'Dashboard'];
+        // Aggressive manual link suppression for common site navigation links
+        $navTerms = ['Login', 'Get Started', 'Home', 'Tools', 'Pricing', 'Dashboard', 'Register', 'Sign In'];
         foreach ($navTerms as $term) {
-            $markdown = preg_replace('/^\s*\[?' . $term . '\]?.*$/m', '', $markdown);
+            // Remove links like [ Login](/login) or [Get Started ](/register)
+            $markdown = preg_replace('/^\s*\[?\s*' . $term . '\s*\]?\(.*?\)\s*$/m', '', $markdown);
+            // Remove them even if they are in the middle of a line if they look like a button collection
+            $markdown = preg_replace('/\[\s*' . $term . '\s*\]\([^\)]*\)\s*\|?\s*/is', '', $markdown);
         }
 
         // Branding noise cleanup
@@ -196,13 +225,35 @@ class ServeMarkdownToAI
         $header = "---\n";
         $header .= "source: VidaNexus AI\n";
         $header .= "url: https://vidanexus.ai\n";
-        if ($pageTitle) $header .= "title: " . str_replace('"', '\\"', $pageTitle) . "\n";
-        if ($metaDesc) $header .= "description: " . str_replace('"', '\\"', $metaDesc) . "\n";
-        if ($canonical) $header .= "canonical: {$canonical}\n";
+        if ($meta['title']) $header .= "title: " . str_replace('"', '\\"', $meta['title']) . "\n";
+        if ($meta['description']) $header .= "description: " . str_replace('"', '\\"', $meta['description']) . "\n";
+        if ($meta['canonical']) $header .= "canonical: {$meta['canonical']}\n";
         $header .= "format: markdown\n";
         $header .= "generated_at: " . now()->toIso8601String() . "\n";
         $header .= "---\n\n";
 
         return $header . trim($markdown) . "\n";
+    }
+
+    /**
+     * Helper to extract metadata from HTML.
+     */
+    protected function extractMetaInfo(string $html): array
+    {
+        $meta = ['title' => '', 'description' => '', 'canonical' => ''];
+        
+        if (preg_match('/<title[^>]*>(.*?)<\/title>/is', $html, $matches)) {
+            $meta['title'] = trim(strip_tags($matches[1]));
+        }
+        
+        if (preg_match('/<meta\s+name="description"\s+content="([^"]+)"/i', $html, $matches)) {
+            $meta['description'] = $matches[1];
+        }
+        
+        if (preg_match('/<link\s+rel="canonical"\s+href="([^"]+)"/i', $html, $matches)) {
+            $meta['canonical'] = $matches[1];
+        }
+        
+        return $meta;
     }
 }

@@ -95,6 +95,12 @@ class SystemSettingsController extends Controller
             } elseif (str_ends_with($key, '_model')) {
                 $group = 'tool_ai_config';
                 $type = 'text';
+            } elseif (str_starts_with($key, 'markdown_ai_')) {
+                $group = 'markdown_ai';
+                $type = str_contains($key, '_enabled') ? 'boolean' : (str_contains($key, '_ttl') ? 'integer' : 'text');
+                if ($type === 'boolean') {
+                    $value = ($value === 'on' || $value == 1);
+                }
             } elseif ($key === 'footer_script') {
                 $group = 'scripts';
                 $type = 'text';
@@ -119,6 +125,10 @@ class SystemSettingsController extends Controller
         }
 
         // Handle Checkboxes (ensure false is saved if missing)
+        if (!$request->has('markdown_ai_enabled')) {
+            Setting::set('markdown_ai_enabled', false, 'boolean', 'markdown_ai');
+        }
+
         foreach ($tools as $tool) {
             $availKey = "tool_available_{$tool['slug']}";
             if (!$request->has($availKey)) {

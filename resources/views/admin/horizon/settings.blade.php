@@ -33,6 +33,9 @@
             <button type="button" onclick="switchTab('command')" id="tab-command" class="tab-btn">
                 <i class="fas fa-terminal"></i> Command Center
             </button>
+            <button type="button" onclick="switchTab('markdown')" id="tab-markdown" class="tab-btn">
+                <i class="fas fa-robot"></i> AI Crawler SEO
+            </button>
         </div>
 
 
@@ -476,6 +479,73 @@
                             <i class="fas fa-power-off"></i> Logout Session
                         </button>
                     </form>
+                </div>
+            </div>
+        </div>
+
+        <!-- 10. AI Crawler Markdown SEO -->
+        <div id="content-markdown" class="tab-panel">
+            <div class="card-admin">
+                <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 2rem;">
+                    <div>
+                        <h3 style="color: #f59e0b; margin: 0; display: flex; align-items: center; gap: 0.75rem;">
+                            <i class="fas fa-robot"></i> AI Crawler Markdown Adaptation
+                        </h3>
+                        <p style="color: var(--text-muted); font-size: 0.85rem; margin-top: 0.5rem;">
+                            Control how your site appears to AI agents (GPTBot, ClaudeBot, etc.) by serving noise-free Markdown.
+                        </p>
+                    </div>
+                    <div style="display: flex; align-items: center; gap: 1rem; background: rgba(245, 158, 11, 0.05); padding: 0.75rem 1.25rem; border-radius: 12px; border: 1px solid rgba(245, 158, 11, 0.2);">
+                        <span style="font-weight: 700; color: var(--text-main); font-size: 0.85rem;">Global AI Protocol</span>
+                        <label class="vn-switch">
+                            <input type="checkbox" name="markdown_ai_enabled" {{ ($settings['markdown_ai_enabled'] ?? config('markdown_ai.enabled')) ? 'checked' : '' }}>
+                            <span class="vn-slider"></span>
+                        </label>
+                    </div>
+                </div>
+
+                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(450px, 1fr)); gap: 2rem;">
+                    <!-- Bot Identification -->
+                    <div style="background: rgba(255,255,255,0.02); border: 1px solid var(--horizon-border); border-radius: 20px; padding: 1.5rem;">
+                        <h4 style="color: var(--text-main); font-size: 0.9rem; margin-bottom: 1rem; display: flex; align-items: center; gap: 0.6rem; font-weight: 800;">
+                            <i class="fas fa-user-secret" style="color: #f59e0b;"></i> Crawler Identification
+                        </h4>
+                        <p style="font-size: 0.7rem; color: var(--text-muted); margin-bottom: 1.5rem; line-height: 1.5;">
+                            List of User-Agent substrings that trigger Markdown delivery. Separate by commas (e.g., GPTBot, ClaudeBot).
+                        </p>
+                        <textarea name="markdown_ai_crawlers" class="modal-input" style="height: 120px; font-family: monospace; font-size: 0.8rem; line-height: 1.6;" placeholder="GPTBot, ClaudeBot, PerplexityBot...">{{ $settings['markdown_ai_crawlers'] ?? implode(', ', config('markdown_ai.crawlers')) }}</textarea>
+                    </div>
+
+                    <!-- Layout Cleaning -->
+                    <div style="background: rgba(255,255,255,0.02); border: 1px solid var(--horizon-border); border-radius: 20px; padding: 1.5rem;">
+                        <h4 style="color: var(--text-main); font-size: 0.9rem; margin-bottom: 1rem; display: flex; align-items: center; gap: 0.6rem; font-weight: 800;">
+                            <i class="fas fa-broom" style="color: #10b981;"></i> Noise Reduction Selectors
+                        </h4>
+                        <p style="font-size: 0.7rem; color: var(--text-muted); margin-bottom: 1.5rem; line-height: 1.5;">
+                            HTML tags or CSS selectors to strip before conversion to minimize indexable bloat (e.g., nav, header, footer).
+                        </p>
+                        <textarea name="markdown_ai_selectors" class="modal-input" style="height: 120px; font-family: monospace; font-size: 0.8rem; line-height: 1.6;" placeholder="nav, header, footer, .whatsapp-btn...">{{ $settings['markdown_ai_selectors'] ?? implode(', ', config('markdown_ai.strip_selectors')) }}</textarea>
+                    </div>
+                </div>
+
+                <div style="margin-top: 2rem; background: rgba(255,255,255,0.02); border: 1px solid var(--horizon-border); border-radius: 20px; padding: 1.5rem;">
+                    <div style="display: flex; align-items: center; justify-content: space-between;">
+                        <div style="flex: 1;">
+                            <h4 style="color: var(--text-main); font-size: 0.9rem; margin-bottom: 0.5rem; font-weight: 800;">Markdown Generation Cache</h4>
+                            <p style="font-size: 0.7rem; color: var(--text-muted);">How long the generated Markdown remains in memory before re-rendering (seconds).</p>
+                        </div>
+                        <div style="width: 200px; position: relative;">
+                            <input type="number" name="markdown_ai_cache_ttl" value="{{ $settings['markdown_ai_cache_ttl'] ?? config('markdown_ai.cache.ttl') }}" class="modal-input" style="text-align: center; padding-right: 4rem; font-weight: 700; color: #f59e0b;">
+                            <span style="position: absolute; right: 1rem; top: 50%; transform: translateY(-50%); font-size: 0.65rem; color: var(--text-muted); font-weight: 800;">SEC</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div style="margin-top: 2rem; padding: 1.25rem; background: rgba(14, 165, 233, 0.05); border: 1px dashed rgba(14, 165, 233, 0.2); border-radius: 12px; display: flex; align-items: start; gap: 1rem;">
+                    <i class="fas fa-info-circle" style="color: var(--primary-admin); margin-top: 0.25rem;"></i>
+                    <div style="font-size: 0.75rem; color: var(--text-muted); line-height: 1.6;">
+                        <strong>SEO Strategy Tip:</strong> AI crawlers like GPTBot prefer clean text data. By serving Markdown, you improve the accuracy of model-based indexing for your tools and content. You can manually verify the output by adding <code>.md</code> to any public URL.
+                    </div>
                 </div>
             </div>
         </div>
