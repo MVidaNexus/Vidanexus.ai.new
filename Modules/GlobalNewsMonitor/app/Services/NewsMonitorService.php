@@ -9,8 +9,9 @@ use Illuminate\Support\Facades\Cache;
 class NewsMonitorService
 {
     /**
-     * Fetch News from Google News RSS — Direct Pull, No Keyword Filtering
-     * Pulls from multiple Google News RSS endpoints for maximum coverage
+     * Fetch News from Google News RSS — Topic-Pure Direct Pull
+     * Pulls ONLY from the specific Google News topic RSS for the selected section.
+     * This mirrors the exact experience of browsing Google News topics directly.
      */
     public function fetchGoogleNews($country = 'EG', $topic = 'WORLD', $lang = 'ar', $timeWindow = '12h', $countryName = '')
     {
@@ -19,53 +20,37 @@ class NewsMonitorService
 
         $rawNews = [];
         
-        // Source 1: Direct Topic RSS from Google News (Primary — most relevant)
+        // ─── PRIMARY SOURCE: Google News Topic RSS (Exactly like Google News) ───
+        // This is the ONLY source to ensure topic purity — no mixing of unrelated news
         if ($topic === 'GENERAL' || $topic === 'TOP_STORIES') {
-            $urlTopic = "https://news.google.com/rss?hl={$lang}&gl={$country}&ceid={$country}:{$lang}";
+            $url = "https://news.google.com/rss?hl={$lang}&gl={$country}&ceid={$country}:{$lang}";
         } else {
-            $urlTopic = "https://news.google.com/rss/headlines/section/topic/{$topic}?hl={$lang}&gl={$country}&ceid={$country}:{$lang}";
+            $url = "https://news.google.com/rss/headlines/section/topic/{$topic}?hl={$lang}&gl={$country}&ceid={$country}:{$lang}";
         }
-        $rawNews = $this->fetchFromUrl($urlTopic, $rawNews);
+        $rawNews = $this->fetchFromUrl($url, $rawNews);
+        Log::info("NewsMonitor [{$topic}]: Topic RSS returned " . count($rawNews) . " articles for {$country}");
 
-        // Source 2: Search RSS using topic name directly (Google's own classification)
-        $topicSearchTerms = [
-            'WORLD' => ['ar' => ['أخبار عالمية', 'أخبار دولية', 'أحداث عاجلة'], 'en' => ['world news', 'international news', 'global events'], 'pl' => ['wiadomości ze świata']],
-            'NATION' => ['ar' => ['أخبار محلية', 'أخبار اليوم', 'حوادث'], 'en' => ['local news', 'national news', 'breaking news'], 'pl' => ['wiadomości krajowe']],
-            'BUSINESS' => ['ar' => ['اقتصاد', 'أسواق مال', 'بورصة', 'استثمار'], 'en' => ['business news', 'economy', 'stock market', 'finance'], 'pl' => ['biznes']],
-            'TECHNOLOGY' => ['ar' => ['تكنولوجيا', 'تقنية', 'ذكاء اصطناعي', 'هواتف'], 'en' => ['technology', 'tech news', 'AI', 'smartphones'], 'pl' => ['technologia']],
-            'ENTERTAINMENT' => ['ar' => ['فن وترفيه', 'مشاهير', 'سينما', 'دراما', 'أفلام', 'مسلسلات', 'نجوم الفن', 'حفلات'], 'en' => ['entertainment', 'movies', 'celebrities', 'TV shows', 'Netflix', 'music'], 'pl' => ['rozrywka']],
-            'SPORTS' => ['ar' => ['رياضة', 'كرة قدم', 'دوري', 'مباريات اليوم'], 'en' => ['sports', 'football', 'soccer', 'NBA'], 'pl' => ['sport']],
-            'SCIENCE' => ['ar' => ['علوم', 'فضاء', 'اكتشافات علمية', 'بيئة'], 'en' => ['science', 'space', 'environment', 'research'], 'pl' => ['nauka']],
-            'HEALTH' => ['ar' => ['صحة', 'طب', 'أدوية', 'مستشفيات'], 'en' => ['health', 'medicine', 'hospitals', 'wellness'], 'pl' => ['zdrowie']],
-        ];
-        
-        $searchTerms = $topicSearchTerms[$topic][$lang] ?? $topicSearchTerms[$topic]['en'] ?? [$topic];
-        
-        // Search using primary term
-        $urlSearch = "https://news.google.com/rss/search?q=" . urlencode($searchTerms[0]) . "&hl={$lang}&gl={$country}&ceid={$country}:{$lang}";
-        $rawNews = $this->fetchFromUrl($urlSearch, $rawNews);
-
-        // Source 3: General top stories (fills remaining slots with fresh news from same country)
-        $urlGeneral = "https://news.google.com/rss?hl={$lang}&gl={$country}&ceid={$country}:{$lang}";
-        $rawNews = $this->fetchFromUrl($urlGeneral, $rawNews);
-
-        // Source 4: Additional search terms to fill low-volume topics
-        if (count($rawNews) < 80) {
-            foreach (array_slice($searchTerms, 1) as $altTerm) {
-                $urlAlt = "https://news.google.com/rss/search?q=" . urlencode($altTerm) . "&hl={$lang}&gl={$country}&ceid={$country}:{$lang}";
-                $rawNews = $this->fetchFromUrl($urlAlt, $rawNews);
-                if (count($rawNews) >= 100) break;
-            }
-        }
-
-        // Source 5: NATION subtopic as fallback for WORLD (they overlap heavily)
-        if (count($rawNews) < 60 && $topic === 'WORLD') {
-            $urlNation = "https://news.google.com/rss/headlines/section/topic/NATION?hl={$lang}&gl={$country}&ceid={$country}:{$lang}";
-            $rawNews = $this->fetchFromUrl($urlNation, $rawNews);
+        // Topic-pure search fallback — ONLY if Topic RSS returned very few results
+        // Uses the exact Google News topic name to maintain topic relevance
+        if (count($rawNews) < 5 && $topic !== 'GENERAL' && $topic !== 'TOP_STORIES') {
+            $topicSearchMap = [
+                'WORLD'         => ['ar' => 'أخبار دولية',      'en' => 'world news'],
+                'NATION'        => ['ar' => 'أخبار محلية',       'en' => 'national news'],
+                'BUSINESS'      => ['ar' => 'تجارة وأعمال',      'en' => 'business news'],
+                'TECHNOLOGY'    => ['ar' => 'تكنولوجيا',         'en' => 'technology news'],
+                'ENTERTAINMENT' => ['ar' => 'فن وترفيه',         'en' => 'entertainment news'],
+                'SPORTS'        => ['ar' => 'رياضة',             'en' => 'sports news'],
+                'SCIENCE'       => ['ar' => 'علوم',              'en' => 'science news'],
+                'HEALTH'        => ['ar' => 'صحة وطب',           'en' => 'health news'],
+            ];
+            
+            $searchTerm = $topicSearchMap[$topic][$lang] ?? $topicSearchMap[$topic]['en'] ?? $topic;
+            $urlSearch = "https://news.google.com/rss/search?q=" . urlencode($searchTerm) . "&hl={$lang}&gl={$country}&ceid={$country}:{$lang}";
+            $rawNews = $this->fetchFromUrl($urlSearch, $rawNews);
+            Log::info("NewsMonitor [{$topic}]: Topic-pure search fallback → total now " . count($rawNews) . " for {$country}");
         }
 
         // Freshness Filter: Only keep articles within the configured time window
-        // Use at least 24h to ensure enough articles
         $maxAge = max($this->parseTimeWindow($timeWindow), 86400); // minimum 24h
         $cutoffTime = time() - $maxAge;
 
@@ -94,6 +79,7 @@ class NewsMonitorService
             if (count($finalNews) >= 100) break;
         }
 
+        Log::info("NewsMonitor [{$topic}]: Final count = " . count($finalNews) . " articles for {$country}");
         return $finalNews;
     }
 
