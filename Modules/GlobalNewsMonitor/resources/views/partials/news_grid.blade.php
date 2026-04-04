@@ -1,53 +1,238 @@
 @if(count($googleNews) > 0)
-    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
         @foreach($googleNews as $index => $item)
-            <div x-show="!showHighChanceOnly || {{ ($item['seo_score'] ?? 0) }} >= 70"
-                 x-transition:enter="transition ease-out duration-300"
-                 x-transition:enter-start="opacity-0 scale-90"
-                 x-transition:enter-end="opacity-100 scale-100"
-                 class="news-card glass-card p-5 flex flex-col group/news hover:bg-white/5 transition-all border-l-4 {{ ($item['sentiment'] ?? 'neutral') === 'positive' ? 'border-primary-cyan' : (($item['sentiment'] ?? 'negative') ? 'border-red-500/50' : 'border-white/10') }}">
+            @php
+                $score = $item['seo_score'] ?? 0;
+                $trend = $item['trend_direction'] ?? 'stable';
+                $sentiment = $item['sentiment'] ?? 'neutral';
+                $ageHours = $item['age_hours'] ?? 99;
                 
-                <!-- Header: Source & SEO Score -->
-                <div class="flex items-center justify-between mb-4">
-                    <div class="flex items-center gap-2">
-                        <span class="text-[10px] px-2 py-0.5 rounded-full bg-primary-cyan/10 text-primary-cyan font-bold uppercase tracking-wider flex items-center gap-1">
-                            @if($item['is_high_authorative'] ?? false) <i class="fas fa-check-circle text-[8px]"></i> @endif
-                            {{ $item['source'] }}
-                        </span>
-                        
-                        <!-- Sentiment Dot -->
-                        <div class="w-1.5 h-1.5 rounded-full animate-pulse" 
-                             style="background: {{ ($item['sentiment'] ?? 'neutral') === 'positive' ? '#0ea5e9' : (($item['sentiment'] ?? 'neutral') === 'negative' ? '#ff4d4d' : '#888') }}"
-                             title="Sentiment: {{ ucfirst($item['sentiment'] ?? 'neutral') }}">
-                        </div>
+                // Use dynamic thresholds passed from controller or defaults
+                $tHigh = (int) ($thresholdHigh ?? 70);
+                $tMod  = (int) ($thresholdModerate ?? 45);
+
+                // RECALCULATE LEVEL LIVE (to avoid caching issues)
+                $level = 'low';
+                if ($score >= $tHigh) $level = 'high';
+                elseif ($score >= $tMod) $level = 'moderate';
+
+                // Opportunity badge config
+                $badgeConfig = match($level) {
+                    'high' => [
+                        'label' => 'HIGH OPPORTUNITY',
+                        'sublabel' => 'Write Now!',
+                        'bg' => 'rgba(16, 185, 129, 0.12)',
+                        'border' => 'rgba(16, 185, 129, 0.35)',
+                        'color' => '#10b981',
+                        'glow' => '0 0 25px rgba(16, 185, 129, 0.15)',
+                        'icon' => 'fas fa-rocket',
+                        'cardBorder' => 'border-emerald-500/60',
+                    ],
+                    'moderate' => [
+                        'label' => 'MODERATE',
+                        'sublabel' => 'Unique Angle Needed',
+                        'bg' => 'rgba(245, 158, 11, 0.1)',
+                        'border' => 'rgba(245, 158, 11, 0.3)',
+                        'color' => '#f59e0b',
+                        'glow' => '0 0 15px rgba(245, 158, 11, 0.1)',
+                        'icon' => 'fas fa-bolt',
+                        'cardBorder' => 'border-amber-500/40',
+                    ],
+                    default => [
+                        'label' => 'LOW',
+                        'sublabel' => 'High Competition',
+                        'bg' => 'rgba(100, 116, 139, 0.08)',
+                        'border' => 'rgba(100, 116, 139, 0.2)',
+                        'color' => '#64748b',
+                        'glow' => 'none',
+                        'icon' => 'fas fa-shield-halved',
+                        'cardBorder' => 'border-white/10',
+                    ],
+                };
+
+                // Trend direction config
+                $trendConfig = match($trend) {
+                    'rising_fast' => ['icon' => 'fas fa-arrow-trend-up', 'color' => '#10b981', 'label' => 'Surging'],
+                    'rising' => ['icon' => 'fas fa-arrow-up', 'color' => '#0ea5e9', 'label' => 'Rising'],
+                    'declining' => ['icon' => 'fas fa-arrow-down', 'color' => '#ef4444', 'label' => 'Cooling'],
+                    default => ['icon' => 'fas fa-minus', 'color' => '#64748b', 'label' => 'Stable'],
+                };
+
+                // Sentiment border color
+                $sentimentBorder = match($sentiment) {
+                    'positive' => 'border-emerald-500/50',
+                    'negative' => 'border-red-500/40',
+                    default => 'border-white/10',
+                };
+            @endphp
+
+            <div x-show="!showHighChanceOnly || '{{ $level }}' === 'high'"
+                 x-transition:enter="transition ease-out duration-300"
+                 x-transition:enter-start="opacity-0 scale-95 translate-y-4"
+                 x-transition:enter-end="opacity-100 scale-100 translate-y-0"
+                 class="news-card glass-card flex flex-col group/news hover:bg-white/[0.04] transition-all duration-300 border-l-4 {{ $badgeConfig['cardBorder'] }} relative overflow-hidden"
+                 style="box-shadow: {{ $badgeConfig['glow'] }};">
+                
+                {{-- Glow Effect for HIGH opportunity --}}
+                @if($level === 'high')
+                <div class="absolute top-0 right-0 w-32 h-32 bg-emerald-500/[0.06] blur-3xl -mr-16 -mt-16 rounded-full pointer-events-none"></div>
+                @endif
+
+                {{-- ═══ TOP BAR: Opportunity Badge + Trend + Age ═══ --}}
+                <div class="px-5 pt-5 pb-3 flex items-center justify-between gap-2">
+                    {{-- Opportunity Badge --}}
+                    <div class="flex items-center gap-2 px-3 py-1.5 rounded-xl text-[10px] font-black tracking-wider uppercase"
+                         style="background: {{ $badgeConfig['bg'] }}; border: 1px solid {{ $badgeConfig['border'] }}; color: {{ $badgeConfig['color'] }};">
+                        <i class="{{ $badgeConfig['icon'] }} text-[9px]"></i>
+                        <span>{{ $badgeConfig['label'] }}</span>
+                        <span class="text-[8px] font-bold opacity-70">{{ $score }}%</span>
                     </div>
 
-                    <div class="flex items-center gap-1.5 {{ ($item['seo_score'] ?? 0) >= 70 ? 'bg-emerald-500/10 border-emerald-500/20 shadow-[0_0_15px_rgba(52,211,153,0.1)]' : 'bg-white/5 border-white/5' }} px-2 py-1 rounded-lg border cursor-help transition-all" 
-                         title="Ranking Opportunity: Calculated based on freshness, source authority, and current virality.">
-                        <i class="fas fa-chart-line text-[9px] {{ ($item['seo_score'] ?? 0) >= 70 ? 'text-emerald-400' : 'text-primary-cyan' }}"></i>
-                        <span class="text-[9px] font-bold opacity-70" style="color: {{ ($item['seo_score'] ?? 0) >= 70 ? 'rgba(52, 211, 153, 0.8)' : 'var(--text-muted)' }};">Score:</span>
-                        <span class="text-[10px] font-black {{ ($item['seo_score'] ?? 0) >= 70 ? 'text-emerald-400 drop-shadow-[0_0_5px_rgba(52,211,153,0.5)]' : 'text-primary-blue' }}">
-                            {{ $item['seo_score'] ?? 0 }}%
+                    <div class="flex items-center gap-2">
+                        {{-- Trend Direction --}}
+                        <div class="flex items-center gap-1 px-2 py-1 rounded-lg text-[9px] font-bold"
+                             style="background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.06); color: {{ $trendConfig['color'] }};"
+                             title="Trend: {{ $trendConfig['label'] }}">
+                            <i class="{{ $trendConfig['icon'] }} text-[8px]"></i>
+                            <span>{{ $trendConfig['label'] }}</span>
+                        </div>
+
+                        {{-- Age Badge --}}
+                        @if($ageHours < 1)
+                        <span class="px-2 py-1 bg-red-500/10 text-red-400 text-[8px] border border-red-500/20 rounded-lg font-black flex items-center gap-1 animate-pulse">
+                            <div class="w-1.5 h-1.5 bg-red-400 rounded-full"></div> LIVE
                         </span>
+                        @elseif($ageHours < 3)
+                        <span class="px-2 py-1 text-[8px] rounded-lg font-bold" style="background: rgba(14, 165, 233, 0.08); color: #0ea5e9; border: 1px solid rgba(14, 165, 233, 0.15);">
+                            {{ round($ageHours * 60) }}m ago
+                        </span>
+                        @endif
                     </div>
                 </div>
+
+                {{-- ═══ SOURCE + SENTIMENT ═══ --}}
+                <div class="px-5 pb-2 flex items-center gap-2">
+                    <span class="text-[10px] px-2.5 py-1 rounded-lg font-bold uppercase tracking-wider flex items-center gap-1.5"
+                          style="background: var(--card-bg); border: 1px solid var(--glass-border); color: var(--text-muted);">
+                        @if($item['is_high_authorative'] ?? false) 
+                            <i class="fas fa-check-circle text-[8px]" style="color: #0ea5e9;"></i> 
+                        @endif
+                        {{ $item['source'] }}
+                    </span>
+                    
+                    {{-- Sentiment Indicator --}}
+                    <div class="flex items-center gap-1 text-[9px] font-bold" style="color: {{ $sentiment === 'positive' ? '#10b981' : ($sentiment === 'negative' ? '#ef4444' : '#64748b') }};">
+                        <div class="w-1.5 h-1.5 rounded-full" style="background: {{ $sentiment === 'positive' ? '#10b981' : ($sentiment === 'negative' ? '#ef4444' : '#64748b') }};"></div>
+                        {{ ucfirst($sentiment) }}
+                    </div>
+
+                    {{-- Authority Level --}}
+                    @if(($item['authority_level'] ?? 'low') === 'low')
+                    <span class="text-[8px] px-1.5 py-0.5 rounded bg-emerald-500/10 text-emerald-400 font-bold border border-emerald-500/15" title="Small source = easier to outrank">
+                        Low Authority
+                    </span>
+                    @endif
+                </div>
                 
-                <h3 class="font-bold leading-relaxed mb-3 text-sm line-clamp-2 min-h-[3rem]" style="color: var(--text-main);">
+                {{-- ═══ TITLE ═══ --}}
+                <h3 class="px-5 font-bold leading-relaxed text-sm line-clamp-2 min-h-[3rem] mb-1" style="color: var(--text-main);">
                     {{ $item['title'] }}
                 </h3>
 
-                <!-- Entity/Keyword Tags -->
+                {{-- ═══ ENTITY TAGS ═══ --}}
                 @if(!empty($item['entities']))
-                <div class="flex flex-wrap gap-1 mb-4">
+                <div class="px-5 flex flex-wrap gap-1 mb-3">
                     @foreach($item['entities'] as $tag)
-                        <span class="text-[9px] px-2 py-0.5 rounded-md bg-white/5 text-muted-foreground border border-white/5 hover:border-primary-cyan/30 transition-colors">
+                        <span class="text-[9px] px-2 py-0.5 rounded-md font-medium" 
+                              style="background: rgba(14, 165, 233, 0.06); color: rgba(14, 165, 233, 0.7); border: 1px solid rgba(14, 165, 233, 0.1);">
                             #{{ $tag }}
                         </span>
                     @endforeach
                 </div>
                 @endif
 
-                <div class="mt-auto flex items-center justify-between pt-4 border-t" style="border-color: var(--glass-border);">
+                {{-- ═══ SCORING BREAKDOWN (mini bar) ═══ --}}
+                <div class="px-5 mb-3">
+                    <div class="flex items-center gap-3 text-[9px] font-medium" style="color: var(--text-muted);">
+                        <span title="Virality Score">🔥 {{ $item['virality_score'] ?? 0 }}</span>
+                        <span title="Freshness Score">⚡ {{ $item['freshness_score'] ?? 0 }}</span>
+                        <span class="flex-1">
+                            <div class="w-full h-1 rounded-full overflow-hidden" style="background: rgba(255,255,255,0.05);">
+                                <div class="h-full rounded-full transition-all duration-500"
+                                     style="width: {{ $score }}%; background: {{ $badgeConfig['color'] }};"></div>
+                            </div>
+                        </span>
+                    </div>
+                </div>
+
+                {{-- ═══ AI ANALYSIS PANEL (expandable) ═══ --}}
+                <div x-data="{ showAnalysis: false, analysisData: null, analyzing: false }" class="px-5 mb-3">
+                    {{-- Analyze Button --}}
+                    <button x-show="!showAnalysis && !analyzing" 
+                            @click="analyzeArticle($el, '{{ addslashes($item['title']) }}', '{{ addslashes($item['description'] ?? '') }}', '{{ $region ?? 'EG' }}', '{{ $lang ?? 'ar' }}', '{{ $topic ?? 'WORLD' }}')"
+                            class="w-full py-2 px-3 rounded-xl text-[11px] font-bold flex items-center justify-center gap-2 transition-all hover:scale-[1.02] active:scale-[0.98]"
+                            style="background: linear-gradient(135deg, rgba(168, 85, 247, 0.08), rgba(14, 165, 233, 0.08)); border: 1px solid rgba(168, 85, 247, 0.15); color: #a855f7;">
+                        <i class="fas fa-brain text-[10px]"></i>
+                        <span>AI Deep Analysis</span>
+                        <span class="text-[8px] opacity-60 ml-1">1 CRS</span>
+                    </button>
+                    
+                    {{-- Loading State --}}
+                    <div x-show="analyzing" class="w-full py-3 flex items-center justify-center gap-2 text-[11px] font-bold" style="color: #a855f7;">
+                        <i class="fas fa-spinner animate-spin text-[10px]"></i>
+                        <span>Analyzing with AI...</span>
+                    </div>
+
+                    {{-- Analysis Results --}}
+                    <div x-show="showAnalysis && analysisData" x-transition
+                         class="rounded-xl p-3 space-y-2"
+                         style="background: rgba(168, 85, 247, 0.05); border: 1px solid rgba(168, 85, 247, 0.12);">
+                        
+                        <template x-if="analysisData">
+                            <div class="space-y-2">
+                                {{-- Recommendation --}}
+                                <div class="flex items-center gap-2">
+                                    <span class="text-[9px] font-black uppercase tracking-wider" style="color: var(--text-muted);">Action:</span>
+                                    <span class="text-[11px] font-black" 
+                                          :class="{
+                                              'text-emerald-400': analysisData.recommended_action?.includes('now') || analysisData.recommended_action?.includes('الآن'),
+                                              'text-amber-400': analysisData.recommended_action?.includes('monitor') || analysisData.recommended_action?.includes('راقب'),
+                                              'text-red-400': analysisData.recommended_action?.includes('skip') || analysisData.recommended_action?.includes('تجاوز')
+                                          }"
+                                          x-text="analysisData.recommended_action"></span>
+                                </div>
+
+                                {{-- Reason --}}
+                                <p class="text-[10px] leading-relaxed" style="color: var(--text-muted);" x-text="analysisData.ranking_reason"></p>
+
+                                {{-- Suggested Angle --}}
+                                <div>
+                                    <span class="text-[9px] font-black uppercase tracking-wider" style="color: var(--text-muted);">Content Angle:</span>
+                                    <p class="text-[11px] font-semibold mt-0.5" style="color: var(--text-main);" x-text="analysisData.suggested_angle"></p>
+                                </div>
+
+                                {{-- Keywords --}}
+                                <div class="flex flex-wrap gap-1">
+                                    <template x-for="kw in (analysisData.suggested_keywords || [])" :key="kw">
+                                        <span class="text-[9px] px-2 py-0.5 rounded-md font-bold"
+                                              style="background: rgba(168, 85, 247, 0.08); color: #a855f7; border: 1px solid rgba(168, 85, 247, 0.15);"
+                                              x-text="kw"></span>
+                                    </template>
+                                </div>
+
+                                {{-- Meta Row --}}
+                                <div class="flex items-center gap-3 pt-1 text-[9px] font-bold" style="color: var(--text-muted);">
+                                    <span>📊 <span x-text="analysisData.content_type"></span></span>
+                                    <span>🔍 Vol: <span x-text="analysisData.estimated_search_volume"></span></span>
+                                    <span>⚔️ Comp: <span x-text="analysisData.competition_level"></span></span>
+                                </div>
+                            </div>
+                        </template>
+                    </div>
+                </div>
+
+                {{-- ═══ FOOTER: Actions ═══ --}}
+                <div class="mt-auto px-5 pb-5 flex items-center justify-between pt-3 border-t" style="border-color: var(--glass-border);">
                     <div class="flex flex-col gap-1">
                         <a href="{{ $item['link'] }}" target="_blank" class="text-[11px] text-primary-cyan hover:text-primary-blue transition-colors flex items-center gap-1 font-bold no-underline mb-1">
                             <span>Read Source</span>
@@ -59,15 +244,32 @@
                     </div>
                     
                     <div class="flex items-center gap-2">
-                        <a href="https://www.google.com/search?q={{ urlencode($item['title']) }}&gl={{ $region ?? 'US' }}&hl={{ $lang ?? 'en' }}" target="_blank" class="w-8 h-8 rounded-lg hover:bg-primary-cyan hover:text-black flex items-center justify-center transition-all text-xs" style="background: var(--card-bg); border: 1px solid var(--glass-border); color: var(--text-main);" title="Google Search">
+                        <a href="https://www.google.com/search?q={{ urlencode($item['title']) }}&gl={{ $region ?? 'US' }}&hl={{ $lang ?? 'en' }}" target="_blank" 
+                           class="w-8 h-8 rounded-lg hover:bg-primary-cyan hover:text-black flex items-center justify-center transition-all text-xs" 
+                           style="background: var(--card-bg); border: 1px solid var(--glass-border); color: var(--text-main);" 
+                           title="Check SERP">
                             <i class="fab fa-google"></i>
                         </a>
-                        <button onclick="copyToClipboard('{{ addslashes($item['title']) }}')" class="w-8 h-8 rounded-lg hover:bg-primary-cyan hover:text-black flex items-center justify-center transition-all text-xs" style="background: var(--card-bg); border: 1px solid var(--glass-border); color: var(--text-main);" title="Copy Title">
+                        <button onclick="copyToClipboard('{{ addslashes($item['title']) }}')" 
+                                class="w-8 h-8 rounded-lg hover:bg-primary-cyan hover:text-black flex items-center justify-center transition-all text-xs" 
+                                style="background: var(--card-bg); border: 1px solid var(--glass-border); color: var(--text-main);" 
+                                title="Copy Title">
                             <i class="fas fa-copy"></i>
                         </button>
-                        <a href="{{ route('headlines.index') }}?keyword={{ urlencode($item['title']) }}" class="w-8 h-8 rounded-lg hover:bg-primary-cyan hover:text-black flex items-center justify-center transition-all text-xs shadow-lg shadow-primary-cyan/10" style="background: var(--card-bg); border: 1px solid var(--glass-border); color: var(--text-main);" title="Discover Headlines">
+                        <a href="{{ route('headlines.index') }}?keyword={{ urlencode($item['title']) }}" target="_blank"
+                           class="w-8 h-8 rounded-lg hover:bg-primary-cyan hover:text-black flex items-center justify-center transition-all text-xs" 
+                           style="background: var(--card-bg); border: 1px solid var(--glass-border); color: var(--text-main);" 
+                           title="Discover Headlines">
                             <i class="fas fa-bolt"></i>
                         </a>
+                        @if(Route::has('dashboard.article-writer.index'))
+                        <a href="{{ route('dashboard.article-writer.index') }}?topic={{ urlencode($item['title']) }}" target="_blank"
+                           class="w-8 h-8 rounded-lg flex items-center justify-center transition-all text-xs shadow-lg"
+                           style="background: linear-gradient(135deg, rgba(16, 185, 129, 0.15), rgba(14, 165, 233, 0.15)); border: 1px solid rgba(16, 185, 129, 0.2); color: #10b981;"
+                           title="Write Article About This">
+                            <i class="fas fa-pen-fancy"></i>
+                        </a>
+                        @endif
                     </div>
                 </div>
             </div>
@@ -77,5 +279,6 @@
     <div class="glass-card p-16 text-center border-dashed" style="border-color: var(--glass-border);">
         <i class="fas fa-newspaper text-4xl mb-4 block" style="color: var(--text-muted); opacity: 0.5;"></i>
         <p class="font-bold" style="color: var(--text-muted);">No news available currently</p>
+        <p class="text-sm mt-2" style="color: var(--text-muted); opacity: 0.6;">Try changing the region or topic filter</p>
     </div>
 @endif

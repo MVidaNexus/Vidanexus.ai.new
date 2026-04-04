@@ -151,11 +151,57 @@ class GlobalNewsMonitorController extends Controller
             ]);
         }
 
+        $thresholdHigh = (int) \App\Models\Setting::get('global-news-monitor_threshold_high', 70);
+        $thresholdModerate = (int) \App\Models\Setting::get('global-news-monitor_threshold_moderate', 45);
+
         // Handle AJAX requests
         if ($isAjax) {
-            return view('globalnewsmonitor::partials.news_grid', compact('googleNews', 'region', 'lang'))->render();
+            return view('globalnewsmonitor::partials.news_grid', compact('googleNews', 'region', 'lang', 'thresholdHigh', 'thresholdModerate'))->render();
         }
 
-        return view('globalnewsmonitor::index', compact('countryMap', 'topicsMap', 'currentCountry', 'googleNews', 'topic', 'lang'));
+        return view('globalnewsmonitor::index', compact('countryMap', 'topicsMap', 'currentCountry', 'googleNews', 'topic', 'lang', 'region', 'thresholdHigh', 'thresholdModerate'));
+    }
+
+    /**
+     * On-demand AI Deep Analysis for a single article
+     */
+    public function analyzeArticle(Request $request)
+    {
+        $user = auth()->user();
+        
+        if (!$user->canUseTool('global-news-monitor')) {
+            return response()->json(['success' => false, 'message' => 'Tool access denied.'], 403);
+        }
+
+        $syncCredits = 1;
+        if (!$user->wallet || $user->wallet->balance_credits < $syncCredits) {
+            return response()->json(['success' => false, 'message' => 'Insufficient balance. Required: 1 Credit.'], 402);
+        }
+
+        $title = $request->input('title', '');
+        $description = $request->input('description', '');
+        $country = $request->input('country', 'EG');
+        $lang = $request->input('lang', 'ar');
+        $topic = $request->input('topic', 'WORLD');
+
+        if (empty($title)) {
+            return response()->json(['success' => false, 'message' => 'Title is required.'], 422);
+        }
+
+        $result = $this->service->analyzeArticleWithAI($title, $description, $country, $lang, $topic);
+
+        if ($result['success']) {
+            // Charge credits only on success
+            $user->wallet->decrement('balance_credits', $syncCredits);
+            \App\Models\AiUsage::create([
+                'user_id'  => $user->id,
+                'tool'     => 'global-news-monitor',
+                'provider' => 'ai',
+                'model'    => 'ai-analysis',
+                'status'   => 'success',
+            ]);
+        }
+
+        return response()->json($result);
     }
 }

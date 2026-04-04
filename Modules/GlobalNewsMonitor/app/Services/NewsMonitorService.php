@@ -260,64 +260,313 @@ class NewsMonitorService
     }
 
     /**
-     * Advanced SEO Analytics: Scoring, Sentiment, and Entities
+     * ══════════════════════════════════════════════════════════════
+     *  RANKING OPPORTUNITY ENGINE v2.0
+     *  Real scoring based on: Trend Velocity, Freshness, SERP 
+     *  Saturation, Authority Gap, Sentiment, and Entity Extraction
+     * ══════════════════════════════════════════════════════════════
      */
     protected function analyzeSeoPotential($title, $desc, $pubDate, $source)
     {
         $text = mb_strtolower($title . ' ' . $desc);
+        $titleLower = mb_strtolower($title);
         
-        // 1. Authority Sources (Weighting)
-        $authoritySources = [
-            'سكاي نيوز', 'الجزيرة', 'العربية', 'رويترز', 'bbc', 'cnn', 'فرانس 24', 'الشرق', 'اندبندنت', 'اليوم السابع', 'البيان', 'الخليج',
-            'reuters', 'ny times', 'washington post', 'guardian', 'bloomberg', 'forbes', 'techcrunch', 'wired', 'verge'
-        ];
-        $isAuthority = false;
-        foreach ($authoritySources as $auth) {
-            if (str_contains(mb_strtolower($source), $auth)) {
-                $isAuthority = true;
-                break;
+        // ─── 1. SOURCE AUTHORITY ANALYSIS ───
+        $majorAuthorityText = \App\Models\Setting::get('global-news-monitor_major_authority_sources', "سكاي نيوز\nالجزيرة\nالعربية\nرويترز\nفرانس 24\nالشرق الأوسط\nbbc\ncnn\nreuters\nny times\nassociated press\nal jazeera");
+        $midAuthorityText = \App\Models\Setting::get('global-news-monitor_mid_authority_sources', "اليوم السابع\nالبيان\nالخليج\nالوطن\nالمصري اليوم\nالشروق\nعكاظ\nسبق\nforbes\ntechcrunch\nwired\nverge");
+        
+        $majorAuthoritySources = array_map('trim', explode("\n", mb_strtolower($majorAuthorityText)));
+        $midAuthoritySources = array_map('trim', explode("\n", mb_strtolower($midAuthorityText)));
+        
+        $sourceLower = mb_strtolower($source);
+        $authorityLevel = 'low'; // low = opportunity for you!
+        foreach ($majorAuthoritySources as $auth) {
+            if (!empty($auth) && str_contains($sourceLower, $auth)) { $authorityLevel = 'major'; break; }
+        }
+        if ($authorityLevel === 'low') {
+            foreach ($midAuthoritySources as $auth) {
+                if (!empty($auth) && str_contains($sourceLower, $auth)) { $authorityLevel = 'mid'; break; }
             }
         }
+        
+        // ─── 2. FRESHNESS SCORE (25% weight) ───
+        $ageHours = max(0, (time() - strtotime($pubDate)) / 3600);
+        $freshnessScore = 0;
+        if ($ageHours < 0.5) $freshnessScore = 100;
+        elseif ($ageHours < 1) $freshnessScore = 90;
+        elseif ($ageHours < 2) $freshnessScore = 75;
+        elseif ($ageHours < 6) $freshnessScore = 55;
+        elseif ($ageHours < 12) $freshnessScore = 35;
+        elseif ($ageHours < 24) $freshnessScore = 20;
+        else $freshnessScore = 5;
 
-        // 2. SEO Scoring (1-100)
-        $score = 40; // Baseline
-        $ageHours = (time() - strtotime($pubDate)) / 3600;
+        // ─── 3. AUTHORITY GAP SCORE (15% weight) ───
+        $authorityGapScore = match($authorityLevel) {
+            'major' => 20, 
+            'mid'   => 55,
+            'low'   => 90,
+            default => 50,
+        };
         
-        if ($ageHours < 1) $score += 30;
-        elseif ($ageHours < 6) $score += 20;
-        elseif ($ageHours < 24) $score += 10;
+        // ─── 4. VIRALITY SIGNALS ───
+        $viralityScore = 0;
+        $breakingKeywords = ['عاجل', 'انفراد', 'حصري', 'خاص', 'لأول مرة', 'breaking', 'exclusive', 'just in', 'urgent', 'developing'];
+        foreach ($breakingKeywords as $bk) { if (str_contains($text, $bk)) { $viralityScore += 20; break; } }
         
-        if ($isAuthority) $score += 15;
-        if (str_contains($text, 'عاجل') || str_contains($text, 'انفراد')) $score += 15;
+        $viralTopics = ['وفاة', 'مقتل', 'زلزال', 'انفجار', 'اعتقال', 'استقالة', 'إقالة', 'فضيحة', 'تسريب', 'death', 'earthquake', 'explosion', 'arrest', 'scandal', 'crash'];
+        foreach ($viralTopics as $vt) { if (str_contains($text, $vt)) { $viralityScore += 15; break; } }
         
-        // 3. Sentiment Analysis (Heuristic)
+        $curiosityTriggers = ['لماذا', 'كيف', 'ما حقيقة', 'هل يمكن', 'السبب', 'الحقيقة', 'المفاجأة', 'why', 'how', 'truth behind', 'shocking'];
+        foreach ($curiosityTriggers as $ct) { if (str_contains($text, $ct)) { $viralityScore += 10; break; } }
+        
+        if (preg_match('/\d+/', $title)) $viralityScore += 5;
+        $viralityScore = min(100, $viralityScore);
+        
+        // ─── 5. CONTENT SATURATION ESTIMATE ───
+        $titleWords = array_filter(preg_split('/\s+/u', $titleLower), fn($w) => mb_strlen($w, 'UTF-8') >= 3);
+        $uniqueWordCount = count(array_unique($titleWords));
+        $specificityScore = min(100, $uniqueWordCount * 12);
+        $serpSaturationScore = max(20, $specificityScore);
+        
+        // ─── 6. DYNAMIC COMPOSITE SCORING ───
+        $weightVirality  = (int) \App\Models\Setting::get('global-news-monitor_weight_virality', 35);
+        $weightFreshness = (int) \App\Models\Setting::get('global-news-monitor_weight_freshness', 25);
+        $weightSerp      = (int) \App\Models\Setting::get('global-news-monitor_weight_serp', 25);
+        $weightAuthority = (int) \App\Models\Setting::get('global-news-monitor_weight_authority', 15);
+        
+        $thresholdHigh     = (int) \App\Models\Setting::get('global-news-monitor_threshold_high', 70);
+        $thresholdModerate = (int) \App\Models\Setting::get('global-news-monitor_threshold_moderate', 45);
+
+        $rankingOpportunity = (int) round(
+            ($viralityScore       * ($weightVirality / 100)) + 
+            ($freshnessScore      * ($weightFreshness / 100)) + 
+            ($serpSaturationScore * ($weightSerp / 100)) + 
+            ($authorityGapScore   * ($weightAuthority / 100))
+        );
+        
+        // Rescale if weights don't sum to exactly 100 (Safety)
+        $totalWeight = $weightVirality + $weightFreshness + $weightSerp + $weightAuthority;
+        if ($totalWeight > 0 && $totalWeight != 100) {
+            $rankingOpportunity = (int) round(($rankingOpportunity / $totalWeight) * 100);
+        }
+
+        $rankingOpportunity = min(100, max(0, $rankingOpportunity));
+        
+        // Classify opportunity level dynamically
+        $opportunityLevel = 'low';
+        if ($rankingOpportunity >= $thresholdHigh) $opportunityLevel = 'high';
+        elseif ($rankingOpportunity >= $thresholdModerate) $opportunityLevel = 'moderate';
+        
+        // Determine trend direction based on freshness + virality
+        $trendDirection = 'stable';
+        if ($ageHours < 2 && $viralityScore >= 30) $trendDirection = 'rising_fast';
+        elseif ($ageHours < 6 && $viralityScore >= 15) $trendDirection = 'rising';
+        elseif ($ageHours > 12) $trendDirection = 'declining';
+        
+        // ─── 7. ENHANCED SENTIMENT ANALYSIS ───
         $sentiment = 'neutral';
-        $positive = ['إنجاز', 'ارتفاع', 'نمو', 'نجاح', 'تطور', 'اتفاق', 'تعاون', 'افتتاح', 'فوز', 'أرباح'];
-        $negative = ['أزمة', 'انهيار', 'انخفاض', 'وفاة', 'مقتل', 'انفجار', 'تراجع', 'خسارة', 'توقف', 'إضراب', 'شكوى'];
+        $positiveKeywords = [
+            'إنجاز', 'ارتفاع', 'نمو', 'نجاح', 'تطور', 'اتفاق', 'تعاون', 'افتتاح', 'فوز', 'أرباح',
+            'تحسن', 'انتصار', 'إطلاق', 'اعتماد', 'شراكة', 'تمويل', 'رقم قياسي', 'زيادة', 'ابتكار', 'جائزة',
+            'success', 'growth', 'launch', 'win', 'profit', 'record', 'breakthrough', 'partnership', 'innovation', 'award',
+            'achievement', 'progress', 'deal', 'agreement', 'surge', 'milestone', 'upgrade',
+        ];
+        $negativeKeywords = [
+            'أزمة', 'انهيار', 'انخفاض', 'وفاة', 'مقتل', 'انفجار', 'تراجع', 'خسارة', 'توقف', 'إضراب', 'شكوى',
+            'كارثة', 'حريق', 'حرب', 'هجوم', 'اعتقال', 'فضيحة', 'تسريح', 'إفلاس', 'عقوبات', 'تهديد', 'اختراق',
+            'crisis', 'crash', 'death', 'killed', 'explosion', 'decline', 'loss', 'collapse', 'war', 'attack',
+            'arrest', 'scandal', 'layoff', 'bankruptcy', 'sanctions', 'threat', 'breach', 'fire', 'disaster',
+        ];
         
         $posCount = 0; $negCount = 0;
-        foreach ($positive as $p) if (str_contains($text, $p)) $posCount++;
-        foreach ($negative as $n) if (str_contains($text, $n)) $negCount++;
+        foreach ($positiveKeywords as $p) if (str_contains($text, $p)) $posCount++;
+        foreach ($negativeKeywords as $n) if (str_contains($text, $n)) $negCount++;
         
         if ($posCount > $negCount) $sentiment = 'positive';
         elseif ($negCount > $posCount) $sentiment = 'negative';
 
-        // 4. Entity Extraction (Key Concepts)
+        // ─── 8. IMPROVED ENTITY EXTRACTION ───
         $entities = [];
-        // Extract 2-3 significant words (longer than 4 chars, not common)
-        $words = explode(' ', preg_replace('/[^\p{L}\p{N}\s]+/u', ' ', $title));
+        $stopWords = [
+            // Arabic
+            'هذا', 'هذه', 'على', 'منذ', 'بعد', 'قبل', 'التي', 'الذي', 'الذين', 'الوطن',
+            'عليه', 'عليها', 'يوم', 'خلال', 'حول', 'أمام', 'أكثر', 'يمكن', 'عبر', 'حيث',
+            'أثناء', 'ضمن', 'وسط', 'صباح', 'مساء', 'اليوم', 'الآن', 'حتى', 'لكن',
+            // English
+            'about', 'after', 'their', 'these', 'those', 'could', 'would', 'should', 'where',
+            'there', 'being', 'which', 'while', 'other', 'under', 'every', 'first', 'since',
+        ];
+        $words = preg_split('/\s+/u', preg_replace('/[^\p{L}\p{N}\s]+/u', ' ', $title));
         foreach ($words as $word) {
-            if (mb_strlen($word) > 4 && !in_array($word, ['هذا', 'على', 'منذ', 'بعد', 'قبل'])) {
-                $entities[] = $word;
+            $word = trim($word);
+            if (mb_strlen($word) > 3 && !in_array(mb_strtolower($word), $stopWords)) {
+                // Prefer words that start with uppercase (proper nouns) or Arabic words > 4 chars
+                if (preg_match('/^\p{Lu}/u', $word) || mb_strlen($word) > 4) {
+                    $entities[] = $word;
+                }
             }
-            if (count($entities) >= 3) break;
+            if (count($entities) >= 5) break;
         }
+        // Deduplicate
+        $entities = array_values(array_unique($entities));
+        if (count($entities) > 4) $entities = array_slice($entities, 0, 4);
 
         return [
-            'seo_score' => min(100, $score),
-            'sentiment' => $sentiment,
-            'entities' => $entities,
-            'is_high_authorative' => $isAuthority
+            'seo_score'           => $rankingOpportunity,
+            'opportunity_level'   => $opportunityLevel,    // high / moderate / low
+            'trend_direction'     => $trendDirection,       // rising_fast / rising / stable / declining
+            'sentiment'           => $sentiment,
+            'entities'            => $entities,
+            'is_high_authorative' => ($authorityLevel !== 'low'),
+            'authority_level'     => $authorityLevel,
+            'freshness_score'     => $freshnessScore,
+            'virality_score'      => $viralityScore,
+            'age_hours'           => round($ageHours, 1),
         ];
+    }
+
+    /**
+     * ══════════════════════════════════════════════════════════════
+     *  ON-DEMAND AI DEEP ANALYSIS (per article)
+     *  Called via AJAX when user clicks "Analyze This"
+     * ══════════════════════════════════════════════════════════════
+     */
+    public function analyzeArticleWithAI(string $title, string $description, string $country, string $lang, string $topic): array
+    {
+        $aiManager = app(\App\Core\AI\AIManager::class);
+        
+        $isArabic = ($lang === 'ar');
+        
+        // Fetch custom prompt from settings
+        $customPrompt = \App\Models\Setting::get('global-news-monitor_ai_analysis_prompt', '');
+        
+        if (!empty($customPrompt)) {
+            $prompt = str_replace(
+                ['[Title]', '[Description]', '[Country]', '[Topic]', '[Lang]'],
+                [$title, $description, $country, $topic, $lang],
+                $customPrompt
+            );
+        } else {
+            $prompt = $isArabic 
+                ? "أنت محلل SEO محترف. حلّل هذا الخبر وأجب بصيغة JSON فقط بدون أي نص إضافي.
+    
+    العنوان: {$title}
+    الوصف: {$description}
+    الدولة: {$country}
+    القسم: {$topic}
+    
+    أريد JSON بهذا الشكل بالضبط:
+    {
+      \"ranking_opportunity\": \"high|moderate|low\",
+      \"ranking_reason\": \"سبب مختصر في سطر واحد بالعربية\",
+      \"suggested_angle\": \"زاوية محتوى فريدة مقترحة للتغطية بالعربية\",
+      \"suggested_keywords\": [\"كلمة1\", \"كلمة2\", \"كلمة3\", \"كلمة4\", \"كلمة5\"],
+      \"content_type\": \"مقال إخباري سريع|تحليل معمق|فيديو قصير|إنفوجرافيك\",
+      \"estimated_search_volume\": \"high|medium|low\",
+      \"competition_level\": \"high|medium|low\",
+      \"recommended_action\": \"اكتب الآن|راقب أولاً|تجاوز\"
+    }"
+                : "You are a professional SEO analyst. Analyze this news article and respond with JSON ONLY, no extra text.
+    
+    Title: {$title}
+    Description: {$description}
+    Country: {$country}
+    Topic: {$topic}
+    
+    Return JSON in this exact format:
+    {
+      \"ranking_opportunity\": \"high|moderate|low\",
+      \"ranking_reason\": \"Brief one-line reason\",
+      \"suggested_angle\": \"A unique content angle to cover this story\",
+      \"suggested_keywords\": [\"keyword1\", \"keyword2\", \"keyword3\", \"keyword4\", \"keyword5\"],
+      \"content_type\": \"quick news article|deep analysis|short video|infographic\",
+      \"estimated_search_volume\": \"high|medium|low\",
+      \"competition_level\": \"high|medium|low\",
+      \"recommended_action\": \"write now|monitor first|skip\"
+    }";
+        }
+
+        try {
+            $result = $aiManager->generate('global-news-monitor', $prompt, [
+                'temperature' => 0.2,
+                'max_tokens'  => 1000,
+            ]);
+            
+            $responseText = $result['text'] ?? '';
+            
+            // Extract JSON from response (handle markdown code blocks)
+            if (preg_match('/```(?:json)?\s*([\s\S]*?)```/', $responseText, $matches)) {
+                $responseText = trim($matches[1]);
+            }
+            $responseText = trim($responseText);
+            
+            $parsed = json_decode($responseText, true);
+            
+            if ($parsed && isset($parsed['ranking_opportunity'])) {
+                return [
+                    'success' => true,
+                    'analysis' => $parsed,
+                ];
+            }
+            
+            Log::warning('[NewsMonitor AI] Failed to parse AI response: ' . substr($responseText, 0, 500));
+            return ['success' => false, 'message' => 'AI response could not be parsed.'];
+            
+        } catch (\Exception $e) {
+            Log::error('[NewsMonitor AI] Error: ' . $e->getMessage());
+            return ['success' => false, 'message' => $e->getMessage()];
+        }
+    }
+
+    /**
+     * Check if a topic matches current Google Trends
+     * Returns: array of matching trend titles (empty if no match)
+     */
+    public function checkGoogleTrends(string $keyword, string $region = 'EG'): array
+    {
+        $cacheKey = "google_trends_monitor_{$region}";
+        
+        $trends = Cache::remember($cacheKey, 600, function () use ($region) {
+            try {
+                $url = "https://trends.google.com/trending/rss?geo={$region}&sort=recency";
+                $response = Http::timeout(8)->get($url);
+                if ($response->failed()) return [];
+                
+                $xml = @simplexml_load_string($response->body());
+                if (!$xml || !isset($xml->channel->item)) return [];
+                
+                $items = [];
+                foreach ($xml->channel->item as $item) {
+                    $items[] = [
+                        'title'   => (string) $item->title,
+                        'traffic' => (string) ($item->children('ht', true)->approx_traffic ?? ''),
+                    ];
+                }
+                return $items;
+            } catch (\Exception $e) {
+                Log::warning('[NewsMonitor] Trends fetch failed: ' . $e->getMessage());
+                return [];
+            }
+        });
+        
+        if (empty($trends)) return [];
+        
+        $keywordLower = mb_strtolower($keyword);
+        $keywordWords = array_filter(preg_split('/\s+/u', $keywordLower), fn($w) => mb_strlen($w) >= 3);
+        
+        $matches = [];
+        foreach ($trends as $trend) {
+            $trendLower = mb_strtolower($trend['title']);
+            
+            // Check word overlap
+            $trendWords = array_filter(preg_split('/\s+/u', $trendLower), fn($w) => mb_strlen($w) >= 3);
+            $common = count(array_intersect($keywordWords, $trendWords));
+            
+            if ($common >= 1 || str_contains($trendLower, $keywordLower) || str_contains($keywordLower, $trendLower)) {
+                $matches[] = $trend;
+            }
+        }
+        
+        return $matches;
     }
 }

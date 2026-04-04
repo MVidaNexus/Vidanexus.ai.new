@@ -72,6 +72,30 @@ class HorizonController extends Controller
             $settings['available_countries'] = Setting::get("{$slug}_available_countries", "EG:مصر 🇪🇬\nSA:السعودية 🇸🇦\nAE:الإمارات 🇦🇪\nKW:الكويت 🇰🇼\nQA:قطر 🇶🇦\nBH:البحرين 🇧🇭\nOM:عمان 🇴🇲\nIQ:العراق 🇮🇶\nJO:الأردن 🇯🇴\nLB:لبنان 🇱🇧\nMA:المغرب 🇲🇦\nDZ:الجزائر 🇩🇿\nTN:تونس 🇹🇳\nLY:ليبيا 🇱🇾\nPS:فلسطين 🇵🇸\nSY:سوريا 🇸🇾\nYE:اليمن 🇾🇪\nUS:USA 🇺🇸\nGB:UK 🇬🇧\nFR:France 🇫🇷\nPL:Poland 🇵🇱");
             
             $settings['available_topics'] = Setting::get("{$slug}_available_topics", "GENERAL:أخبار عامة\nWORLD:عالمية\nNATION:محلية\nBUSINESS:أعمال\nTECHNOLOGY:تكنولوجيا\nENTERTAINMENT:ترفيه\nSPORTS:رياضة\nSCIENCE:علوم\nHEALTH:صحة");
+
+            // Ranking Engine Weights
+            $settings['weight_virality'] = Setting::get("{$slug}_weight_virality", 35);
+            $settings['weight_freshness'] = Setting::get("{$slug}_weight_freshness", 25);
+            $settings['weight_serp'] = Setting::get("{$slug}_weight_serp", 25);
+            $settings['weight_authority'] = Setting::get("{$slug}_weight_authority", 15);
+
+            // Opportunity Thresholds
+            $settings['threshold_high'] = Setting::get("{$slug}_threshold_high", 70);
+            $settings['threshold_moderate'] = Setting::get("{$slug}_threshold_moderate", 45);
+
+            // AI Analysis Prompt
+            $settings['ai_analysis_prompt'] = Setting::get("{$slug}_ai_analysis_prompt", '');
+
+            // Performance
+            $settings['cache_ttl'] = Setting::get("{$slug}_cache_ttl", 300);
+            $settings['auto_refresh_seconds'] = Setting::get("{$slug}_auto_refresh_seconds", 300);
+            $settings['max_articles_per_fetch'] = Setting::get("{$slug}_max_articles_per_fetch", 60);
+            $settings['sync_credits'] = Setting::get("{$slug}_sync_credits", 1);
+            $settings['ai_analysis_credits'] = Setting::get("{$slug}_ai_analysis_credits", 1);
+
+            // Authority Sources
+            $settings['major_authority_sources'] = Setting::get("{$slug}_major_authority_sources", "سكاي نيوز\nالجزيرة\nالعربية\nرويترز\nفرانس 24\nالشرق الأوسط\nbbc\ncnn\nreuters\nny times\nwashington post\nguardian\nbloomberg\nassociated press");
+            $settings['mid_authority_sources'] = Setting::get("{$slug}_mid_authority_sources", "اليوم السابع\nالبيان\nالخليج\nالوطن\nالمصري اليوم\nالشروق\nعكاظ\nسبق\nforbes\ntechcrunch\nwired\nverge");
         }
 
         // Specific settings for Discover Headlines
@@ -220,6 +244,58 @@ class HorizonController extends Controller
             }
             if ($request->has('available_topics')) {
                 Setting::set("{$slug}_available_topics", $request->available_topics, 'textarea', 'tool_settings');
+            }
+
+            // Ranking Engine Weights
+            if ($request->has('weight_virality')) {
+                Setting::set("{$slug}_weight_virality", (int)$request->weight_virality, 'number', 'tool_settings');
+            }
+            if ($request->has('weight_freshness')) {
+                Setting::set("{$slug}_weight_freshness", (int)$request->weight_freshness, 'number', 'tool_settings');
+            }
+            if ($request->has('weight_serp')) {
+                Setting::set("{$slug}_weight_serp", (int)$request->weight_serp, 'number', 'tool_settings');
+            }
+            if ($request->has('weight_authority')) {
+                Setting::set("{$slug}_weight_authority", (int)$request->weight_authority, 'number', 'tool_settings');
+            }
+
+            // Opportunity Thresholds
+            if ($request->has('threshold_high')) {
+                Setting::set("{$slug}_threshold_high", (int)$request->threshold_high, 'number', 'tool_settings');
+            }
+            if ($request->has('threshold_moderate')) {
+                Setting::set("{$slug}_threshold_moderate", (int)$request->threshold_moderate, 'number', 'tool_settings');
+            }
+
+            // AI Analysis Prompt
+            if ($request->has('ai_analysis_prompt')) {
+                Setting::set("{$slug}_ai_analysis_prompt", $request->ai_analysis_prompt, 'textarea', 'tool_settings');
+            }
+
+            // Performance
+            if ($request->has('cache_ttl')) {
+                Setting::set("{$slug}_cache_ttl", (int)$request->cache_ttl, 'number', 'tool_settings');
+            }
+            if ($request->has('auto_refresh_seconds')) {
+                Setting::set("{$slug}_auto_refresh_seconds", (int)$request->auto_refresh_seconds, 'number', 'tool_settings');
+            }
+            if ($request->has('max_articles_per_fetch')) {
+                Setting::set("{$slug}_max_articles_per_fetch", (int)$request->max_articles_per_fetch, 'number', 'tool_settings');
+            }
+            if ($request->has('sync_credits')) {
+                Setting::set("{$slug}_sync_credits", (int)$request->sync_credits, 'number', 'tool_settings');
+            }
+            if ($request->has('ai_analysis_credits')) {
+                Setting::set("{$slug}_ai_analysis_credits", (int)$request->ai_analysis_credits, 'number', 'tool_settings');
+            }
+
+            // Authority Sources
+            if ($request->has('major_authority_sources')) {
+                Setting::set("{$slug}_major_authority_sources", $request->major_authority_sources, 'textarea', 'tool_settings');
+            }
+            if ($request->has('mid_authority_sources')) {
+                Setting::set("{$slug}_mid_authority_sources", $request->mid_authority_sources, 'textarea', 'tool_settings');
             }
             
             // Clear news cache so new settings take effect
