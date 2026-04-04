@@ -11,6 +11,9 @@ return Application::configure(basePath: dirname(__DIR__))
         health: '/up',
     )
     ->withMiddleware(function (Middleware $middleware) {
+        $middleware->use([
+            \App\Http\Middleware\ServeMarkdownToAI::class,
+        ]);
         $middleware->web(append: [
             \App\Http\Middleware\PreLaunchMiddleware::class,
         ]);

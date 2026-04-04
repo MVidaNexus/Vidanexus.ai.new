@@ -4,19 +4,18 @@ use Illuminate\Support\Facades\Route;
 use Illuminate\Foundation\Auth\EmailVerificationRequest;
 use Illuminate\Http\Request;
 
+// ─── PUBLIC PAGES (AI-Friendly Markdown supported via Global Middleware) ───
 Route::get('/', [\App\Http\Controllers\ToolController::class, 'index'])->name('home');
-
-// Tool & Marketing Routes
 Route::get('/tools/{slug}', [\App\Http\Controllers\ToolController::class, 'show'])->name('tools.show');
 Route::get('/pricing', [\App\Http\Controllers\ToolController::class, 'pricing'])->name('pricing');
-
-// Public Resource Pages
-Route::get('/api-docs', function () { return view('pages.api-docs'); })->name('api-docs');
 Route::get('/help-center', function () { return view('pages.help-center'); })->name('help-center');
 Route::get('/terms', function () { return view('pages.terms'); })->name('terms');
 Route::get('/privacy', function () { return view('pages.privacy'); })->name('privacy');
 Route::get('/refund', function () { return view('pages.refund'); })->name('refund');
 Route::get('/shipping', function () { return view('pages.shipping'); })->name('shipping');
+
+// API Docs (no markdown needed)
+Route::get('/api-docs', function () { return view('pages.api-docs'); })->name('api-docs');
 
 
 // Auth routes
