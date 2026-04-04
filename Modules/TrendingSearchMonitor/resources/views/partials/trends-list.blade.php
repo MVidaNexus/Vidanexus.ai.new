@@ -29,6 +29,15 @@
                                 {{ $trend['traffic'] }} search
                             </span>
                         @endif
+                        
+                        {{-- V2.0 Opportunity Meter --}}
+                        @php $oppScore = app(\Modules\TrendingSearchMonitor\Services\TrendIntelligenceService::class)->getEstimatedScore($trend['title']); @endphp
+                        <div class="flex items-center gap-2 ml-auto md:ml-0">
+                             <div class="w-16 h-1.5 bg-white/5 rounded-full overflow-hidden border border-white/5">
+                                 <div class="h-full bg-gradient-to-r from-primary-cyan to-primary-purple" style="width: {{ $oppScore }}%"></div>
+                             </div>
+                             <span class="text-[9px] font-black {{ $oppScore > 60 ? 'text-primary-cyan' : 'text-gray-500' }} uppercase tracking-tighter">{{ $oppScore }}% ROI</span>
+                        </div>
                     </div>
                     
                     @if(!empty($trend['news']))
@@ -47,22 +56,30 @@
                     @endif
                 </div>
 
-                <div class="flex items-center gap-2 opacity-0 group-hover/card:opacity-100 transition-opacity duration-300">
+                <div class="flex items-center gap-2 transition-all duration-300">
+                    {{-- V2.0 AI Deep Intel Button --}}
+                    <button onclick="analyzeTrend('{{ addslashes($trend['title']) }}', '{{ $region }}', '{{ $currentCountry['lang'] ?? 'ar' }}', this)" 
+                            class="w-10 h-10 rounded-xl bg-primary-cyan/10 border border-primary-cyan/20 hover:bg-primary-cyan hover:text-black flex items-center justify-center transition-all text-primary-cyan"
+                            title="AI Deep Intelligence">
+                        <i class="fas fa-brain text-sm"></i>
+                    </button>
+
                     <button onclick="copyTrend('{{ addslashes($trend['title']) }}', this)" 
-                            class="w-10 h-10 rounded-xl bg-white/5 hover:bg-primary-cyan hover:text-black flex items-center justify-center transition-all text-gray-400"
+                            class="w-10 h-10 rounded-xl bg-white/5 hover:bg-white/10 flex items-center justify-center transition-all text-gray-400"
                             title="Copy Keyword">
                         <i class="fas fa-copy text-sm"></i>
                     </button>
+
                     <a href="{{ route('headlines.index') }}?keyword={{ urlencode($trend['title']) }}" 
                        class="w-10 h-10 rounded-xl bg-white/5 hover:bg-primary-cyan hover:text-black flex items-center justify-center transition-all text-gray-400"
                        title="Generate Discover Headlines">
                         <i class="fas fa-bolt text-sm"></i>
                     </a>
-                    <a href="https://www.google.com/search?q={{ urlencode($trend['title']) }}&gl={{ $region }}" 
-                       target="_blank"
-                       class="w-10 h-10 rounded-xl bg-white/5 hover:bg-primary-cyan hover:text-black flex items-center justify-center transition-all text-gray-400"
-                       title="Search Google">
-                        <i class="fas fa-external-link-alt text-sm"></i>
+
+                    <a href="{{ route('articlewriter.index') }}?keyword={{ urlencode($trend['title']) }}" 
+                       class="w-10 h-10 rounded-xl bg-white/5 hover:bg-primary-purple hover:text-white flex items-center justify-center transition-all text-gray-400"
+                       title="One-Click Article Writer">
+                        <i class="fas fa-pen-fancy text-sm"></i>
                     </a>
                 </div>
             </div>

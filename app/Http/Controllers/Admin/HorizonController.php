@@ -98,6 +98,35 @@ class HorizonController extends Controller
             $settings['mid_authority_sources'] = Setting::get("{$slug}_mid_authority_sources", "اليوم السابع\nالبيان\nالخليج\nالوطن\nالمصري اليوم\nالشروق\nعكاظ\nسبق\nforbes\ntechcrunch\nwired\nverge");
         }
 
+        // Specific settings for Trending Search Monitor
+        if ($slug === 'trending-search-monitor') {
+            $settings['feed_type'] = Setting::get("{$slug}_feed_type", 'daily');
+            $settings['category'] = Setting::get("{$slug}_category", 'all');
+            $settings['countries'] = Setting::get("{$slug}_countries", '[]');
+            $settings['available_countries'] = Setting::get("{$slug}_available_countries", "EG:مصر 🇪🇬\nSA:السعودية 🇸🇦\nAE:الإمارات 🇦🇪\nKW:الكويت 🇰🇼\nQA:قطر 🇶🇦\nBH:البحرين 🇧🇭\nOM:عمان 🇴🇲\nUS:USA 🇺🇸\nGB:UK 🇬🇧\nDE:Germany 🇩🇪\nFR:France 🇫🇷\nPL:Poland 🇵🇱");
+            
+            // AI Analysis
+            $settings['ai_analysis_prompt'] = Setting::get("{$slug}_ai_analysis_prompt", '');
+            $settings['ai_analysis_credits'] = Setting::get("{$slug}_ai_analysis_credits", 2);
+            $settings['ai_model'] = Setting::get("{$slug}_ai_model", 'gpt-4o-mini');
+            
+            // Platform Toggles
+            $settings['source_google_enabled'] = (bool)Setting::get("{$slug}_source_google_enabled", true);
+            $settings['source_x_enabled'] = (bool)Setting::get("{$slug}_source_x_enabled", true);
+            $settings['source_tiktok_enabled'] = (bool)Setting::get("{$slug}_source_tiktok_enabled", true);
+            $settings['source_youtube_enabled'] = (bool)Setting::get("{$slug}_source_youtube_enabled", true);
+            
+            // TikTok External API (RapidAPI / Custom)
+            $settings['tiktok_api_key'] = Setting::get("{$slug}_tiktok_api_key", '');
+            $settings['tiktok_api_host'] = Setting::get("{$slug}_tiktok_api_host", 'tiktok-creative-center-api.p.rapidapi.com');
+            $settings['tiktok_api_endpoint'] = Setting::get("{$slug}_tiktok_api_endpoint", '/api/trending/hashtag');
+            
+            // Performance
+            $settings['cache_ttl'] = Setting::get("{$slug}_cache_ttl", 3600);
+            $settings['sync_interval'] = Setting::get("{$slug}_sync_interval", 5);
+            $settings['max_trends'] = Setting::get("{$slug}_max_trends", 50);
+        }
+
         // Specific settings for Discover Headlines
         if ($slug === 'discover-headlines') {
             $settings['suggestions_prompt'] = Setting::get("{$slug}_suggestions_prompt", '');
@@ -344,9 +373,52 @@ class HorizonController extends Controller
             if ($request->has('available_countries')) {
                 Setting::set("{$slug}_available_countries", $request->available_countries, 'textarea', 'tool_settings');
             }
+
+            // AI Intelligence
+            if ($request->has('ai_analysis_prompt')) {
+                Setting::set("{$slug}_ai_analysis_prompt", $request->ai_analysis_prompt, 'textarea', 'tool_settings');
+            }
+            if ($request->has('ai_analysis_credits')) {
+                Setting::set("{$slug}_ai_analysis_credits", (int)$request->ai_analysis_credits, 'number', 'tool_settings');
+            }
+            if ($request->has('ai_model')) {
+                Setting::set("{$slug}_ai_model", $request->ai_model, 'text', 'tool_settings');
+            }
+
+            // Platform Toggles
+            Setting::set("{$slug}_source_google_enabled", $request->has('source_google_enabled'), 'boolean', 'tool_settings');
+            Setting::set("{$slug}_source_x_enabled", $request->has('source_x_enabled'), 'boolean', 'tool_settings');
+            Setting::set("{$slug}_source_tiktok_enabled", $request->has('source_tiktok_enabled'), 'boolean', 'tool_settings');
+            Setting::set("{$slug}_source_youtube_enabled", $request->has('source_youtube_enabled'), 'boolean', 'tool_settings');
+
+            // TikTok External API
+            if ($request->has('tiktok_api_key')) {
+                Setting::set("{$slug}_tiktok_api_key", $request->tiktok_api_key, 'text', 'tool_settings');
+            }
+            if ($request->has('tiktok_api_host')) {
+                Setting::set("{$slug}_tiktok_api_host", $request->tiktok_api_host, 'text', 'tool_settings');
+            }
+            if ($request->has('tiktok_api_endpoint')) {
+                Setting::set("{$slug}_tiktok_api_endpoint", $request->tiktok_api_endpoint, 'text', 'tool_settings');
+            }
+
+            // Performance
+            if ($request->has('cache_ttl')) {
+                Setting::set("{$slug}_cache_ttl", (int)$request->cache_ttl, 'number', 'tool_settings');
+            }
+            if ($request->has('sync_interval')) {
+                Setting::set("{$slug}_sync_interval", (int)$request->sync_interval, 'number', 'tool_settings');
+            }
+            if ($request->has('max_trends')) {
+                Setting::set("{$slug}_max_trends", (int)$request->max_trends, 'number', 'tool_settings');
+            }
             
             // Clear API trends cache so the new settings take effect immediately
             \Illuminate\Support\Facades\Cache::forget('trending_suggestions_cache_keys');
+            // Also clear TikTok cache for all countries
+            foreach (['EG','SA','AE','KW','QA','BH','OM','US','GB','DE','FR','PL'] as $cc) {
+                \Illuminate\Support\Facades\Cache::forget("trending_tiktok_{$cc}");
+            }
         }
 
         $tool = collect($this->getToolDefinitions())->where('slug', $slug)->first();
