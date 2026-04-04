@@ -9,9 +9,9 @@ use Illuminate\Support\Facades\Cache;
 class NewsMonitorService
 {
     /**
-     * Fetch News from Google News RSS — Topic-Pure Direct Pull
-     * Pulls ONLY from the specific Google News topic RSS for the selected section.
-     * This mirrors the exact experience of browsing Google News topics directly.
+     * Fetch News from Google News RSS — Using Google's Official Encoded Topic IDs
+     * This uses the EXACT SAME topic IDs that Google News uses internally.
+     * URL pattern: https://news.google.com/rss/topics/{ENCODED_TOPIC_ID}?hl={lang}&gl={country}&ceid={country}:{lang}
      */
     public function fetchGoogleNews($country = 'EG', $topic = 'WORLD', $lang = 'ar', $timeWindow = '12h', $countryName = '')
     {
@@ -20,38 +20,65 @@ class NewsMonitorService
 
         $rawNews = [];
         
-        // ─── PRIMARY SOURCE: Google News Topic RSS (Exactly like Google News) ───
-        // This is the ONLY source to ensure topic purity — no mixing of unrelated news
-        if ($topic === 'GENERAL' || $topic === 'TOP_STORIES') {
+        // ─── Google News Encoded Topic IDs ───
+        // These are extracted directly from Google News navigation.
+        // Each language has its own set of encoded IDs.
+        $topicIds = [
+            'ar' => [
+                'NATION'        => 'CAAqIQgKIhtDQkFTRGdvSUwyMHZNREpyTlRRU0FtRnlLQUFQAQ',
+                'WORLD'         => 'CAAqJggKIiBDQkFTRWdvSUwyMHZNRGx1YlY4U0FtRnlHZ0pGUnlnQVAB',
+                'BUSINESS'      => 'CAAqJggKIiBDQkFTRWdvSUwyMHZNRGx6TVdZU0FtRnlHZ0pGUnlnQVAB',
+                'TECHNOLOGY'    => 'CAAqKAgKIiJDQkFTRXdvSkwyMHZNR1ptZHpWbUVnSmhjaG9DUlVjb0FBUAE',
+                'ENTERTAINMENT' => 'CAAqJggKIiBDQkFTRWdvSUwyMHZNREpxYW5RU0FtRnlHZ0pGUnlnQVAB',
+                'SPORTS'        => 'CAAqJggKIiBDQkFTRWdvSUwyMHZNRFp1ZEdvU0FtRnlHZ0pGUnlnQVAB',
+                'SCIENCE'       => 'CAAqKAgKIiJDQkFTRXdvSkwyMHZNR1ptZHpWbUVnSmhjaG9DUlVjb0FBUAE', // Same as Technology in Arabic
+                'HEALTH'        => 'CAAqIQgKIhtDQkFTRGdvSUwyMHZNR3QwTlRFU0FtRnlLQUFQAQ',
+            ],
+            'en' => [
+                'NATION'        => 'CAAqIggKIhxDQkFTRHdvSkwyMHZNRGxqTjNjd0VnSmxiaWdBUAE',
+                'WORLD'         => 'CAAqJggKIiBDQkFTRWdvSUwyMHZNRGx1YlY4U0FtVnVHZ0pWVXlnQVAB',
+                'BUSINESS'      => 'CAAqJggKIiBDQkFTRWdvSUwyMHZNRGx6TVdZU0FtVnVHZ0pWVXlnQVAB',
+                'TECHNOLOGY'    => 'CAAqJggKIiBDQkFTRWdvSUwyMHZNRGRqTVhZU0FtVnVHZ0pWVXlnQVAB',
+                'ENTERTAINMENT' => 'CAAqJggKIiBDQkFTRWdvSUwyMHZNREpxYW5RU0FtVnVHZ0pWVXlnQVAB',
+                'SPORTS'        => 'CAAqJggKIiBDQkFTRWdvSUwyMHZNRFp1ZEdvU0FtVnVHZ0pWVXlnQVAB',
+                'SCIENCE'       => 'CAAqJggKIiBDQkFTRWdvSUwyMHZNRFp0Y1RjU0FtVnVHZ0pWVXlnQVAB',
+                'HEALTH'        => 'CAAqIQgKIhtDQkFTRGdvSUwyMHZNR3QwTlRFU0FtVnVLQUFQAQ',
+            ],
+        ];
+
+        // Resolve the encoded topic ID for the current language
+        $langKey = in_array($lang, ['ar']) ? 'ar' : 'en';
+        $encodedTopicId = $topicIds[$langKey][$topic] ?? null;
+        
+        if ($topic === 'GENERAL' || $topic === 'TOP_STORIES' || !$encodedTopicId) {
+            // General/Top Stories: use the main RSS feed
             $url = "https://news.google.com/rss?hl={$lang}&gl={$country}&ceid={$country}:{$lang}";
         } else {
-            $url = "https://news.google.com/rss/headlines/section/topic/{$topic}?hl={$lang}&gl={$country}&ceid={$country}:{$lang}";
+            // Topic-specific: use Google News encoded topic ID (exactly like Google News website)
+            $url = "https://news.google.com/rss/topics/{$encodedTopicId}?hl={$lang}&gl={$country}&ceid={$country}:{$lang}";
         }
+        
         $rawNews = $this->fetchFromUrl($url, $rawNews);
-        Log::info("NewsMonitor [{$topic}]: Topic RSS returned " . count($rawNews) . " articles for {$country}");
+        Log::info("NewsMonitor [{$topic}]: Encoded Topic RSS returned " . count($rawNews) . " articles for {$country} [{$lang}]");
 
-        // Topic-pure search fallback — ONLY if Topic RSS returned very few results
-        // Uses the exact Google News topic name to maintain topic relevance
-        if (count($rawNews) < 5 && $topic !== 'GENERAL' && $topic !== 'TOP_STORIES') {
-            $topicSearchMap = [
-                'WORLD'         => ['ar' => 'أخبار دولية',      'en' => 'world news'],
-                'NATION'        => ['ar' => 'أخبار محلية',       'en' => 'national news'],
-                'BUSINESS'      => ['ar' => 'تجارة وأعمال',      'en' => 'business news'],
-                'TECHNOLOGY'    => ['ar' => 'تكنولوجيا',         'en' => 'technology news'],
-                'ENTERTAINMENT' => ['ar' => 'فن وترفيه',         'en' => 'entertainment news'],
-                'SPORTS'        => ['ar' => 'رياضة',             'en' => 'sports news'],
-                'SCIENCE'       => ['ar' => 'علوم',              'en' => 'science news'],
-                'HEALTH'        => ['ar' => 'صحة وطب',           'en' => 'health news'],
-            ];
-            
-            $searchTerm = $topicSearchMap[$topic][$lang] ?? $topicSearchMap[$topic]['en'] ?? $topic;
-            $urlSearch = "https://news.google.com/rss/search?q=" . urlencode($searchTerm) . "&hl={$lang}&gl={$country}&ceid={$country}:{$lang}";
-            $rawNews = $this->fetchFromUrl($urlSearch, $rawNews);
-            Log::info("NewsMonitor [{$topic}]: Topic-pure search fallback → total now " . count($rawNews) . " for {$country}");
+        // Fallback 1: If encoded ID returned nothing, try simple topic name
+        if (count($rawNews) < 3 && $encodedTopicId) {
+            $urlFallback = "https://news.google.com/rss/headlines/section/topic/{$topic}?hl={$lang}&gl={$country}&ceid={$country}:{$lang}";
+            $rawNews = $this->fetchFromUrl($urlFallback, $rawNews);
+            Log::info("NewsMonitor [{$topic}]: Simple topic fallback → total now " . count($rawNews) . " for {$country}");
+        }
+
+        // Fallback 2: If still too few and we're Arabic, try English topic IDs for same country
+        // Some Arabic Google News topics have very sparse coverage
+        if (count($rawNews) < 5 && $langKey === 'ar' && isset($topicIds['en'][$topic])) {
+            $enTopicId = $topicIds['en'][$topic];
+            $urlEnFallback = "https://news.google.com/rss/topics/{$enTopicId}?hl=ar&gl={$country}&ceid={$country}:ar";
+            $rawNews = $this->fetchFromUrl($urlEnFallback, $rawNews);
+            Log::info("NewsMonitor [{$topic}]: English topic ID with Arabic lang → total now " . count($rawNews) . " for {$country}");
         }
 
         // Freshness Filter: Only keep articles within the configured time window
-        $maxAge = max($this->parseTimeWindow($timeWindow), 86400); // minimum 24h
+        $maxAge = max($this->parseTimeWindow($timeWindow), 172800); // minimum 48h to ensure enough articles
         $cutoffTime = time() - $maxAge;
 
         $freshNews = [];
