@@ -1,0 +1,248 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>VidaNexus SEO & Technical Report</title>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;700&family=Outfit:wght@400;700&family=Cairo:wght@400;700&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/mermaid/dist/mermaid.min.js"></script>
+    <style>
+        :root {
+            --primary: #2563eb;
+            --primary-dark: #1e40af;
+            --bg: #f8fafc;
+            --text: #1e293b;
+            --card-bg: #ffffff;
+            --border: #e2e8f0;
+        }
+
+        body {
+            font-family: 'Cairo', 'Inter', sans-serif;
+            background-color: var(--bg);
+            color: var(--text);
+            line-height: 1.6;
+            margin: 0;
+            padding: 40px;
+        }
+
+        .container {
+            max-width: 900px;
+            margin: 0 auto;
+            background: var(--card-bg);
+            padding: 60px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.05);
+            border-radius: 12px;
+        }
+
+        h1, h2, h3 {
+            color: var(--primary-dark);
+            font-family: 'Outfit', sans-serif;
+        }
+
+        h1 {
+            border-bottom: 4px solid var(--primary);
+            padding-bottom: 20px;
+            text-align: center;
+            margin-bottom: 40px;
+        }
+
+        .section {
+            margin-bottom: 60px;
+            padding-bottom: 40px;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .tool-header {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            margin-bottom: 25px;
+        }
+
+        .tool-header i {
+            font-size: 2rem;
+            color: var(--primary);
+        }
+
+        .badge {
+            background: #dbeafe;
+            color: #1e40af;
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 0.85rem;
+            font-weight: bold;
+        }
+
+        .mermaid {
+            background: #f1f5f9;
+            padding: 20px;
+            border-radius: 8px;
+            margin: 20px 0;
+            text-align: center;
+        }
+
+        .tech-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 20px;
+        }
+
+        .tech-table th, .tech-table td {
+            text-align: right;
+            padding: 12px;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .tech-table th {
+            background: #f8fafc;
+        }
+
+        .note {
+            background: #fff9db;
+            border-right: 5px solid #fab005;
+            padding: 15px;
+            margin: 20px 0;
+            border-radius: 4px;
+        }
+
+        @media print {
+            body { background: white; padding: 0; }
+            .container { box-shadow: none; max-width: 100%; width: 100%; padding: 20px; }
+            .mermaid { page-break-inside: avoid; }
+            button { display: none; }
+        }
+
+        .print-btn {
+            position: fixed;
+            top: 20px;
+            left: 20px;
+            background: var(--primary);
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: bold;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+        }
+    </style>
+</head>
+<body>
+
+    <button class="print-btn" onclick="window.print()">
+        <i class="fas fa-print"></i> حفظ كـ PDF
+    </button>
+
+    <div class="container">
+        <h1>🏆 التقرير الشامل: الهندسة والاستراتيجية لأدوات VidaNexus</h1>
+
+        <div class="section">
+            <div class="tool-header">
+                <i class="fas fa-satellite-dish"></i>
+                <h2>1. AI Keyword Radar (رادار الكلمات)</h2>
+            </div>
+            <p><strong>الهدف الاستراتيجي:</strong> اكتشاف فجوات المحتوى عبر مراقبة المنافسين في الوقت الفعلي.</p>
+            
+            <h3>🔄 مسار العمل (Workflow):</h3>
+            <div class="mermaid">
+                graph TD
+                A["بداية المزامنة - Manual Sync"] --> B["توزيع المهمة لـ Laravel Horizon"]
+                B --> C["KeywordService: fetchHeadlines"]
+                C --> D["HTTP Pool: جلب متوازي"]
+                D --> E["Deduplication & AI Extraction"]
+                E --> F["تحديث الواجهة - Alpine.js"]
+            </div>
+
+            <h3>💻 التكنولوجيا والمكتبات:</h3>
+            <table class="tech-table">
+                <tr><th>الفئة</th><th>التقنية / المكتبة</th></tr>
+                <tr><td>Backend</td><td>Laravel 11, Guzzle (Multi-Sync)</td></tr>
+                <tr><td>Queues</td><td>Laravel Horizon + Redis</td></tr>
+                <tr><td>Parsing</td><td>SimpleXML, SitemapParser</td></tr>
+                <tr><td>Frontend</td><td>Alpine.js, SweetAlert2</td></tr>
+            </table>
+        </div>
+
+        <div class="section">
+            <div class="tool-header">
+                <i class="fas fa-bolt"></i>
+                <h2>2. Discover Headlines (عناوين ديسكوفر)</h2>
+            </div>
+            <p><strong>الهدف الاستراتيجي:</strong> تصدر نتائج Google Discover عبر تحسين الـ CTR.</p>
+            
+            <h3>🔄 مسار العمل (Workflow):</h3>
+            <div class="mermaid">
+                graph TD
+                A["Keyword Input"] --> B["Searching Context (12h/24h)"]
+                B --> C["Grounding Context Feeding"]
+                C --> D["AI Generation - Gemini/Claude"]
+                D --> E["Scoring Engine (12 Criteria)"]
+                E --> F["Professional Ranking"]
+            </div>
+
+            <h3>💻 التكنولوجيا والمكتبات:</h3>
+            <table class="tech-table">
+                <tr><th>الفئة</th><th>التقنية / المكتبة</th></tr>
+                <tr><td>AI Engine</td><td>Custom AIManager (Gemini/OpenRouter)</td></tr>
+                <tr><td>Logic</td><td>PHP Text Processing (Scoring Algorithm)</td></tr>
+                <tr><td>UI</td><td>Tailwind CSS Animations</td></tr>
+            </table>
+        </div>
+
+        <div class="section">
+            <div class="tool-header">
+                <i class="fas fa-globe"></i>
+                <h2>3. Global News Monitor (رصد النيوز)</h2>
+            </div>
+            <p><strong>الهدف الاستراتيجي:</strong> رصد الأخبار العالمية وتحديد "سهولة التصدر".</p>
+            
+            <h3>🔄 مسار العمل (Workflow):</h3>
+            <p>1. جلب بيانات RSS بناءً على الدولة والقسم. <br>
+               2. حساب سكور الفرصة بناءً على (Authority Gap + Freshness). <br>
+               3. فلترة الـ Categories برمجياً لضمان الدقة.</p>
+
+            <h3>💻 التكنولوجيا والمكتبات:</h3>
+            <table class="tech-table">
+                <tr><th>الفئة</th><th>التقنية / المكتبة</th></tr>
+                <tr><td>Engine</td><td>NewsMonitorService (PHP 8.2)</td></tr>
+                <tr><td>Parsing</td><td>SimpleXMLElement</td></tr>
+                <tr><td>Icons</td><td>FontAwesome 6</td></tr>
+            </table>
+        </div>
+
+        <div class="section" style="border:none">
+            <div class="tool-header">
+                <i class="fas fa-fire"></i>
+                <h2>4. Trending Search Monitor (الترندات)</h2>
+            </div>
+            <p><strong>الهدف الاستراتيجي:</strong> رصد "ماذا يحدث الآن" وتحديد زاوية الكتابة المناسبة.</p>
+            
+            <h3>🔄 مسار العمل (Workflow):</h3>
+            <div class="mermaid">
+                graph TD
+                A["Platform Check"] --> B["Data Fetching (Mirrors)"]
+                B --> C["AI Context Injection"]
+                C --> D["AI ROI Analysis"]
+                D --> E["Suggested Angles"]
+            </div>
+
+            <h3>💻 التكنولوجيا والمكتبات:</h3>
+            <table class="tech-table">
+                <tr><th>الفئة</th><th>التقنية / المكتبة</th></tr>
+                <tr><td>Source Wrappers</td><td>Trends24, Piped, Invidious</td></tr>
+                <tr><td>Client</td><td>Guzzle (Browser Emulation)</td></tr>
+                <tr><td>AI Provider</td><td>Google Gemini API</td></tr>
+            </table>
+        </div>
+
+        <div class="note">
+            🚀 <strong>الخلاصة:</strong> هذا التقرير يمثل البنية التحتية المتكاملة لمنصة VidaNexus، مصممة لتحويل التريندات إلى فرص تصدر حقيقية.
+        </div>
+    </div>
+
+    <script>
+        mermaid.initialize({ startOnLoad: true, theme: 'forest' });
+    </script>
+</body>
+</html>
