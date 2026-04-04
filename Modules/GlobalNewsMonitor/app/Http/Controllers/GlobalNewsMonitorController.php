@@ -106,7 +106,7 @@ class GlobalNewsMonitorController extends Controller
 
         // USER REQUEST: Charge on initial load (Non-AJAX), Refresh (F5), or Update Button (refresh=1)
         // We charge regardless of cache status for these specific events.
-        $shouldCharge = !$isAjax || $forceRefresh;
+        $shouldCharge = ($isAjax || $forceRefresh);
 
         if ($shouldCharge) {
             $user = auth()->user();
@@ -136,9 +136,12 @@ class GlobalNewsMonitorController extends Controller
         $countryName = $currentCountry['name'] ?? '';
         $lang = $currentCountry['lang'] ?? 'ar'; // Define $lang here
 
-        $googleNews = Cache::remember($cacheKey, 300, function () use ($region, $topic, $timeWindow, $currentCountry) {
-            return $this->service->fetchGoogleNews($region, $topic, $currentCountry['lang'] ?? 'ar', $timeWindow, $currentCountry['name'] ?? '');
-        });
+        $googleNews = [];
+        if ($isAjax || $forceRefresh) {
+            $googleNews = Cache::remember($cacheKey, 300, function () use ($region, $topic, $timeWindow, $currentCountry) {
+                return $this->service->fetchGoogleNews($region, $topic, $currentCountry['lang'] ?? 'ar', $timeWindow, $currentCountry['name'] ?? '');
+            });
+        }
 
         if ($shouldCharge && !empty($googleNews)) {
             auth()->user()->wallet->decrement('balance_credits', 1);
@@ -156,10 +159,19 @@ class GlobalNewsMonitorController extends Controller
 
         // Handle AJAX requests
         if ($isAjax) {
-            return view('globalnewsmonitor::partials.news_grid', compact('googleNews', 'region', 'lang', 'thresholdHigh', 'thresholdModerate'))->render();
+            $html = view('globalnewsmonitor::partials.news_grid', compact('googleNews', 'region', 'lang', 'thresholdHigh', 'thresholdModerate'))->render();
+            return response()->json([
+                'html' => $html,
+                'stats' => [
+                    'total' => count($googleNews),
+                    'high' => collect($googleNews)->where('seo_score', '>=', $thresholdHigh)->count(),
+                    'moderate' => collect($googleNews)->where('seo_score', '>=', $thresholdModerate)->where('seo_score', '<', $thresholdHigh)->count()
+                ]
+            ]);
         }
 
-        return view('globalnewsmonitor::index', compact('countryMap', 'topicsMap', 'currentCountry', 'googleNews', 'topic', 'lang', 'region', 'thresholdHigh', 'thresholdModerate'));
+        $isInitial = empty($googleNews) && !$forceRefresh && !$isAjax;
+        return view('globalnewsmonitor::index', compact('countryMap', 'topicsMap', 'currentCountry', 'googleNews', 'topic', 'lang', 'region', 'thresholdHigh', 'thresholdModerate', 'isInitial'));
     }
 
     /**

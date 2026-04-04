@@ -277,8 +277,24 @@
     </div>
 @else
     <div class="glass-card p-16 text-center border-dashed" style="border-color: var(--glass-border);">
-        <i class="fas fa-newspaper text-4xl mb-4 block" style="color: var(--text-muted); opacity: 0.5;"></i>
-        <p class="font-bold" style="color: var(--text-muted);">No news available currently</p>
-        <p class="text-sm mt-2" style="color: var(--text-muted); opacity: 0.6;">Try changing the region or topic filter</p>
+        @if($isInitial ?? false)
+            <div class="mb-6">
+                <div class="w-20 h-20 bg-primary-cyan/10 rounded-full flex items-center justify-center mx-auto mb-4 border border-primary-cyan/20">
+                    <i class="fas fa-satellite-dish text-3xl text-primary-cyan animate-pulse"></i>
+                </div>
+                <h3 class="text-xl font-bold text-white mb-2">Ready to Scan?</h3>
+                <p class="text-sm max-w-md mx-auto" style="color: var(--text-muted); opacity: 0.8;">
+                    Click the <strong>"Get News"</strong> button to start scanning for global ranking opportunities in real-time.
+                </p>
+                <button @click="refreshNews(true)" class="mt-6 vn-btn vn-btn-primary px-8 py-3 rounded-2xl flex items-center gap-2 mx-auto">
+                    <i class="fas fa-sync-alt" :class="{ 'animate-spin': loading }"></i>
+                    <span class="font-bold">Fetch Latest News</span>
+                </button>
+            </div>
+        @else
+            <i class="fas fa-newspaper text-4xl mb-4 block" style="color: var(--text-muted); opacity: 0.5;"></i>
+            <p class="font-bold text-white">No news found for this search</p>
+            <p class="text-sm mt-2" style="color: var(--text-muted); opacity: 0.6;">Try changing the region, topic, or click Get News again.</p>
+        @endif
     </div>
 @endif

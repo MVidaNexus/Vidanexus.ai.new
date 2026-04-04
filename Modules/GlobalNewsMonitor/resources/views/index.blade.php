@@ -34,11 +34,10 @@
                 </template>
             </button>
 
-            {{-- Refresh Button with Countdown --}}
+            {{-- Get News Button --}}
             <button @click="refreshNews(true)" class="vn-btn vn-btn-primary px-6 py-3 rounded-2xl flex items-center gap-2 text-sm z-50 overflow-visible relative">
                 <i class="fas fa-sync-alt" :class="{ 'animate-spin': loading }"></i>
-                <span>Refresh</span>
-                <span x-show="autoRefreshCountdown > 0" class="text-[9px] opacity-60 ml-1" x-text="autoRefreshCountdown + 's'"></span>
+                <span class="font-bold">Get News</span>
             </button>
         </div>
     </div>
@@ -97,16 +96,24 @@
 
     </div>
 
-    <!-- Stats Bar -->
     <div class="glass-card p-4 mb-6 flex items-center justify-between flex-wrap gap-4">
         <div class="flex items-center gap-6 text-[11px] font-bold" style="color: var(--text-muted);">
-            <span><i class="fas fa-newspaper text-primary-cyan mr-1.5"></i> <span id="total-count">{{ count($googleNews) }}</span> articles</span>
-            <span><i class="fas fa-rocket text-emerald-400 mr-1.5"></i> <span id="high-count">{{ collect($googleNews)->where('seo_score', '>=', $thresholdHigh)->count() }}</span> high opportunity</span>
-            <span><i class="fas fa-bolt text-amber-400 mr-1.5"></i> <span id="moderate-count">{{ collect($googleNews)->where('seo_score', '>=', $thresholdModerate)->where('seo_score', '<', $thresholdHigh)->count() }}</span> moderate</span>
+            <span>
+                <i class="fas fa-newspaper text-primary-cyan mr-1.5"></i> 
+                <span x-text="showHighChanceOnly ? stats.high : stats.total"></span> articles
+            </span>
+            <span>
+                <i class="fas fa-rocket text-emerald-400 mr-1.5"></i> 
+                <span x-text="stats.high"></span> high opportunity
+            </span>
+            <span>
+                <i class="fas fa-bolt text-amber-400 mr-1.5"></i> 
+                <span x-text="stats.moderate"></span> moderate
+            </span>
         </div>
         <div class="flex items-center gap-2 text-[10px]" style="color: var(--text-muted);">
             <div class="w-2 h-2 bg-emerald-400 rounded-full animate-pulse"></div>
-            <span>Auto-refresh in <span x-text="autoRefreshCountdown" class="font-bold text-primary-cyan"></span>s</span>
+            <span>System Operational</span>
         </div>
     </div>
 
@@ -115,7 +122,7 @@
         <div class="absolute top-0 right-0 w-64 h-64 bg-primary-cyan/5 blur-3xl -mr-32 -mt-32 rounded-full"></div>
         
         <!-- Loading Overlay -->
-        <div x-show="loading" class="absolute inset-0 z-20 flex flex-col items-center justify-center backdrop-blur-sm" style="background: rgba(var(--bg-color-rgb, 13, 14, 18), 0.6); display: none;">
+        <div x-show="loading" class="absolute inset-0 z-50 flex flex-col items-center justify-center backdrop-blur-md" style="background: #0a0b0e; display: none;">
             <div class="w-16 h-16 border-4 border-t-primary-cyan rounded-full animate-spin mb-4" style="border-color: var(--glass-border);"></div>
             <p class="text-primary-cyan font-bold tracking-widest animate-pulse">Scanning for opportunities...</p>
         </div>
@@ -133,7 +140,8 @@
                     'region' => $region ?? 'EG',
                     'lang' => $lang ?? 'ar',
                     'thresholdHigh' => $thresholdHigh ?? 70,
-                    'thresholdModerate' => $thresholdModerate ?? 45
+                    'thresholdModerate' => $thresholdModerate ?? 45,
+                    'isInitial' => $isInitial ?? false
                 ])
             </div>
         </div>
@@ -151,13 +159,22 @@ function newsMonitor() {
         loading: false,
         showHighChanceOnly: false,
         showBreakingOnly: false,
-        autoRefreshCountdown: 300,
-        autoRefreshTimer: null,
+        isInitial: {{ $isInitial ? 'true' : 'false' }},
+        stats: {
+            total: {{ count($googleNews) }},
+            high: {{ collect($googleNews)->where('seo_score', '>=', $thresholdHigh)->count() }},
+            moderate: {{ collect($googleNews)->where('seo_score', '>=', $thresholdModerate)->where('seo_score', '<', $thresholdHigh)->count() }}
+        },
         topicsMap: @json($topicsMap),
         
         init() {
             console.log('News Intelligence Monitor Initialized');
-            this.startAutoRefresh();
+            this.updateStats();
+        },
+        
+        updateStats() {
+            // Count visible items if needed, or update from backend during refresh
+            // For now, we update these after each fetch
         },
 
         getTopicName() {
@@ -176,21 +193,9 @@ function newsMonitor() {
             this.refreshNews();
         },
 
-        startAutoRefresh() {
-            if (this.autoRefreshTimer) clearInterval(this.autoRefreshTimer);
-            this.autoRefreshCountdown = 300;
-            this.autoRefreshTimer = setInterval(() => {
-                this.autoRefreshCountdown--;
-                if (this.autoRefreshCountdown <= 0) {
-                    this.refreshNews(true);
-                    this.autoRefreshCountdown = 300;
-                }
-            }, 1000);
-        },
 
         refreshNews(force = false) {
             this.loading = true;
-            this.autoRefreshCountdown = 300;
             let url = `{{ route('dashboard.global-news-monitor.index') }}?region=${this.region}&topic=${this.topic}`;
             if (force) url += '&refresh=1';
 
@@ -219,8 +224,15 @@ function newsMonitor() {
                     }
                     return;
                 }
-                if (type === 'html') {
+                if (type === 'json' && data.html) {
+                    document.getElementById('news-container').innerHTML = data.html;
+                    this.isInitial = false;
+                    if (data.stats) {
+                        this.stats = data.stats;
+                    }
+                } else if (type === 'html') {
                     document.getElementById('news-container').innerHTML = data;
+                    this.isInitial = false;
                 }
             })
             .finally(() => this.loading = false);

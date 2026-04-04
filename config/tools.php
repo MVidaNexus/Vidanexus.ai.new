@@ -159,24 +159,90 @@ return [
         ],
         [
             'name' => 'News Intelligence',
-            'tagline' => 'Stay ahead of the world\'s pulse.',
-            'icon' => 'fa-newspaper',
+            'tagline' => 'Spot the next viral wave with real-time global news surveillance.',
+            'icon' => 'fa-satellite-dish',
             'slug' => 'global-news-monitor',
-            'color' => '#ffcc00',
+            'color' => '#0ea5e9',
             'required_tier' => 'beginner',
             'category' => 'seo',
             'unlock_price' => 99,
             'credit_cost_per_action' => 1,
             'initial_bonus_credits' => 10,
-            'description' => 'Real-time AI logic to monitor global news feeds and identifying emerging trending angles.',
-            'marketing_content' => '<h3>Real-Time Global News Intelligence</h3><p>The <b>News Intelligence</b> monitor provides an eagle-eye view of world events as they happen. Filtered by precision AI, it identifies emerging stories in your niche across multiple continents and languages.</p><ul><li><b>Multi-Region Coverage:</b> Monitor the US, UK, France, Poland, and the Middle East simultaneously.</li><li><b>Trend Prediction:</b> See which news stories are likely to become viral search trends within the next 24 hours.</li><li><b>Noise Filtering:</b> Our algorithms strip away irrelevant local clutter, leaving you with pure actionable intel.</li></ul>',
+            'description' => 'A high-performance radar system for 24/7 monitoring of global agencies, featuring intelligent SEO scoring and deep-angle discovery before trends go viral.',
+            'marketing_content' => '<h3 style="color: #0ea5e9; font-size: 2.2rem; font-weight: 900; margin-bottom: 24px; letter-spacing: -0.025em;">News Intelligence Protocol</h3>
+                <p style="font-size: 1.25rem; line-height: 1.8; color: rgba(255,255,255,0.9); margin-bottom: 32px;">
+                    In the high-stakes world of content publishing, speed isn’t just an advantage—it’s the only currency that matters. With <strong>News Intelligence</strong>, you stop following the news and start outrunning it. Our AI engine scans thousands of global sources in seconds to reveal hidden opportunities.
+                </p>
+
+                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 24px; margin-bottom: 40px;">
+                    <div style="background: rgba(15, 23, 42, 0.6); border: 1px solid rgba(14, 165, 233, 0.2); padding: 28px; border-radius: 20px; position: relative; overflow: hidden; backdrop-filter: blur(10px);">
+                        <div style="position: absolute; top: 0; left: 0; width: 4px; height: 100%; background: #0ea5e9;"></div>
+                        <h4 style="color: #fff; font-size: 1.4rem; margin-bottom: 12px; display: flex; align-items: center; gap: 12px; font-weight: 800;">
+                            <span style="font-size: 1.6rem; color: #0ea5e9;"><i class="fas fa-globe-americas"></i></span> Global Surveillance
+                        </h4>
+                        <p style="color: rgba(255,255,255,0.7); line-height: 1.7; margin: 0; font-size: 0.95rem;">Monitor the US, UK, Middle East, and Europe simultaneously. Replace hours of manual scanning with a single, unified intelligence feed.</p>
+                    </div>
+
+                    <div style="background: rgba(15, 23, 42, 0.6); border: 1px solid rgba(16, 185, 129, 0.2); padding: 28px; border-radius: 20px; position: relative; overflow: hidden; backdrop-filter: blur(10px);">
+                        <div style="position: absolute; top: 0; left: 0; width: 4px; height: 100%; background: #10b981;"></div>
+                        <h4 style="color: #fff; font-size: 1.4rem; margin-bottom: 12px; display: flex; align-items: center; gap: 12px; font-weight: 800;">
+                            <span style="font-size: 1.6rem; color: #10b981;"><i class="fas fa-rocket"></i></span> SEO Opportunity Score
+                        </h4>
+                        <p style="color: rgba(255,255,255,0.7); line-height: 1.7; margin: 0; font-size: 0.95rem;">Our logic calculates the "Viral Potential" of every news item, showing you exactly which stories will dominate Google Discover and Search.</p>
+                    </div>
+
+                    <div style="background: rgba(15, 23, 42, 0.6); border: 1px solid rgba(245, 158, 11, 0.2); padding: 28px; border-radius: 20px; position: relative; overflow: hidden; backdrop-filter: blur(10px);">
+                        <div style="position: absolute; top: 0; left: 0; width: 4px; height: 100%; background: #f59e0b;"></div>
+                        <h4 style="color: #fff; font-size: 1.4rem; margin-bottom: 12px; display: flex; align-items: center; gap: 12px; font-weight: 800;">
+                            <span style="font-size: 1.6rem; color: #f59e0b;"><i class="fas fa-brain"></i></span> Deep-Angle Analytics
+                        </h4>
+                        <p style="color: rgba(255,255,255,0.7); line-height: 1.7; margin: 0; font-size: 0.95rem;">Leverage AI to discover unique narrative angles, LSI keywords, and audience sentiment shifts specifically tailored for each major headline.</p>
+                    </div>
+
+                    <div style="background: rgba(15, 23, 42, 0.6); border: 1px solid rgba(168, 85, 247, 0.2); padding: 28px; border-radius: 20px; position: relative; overflow: hidden; backdrop-filter: blur(10px);">
+                        <div style="position: absolute; top: 0; left: 0; width: 4px; height: 100%; background: #a855f7;"></div>
+                        <h4 style="color: #fff; font-size: 1.4rem; margin-bottom: 12px; display: flex; align-items: center; gap: 12px; font-weight: 800;">
+                            <span style="font-size: 1.6rem; color: #a855f7;"><i class="fas fa-bolt"></i></span> Zero-Day Trend Spotting
+                        </h4>
+                        <p style="color: rgba(255,255,255,0.7); line-height: 1.7; margin: 0; font-size: 0.95rem;">Identify explosive stories long before they hit the local mainstream. Secure your ranking while the competition is still sleeping.</p>
+                    </div>
+                </div>
+
+                <div style="background: linear-gradient(135deg, rgba(14, 165, 233, 0.1), rgba(16, 185, 129, 0.05)); border-radius: 24px; padding: 40px; text-align: center; border: 1px solid rgba(255,255,255,0.1); position: relative; overflow: hidden;">
+                    <h3 style="color: #fff; margin-bottom: 30px; font-size: 1.8rem; font-weight: 900;">Why Publishers Choose News Intelligence?</h3>
+                    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 20px;">
+                        <div style="background: rgba(255,255,255,0.03); padding: 20px; border-radius: 16px; border: 1px solid rgba(255,255,255,0.05);">
+                            <div style="color: #0ea5e9; font-size: 1.5rem; margin-bottom: 10px;"><i class="fas fa-money-bill-trend-up"></i></div>
+                            <strong style="color: #fff; display: block; margin-bottom: 5px;">Skyrocket Discover Traffic</strong>
+                            <span style="font-size: 0.9rem; color: rgba(255,255,255,0.6);">Targeting high-score news guarantees wider visibility in Google Discover feeds.</span>
+                        </div>
+                        <div style="background: rgba(255,255,255,0.03); padding: 20px; border-radius: 16px; border: 1px solid rgba(255,255,255,0.05);">
+                            <div style="color: #10b981; font-size: 1.5rem; margin-bottom: 10px;"><i class="fas fa-hourglass-start"></i></div>
+                            <strong style="color: #fff; display: block; margin-bottom: 5px;">Save 90% Research Time</strong>
+                            <span style="font-size: 0.9rem; color: rgba(255,255,255,0.6);">Automate your manual news-gathering and focus entirely on content execution.</span>
+                        </div>
+                        <div style="background: rgba(255,255,255,0.03); padding: 20px; border-radius: 16px; border: 1px solid rgba(255,255,255,0.05);">
+                            <div style="color: #a855f7; font-size: 1.5rem; margin-bottom: 10px;"><i class="fas fa-award"></i></div>
+                            <strong style="color: #fff; display: block; margin-bottom: 5px;">Establish E-E-A-T Authority</strong>
+                            <span style="font-size: 0.9rem; color: rgba(255,255,255,0.6);">Publishing informed, unique angles builds massive credibility with algorithms.</span>
+                        </div>
+                        <div style="background: rgba(255,255,255,0.03); padding: 20px; border-radius: 16px; border: 1px solid rgba(255,255,255,0.05);">
+                            <div style="color: #f59e0b; font-size: 1.5rem; margin-bottom: 10px;"><i class="fas fa-coins"></i></div>
+                            <strong style="color: #fff; display: block; margin-bottom: 5px;">Monetization Velocity</strong>
+                            <span style="font-size: 0.9rem; color: rgba(255,255,255,0.6);">Faster reporting on viral trends translates directly into peak CPM and maximized ad revenue.</span>
+                        </div>
+                    </div>
+                </div>',
             'features' => [
-                ['icon' => 'fa-earth-americas', 'title' => 'Personalized News Feed', 'desc' => 'Follow only the regions and languages that are important to your goals.'],
-                ['icon' => 'fa-filter-circle-xmark', 'title' => 'Distraction-Free Reading', 'desc' => 'Our smart filters remove duplicates and clutter, saving you hours of manual research.'],
-                ['icon' => 'fa-bell', 'title' => 'Alerts for what matters', 'desc' => 'Get notified immediately when a topic starts gaining major traction internationally.']
+                ['icon' => 'fa-satellite', 'title' => '24/7 Global Feed', 'desc' => 'Real-time tracking of international and local news agencies.'],
+                ['icon' => 'fa-bullseye', 'title' => 'SEO Score Analysis', 'desc' => 'Identify high-potential news items for maximum search visibility.'],
+                ['icon' => 'fa-wand-magic-sparkles', 'title' => 'Deep Angle Discovery', 'desc' => 'Find unique narrative perspectives to stand out from the noise.'],
+                ['icon' => 'fa-shield-halved', 'title' => 'Anti-Clutter Filter', 'desc' => 'Smart AI filtering to remove duplicate stories and focus on unique value.'],
+                ['icon' => 'fa-language', 'title' => 'Multi-Region Sync', 'desc' => 'Seamlessly track and correlate news stories across international borders.'],
+                ['icon' => 'fa-chart-pie', 'title' => 'Predictive Analytics', 'desc' => 'Our proprietary logic identifies emerging trends before they peak.']
             ],
-            'meta_title' => 'News Intelligence | VidaNexus AI',
-            'meta_desc' => 'Real-time news and viral trend monitoring across global markets.',
+            'meta_title' => 'Global News Intelligence & Trend Monitoring | VidaNexus AI',
+            'meta_desc' => 'Catch viral trends with real-time news intelligence. Analyze SEO scores, discover unique angles, and dominate global search markets.',
             'route' => 'dashboard.global-news-monitor.index',
             'daily_limit' => 10,
         ],

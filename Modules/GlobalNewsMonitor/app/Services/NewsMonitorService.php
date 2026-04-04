@@ -440,51 +440,20 @@ class NewsMonitorService
         // Fetch custom prompt from settings
         $customPrompt = \App\Models\Setting::get('global-news-monitor_ai_analysis_prompt', '');
         
-        if (!empty($customPrompt)) {
-            $prompt = str_replace(
+        $langName = ($lang === 'ar') ? 'Arabic (العربية)' : 'English';
+        $languageInstruction = "Crucial: Your entire response (ranking_reason, suggested_angle, suggested_keywords, etc.) MUST be in {$langName}.";
+
+        $prompt = !empty($customPrompt) 
+            ? str_replace(
                 ['[Title]', '[Description]', '[Country]', '[Topic]', '[Lang]'],
                 [$title, $description, $country, $topic, $lang],
                 $customPrompt
-            );
-        } else {
-            $prompt = $isArabic 
-                ? "أنت محلل SEO محترف. حلّل هذا الخبر وأجب بصيغة JSON فقط بدون أي نص إضافي.
-    
-    العنوان: {$title}
-    الوصف: {$description}
-    الدولة: {$country}
-    القسم: {$topic}
-    
-    أريد JSON بهذا الشكل بالضبط:
-    {
-      \"ranking_opportunity\": \"high|moderate|low\",
-      \"ranking_reason\": \"سبب مختصر في سطر واحد بالعربية\",
-      \"suggested_angle\": \"زاوية محتوى فريدة مقترحة للتغطية بالعربية\",
-      \"suggested_keywords\": [\"كلمة1\", \"كلمة2\", \"كلمة3\", \"كلمة4\", \"كلمة5\"],
-      \"content_type\": \"مقال إخباري سريع|تحليل معمق|فيديو قصير|إنفوجرافيك\",
-      \"estimated_search_volume\": \"high|medium|low\",
-      \"competition_level\": \"high|medium|low\",
-      \"recommended_action\": \"اكتب الآن|راقب أولاً|تجاوز\"
-    }"
-                : "You are a professional SEO analyst. Analyze this news article and respond with JSON ONLY, no extra text.
-    
-    Title: {$title}
-    Description: {$description}
-    Country: {$country}
-    Topic: {$topic}
-    
-    Return JSON in this exact format:
-    {
-      \"ranking_opportunity\": \"high|moderate|low\",
-      \"ranking_reason\": \"Brief one-line reason\",
-      \"suggested_angle\": \"A unique content angle to cover this story\",
-      \"suggested_keywords\": [\"keyword1\", \"keyword2\", \"keyword3\", \"keyword4\", \"keyword5\"],
-      \"content_type\": \"quick news article|deep analysis|short video|infographic\",
-      \"estimated_search_volume\": \"high|medium|low\",
-      \"competition_level\": \"high|medium|low\",
-      \"recommended_action\": \"write now|monitor first|skip\"
-    }";
-        }
+            )
+            : ($isArabic 
+                ? "أنت محلل SEO محترف. حلّل هذا الخبر وأجب بصيغة JSON فقط بدون أي نص إضافي.\n\nالعنوان: {$title}\nالوصف: {$description}\nالدولة: {$country}\nالقسم: {$topic}\n\nأريد JSON بهذا الشكل بالضبط:\n{\n  \"ranking_opportunity\": \"high|moderate|low\",\n  \"ranking_reason\": \"سبب مختصر في سطر واحد بالعربية\",\n  \"suggested_angle\": \"زاوية محتوى فريدة مقترحة للتغطية بالعربية\",\n  \"suggested_keywords\": [\"كلمة1\", \"كلمة2\", \"كلمة3\", \"كلمة4\", \"كلمة5\"],\n  \"content_type\": \"مقال إخباري سريع|تحليل معمق|فيديو قصير|إنفوجرافيك\",\n  \"estimated_search_volume\": \"high|medium|low\",\n  \"competition_level\": \"high|medium|low\",\n  \"recommended_action\": \"اكتب الآن|راقب أولاً|تجاوز\"\n}"
+                : "You are a professional SEO analyst. Analyze this news article and respond WITH JSON ONLY in English, no extra text.\n\nTitle: {$title}\nDescription: {$description}\nCountry: {$country}\nTopic: {$topic}\n\nReturn JSON in this EXACT format:\n{\n  \"ranking_opportunity\": \"high|moderate|low\",\n  \"ranking_reason\": \"Brief one-line reason\",\n  \"suggested_angle\": \"A unique content angle to cover this story\",\n  \"suggested_keywords\": [\"keyword1\", \"keyword2\", \"keyword3\", \"keyword4\", \"keyword5\"],\n  \"content_type\": \"quick news article|deep analysis|short video|infographic\",\n  \"estimated_search_volume\": \"high|medium|low\",\n  \"competition_level\": \"high|medium|low\",\n  \"recommended_action\": \"write now|monitor first|skip\"\n}");
+
+        $prompt .= "\n\n" . $languageInstruction;
 
         try {
             $result = $aiManager->generate('global-news-monitor', $prompt, [
