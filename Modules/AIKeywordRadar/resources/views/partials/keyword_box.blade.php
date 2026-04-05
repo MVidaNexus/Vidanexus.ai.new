@@ -305,6 +305,12 @@
                                 <i class="fas fa-magic text-[10px]"></i>
                                 <span class="hidden sm:inline">Magic</span>
                             </a>
+                            <a href="{{ route('dashboard.article-writer.index', ['keyword' => $text]) }}" target="_blank" 
+                                style="display:inline-flex;align-items:center;justify-content:center;gap:4px;border-radius:10px;font-size:0.65rem;font-weight:900;padding:0.4rem 0.6rem;min-width:32px;height:32px;text-decoration:none;color:#fff;background:linear-gradient(135deg, #a855f7, #6366f1);border:1px solid rgba(255,255,255,0.15);transition:all 0.2s;cursor:pointer;" 
+                                title="Write with AI"
+                                onmouseover="this.style.transform='scale(1.1)';this.style.boxShadow='0 4px 15px rgba(168,85,247,0.3)'" onmouseout="this.style.transform='scale(1)';this.style.boxShadow='none'">
+                                <i class="fas fa-pen-fancy text-[10px]"></i>
+                            </a>
                         </div>
                     </div>
                     @endif

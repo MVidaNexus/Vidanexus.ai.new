@@ -138,6 +138,48 @@ class HorizonController extends Controller
             $settings['cache_ttl'] = Setting::get("{$slug}_cache_ttl", 1800);
         }
 
+        // Specific settings for Article Writer
+        if ($slug === 'article-writer') {
+            $settings['available_languages'] = Setting::get("{$slug}_available_languages", "en:English 🇺🇸\nar:Arabic 🇸🇦\nes:Spanish 🇪🇸\nfr:French 🇫🇷\nde:German 🇩🇪\npt:Portuguese 🇧🇷\nit:Italian 🇮🇹\nnl:Dutch 🇳🇱\ntr:Turkish 🇹🇷");
+            $settings['available_tones'] = Setting::get("{$slug}_available_tones", "professional:Professional\ninformative:Informative\ncasual:Casual & Friendly\nauthoritative:Authoritative Expert\ncreative:Creative & Engaging\npersuasive:Persuasive & Sales");
+            $settings['available_audiences'] = Setting::get("{$slug}_available_audiences", "general:General Audience\nprofessionals:Industry Professionals\nbeginners:Beginners & Learners\nshoppers:Online Shoppers\nentrepreneurs:Entrepreneurs & Founders\nmarketers:Digital Marketers");
+            $settings['default_tokens'] = Setting::get("{$slug}_max_tokens", 4000);
+            $settings['default_word_count'] = Setting::get("{$slug}_default_word_count", 1500);
+            $settings['available_components'] = Setting::get("{$slug}_available_components", "faq:FAQ Section\nsummary:Quick Summary\ntakeaways:Key Takeaways\nmeta:SEO Meta Tags");
+            $settings['credit_cost'] = Setting::get("tool_credit_cost_{$slug}", 5);
+
+            // Dedicated Prompt Fields
+            $settings['prompt_title'] = Setting::get("{$slug}_prompt_title", "Generate a Google Discover-optimized headline for [keyword] in [language].\n\nRESEARCH CONTEXT:\n[news_context]\n\nRequirements:\n- 8-14 words for optimal Discover CTR\n- MUST use a power word (Breaking, Exclusive, Detailed, Revealed)\n- Focus on the LATEST angle from the research context\n- Include [year] and magnetic hooks.");
+
+            $settings['prompt_body'] = Setting::get("{$slug}_prompt_body", "You are a master investigative journalist and SEO specialist. Write a [word_count]-word comprehensive article about [keyword] in [language].\n\n# ABSOLUTE TRUTH: REAL-TIME RESEARCH\n[news_context]\n\n# INSTRUCTIONS:\n1. Prioritize the [news_context] for ALL facts, dates, and names. This is your source of current truth for [year].\n2. Cover all angles: Current State, Expert Insights, and Future Outlook.\n3. Tone: [tone] | Audience: [audience]\n4. Structure with H1, H2, H3. Use tables for comparisons.\n5. Ensure E-E-A-T compliance by citing sources mentioned in the context.");
+
+            $settings['prompt_summary'] = Setting::get("{$slug}_prompt_summary", "Immediately after the <h1> title, generate a Quick Summary in this format:\n<div class=\"quick-summary\">\n<p>[Write 3-5 sentences serving as an EXECUTIVE BRIEFING. Cover: what the topic is, why it matters critically in [year], the most important findings/insights, and what the reader gains by reading fully. Write so a busy executive could stop here and still walk away informed. Include at least one specific data point or statistic.]</p>\n</div>");
+
+            $settings['prompt_takeaways'] = Setting::get("{$slug}_prompt_takeaways", "After the Quick Summary, generate a Key Takeaways section:\n<div class=\"key-takeaways\">\n<h2>Key Takeaways</h2>\n<ul>\n<li><strong>[Insight Label]</strong>: [One sentence with a SPECIFIC data point, percentage, or actionable insight — not generic statements]</li>\n</ul>\n</div>\nGenerate 6-8 takeaways. Each MUST contain a concrete number, named entity, or specific actionable step. Generic takeaways like 'This topic is important' are FORBIDDEN.");
+
+            $settings['prompt_faq'] = Setting::get("{$slug}_prompt_faq", "Generate a schema-ready FAQ section with 5-7 questions. Requirements:\n- Questions must simulate Google's 'People Also Ask' — use REAL search queries people type\n- Cover different intents: what, how, why, when, cost, comparison, alternatives, best practices\n- Lead EVERY answer with the direct answer in the FIRST sentence, then elaborate in 2-3 more sentences\n- Include at least one data point or expert reference in each answer\n- NEVER use generic questions like 'What is [topic]?' — be SPECIFIC and high-intent\n\nFormat:\n<div class=\"faq-section\">\n<h2>Frequently Asked Questions</h2>\n<h3>[Specific, natural-language question matching real search behavior]?</h3>\n<p>[Direct answer first. Then supporting evidence, context, or example. 2-4 sentences total.]</p>\n</div>");
+
+            $settings['prompt_meta'] = Setting::get("{$slug}_prompt_meta", "After ALL article content, output these metadata tags on separate lines:\n\n[TITLE]: [Your Google Discover-quality magnetic title — MAX 60 characters — must trigger curiosity + include primary keyword — use power words, numbers, or emotional hooks — this title should make people STOP scrolling]\n[META_DESCRIPTION]: [Conversion-focused description — MAX 155 characters — must include primary keyword, a compelling hook, and a subtle call-to-action like 'Learn more', 'Discover why', 'See the data']\n[FOCUS_KEYWORD]: [The exact primary keyword/phrase for SEO targeting]");
+
+            // Tone Directives
+            $settings['directive_professional'] = Setting::get("{$slug}_directive_professional", "Write in a polished, authoritative, business-professional voice. Use precise language, avoid slang, and maintain a confident yet approachable demeanor. Think: Harvard Business Review meets industry expert blog. Focus on utility and clarity.");
+            $settings['directive_informative'] = Setting::get("{$slug}_directive_informative", "Write in a clear, educational, and well-structured voice. Prioritize clarity and comprehensiveness. Explain complex concepts simply without dumbing down the content. Think: an authoritative, modern encyclopedia with a helpful personality.");
+            $settings['directive_casual'] = Setting::get("{$slug}_directive_casual", "Write in a warm, conversational, and relatable voice. Use contractions, rhetorical questions, and occasional humor. Make the reader feel like they're learning from a knowledgeable friend who knows the inside secrets. Keep it engaging but still high-value.");
+            $settings['directive_authoritative'] = Setting::get("{$slug}_directive_authoritative", "Write with commanding expertise and thought leadership. Use industry terminology confidently, reference frameworks by name, cite studies and data points. Position every statement with unshakable authority and investigative journalist precision.");
+            $settings['directive_creative'] = Setting::get("{$slug}_directive_creative", "Write with vivid storytelling, compelling analogies, and engaging narrative hooks. Make dry topics fascinating. Use metaphors, paint pictures with words, and create emotional resonance while maintaining high SEO value.");
+
+            // Audience Directives
+            $settings['directive_general'] = Setting::get("{$slug}_directive_general", "Write for a broad, educated audience with moderate familiarity with the topic. Explain specialized terms when first introduced. Balance depth with accessibility. Assume the reader is searching for reliable, comprehensive information.");
+            $settings['directive_professionals'] = Setting::get("{$slug}_directive_professionals", "Write for experienced industry professionals who already understand the fundamentals. Skip the basics, go deep into advanced strategies, nuanced insights, and expert-level optimization techniques. Use industry-standard shorthand and advanced concepts.");
+            $settings['directive_beginners'] = Setting::get("{$slug}_directive_beginners", "Write for complete beginners who are encountering this topic for the first time. Define every key term, use simple analogies, provide step-by-step guidance, and build concepts progressively. Make the reader feel empowered and informed, not overwhelmed.");
+            $settings['directive_shoppers'] = Setting::get("{$slug}_directive_shoppers", "Write for buyers in the research/comparison phase. Focus on features vs. benefits, pros and cons, pricing considerations, and clear recommendations. Include comparison elements and decision-making frameworks to help them make a confident purchase.");
+            $settings['directive_marketers'] = Setting::get("{$slug}_directive_marketers", "Write for digital marketing professionals. Include ROI-focused insights, campaign strategies, platform-specific tips, and data-driven recommendations with measurable outcomes. Focus on what works in the current algorithm landscape.");
+
+            // Grounding Settings
+            $settings['live_search_enabled'] = Setting::get("{$slug}_live_search_enabled", true);
+            $settings['live_search_limit'] = Setting::get("{$slug}_live_search_limit", 15);
+        }
+
         $fromDate = request('from_date', now()->subDays(30)->toDateString());
         $toDate = request('to_date', now()->toDateString());
 
@@ -418,6 +460,48 @@ class HorizonController extends Controller
             // Also clear TikTok cache for all countries
             foreach (['EG','SA','AE','KW','QA','BH','OM','US','GB','DE','FR','PL'] as $cc) {
                 \Illuminate\Support\Facades\Cache::forget("trending_tiktok_{$cc}");
+            }
+        }
+        if ($slug === 'article-writer') {
+            if ($request->has('available_languages')) {
+                Setting::set("{$slug}_available_languages", $request->available_languages, 'textarea', 'tool_settings');
+            }
+            if ($request->has('available_tones')) {
+                Setting::set("{$slug}_available_tones", $request->available_tones, 'textarea', 'tool_settings');
+            }
+            if ($request->has('available_audiences')) {
+                Setting::set("{$slug}_available_audiences", $request->available_audiences, 'textarea', 'tool_settings');
+            }
+            if ($request->has('max_tokens')) {
+                Setting::set("{$slug}_max_tokens", (int)$request->max_tokens, 'number', 'tool_settings');
+            }
+            if ($request->has('default_word_count')) {
+                Setting::set("{$slug}_default_word_count", (int)$request->default_word_count, 'number', 'tool_settings');
+            }
+            if ($request->has('available_components')) {
+                Setting::set("{$slug}_available_components", $request->available_components, 'textarea', 'tool_settings');
+            }
+            if ($request->has('is_active')) {
+                Setting::set("tool_available_{$slug}", $request->is_active == '1', 'boolean', 'tool_settings');
+            }
+
+            if ($request->has('live_search_enabled')) {
+                Setting::set("{$slug}_live_search_enabled", $request->live_search_enabled == '1', 'boolean', 'tool_settings');
+            }
+            if ($request->has('live_search_limit')) {
+                Setting::set("{$slug}_live_search_limit", (int)$request->live_search_limit, 'number', 'tool_settings');
+            }
+
+            // Save Dedicated Prompt Protocols
+            $promptFields = [
+                'prompt_title', 'prompt_body', 'prompt_summary', 'prompt_takeaways', 'prompt_faq', 'prompt_meta',
+                'directive_professional', 'directive_informative', 'directive_casual', 'directive_authoritative', 'directive_creative',
+                'directive_general', 'directive_professionals', 'directive_beginners', 'directive_shoppers', 'directive_marketers'
+            ];
+            foreach ($promptFields as $field) {
+                if ($request->has($field)) {
+                    Setting::set("{$slug}_{$field}", $request->input($field), 'textarea', 'tool_settings');
+                }
             }
         }
 

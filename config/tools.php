@@ -280,15 +280,91 @@ return [
             'unlock_price' => 499,
             'credit_cost_per_action' => 5,
             'initial_bonus_credits' => 10,
-            'description' => 'Create high-quality, long-form articles that target your exact keywords and rank quickly on Google.',
-            'marketing_content' => '<h3>High-Volume Production, Zero Compromise</h3><p>Stop paying expensive writers for average content. The <b>Pro AI Article Writer</b> generates fully structured, deeply researched articles designed to rank.</p><ul><li><b>LSI Integration:</b> Automatically weaves secondary keywords naturally throughout the text.</li><li><b>EEAT Structured:</b> Follows Google\'s quality guidelines for helpful content.</li><li><b>Ready to Publish:</b> Generates HTML formatting so you can paste directly into WordPress.</li></ul>',
+            'description' => 'A high-performance AI content laboratory designed for professional editors. Generate factual, research-grounded, and SEO-optimized long-form articles with real-time news integration and custom persona control.',
+            'marketing_content' => '<h3 style="color: #14b8a6; font-size: 2.2rem; font-weight: 900; margin-bottom: 24px; letter-spacing: -0.025em;">The Content Engineering Laboratory</h3>
+                <p style="font-size: 1.25rem; line-height: 1.8; color: rgba(255,255,255,0.9); margin-bottom: 32px;">
+                    Stop publishing static, hallucination-prone AI text. The <strong>Pro AI Article Writer</strong> is a state-of-the-art content engine that fuses cutting-edge LLMs with <strong>Live Research Grounding</strong>. Every article is built on real-time facts, tailored to your specific audience, and optimized for 2026 search algorithms.
+                </p>
+
+                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 24px; margin-bottom: 40px;">
+                    <div style="background: rgba(15, 23, 42, 0.6); border: 1px solid rgba(20, 184, 166, 0.2); padding: 28px; border-radius: 20px; position: relative; overflow: hidden; backdrop-filter: blur(10px);">
+                        <div style="position: absolute; top: 0; left: 0; width: 4px; height: 100%; background: #14b8a6;"></div>
+                        <h4 style="color: #fff; font-size: 1.4rem; margin-bottom: 12px; display: flex; align-items: center; gap: 12px; font-weight: 800;">
+                            <span style="font-size: 1.6rem; color: #14b8a6;"><i class="fas fa-microchip"></i></span> Live Research Engine
+                        </h4>
+                        <p style="color: rgba(255,255,255,0.7); line-height: 1.7; margin: 0; font-size: 0.95rem;">Our system performs real-time Google News scans for your keyword, injecting the latest facts and data into the AI’s context window to eliminate hallucinations.</p>
+                    </div>
+
+                    <div style="background: rgba(15, 23, 42, 0.6); border: 1px solid rgba(168, 85, 247, 0.2); padding: 28px; border-radius: 20px; position: relative; overflow: hidden; backdrop-filter: blur(10px);">
+                        <div style="position: absolute; top: 0; left: 0; width: 4px; height: 100%; background: #a855f7;"></div>
+                        <h4 style="color: #fff; font-size: 1.4rem; margin-bottom: 12px; display: flex; align-items: center; gap: 12px; font-weight: 800;">
+                            <span style="font-size: 1.6rem; color: #a855f7;"><i class="fas fa-mask"></i></span> Persona Factory
+                        </h4>
+                        <p style="color: rgba(255,255,255,0.7); line-height: 1.7; margin: 0; font-size: 0.95rem;">Switch between 10+ professional editorial tones and target audiences. From "Deep Technical" to "Viral Storytelling"—your content always sounds human.</p>
+                    </div>
+
+                    <div style="background: rgba(15, 23, 42, 0.6); border: 1px solid rgba(16, 185, 129, 0.2); padding: 28px; border-radius: 20px; position: relative; overflow: hidden; backdrop-filter: blur(10px);">
+                        <div style="position: absolute; top: 0; left: 0; width: 4px; height: 100%; background: #10b981;"></div>
+                        <h4 style="color: #fff; font-size: 1.4rem; margin-bottom: 12px; display: flex; align-items: center; gap: 12px; font-weight: 800;">
+                            <span style="font-size: 1.6rem; color: #10b981;"><i class="fas fa-sitemap"></i></span> Semantic Architecture
+                        </h4>
+                        <p style="color: rgba(255,255,255,0.7); line-height: 1.7; margin: 0; font-size: 0.95rem;">Strict H1-H3 hierarchy, LSI keyword distribution, snippet-ready FAQs, and key takeaway boxes—all built-in for maximum SEO dominance.</p>
+                    </div>
+
+                    <div style="background: rgba(15, 23, 42, 0.6); border: 1px solid rgba(245, 158, 11, 0.2); padding: 28px; border-radius: 20px; position: relative; overflow: hidden; backdrop-filter: blur(10px);">
+                        <div style="position: absolute; top: 0; left: 0; width: 4px; height: 100%; background: #f59e0b;"></div>
+                        <h4 style="color: #fff; font-size: 1.4rem; margin-bottom: 12px; display: flex; align-items: center; gap: 12px; font-weight: 800;">
+                            <span style="font-size: 1.6rem; color: #f59e0b;"><i class="fas fa-maximize"></i></span> Scalable Production
+                        </h4>
+                        <p style="color: rgba(255,255,255,0.7); line-height: 1.7; margin: 0; font-size: 0.95rem;">Choose your exact scale: from rapid 300-word news briefs to comprehensive 2000+ word ultimate guides, all with a single click.</p>
+                    </div>
+                </div>
+
+                <div style="background: linear-gradient(135deg, rgba(20, 184, 166, 0.1), rgba(168, 85, 247, 0.05)); border-radius: 24px; padding: 40px; text-align: center; border: 1px solid rgba(255,255,255,0.1); position: relative; overflow: hidden;">
+                    <h3 style="color: #fff; margin-bottom: 30px; font-size: 1.8rem; font-weight: 900;">Why Content Teams Trust Pro AI?</h3>
+                    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 20px;">
+                        <div style="background: rgba(255,255,255,0.03); padding: 20px; border-radius: 16px; border: 1px solid rgba(255,255,255,0.05);">
+                            <div style="color: #14b8a6; font-size: 1.5rem; margin-bottom: 10px;"><i class="fas fa-check-double"></i></div>
+                            <strong style="color: #fff; display: block; margin-bottom: 5px;">Zero Hallucinations</strong>
+                            <span style="font-size: 0.9rem; color: rgba(255,255,255,0.6);">Fact-checked against live news results.</span>
+                        </div>
+                        <div style="background: rgba(255,255,255,0.03); padding: 20px; border-radius: 16px; border: 1px solid rgba(255,255,255,0.05);">
+                            <div style="color: #a855f7; font-size: 1.5rem; margin-bottom: 10px;"><i class="fas fa-language"></i></div>
+                            <strong style="color: #fff; display: block; margin-bottom: 5px;">Native Fluency</strong>
+                            <span style="font-size: 0.9rem; color: rgba(255,255,255,0.6);">Support for 20+ languages natively.</span>
+                        </div>
+                        <div style="background: rgba(255,255,255,0.03); padding: 20px; border-radius: 16px; border: 1px solid rgba(255,255,255,0.05);">
+                            <div style="color: #10b981; font-size: 1.5rem; margin-bottom: 10px;"><i class="fas fa-bolt"></i></div>
+                            <strong style="color: #fff; display: block; margin-bottom: 5px;">90% Faster</strong>
+                            <span style="font-size: 0.9rem; color: rgba(255,255,255,0.6);">Research to Ready-to-Publish in seconds.</span>
+                        </div>
+                        <div style="background: rgba(255,255,255,0.03); padding: 20px; border-radius: 16px; border: 1px solid rgba(255,255,255,0.05);">
+                            <div style="color: #f59e0b; font-size: 1.5rem; margin-bottom: 10px;"><i class="fas fa-award"></i></div>
+                            <strong style="color: #fff; display: block; margin-bottom: 5px;">E-E-A-T Compliant</strong>
+                            <span style="font-size: 0.9rem; color: rgba(255,255,255,0.6);">Built for Google Authority standards.</span>
+                        </div>
+                        <div style="background: rgba(255,255,255,0.03); padding: 20px; border-radius: 16px; border: 1px solid rgba(255,255,255,0.05);">
+                            <div style="color: #0ea5e9; font-size: 1.5rem; margin-bottom: 10px;"><i class="fas fa-image"></i></div>
+                            <strong style="color: #fff; display: block; margin-bottom: 5px;">Visual Meta Guide</strong>
+                            <span style="font-size: 0.9rem; color: rgba(255,255,255,0.6);">Suggested thumbnail and visual angles.</span>
+                        </div>
+                        <div style="background: rgba(255,255,255,0.03); padding: 20px; border-radius: 16px; border: 1px solid rgba(255,255,255,0.05);">
+                            <div style="color: #6366f1; font-size: 1.5rem; margin-bottom: 10px;"><i class="fas fa-cloud"></i></div>
+                            <strong style="color: #fff; display: block; margin-bottom: 5px;">Smart History Cloud</strong>
+                            <span style="font-size: 0.9rem; color: rgba(255,255,255,0.6);">Cloud-archived articles for instant retrieval.</span>
+                        </div>
+                    </div>
+                </div>',
             'features' => [
-                ['icon' => 'fa-paragraph', 'title' => 'Long-Form Mastery', 'desc' => 'Generate articles exceeding 2000+ words with perfect coherence.'],
-                ['icon' => 'fa-list-ol', 'title' => 'Structural Perfection', 'desc' => 'Perfect H1, H2, and H3 tagging optimized for the algorithm.'],
-                ['icon' => 'fa-clock', 'title' => 'Instant Turnaround', 'desc' => 'What takes a human 4 hours takes our AI 4 seconds.']
+                ['icon' => 'fa-microchip', 'title' => 'Live Grounding', 'desc' => 'Articles are grounded in real-time facts from global news networks.'],
+                ['icon' => 'fa-mask', 'title' => 'Tone Mastery', 'desc' => 'Switch between professional, conversational, or viral personalities.'],
+                ['icon' => 'fa-list-ol', 'title' => 'SEO Hierarchy', 'desc' => 'Automated H1-H3 tagging and LSI keyword optimization.'],
+                ['icon' => 'fa-language', 'title' => 'Global Mastery', 'desc' => 'Generate flawless content across dozens of languages natively.'],
+                ['icon' => 'fa-chart-pie', 'title' => 'Structural Tools', 'desc' => 'Integrated summary boxes, takeaways, and FAQ schema.'],
+                ['icon' => 'fa-maximize', 'title' => 'Scalable Length', 'desc' => 'Full control over article depth from short-form to epic guides.']
             ],
-            'meta_title' => 'Pro AI Article Writer | VidaNexus AI',
-            'meta_desc' => 'Generate high-quality, SEO-optimized articles in seconds.',
+            'meta_title' => 'Pro AI Article Writer | Enterprise Content Generation',
+            'meta_desc' => 'Generate research-grounded, SEO-optimized long-form articles with real-time news integration and professional persona control.',
             'route' => 'dashboard.article-writer.index',
             'daily_limit' => 5,
         ],

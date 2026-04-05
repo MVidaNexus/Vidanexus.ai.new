@@ -43,100 +43,111 @@ class SystemSettingsController extends Controller
 
     public function update(Request $request)
     {
-        $input = $request->except('_token');
-        $tools = config('tools.all_tools', []);
-        $envData = [];
-        
-        // Handle all input fields
-        foreach ($input as $key => $value) {
-            if ($key === 'packages' && is_array($value)) {
-                // Ensure popular toggles are consistently boolean-like
-                foreach(['lite', 'standard', 'pro', 'enterprise'] as $pkgKey) {
-                    if (isset($value[$pkgKey])) {
-                        $value[$pkgKey]['popular'] = isset($value[$pkgKey]['popular']) && $value[$pkgKey]['popular'] == '1';
-                        unset($value[$pkgKey]['popular_hidden']);
+        try {
+            $input = $request->except('_token');
+            $tools = config('tools.all_tools', []);
+            $envData = [];
+            
+            // Handle all input fields
+            foreach ($input as $key => $value) {
+                if ($key === 'packages' && is_array($value)) {
+                    // Ensure popular toggles are consistently boolean-like
+                    foreach(['lite', 'standard', 'pro', 'enterprise'] as $pkgKey) {
+                        if (isset($value[$pkgKey])) {
+                            $value[$pkgKey]['popular'] = isset($value[$pkgKey]['popular']) && $value[$pkgKey]['popular'] == '1';
+                            unset($value[$pkgKey]['popular_hidden']);
+                        }
                     }
+                    Setting::set('marketplace_packages', json_encode($value), 'json', 'marketplace');
+                    continue;
                 }
-                Setting::set('marketplace_packages', json_encode($value), 'json', 'marketplace');
-                continue;
-            }
 
-            $type = 'integer';
-            $group = 'general';
-            
-            if (str_starts_with($key, 'plan_credits_')) {
-                $group = 'plan_credits';
-            } elseif (str_starts_with($key, 'plan_active_')) {
-                $group = 'plan_activation';
-                $type = 'boolean';
-                $value = ($value === 'on' || $value == 1);
-            } elseif (str_starts_with($key, 'plan_tool_access_')) {
-                $group = 'tool_access';
-                $type = 'boolean';
-                $value = ($value === 'on' || $value == 1);
-            } elseif (str_starts_with($key, 'plan_tool_limit_')) {
-                $group = 'tool_limits';
-            } elseif (str_starts_with($key, 'tool_available_')) {
-                $group = 'tool_availability';
-                $type = 'boolean';
-                $value = ($value === 'on' || $value == 1);
-            } elseif (str_starts_with($key, 'tool_unlock_price_')) {
-                $group = 'marketplace_pricing';
+                // Skip array values that aren't packages (safety check)
+                if (is_array($value)) {
+                    continue;
+                }
+
                 $type = 'integer';
-            } elseif (str_starts_with($key, 'tool_credit_cost_')) {
-                $group = 'tool_usage_pricing';
-                $type = 'integer';
-            } elseif (str_starts_with($key, 'tool_bonus_credits_')) {
-                $group = 'marketplace_bonuses';
-                $type = 'integer';
-            } elseif (str_ends_with($key, '_provider')) {
-                $group = 'tool_ai_config';
-                $type = 'text';
-            } elseif (str_ends_with($key, '_model')) {
-                $group = 'tool_ai_config';
-                $type = 'text';
-            } elseif (str_starts_with($key, 'markdown_ai_')) {
-                $group = 'markdown_ai';
-                $type = str_contains($key, '_enabled') ? 'boolean' : (str_contains($key, '_ttl') ? 'integer' : 'text');
-                if ($type === 'boolean') {
+                $group = 'general';
+                
+                if (str_starts_with($key, 'plan_credits_')) {
+                    $group = 'plan_credits';
+                } elseif (str_starts_with($key, 'plan_active_')) {
+                    $group = 'plan_activation';
+                    $type = 'boolean';
                     $value = ($value === 'on' || $value == 1);
+                } elseif (str_starts_with($key, 'plan_tool_access_')) {
+                    $group = 'tool_access';
+                    $type = 'boolean';
+                    $value = ($value === 'on' || $value == 1);
+                } elseif (str_starts_with($key, 'plan_tool_limit_')) {
+                    $group = 'tool_limits';
+                } elseif (str_starts_with($key, 'tool_available_')) {
+                    $group = 'tool_availability';
+                    $type = 'boolean';
+                    $value = ($value === 'on' || $value == 1);
+                } elseif (str_starts_with($key, 'tool_unlock_price_')) {
+                    $group = 'marketplace_pricing';
+                    $type = 'integer';
+                } elseif (str_starts_with($key, 'tool_credit_cost_')) {
+                    $group = 'tool_usage_pricing';
+                    $type = 'integer';
+                } elseif (str_starts_with($key, 'tool_bonus_credits_')) {
+                    $group = 'marketplace_bonuses';
+                    $type = 'integer';
+                } elseif (str_ends_with($key, '_provider')) {
+                    $group = 'tool_ai_config';
+                    $type = 'text';
+                } elseif (str_ends_with($key, '_model')) {
+                    $group = 'tool_ai_config';
+                    $type = 'text';
+                } elseif (str_starts_with($key, 'markdown_ai_')) {
+                    $group = 'markdown_ai';
+                    $type = str_contains($key, '_enabled') ? 'boolean' : (str_contains($key, '_ttl') ? 'integer' : 'text');
+                    if ($type === 'boolean') {
+                        $value = ($value === 'on' || $value == 1);
+                    }
+                } elseif ($key === 'footer_script') {
+                    $group = 'scripts';
+                    $type = 'text';
                 }
-            } elseif ($key === 'footer_script') {
-                $group = 'scripts';
-                $type = 'text';
+                
+                // Handle SMTP / .env keys separately
+                if (str_starts_with($key, 'MAIL_')) {
+                    $envData[$key] = $value;
+                    continue;
+                }
+
+                Setting::set($key, $value, $type, $group);
             }
-            
-            // Handle SMTP / .env keys separately
-            if (str_starts_with($key, 'MAIL_')) {
-                $envData[$key] = $value;
-                continue;
+
+            // Persist .env changes if any
+            if (!empty($envData)) {
+                try {
+                    $this->updateEnv($envData);
+                } catch (\Exception $e) {
+                    \Log::warning('Failed to update .env: ' . $e->getMessage());
+                }
             }
 
-            Setting::set($key, $value, $type, $group);
-        }
-
-        // Persist .env changes if any
-        if (!empty($envData)) {
-            try {
-                $this->updateEnv($envData);
-            } catch (\Exception $e) {
-                // Log or handle error if .env is not writable
+            // Handle Checkboxes (ensure false is saved if missing)
+            if (!$request->has('markdown_ai_enabled')) {
+                Setting::set('markdown_ai_enabled', false, 'boolean', 'markdown_ai');
             }
-        }
 
-        // Handle Checkboxes (ensure false is saved if missing)
-        if (!$request->has('markdown_ai_enabled')) {
-            Setting::set('markdown_ai_enabled', false, 'boolean', 'markdown_ai');
-        }
-
-        foreach ($tools as $tool) {
-            $availKey = "tool_available_{$tool['slug']}";
-            if (!$request->has($availKey)) {
-                Setting::set($availKey, false, 'boolean', 'tool_availability');
+            foreach ($tools as $tool) {
+                $availKey = "tool_available_{$tool['slug']}";
+                if (!$request->has($availKey)) {
+                    Setting::set($availKey, false, 'boolean', 'tool_availability');
+                }
             }
-        }
 
-        return back()->with('success', 'System settings matrix updated successfully.');
+            return back()->with('success', 'System settings matrix updated successfully.');
+
+        } catch (\Throwable $e) {
+            \Log::error('SystemSettings update CRASHED: ' . $e->getMessage() . "\n" . $e->getTraceAsString());
+            return back()->with('error', 'Error saving settings: ' . $e->getMessage());
+        }
     }
 
     public function apiKeys()

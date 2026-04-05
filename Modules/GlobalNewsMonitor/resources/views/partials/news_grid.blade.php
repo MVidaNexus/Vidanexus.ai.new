@@ -262,14 +262,12 @@
                            title="Discover Headlines">
                             <i class="fas fa-bolt"></i>
                         </a>
-                        @if(Route::has('dashboard.article-writer.index'))
                         <a href="{{ route('dashboard.article-writer.index') }}?topic={{ urlencode($item['title']) }}" target="_blank"
-                           class="w-8 h-8 rounded-lg flex items-center justify-center transition-all text-xs shadow-lg"
-                           style="background: linear-gradient(135deg, rgba(16, 185, 129, 0.15), rgba(14, 165, 233, 0.15)); border: 1px solid rgba(16, 185, 129, 0.2); color: #10b981;"
+                           class="w-8 h-8 rounded-lg flex items-center justify-center transition-all text-xs shadow-lg bg-gradient-to-br from-[#10b981] to-[#0ea5e9] hover:scale-110 text-white"
+                           style="border: 1px solid rgba(16, 185, 129, 0.2);"
                            title="Write Article About This">
                             <i class="fas fa-pen-fancy"></i>
                         </a>
-                        @endif
                     </div>
                 </div>
             </div>

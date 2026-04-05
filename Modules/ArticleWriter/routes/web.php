@@ -14,6 +14,10 @@ use Modules\ArticleWriter\Http\Controllers\ArticleWriterController;
 |
 */
 
-Route::group(['middleware' => ['auth', 'tool.access:article-writer', 'check_credits']], function () {
-    Route::resource('articlewriter', ArticleWriterController::class)->names('articlewriter');
+Route::prefix('dashboard/article-writer')->middleware(['auth', 'tool.access:article-writer', 'check_credits'])->group(function () {
+    Route::get('/', [ArticleWriterController::class, 'index'])->name('dashboard.article-writer.index');
+    Route::post('/generate', [ArticleWriterController::class, 'store'])->name('dashboard.article-writer.generate');
+    Route::get('/history', [ArticleWriterController::class, 'history'])->name('dashboard.article-writer.history');
+    Route::get('/{id}', [ArticleWriterController::class, 'show'])->name('dashboard.article-writer.show');
+    Route::delete('/{id}', [ArticleWriterController::class, 'destroy'])->name('dashboard.article-writer.destroy');
 });

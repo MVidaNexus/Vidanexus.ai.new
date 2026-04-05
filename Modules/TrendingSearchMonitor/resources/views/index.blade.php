@@ -418,9 +418,9 @@ function renderTrends(trends, country) {
                         <i class="fas fa-bolt text-sm"></i>
                     </a>
 
-                    <a href="{{ route('articlewriter.index') }}?keyword=${encodeURIComponent(trend.title)}" 
-                       class="w-10 h-10 rounded-xl bg-white/5 hover:bg-primary-purple hover:text-white flex items-center justify-center transition-all text-gray-400"
-                       title="One-Click Article Writer">
+                    <a href="{{ route('dashboard.article-writer.index') }}?keyword=${encodeURIComponent(trend.title)}" target="_blank"
+                       class="w-10 h-10 rounded-xl bg-gradient-to-br from-[#a855f7] to-[#6366f1] hover:scale-110 flex items-center justify-center transition-all text-white shadow-lg"
+                       title="Write with AI">
                         <i class="fas fa-pen-fancy text-sm"></i>
                     </a>
                 </div>
@@ -511,7 +511,8 @@ async function analyzeTrend(trend, country, lang, btn) {
                 </div>
 
                 <div class="grid grid-cols-2 gap-3 mt-6">
-                    <a href="{{ route('articlewriter.index') }}?keyword=${encodeURIComponent(trend)}" class="vn-btn vn-btn-primary py-3 rounded-xl flex items-center justify-center gap-2 text-sm">
+                    <a href="{{ route('dashboard.article-writer.index') }}?keyword=${encodeURIComponent(trend)}" target="_blank"
+                       class="vn-btn vn-btn-primary py-3 rounded-xl flex items-center justify-center gap-2 text-sm shadow-lg shadow-primary-cyan/20">
                         <i class="fas fa-pen-fancy"></i> Write Article
                     </a>
                     <button onclick="Swal.close()" class="vn-btn border border-white/10 hover:bg-white/5 py-3 rounded-xl text-gray-400 text-sm">

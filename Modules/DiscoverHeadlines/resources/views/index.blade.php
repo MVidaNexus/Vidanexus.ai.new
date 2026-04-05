@@ -227,6 +227,12 @@
                                     <span class="text-[9px] font-black uppercase tracking-widest text-center">Visual Angle</span>
                                 </button>
 
+                                <a :href="'{{ route('dashboard.article-writer.index') }}?keyword=' + encodeURIComponent(headline.text)" target="_blank"
+                                        class="flex-1 p-4 rounded-2xl bg-gradient-to-br from-[#a855f7] to-[#6366f1] border border-white/10 hover:scale-[1.05] transition-all duration-300 flex flex-col items-center justify-center gap-1.5 shadow-xl text-white no-underline">
+                                    <i class="fas fa-pen-fancy text-lg"></i>
+                                    <span class="text-[9px] font-black uppercase tracking-widest text-center">Write with AI</span>
+                                </a>
+
 
                             </div>
                         </div>

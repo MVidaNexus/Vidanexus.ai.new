@@ -197,12 +197,12 @@
                             <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-bottom: 1rem;">
                                 <div>
                                     <label style="display: block; font-size: 0.75rem; color: var(--text-muted); margin-bottom: 0.5rem; font-weight: 600;">Name</label>
-                                    <input type="text" name="packages[{{ $pkgKey }}][name]" value="{{ $pkg['name'] }}" class="modal-input" required>
+                                    <input type="text" name="packages[{{ $pkgKey }}][name]" value="{{ $pkg['name'] }}" class="modal-input">
                                 </div>
                                 <div>
                                     <label style="display: block; font-size: 0.75rem; color: var(--text-muted); margin-bottom: 0.5rem; font-weight: 600;">Credits Amount</label>
                                     <div style="position: relative;">
-                                        <input type="text" name="packages[{{ $pkgKey }}][credits]" value="{{ $pkg['credits'] }}" class="modal-input" required style="padding-right: 4rem;">
+                                        <input type="text" name="packages[{{ $pkgKey }}][credits]" value="{{ $pkg['credits'] }}" class="modal-input" style="padding-right: 4rem;">
                                         <span style="position: absolute; right: 0.75rem; top: 50%; transform: translateY(-50%); font-size: 0.7rem; font-weight: 800; color: var(--text-muted); opacity: 0.4; pointer-events: none;">Credits</span>
                                     </div>
                                 </div>
@@ -211,7 +211,7 @@
                                 <div>
                                     <label style="display: block; font-size: 0.75rem; color: var(--text-muted); margin-bottom: 0.5rem; font-weight: 600;">Price (EGP)</label>
                                     <div style="position: relative;">
-                                        <input type="text" name="packages[{{ $pkgKey }}][price]" value="{{ $pkg['price'] }}" class="modal-input" required style="padding-right: 3rem;">
+                                        <input type="text" name="packages[{{ $pkgKey }}][price]" value="{{ $pkg['price'] }}" class="modal-input" style="padding-right: 3rem;">
                                         <span style="position: absolute; right: 0.75rem; top: 50%; transform: translateY(-50%); font-size: 0.7rem; font-weight: 800; color: var(--text-muted); opacity: 0.4; pointer-events: none;">EGP</span>
                                     </div>
                                 </div>
@@ -222,7 +222,7 @@
                             </div>
                             <div style="margin-bottom: 1rem;">
                                 <label style="display: block; font-size: 0.75rem; color: var(--text-muted); margin-bottom: 0.5rem; font-weight: 600;">Description</label>
-                                <input type="text" name="packages[{{ $pkgKey }}][desc]" value="{{ $pkg['desc'] }}" class="modal-input" required>
+                                <input type="text" name="packages[{{ $pkgKey }}][desc]" value="{{ $pkg['desc'] }}" class="modal-input">
                             </div>
                             <div style="display: flex; flex-direction: column; justify-content: flex-end; background: rgba(0,0,0,0.05); padding: 0.75rem; border-radius: 10px; border: 1px dashed var(--horizon-border);">
                                 <label style="font-size: 0.85rem; color: var(--text-main); margin: 0; display: flex; align-items: center; gap: 0.75rem; cursor: pointer; font-weight: 600;">
@@ -473,12 +473,9 @@
                     <a href="/up" target="_blank" class="btn-save" style="text-decoration: none; padding: 1.25rem 3rem; background: rgba(255,255,255,0.05); color: var(--text-main); border: 1px solid var(--horizon-border); display: flex; align-items: center; gap: 0.75rem;">
                         <i class="fas fa-heartbeat" style="color: #10b981;"></i> System Pulse (UP)
                     </a>
-                    <form action="/logout" method="POST" style="margin: 0;">
-                        @csrf
-                        <button type="submit" class="btn-save" style="padding: 1.25rem 3rem; background: rgba(239, 68, 68, 0.1); color: #ef4444; border: 1px solid rgba(239, 68, 68, 0.2); display: flex; align-items: center; gap: 0.75rem; cursor: pointer;">
-                            <i class="fas fa-power-off"></i> Logout Session
-                        </button>
-                    </form>
+                    <button type="button" onclick="let f=document.createElement('form');f.method='POST';f.action='/logout';let t=document.createElement('input');t.type='hidden';t.name='_token';t.value='{{ csrf_token() }}';f.appendChild(t);document.body.appendChild(f);f.submit();" class="btn-save" style="padding: 1.25rem 3rem; background: rgba(239, 68, 68, 0.1); color: #ef4444; border: 1px solid rgba(239, 68, 68, 0.2); display: flex; align-items: center; gap: 0.75rem; cursor: pointer;">
+                        <i class="fas fa-power-off"></i> Logout Session
+                    </button>
                 </div>
             </div>
         </div>

@@ -364,6 +364,12 @@
             </div>
         @endif
 
+        @if(session('error'))
+            <div style="background: rgba(239, 68, 68, 0.1); border: 1px solid rgba(239, 68, 68, 0.3); color: #ef4444; padding: 1rem 1.5rem; border-radius: 12px; margin-bottom: 2.5rem; display: flex; align-items: center; gap: 1rem;">
+                <i class="fas fa-exclamation-triangle"></i> {{ session('error') }}
+            </div>
+        @endif
+
         @yield('content')
     </main>
 

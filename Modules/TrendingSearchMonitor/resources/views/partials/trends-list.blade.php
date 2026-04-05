@@ -76,9 +76,9 @@
                         <i class="fas fa-bolt text-sm"></i>
                     </a>
 
-                    <a href="{{ route('articlewriter.index') }}?keyword={{ urlencode($trend['title']) }}" 
-                       class="w-10 h-10 rounded-xl bg-white/5 hover:bg-primary-purple hover:text-white flex items-center justify-center transition-all text-gray-400"
-                       title="One-Click Article Writer">
+                    <a href="{{ route('dashboard.article-writer.index') }}?keyword={{ urlencode($trend['title']) }}" target="_blank"
+                       class="w-10 h-10 rounded-xl bg-gradient-to-br from-[#a855f7] to-[#6366f1] hover:scale-110 flex items-center justify-center transition-all text-white shadow-lg"
+                       title="Write with AI">
                         <i class="fas fa-pen-fancy text-sm"></i>
                     </a>
                 </div>
