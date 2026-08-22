@@ -10,7 +10,7 @@
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&family=JetBrains+Mono&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
     <link rel="stylesheet" href="{{ asset('style.v2.css') }}?v={{ config('vidanexus.style_css_version') }}">
-    <script>(function(){const t=localStorage.getItem("theme")||"light";document.documentElement.setAttribute("data-theme",t);})();</script>
+    @include('partials.theme-init')
     <style>
         :root {
             --horizon-bg: #021B3A;
@@ -585,9 +585,9 @@
         <script>
             // Ensure the toggle matches the current theme on load
             document.addEventListener('DOMContentLoaded', () => {
-                const isLight = document.documentElement.getAttribute('data-theme') === 'light';
+                const isDark = (document.documentElement.getAttribute('data-theme') || 'dark') === 'dark';
                 const toggle = document.getElementById('theme-toggle-checkbox');
-                if (toggle) toggle.checked = isLight;
+                if (toggle) toggle.checked = isDark;
             });
         </script>
 

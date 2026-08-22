@@ -97,6 +97,8 @@ const initTheme = () => {
     const isDark = savedTheme === 'dark';
     
     document.documentElement.setAttribute('data-theme', savedTheme);
+    document.documentElement.classList.toggle('dark', isDark);
+    document.documentElement.style.colorScheme = isDark ? 'dark' : 'light';
     
     // Sync all checkboxes (Checked = Dark Mode)
     const checkboxes = document.querySelectorAll('.theme-switch-dribbble input');
@@ -110,6 +112,8 @@ const handleThemeChange = (e) => {
     const newTheme = isDarkMode ? 'dark' : 'light';
     
     document.documentElement.setAttribute('data-theme', newTheme);
+    document.documentElement.classList.toggle('dark', isDarkMode);
+    document.documentElement.style.colorScheme = isDarkMode ? 'dark' : 'light';
     localStorage.setItem('theme', newTheme);
     
     // Sync other checkboxes

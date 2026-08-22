@@ -60,7 +60,7 @@
     <link rel="icon" type="image/png" href="{{ asset('assets/logo.png') }}">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
     <link rel="stylesheet" href="{{ asset('style.v2.css') }}?v={{ config('vidanexus.style_css_version') }}">
-    <script>(function(){const t=localStorage.getItem("theme")||"light";document.documentElement.setAttribute("data-theme",t);})();</script>
+    @include('partials.theme-init')
 </head>
 <body>
     <canvas id="techCanvas" style="position:fixed;top:0;left:0;width:100vw;height:100vh;z-index:0;pointer-events:none;display:block;"></canvas>
