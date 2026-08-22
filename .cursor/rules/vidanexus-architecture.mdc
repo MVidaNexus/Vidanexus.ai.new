@@ -1,0 +1,71 @@
+---
+description: Whole-project VidaNexus — structure, tools, marketplace, credits, conventions
+alwaysApply: true
+---
+
+# VidaNexus — project rules (global)
+
+## Stack
+
+- **Laravel** — `bootstrap/app.php`: web + API routes; middleware aliases `admin`, `tool.access`, `check_credits`, `verified`.
+- **nwidart/laravel-modules** — `Modules/{Name}/` (`module.json`, routes, controllers, views).
+
+## Source of truth for tools
+
+- **`config/tools.php`** → `all_tools[]`: `slug`, `route`, `unlock_price`, `credit_cost_per_action`, `initial_bonus_credits`, `daily_limit`, etc.
+- **Do not** duplicate slug lists in routes; use `App\Support\GenericToolRoutes` (derived from `all_tools[].route`).
+
+## App vs modules
+
+- **`app/`** — auth, billing, dashboard, admin Horizon, generic AI tools, middleware, models (`User`, `Wallet`, `UserTool`, `Setting`, `AiUsage`, …).
+- **`Modules/`** — large tools (ArticleWriter, DiscoverHeadlines, GlobalNewsMonitor, …). Follow existing module layout.
+
+## Routes
+
+- `routes/web.php` pulls split files: `routes/web/dashboard.php`, `admin.php`, `public.php`, etc.
+- Named routes must match `config/tools.php` `route` for each tool.
+
+## Admin and settings
+
+- Horizon: `resources/views/admin/horizon/` + `App\Http\Controllers\Admin\HorizonController`.
+- System matrix: `SystemSettingsController` + `resources/views/admin/horizon/settings.blade.php`.
+- **`Setting`** model → `settings` table; values are cached (`Setting::get`, `getAllSettings`, per-key cache).
+
+## Marketplace setting keys (per `slug`)
+
+| Purpose | Key |
+|--------|-----|
+| Live on site | `tool_available_{slug}` (boolean) |
+| Monthly unlock (EGP) | `tool_unlock_price_{slug}` |
+| Credits per action | `tool_credit_cost_{slug}` |
+| Bonus on purchase/renewal | `tool_bonus_credits_{slug}` |
+
+Keep Horizon forms and the settings matrix aligned with these names.
+
+## Credits runtime (any code path)
+
+- **`ToolMarketplacePresenter`** — batches settings for welcome, pricing, dashboard; defaults from `config/tools.php`.
+- **`User::getToolCreditCost($slug)`** — `tool_credit_cost_{slug}` → fallback `credit_cost_per_action` in config.
+- **`User::canUseTool` / `deductToolCredits`** — implemented by `ToolCreditConsumptionService`: cost `<= 0` = free; else **`wallet.balance_credits` first**, then per-tool `bonus_credits` only when `user_tools.allow_bonus_for_ai_usage` is true (false for marketplace-paid unlocks so bonus CRS are not consumed on AI usage).
+- **`ToolAccessMiddleware`** — ownership + `canUseTool` (non-admins).
+- **`GenericToolGenerationService::generate`** — ownership, credits, `deductToolCredits`, `AiUsage.tool` = slug (must match config).
+
+## Validation and data integrity
+
+- Credit-like values **must be integers `>= 0`**: unlock price, cost/action, bonus credits, `plan_credits_*`, and validated Horizon extras (`sync_credits`, `ai_analysis_credits`, etc.).
+- **Never** persist negatives on: `tool_credit_cost_*`, `tool_bonus_credits_*`, `plan_credits_*`, `user_tools.bonus_credits`, `wallets.balance_credits`.
+- Legacy cleanup: migration `2026_04_20_120000_clamp_negative_credit_values.php`.
+
+## Adding a new tool
+
+1. Entry in `config/tools.php` `all_tools`.
+2. Route in `routes/web/*.php` matching the config `route` name.
+3. Wire generic flow if applicable (`GenericToolGenerationService`, `tool.access:{slug}`).
+4. Ensure the four `Setting` key patterns above exist in admin UX where users expect them.
+
+## Conventions
+
+- DB: snake_case; match existing Blade/PHP style in the file you touch.
+- Scope changes narrowly; avoid unrelated refactors.
+- After changing `Setting` keys or semantics, consider `Setting::clearCache()` or relevant `Cache::forget` if reads look stale.
+- Admin/dashboard credits label **CRS** — keep wording consistent in views.

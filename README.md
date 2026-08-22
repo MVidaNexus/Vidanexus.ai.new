@@ -1,3 +1,82 @@
+## VidaNexus AI
+
+Multi-tool AI marketplace built on Laravel 11.
+
+### Documentation
+
+- [Authentication & password recovery](docs/AUTHENTICATION.md)
+- [Social login (Google, GitHub, Microsoft)](docs/SOCIAL_LOGIN.md)
+- [AI provider architecture & fallback chain](docs/AI_PROVIDERS.md)
+- [AI security: prompt-injection defense](docs/SECURITY.md)
+- [Platform enhancement roadmap](docs/PLATFORM_ENHANCEMENT_ROADMAP.md)
+
+## Docker Compose (Prod + Dev)
+
+### Production-like stack
+
+Use only the base file:
+
+```bash
+docker compose -f docker-compose.yml up --build -d
+```
+
+Notes:
+- Uses built assets from the image (no Vite HMR container).
+- No source bind mount (closer to production runtime behavior).
+- Default web port is `80` (`APP_PORT` can override).
+
+### Local development stack
+
+Use the dedicated dev file:
+
+```bash
+docker compose -f docker-compose.dev.yml up --build -d
+```
+
+This enables:
+- Source bind mount for live code edits
+- `vite` dev server (`5173`) for HMR
+- `composer` helper service
+- Local-friendly app env overrides
+
+### 1) Configure local env
+
+- Copy `.env.example` to `.env` if needed.
+- For Docker networking, use:
+  - `DB_CONNECTION=mysql`
+  - `DB_HOST=mysql`
+  - `DB_PORT=3306`
+  - `DB_DATABASE=vidanexus`
+  - `DB_USERNAME=vidanexus`
+  - `DB_PASSWORD=secret`
+  - `REDIS_HOST=redis`
+- Set `APP_URL=http://localhost:8000` for local dev.
+
+### 2) Build and start the stack
+
+Services (dev):
+- App: [http://localhost:8000](http://localhost:8000) (or your `APP_PORT`)
+- Vite HMR: [http://localhost:5173](http://localhost:5173)
+
+### 3) Install dependencies and initialize app
+
+```bash
+docker compose -f docker-compose.dev.yml run --rm composer install
+docker compose -f docker-compose.dev.yml exec app php artisan key:generate
+docker compose -f docker-compose.dev.yml exec app php artisan migrate
+```
+
+### 4) Useful commands
+
+```bash
+docker compose -f docker-compose.dev.yml logs -f app vite
+docker compose -f docker-compose.dev.yml exec app php artisan test
+docker compose -f docker-compose.dev.yml --profile horizon up -d horizon
+docker compose -f docker-compose.dev.yml down
+```
+
+---
+
 <p align="center"><a href="https://laravel.com" target="_blank"><img src="https://raw.githubusercontent.com/laravel/art/master/logo-lockup/5%20SVG/2%20CMYK/1%20Full%20Color/laravel-logolockup-cmyk-red.svg" width="400" alt="Laravel Logo"></a></p>
 
 <p align="center">

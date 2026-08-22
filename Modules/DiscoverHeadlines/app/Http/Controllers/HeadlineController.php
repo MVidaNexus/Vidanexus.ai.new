@@ -4,6 +4,8 @@ namespace Modules\DiscoverHeadlines\Http\Controllers;
 
 use App\Http\Controllers\Controller;
 use App\Core\AI\AIManager;
+use App\Support\CountryRegistry;
+use App\Support\GoogleNewsRss;
 use App\Models\Wallet;
 use App\Models\Setting;
 use Illuminate\Http\Request;
@@ -42,15 +44,10 @@ class HeadlineController extends Controller
             session()->forget(['headlineResults', 'scoredHeadlines', 'headlineKeyword', 'headlineError', 'headlineEmpty']);
         }
 
-        $region = strtoupper($request->get('country', 'US'));
         $countryMap = $this->getCountryMap();
-        
-        if (!isset($countryMap[$region])) {
-            $region = 'US';
-        }
-        
-        $currentCountry = $countryMap[$region];
-        $currentCountry['code'] = $region;
+        $resolved = CountryRegistry::resolveRegion($request->get('country'), $countryMap, CountryRegistry::defaultRegion('en'));
+        $region = $resolved['region'];
+        $currentCountry = $resolved['country'];
 
         $data = array_merge([
             'currentCountry' => $currentCountry,
@@ -70,19 +67,29 @@ class HeadlineController extends Controller
      */
     public function generate(Request $request)
     {
-        $keyword = $request->input('keyword');
-        $content = $request->input('content');
         $type = $request->input('type', 'keyword');
-        $region = strtoupper($request->input('country', 'EG'));
+        $countryMap = $this->getCountryMap();
+        $resolved = CountryRegistry::resolveRegion($request->input('country'), $countryMap, CountryRegistry::defaultRegion());
+        $region = $resolved['region'];
         $progressId = $request->input('progress_id') ?: 'hl_' . time();
         $variantsCount = $request->input('variants', 7);
 
+        // Each mode must validate (and ultimately use) only its own input.
+        // Previously a stale `keyword` URL parameter would silently override
+        // the user's pasted content because both fields were always sent and
+        // the prompt's `[Keyword]` placeholder pulled the headline away from
+        // the actual context. Force-clearing the inactive field server-side
+        // makes the mode authoritative regardless of what the form posted.
         $request->validate([
-            'keyword' => 'nullable|string|max:255',
-            'content' => 'nullable|string',
             'type' => 'required|string|in:keyword,content',
             'variants' => 'nullable|integer|min:3|max:15',
+            'country' => 'nullable|string|size:2',
+            'keyword' => $type === 'keyword' ? 'required|string|max:255' : 'nullable|string|max:255',
+            'content' => $type === 'content' ? 'required|string|min:50' : 'nullable|string',
         ]);
+
+        $keyword = $type === 'keyword' ? (string) $request->input('keyword') : '';
+        $content = $type === 'content' ? (string) $request->input('content') : '';
 
         // Credit Check
         $user = auth()->user();
@@ -147,10 +154,8 @@ class HeadlineController extends Controller
      */
     protected function fetchNewsContext($keyword, $region, $progressId = null)
     {
-        $countryMap = $this->getCountryMap();
-        $countryData = $countryMap[$region] ?? ['lang' => 'ar'];
-        $lang = $countryData['lang'] ?? 'ar';
-        $ceid = "{$region}:{$lang}";
+        $region = CountryRegistry::normalizeCode($region) ?: CountryRegistry::defaultRegion();
+        $lang = CountryRegistry::langFor($region);
 
         $cacheKey = 'headline_news_v2_' . $region . '_' . md5(mb_strtolower(trim($keyword)));
         $cached = Cache::get($cacheKey);
@@ -175,7 +180,7 @@ class HeadlineController extends Controller
         
         foreach ($windows as $window) {
             $timeParam = ($window === 'broad') ? "" : " " . $window;
-            $url = "https://news.google.com/rss/search?q=" . urlencode($keyword . $timeParam) . "&hl={$lang}&gl={$region}&ceid={$ceid}";
+            $url = GoogleNewsRss::searchUrl($keyword.$timeParam, $region, $lang);
             
             try {
                 if ($progressId) {
@@ -437,10 +442,10 @@ class HeadlineController extends Controller
 {$jsonStr}";
     }
 
-    protected function getCountryMap()
+    protected function getCountryMap(): array
     {
-        return config('keywords.countries', [
-            'EG' => ['name' => 'مصر', 'flag' => '🇪🇬', 'lang' => 'ar']
-        ]);
+        // Use the global registry so admin-disabled countries don't show up
+        // in Discover Headlines either.
+        return CountryRegistry::globalMap();
     }
 }

@@ -3,6 +3,8 @@
 namespace Modules\TrendingSearchMonitor\Http\Controllers;
 
 use App\Http\Controllers\Controller;
+use App\Support\CountryRegistry;
+use App\Support\GoogleNewsRss;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Cache;
@@ -16,9 +18,6 @@ class TrendingSearchController extends Controller
      */
     public function index(Request $request)
     {
-        $countryMap = config('keywords.countries', []);
-        
-        // Load configurations from Horizon Admin
         $settings = [];
         $settingsRaw = Setting::where('group', 'tool_settings')
             ->where('key', 'like', 'trending-search-monitor_%')
@@ -28,66 +27,20 @@ class TrendingSearchController extends Controller
             $settings[$key] = $s->value;
         }
 
-        // Apply Country Whitelist if Admin configured it
-        // When empty, generate the canonical list from config('keywords.countries') — same source as News Monitor
-        if (!empty($settings['available_countries'])) {
-            $countryMap = [];
-            foreach(explode("\n", trim($settings['available_countries'])) as $line) {
-                $parts = explode(':', trim($line));
-                if(count($parts) >= 2) {
-                    $code = strtoupper(trim($parts[0]));
-                    $nameStr = trim($parts[1]);
-                    
-                    // Try to extract flag from the end of the text (emojis)
-                    $flag = '';
-                    if (preg_match('/(.*?)\s*([\x{1F1E6}-\x{1F1FF}]{2}|[\p{So}\p{Sk}]+)$/u', $nameStr, $matches)) {
-                        $nameStr = trim($matches[1]);
-                        $flag = trim($matches[2]);
-                    }
-                    
-                    // Base data from config if exists, otherwise fallback
-                    $baseConfig = config("keywords.countries.{$code}", []);
-                    
-                    $countryMap[$code] = array_merge([
-                        'name' => $nameStr,
-                        'code' => $code,
-                        'flag' => $flag,
-                        'lang' => 'ar' // Fallback
-                    ], $baseConfig); // Overwrite missing keys with base config
-                    
-                    // Force the name to exactly what the admin typed if it's different
-                    $countryMap[$code]['name'] = $nameStr ?: ($baseConfig['name'] ?? $code);
-                    $countryMap[$code]['flag'] = $flag ?: ($baseConfig['flag'] ?? '');
-                }
-            }
-        }
-        // If countryMap is still the full config (no admin override), it's already correct
-        
+        $availableText = (string) ($settings['available_countries'] ?? '');
         $activeCountries = json_decode($settings['countries'] ?? 'null', true);
-        if (is_array($activeCountries) && count($activeCountries) > 0) {
-            $filteredMap = [];
-            foreach($activeCountries as $c) {
-                $c = strtoupper($c);
-                if (isset($countryMap[$c])) {
-                    $filteredMap[$c] = $countryMap[$c];
-                }
-            }
-            if (count($filteredMap) > 0) {
-                $countryMap = $filteredMap;
-            }
-        }
 
-        // Use first available country as default if 'EG' is not allowed
-        $defaultRegion = isset($countryMap['EG']) ? 'EG' : (array_key_first($countryMap) ?: 'EG');
-        $region = strtoupper($request->get('country', $defaultRegion));
+        // effectiveMap intersects the tool list with the global visibility
+        // registry → admin-hidden countries never appear in the Viral Tool.
+        $countryMap = CountryRegistry::effectiveMap(
+            $availableText,
+            is_array($activeCountries) ? $activeCountries : null
+        );
 
-        // Validate region exists in our country map
-        if (!isset($countryMap[$region])) {
-            $region = $defaultRegion;
-        }
-
-        $currentCountry = $countryMap[$region] ?? ['name' => $region, 'code' => $region, 'lang' => 'ar'];
-        $currentCountry['code'] = $region;
+        $defaultRegion = isset($countryMap['EG']) ? 'EG' : (array_key_first($countryMap) ?: CountryRegistry::defaultRegion());
+        $resolved = CountryRegistry::resolveRegion($request->get('country'), $countryMap, $defaultRegion);
+        $region = $resolved['region'];
+        $currentCountry = $resolved['country'];
 
         // Check limits before fetching
         $user = auth()->user();
@@ -134,14 +87,16 @@ class TrendingSearchController extends Controller
         $shouldFetch = $isAjax || $request->has('fetch') || $request->has('refresh');
 
         $trends = [];
+        $deducted = false;
         if ($shouldFetch) {
             // Extract Feed Type and Category from Admin settings
             $feedType = $settings['feed_type'] ?? 'daily';
             $category = $settings['category'] ?? 'all';
 
-            // Fetch trends based on platform
-            $maxTrends = (int)($settings['max_trends'] ?? 50);
-            
+            // Fetch trends based on platform. The cap is honoured per-source
+            // and a final post-filter pass dedupes + ranks the merged list.
+            $maxTrends = max(10, min(100, (int) ($settings['max_trends'] ?? 50)));
+
             if ($platform === 'x' || $platform === 'twitter') {
                 $trends = $this->fetchXTrends($region, $currentCountry['name'], $forceRefresh, $maxTrends);
             } elseif ($platform === 'tiktok') {
@@ -153,9 +108,26 @@ class TrendingSearchController extends Controller
                 $trends = $this->fetchTrendingSuggestions($region, $currentCountry['lang'] ?? 'ar', $forceRefresh, $feedType, $category, $maxTrends);
             }
 
-            // Charge credits only on explicit fetch/refresh
+            // Final cleanup that runs for every platform: dedupe by normalized
+            // title, drop empty / noise entries, validate the top-3 headlines.
+            $trends = $this->normalizeTrendList(
+                $trends,
+                $platform,
+                $maxTrends,
+                $region,
+                $currentCountry['lang'] ?? 'ar'
+            );
+            $trends = $this->applyProxiedImagesToTrends($trends);
+
+            // Charge credits only on explicit fetch/refresh — canonical service.
             if ($shouldFetch && !empty($trends) && !($isAjax && !$forceRefresh)) {
-                $user->wallet->decrement('balance_credits', 1);
+                if (! $user->deductToolCredits('trending-search-monitor')) {
+                    \Illuminate\Support\Facades\Log::critical('[Trending Search Monitor] Credits could not be deducted after successful fetch', [
+                        'user_id' => $user->id,
+                    ]);
+                } else {
+                    $deducted = true;
+                }
                 \App\Models\AiUsage::create([
                     'user_id' => $user->id,
                     'tool' => 'trending-search-monitor',
@@ -168,6 +140,14 @@ class TrendingSearchController extends Controller
 
         // If AJAX request, return JSON
         if ($isAjax) {
+            // Echo the post-deduction wallet balance so the front-end can
+            // animate the credit chip in place via VidaCredits.apply().
+            $balance = null;
+            if ($deducted) {
+                $user->load('wallet');
+                $balance = (float) ($user->wallet->balance_credits ?? 0);
+            }
+
             return response()->json([
                 'success' => true,
                 'trends' => $trends,
@@ -175,6 +155,7 @@ class TrendingSearchController extends Controller
                 'count' => count($trends),
                 'platform' => $platform,
                 'cached_at' => now()->format('h:i A'),
+                'balance' => $balance,
             ]);
         }
 
@@ -182,24 +163,435 @@ class TrendingSearchController extends Controller
     }
 
     /**
-     * Fetch trending search data from Google Trends (cached)
+     * Fetch trending search data from Google Trends (cached).
+     *
+     * The previous version only used one source; on most countries Google's
+     * Daily RSS returns 10–20 items and the Realtime API returns ~25, so
+     * the combined feed yields a richer, more stable list. We dedupe by
+     * normalized title and prefer the entry with the most metadata
+     * (traffic / image / news items).
      */
-    protected function fetchTrendingSuggestions($region, $lang = 'ar', $forceRefresh = false, $feedType = 'daily', $category = 'all', $maxTrends = 20)
+    protected function fetchTrendingSuggestions($region, $lang = 'ar', $forceRefresh = false, $feedType = 'daily', $category = 'all', $maxTrends = 50)
     {
-        $cacheKey = "trending_suggestions_{$region}_{$lang}_{$feedType}_{$category}";
-        
+        $cacheKey = "trending_suggestions_v2_{$region}_{$lang}_{$feedType}_{$category}";
+
         if ($forceRefresh) {
             Cache::forget($cacheKey);
         }
 
-        $trends = Cache::remember($cacheKey, 300, function () use ($region, $lang, $feedType, $category) {
-            if ($feedType === 'realtime') {
-                return $this->fetchRealtimeFresh($region, $lang, $category);
-            }
-            return $this->fetchDailyFresh($region, $lang);
+        $trends = Cache::remember($cacheKey, 600, function () use ($region, $lang, $feedType, $category) {
+            $primary = $feedType === 'realtime'
+                ? $this->fetchRealtimeFresh($region, $lang, $category)
+                : $this->fetchDailyFresh($region, $lang);
+
+            // Always enrich with the alternate source so a single sparse feed
+            // never strands the user at <10 trends.
+            $secondary = $feedType === 'realtime'
+                ? $this->fetchDailyFresh($region, $lang)
+                : $this->fetchRealtimeFresh($region, $lang, $category);
+
+            return $this->mergeTrendSources([$primary, $secondary]);
         });
 
+        // Slice to the admin-configured cap (post-merge).
         return array_slice($trends, 0, $maxTrends);
+    }
+
+    /**
+     * Merge two trend lists from different sources, preferring the entry
+     * with the richest metadata (traffic + image + news items) when the
+     * normalized titles collide. Output is deduped and sorted by the
+     * order of the primary source first.
+     */
+    protected function mergeTrendSources(array $sources): array
+    {
+        $byKey = [];
+        $orderKeys = [];
+
+        foreach ($sources as $list) {
+            if (! is_array($list)) continue;
+
+            foreach ($list as $item) {
+                $title = trim((string) ($item['title'] ?? ''));
+                if ($title === '') continue;
+
+                $key = $this->normalizeTitleKey($title);
+                if ($key === '') continue;
+
+                if (! isset($byKey[$key])) {
+                    $byKey[$key] = $item;
+                    $orderKeys[] = $key;
+                    continue;
+                }
+
+                // Already seen: keep the richer record but merge missing fields.
+                $existing = $byKey[$key];
+                $merged = $existing;
+                if (empty($merged['image']) && ! empty($item['image'])) {
+                    $merged['image'] = $item['image'];
+                }
+                if (empty($merged['traffic']) && ! empty($item['traffic'])) {
+                    $merged['traffic'] = $item['traffic'];
+                }
+                if (empty($merged['news']) && ! empty($item['news'])) {
+                    $merged['news'] = $item['news'];
+                }
+                $byKey[$key] = $merged;
+            }
+        }
+
+        $out = [];
+        foreach ($orderKeys as $k) {
+            $out[] = $byKey[$k];
+        }
+        return $out;
+    }
+
+    /**
+     * Strip emoji / punctuation / whitespace to a stable lowercase key for
+     * deduplication of trend titles ("صلاح" vs "محمد صلاح" intentionally
+     * stay distinct; "Apple" vs "apple " collapse).
+     */
+    protected function normalizeTitleKey(string $title): string
+    {
+        $clean = mb_strtolower($title);
+        $clean = preg_replace('/[\p{So}\p{Sk}\p{C}]+/u', '', $clean);          // emoji + control chars
+        $clean = preg_replace('/[\p{P}]+/u', ' ', (string) $clean);             // punctuation → space
+        $clean = preg_replace('/\s+/u', ' ', (string) $clean);                  // collapse whitespace
+        return trim((string) $clean);
+    }
+
+    /**
+     * Final post-fetch normalization that runs for every platform.
+     *
+     *  - drops empty titles and tiny one-character noise
+     *  - dedupes by normalized title
+     *  - validates / prunes news headlines (top 3, deduped, with URLs)
+     *  - sorts authoritative news to the top of each trend's headline list
+     *  - clamps the result to the admin-configured maxTrends
+     */
+    protected function normalizeTrendList(array $trends, string $platform, int $maxTrends, string $region = 'EG', string $lang = 'ar'): array
+    {
+        $authoritative = $this->authoritativeSources();
+
+        $seen = [];
+        $out = [];
+
+        foreach ($trends as $trend) {
+            if (! is_array($trend)) continue;
+
+            $title = trim((string) ($trend['title'] ?? ''));
+            if ($title === '' || mb_strlen($title) < 2) continue;
+
+            $key = $this->normalizeTitleKey($title);
+            if ($key === '' || isset($seen[$key])) continue;
+            $seen[$key] = true;
+
+            // ─── Headline validation ───
+            $news = is_array($trend['news'] ?? null) ? $trend['news'] : [];
+            $news = $this->validateHeadlines($news, $authoritative);
+
+            // Enrich deferred — batch fetch after initial pass for speed.
+            $trend['title'] = $title;
+            $trend['news'] = $news;
+
+            // Featured image: trend thumbnail, else first article image.
+            if (empty($trend['image'])) {
+                foreach ($news as $article) {
+                    if (! empty($article['image'])) {
+                        $trend['image'] = $article['image'];
+                        break;
+                    }
+                }
+            }
+
+            if (! isset($trend['platform'])) {
+                $trend['platform'] = $platform === 'twitter' ? 'x' : $platform;
+            }
+
+            $out[] = $trend;
+
+            if (count($out) >= $maxTrends) break;
+        }
+
+        return $this->enrichTrendsNewsInParallel($out, $region, $lang, $authoritative);
+    }
+
+    /**
+     * Parallel Google News enrichment for trends with fewer than 3 articles.
+     */
+    protected function enrichTrendsNewsInParallel(array $trends, string $region, string $lang, array $authoritative): array
+    {
+        $region = CountryRegistry::normalizeCode($region) ?: CountryRegistry::defaultRegion();
+        $lang = CountryRegistry::langFor($region);
+
+        foreach ($trends as $index => $trend) {
+            $news = is_array($trend['news'] ?? null) ? $trend['news'] : [];
+            if (count($news) < 3) {
+                $pending[$index] = 3 - count($news);
+            }
+        }
+
+        if (! empty($pending)) {
+            try {
+                $responses = Http::pool(function ($pool) use ($pending, $trends, $region, $lang) {
+                    foreach ($pending as $index => $limit) {
+                        $title = $trends[$index]['title'] ?? '';
+                        $url = GoogleNewsRss::searchUrl($title, $region, $lang);
+                        $pool->as("trend_{$index}")
+                            ->withHeaders([
+                                'User-Agent' => 'Mozilla/5.0 (compatible; VidaNexus/1.0)',
+                                'Accept' => 'application/rss+xml, application/xml, text/xml',
+                            ])
+                            ->timeout(10)
+                            ->get($url);
+                    }
+                });
+
+                foreach ($pending as $index => $limit) {
+                    $response = $responses["trend_{$index}"] ?? null;
+                    if (! $response || $response->failed()) {
+                        continue;
+                    }
+                    $parsed = $this->parseGoogleNewsRssItems($response->body(), $limit);
+                    $news = $this->validateHeadlines(
+                        $this->mergeNewsItems($trends[$index]['news'] ?? [], $parsed),
+                        $authoritative
+                    );
+                    $trends[$index]['news'] = $news;
+                    if (empty($trends[$index]['image'])) {
+                        foreach ($news as $article) {
+                            if (! empty($article['image'])) {
+                                $trends[$index]['image'] = $article['image'];
+                                break;
+                            }
+                        }
+                    }
+                }
+            } catch (\Throwable $e) {
+                Log::warning('[TrendingSearch] Parallel news enrichment failed: '.$e->getMessage());
+            }
+        }
+
+        foreach ($trends as $index => $trend) {
+            if (empty($trend['image'])) {
+                foreach ($trend['news'] ?? [] as $article) {
+                    if (! empty($article['image'])) {
+                        $trends[$index]['image'] = $article['image'];
+                        break;
+                    }
+                }
+            }
+        }
+
+        return $trends;
+    }
+
+    /**
+     * @return array<int, array<string, mixed>>
+     */
+    protected function parseGoogleNewsRssItems(string $body, int $limit): array
+    {
+        $xml = @simplexml_load_string($body);
+        if (! $xml || ! isset($xml->channel->item)) {
+            return [];
+        }
+
+        $items = [];
+        foreach ($xml->channel->item as $item) {
+            $mapped = GoogleNewsRss::mapRssItem($item);
+            if ($mapped === null) {
+                continue;
+            }
+
+            $items[] = [
+                'title' => $mapped['title'],
+                'url' => $mapped['link'],
+                'source' => $mapped['source'],
+                'snippet' => $mapped['snippet'],
+                'image' => $mapped['image'],
+                'date' => $mapped['pubDate'] ?: null,
+            ];
+
+            if (count($items) >= $limit) {
+                break;
+            }
+        }
+
+        return $items;
+    }
+
+    protected function applyProxiedImagesToTrends(array $trends): array
+    {
+        foreach ($trends as $i => $trend) {
+            if (! empty($trend['image'])) {
+                $trends[$i]['image'] = $this->proxiedImageUrl($trend['image']);
+            }
+            if (! empty($trend['news']) && is_array($trend['news'])) {
+                foreach ($trend['news'] as $j => $article) {
+                    if (! empty($article['image'])) {
+                        $trends[$i]['news'][$j]['image'] = $this->proxiedImageUrl($article['image']);
+                    }
+                }
+            }
+        }
+
+        return $trends;
+    }
+
+    protected function proxiedImageUrl(?string $url): ?string
+    {
+        if ($url === null || trim($url) === '') {
+            return null;
+        }
+
+        return route('media.image-proxy', ['url' => $url]);
+    }
+
+    /**
+     * Validate a list of related-news items for a single trend:
+     *   - require a non-empty title and a working URL
+     *   - dedupe by URL host + path
+     *   - prefer authoritative outlets at the top
+     *   - cap to top 3
+     */
+    protected function validateHeadlines(array $news, array $authoritative): array
+    {
+        $valid = [];
+        $seenUrls = [];
+
+        foreach ($news as $n) {
+            if (! is_array($n)) {
+                continue;
+            }
+            $title = trim((string) ($n['title'] ?? ''));
+            $url = trim((string) ($n['url'] ?? ''));
+            if ($title === '' || $url === '' || ! GoogleNewsRss::isValidOutboundUrl($url)) {
+                continue;
+            }
+
+            $hostPath = preg_replace('/^https?:\/\/(www\.)?/i', '', $url);
+            $hostPath = strtolower(strtok($hostPath, '?#'));
+            if (isset($seenUrls[$hostPath])) {
+                continue;
+            }
+            $seenUrls[$hostPath] = true;
+
+            $valid[] = [
+                'title' => $title,
+                'url' => $url,
+                'source' => trim((string) ($n['source'] ?? '')),
+                'snippet' => trim((string) ($n['snippet'] ?? '')),
+                'image' => trim((string) ($n['image'] ?? '')) ?: null,
+                'date' => trim((string) ($n['date'] ?? '')) ?: null,
+            ];
+        }
+
+        usort($valid, function ($a, $b) use ($authoritative) {
+            $ai = $this->isAuthoritativeSource($a['source'], $a['url'], $authoritative) ? 0 : 1;
+            $bi = $this->isAuthoritativeSource($b['source'], $b['url'], $authoritative) ? 0 : 1;
+
+            return $ai <=> $bi;
+        });
+
+        return array_slice($valid, 0, 3);
+    }
+
+    protected function mergeNewsItems(array $primary, array $secondary): array
+    {
+        $merged = $primary;
+        $seenUrls = [];
+
+        foreach ($primary as $item) {
+            $url = trim((string) ($item['url'] ?? ''));
+            if ($url !== '') {
+                $seenUrls[$this->normalizeNewsUrlKey($url)] = true;
+            }
+        }
+
+        foreach ($secondary as $item) {
+            if (! is_array($item)) {
+                continue;
+            }
+            $url = trim((string) ($item['url'] ?? ''));
+            if ($url === '') {
+                continue;
+            }
+            $key = $this->normalizeNewsUrlKey($url);
+            if (isset($seenUrls[$key])) {
+                continue;
+            }
+            $seenUrls[$key] = true;
+            $merged[] = $item;
+        }
+
+        return $merged;
+    }
+
+    protected function normalizeNewsUrlKey(string $url): string
+    {
+        $hostPath = preg_replace('/^https?:\/\/(www\.)?/i', '', $url);
+
+        return strtolower(strtok((string) $hostPath, '?#'));
+    }
+
+    protected function fetchNewsForTrend(string $trendTitle, string $region, string $lang, int $limit = 3): array
+    {
+        if ($limit <= 0 || $trendTitle === '') {
+            return [];
+        }
+
+        $region = CountryRegistry::normalizeCode($region) ?: CountryRegistry::defaultRegion();
+        $lang = CountryRegistry::langFor($region);
+        $cacheKey = 'trend_news_'.md5(mb_strtolower($trendTitle)."_{$region}_{$lang}_{$limit}");
+
+        return Cache::remember($cacheKey, 600, function () use ($trendTitle, $region, $lang, $limit) {
+            $url = GoogleNewsRss::searchUrl($trendTitle, $region, $lang);
+
+            try {
+                $response = Http::withHeaders([
+                    'User-Agent' => 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+                    'Accept' => 'application/rss+xml, application/xml, text/xml',
+                ])->timeout(10)->get($url);
+
+                if ($response->failed()) {
+                    return [];
+                }
+
+                return $this->parseGoogleNewsRssItems($response->body(), $limit);
+            } catch (\Exception $e) {
+                Log::warning("Trend news enrichment failed for {$trendTitle}: ".$e->getMessage());
+
+                return [];
+            }
+        });
+    }
+
+    /**
+     * Pull the admin-curated authority lists from the Global News Monitor
+     * settings so the Viral Tool surfaces the same trusted outlets at the
+     * top of each trend's headlines.
+     */
+    protected function authoritativeSources(): array
+    {
+        $major = (string) Setting::get('global-news-monitor_major_authority_sources', "bbc\ncnn\nreuters\napnews\nassociated press\nbloomberg\nguardian\nالجزيرة\nالعربية\nرويترز\nسكاي نيوز\nbbc.com\nbbc.co.uk\ncnn.com\nreuters.com\nbloomberg.com\nft.com");
+        $mid = (string) Setting::get('global-news-monitor_mid_authority_sources', "اليوم السابع\nالشروق\nالمصري اليوم\nforbes\ntechcrunch\nthe verge\nverge\nwired");
+
+        return array_filter(array_map(
+            fn ($s) => mb_strtolower(trim($s)),
+            preg_split('/\r?\n/', $major . "\n" . $mid)
+        ));
+    }
+
+    protected function isAuthoritativeSource(string $source, string $url, array $authoritative): bool
+    {
+        $haystack = mb_strtolower($source . ' ' . $url);
+        foreach ($authoritative as $needle) {
+            if ($needle !== '' && str_contains($haystack, $needle)) {
+                return true;
+            }
+        }
+        return false;
     }
 
     /**
@@ -368,17 +760,17 @@ class TrendingSearchController extends Controller
      */
     protected function fetchXTrends($region, $countryName, $forceRefresh = false, $maxTrends = 50)
     {
-        $cacheKey = "trending_x_{$region}";
+        $cacheKey = "trending_x_v2_{$region}_{$maxTrends}";
         if ($forceRefresh) Cache::forget($cacheKey);
 
-        $trends = Cache::remember($cacheKey, 300, function () use ($region, $countryName, $maxTrends) {
+        $trends = Cache::remember($cacheKey, 600, function () use ($region, $countryName, $maxTrends) {
             // Step 1: Try Trends24
             $items = $this->tryTrends24($region, $countryName, $maxTrends);
             if (!empty($items)) return $items;
 
             // Step 2: Fallback — use Google Trends RSS for this country
             Log::info("X Trends: Trends24 unavailable for {$region}, falling back to Google Trends RSS");
-            $lang = config("keywords.countries.{$region}.lang", 'ar');
+            $lang = CountryRegistry::langFor($region);
             $googleItems = $this->fetchDailyFresh($region, $lang);
             
             // Re-format Google trends as X-style entries
@@ -405,7 +797,14 @@ class TrendingSearchController extends Controller
     }
 
     /**
-     * Try fetching X trends from Trends24.in
+     * Try fetching X trends from Trends24.in.
+     *
+     * The Trends24 page renders multiple cards (Now / 1h ago / 3h ago / …);
+     * each card holds up to ~50 trends. The previous regex only captured one
+     * pass, so users got ~10 trends. We now walk every <ol class="trend-card__list"> block
+     * and dedupe across them so the country page always reaches `$maxTrends`
+     * when data is available, and we strip well-known noise (single-character
+     * tokens, hex colors, trends24 chrome links).
      */
     protected function tryTrends24($region, $countryName, $maxTrends)
     {
@@ -425,13 +824,13 @@ class TrendingSearchController extends Controller
 
         $url = "https://trends24.in/{$slug}/";
         Log::info("X Trends: Fetching from {$url}");
-        
+
         try {
             $response = Http::withHeaders([
                 'User-Agent' => 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
                 'Accept' => 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
                 'Accept-Language' => 'en-US,en;q=0.9',
-            ])->timeout(10)->get($url);
+            ])->timeout(12)->get($url);
 
             if ($response->failed() || $response->status() === 404) {
                 Log::warning("X Trends: Trends24 returned {$response->status()} for {$region}");
@@ -441,36 +840,71 @@ class TrendingSearchController extends Controller
             $html = $response->body();
             $items = [];
             $seen = [];
-            
-            preg_match_all('/<a[^>]*class=["\']?trend-link["\']?[^>]*>([^<]+)<\/a>/iu', $html, $matches);
 
-            if (!empty($matches[1])) {
-                foreach ($matches[1] as $title) {
-                    $title = html_entity_decode(trim($title), ENT_QUOTES, 'UTF-8');
-                    if (empty($title)) continue;
-                    
-                    $lower = mb_strtolower($title);
-                    if (isset($seen[$lower])) continue;
-                    $seen[$lower] = true;
+            // Walk every trend-card block (Now, 1h ago, 3h ago, …).
+            $blocks = [];
+            if (preg_match_all('/<ol[^>]*class=["\'][^"\']*trend-card__list[^"\']*["\'][^>]*>(.*?)<\/ol>/sui', $html, $blockMatches)) {
+                $blocks = $blockMatches[1];
+            } elseif (preg_match_all('/<ul[^>]*class=["\'][^"\']*trend-card__list[^"\']*["\'][^>]*>(.*?)<\/ul>/sui', $html, $blockMatches)) {
+                $blocks = $blockMatches[1];
+            }
 
+            if (empty($blocks)) {
+                // Older Trends24 layout still in some markets.
+                $blocks = [$html];
+            }
+
+            $rank = 0;
+            foreach ($blocks as $block) {
+                if (! preg_match_all('/<a[^>]*class=["\'][^"\']*trend-link[^"\']*["\'][^>]*>([^<]+)<\/a>/iu', (string) $block, $matches)) {
+                    continue;
+                }
+
+                foreach ($matches[1] as $titleRaw) {
+                    $title = html_entity_decode(trim($titleRaw), ENT_QUOTES, 'UTF-8');
+                    if (! $this->isValidTwitterTrend($title)) continue;
+
+                    $key = $this->normalizeTitleKey($title);
+                    if ($key === '' || isset($seen[$key])) continue;
+                    $seen[$key] = true;
+
+                    $rank++;
                     $items[] = [
                         'title' => $title,
                         'traffic' => 'Trending',
                         'image' => null,
                         'news' => [],
                         'subtitle' => "🔥 Viral on X in {$countryName}",
-                        'platform' => 'x'
+                        'platform' => 'x',
+                        '_x_rank' => $rank,
                     ];
-                    if (count($items) >= $maxTrends) break;
+                    if (count($items) >= $maxTrends) break 2;
                 }
             }
 
-            Log::info("X Trends [Trends24]: Fetched " . count($items) . " unique trends for {$region}");
+            Log::info("X Trends [Trends24]: Fetched " . count($items) . " unique trends across " . count($blocks) . " time windows for {$region}");
             return $items;
         } catch (\Exception $e) {
             Log::error("X Trends Error for {$region}: " . $e->getMessage());
             return [];
         }
+    }
+
+    /**
+     * Filter out the noise that Trends24 sometimes returns: hex colors,
+     * trends24 internal links, short single-token strings.
+     */
+    protected function isValidTwitterTrend(string $title): bool
+    {
+        if ($title === '' || mb_strlen($title) < 2) return false;
+        if (preg_match('/^#?[0-9a-f]{3,8}$/i', $title)) return false; // hex color
+        if (preg_match('/^https?:\/\//i', $title)) return false;
+        $blocked = ['trends24', 'trending now', 'home', 'login', 'signup', 'twitter'];
+        $lower = mb_strtolower($title);
+        foreach ($blocked as $b) {
+            if ($lower === $b) return false;
+        }
+        return true;
     }
     /**
      * Fetch YouTube Trending Videos for a specific country
@@ -478,7 +912,7 @@ class TrendingSearchController extends Controller
      */
     protected function fetchYouTubeTrends($region, $countryName, $forceRefresh = false, $maxTrends = 50)
     {
-        $cacheKey = "trending_youtube_{$region}";
+        $cacheKey = "trending_youtube_v2_{$region}_{$maxTrends}";
         if ($forceRefresh) Cache::forget($cacheKey);
 
         $trends = Cache::remember($cacheKey, 3600, function () use ($region, $countryName, $maxTrends) {
@@ -512,7 +946,7 @@ class TrendingSearchController extends Controller
     protected function tryYouTubeDirectScrape($region, $countryName, $maxTrends)
     {
         try {
-            $lang = config("keywords.countries.{$region}.lang", 'ar');
+            $lang = CountryRegistry::langFor($region);
             $searchTerms = $lang === 'ar' 
                 ? urlencode("ترند اليوم {$countryName}")
                 : urlencode("trending {$countryName} today");
@@ -553,37 +987,50 @@ class TrendingSearchController extends Controller
     }
 
     /**
-     * Extract videos from YouTube search results ytInitialData
+     * Extract videos from YouTube search results ytInitialData.
+     * Also parses the "viewCountText" string into an integer so we can sort
+     * by popularity and surface the country's actually-trending videos at
+     * the top.
      */
     protected function extractVideosFromSearchResults($data, $countryName, $maxTrends)
     {
         $items = [];
-        $seen = [];
-        
-        // Navigate: contents → twoColumnSearchResultsRenderer → primaryContents → sectionListRenderer → contents
+        $seenIds = [];
+        $seenTitles = [];
+
         $sections = $data['contents']['twoColumnSearchResultsRenderer']['primaryContents']['sectionListRenderer']['contents'] ?? [];
-        
+
         foreach ($sections as $section) {
             $sectionContents = $section['itemSectionRenderer']['contents'] ?? [];
-            
+
             foreach ($sectionContents as $item) {
                 $video = $item['videoRenderer'] ?? [];
                 if (empty($video)) continue;
-                
+
                 $videoId = $video['videoId'] ?? '';
                 $title = $video['title']['runs'][0]['text'] ?? ($video['title']['simpleText'] ?? '');
                 $channel = $video['ownerText']['runs'][0]['text'] ?? '';
-                $viewsText = $video['viewCountText']['simpleText'] ?? '';
-                
-                if (empty($videoId) || empty($title) || isset($seen[$videoId])) continue;
+                $viewsText = $video['viewCountText']['simpleText']
+                    ?? ($video['shortViewCountText']['simpleText'] ?? '');
+                $publishedText = $video['publishedTimeText']['simpleText'] ?? '';
+
+                if (empty($videoId) || empty($title)) continue;
                 if (mb_strlen($title) < 5) continue;
-                $seen[$videoId] = true;
-                
+                if (isset($seenIds[$videoId])) continue;
+
+                $titleKey = $this->normalizeTitleKey($title);
+                if ($titleKey === '' || isset($seenTitles[$titleKey])) continue;
+
+                $seenIds[$videoId] = true;
+                $seenTitles[$titleKey] = true;
+
                 $thumbnail = "https://i.ytimg.com/vi/{$videoId}/mqdefault.jpg";
                 if (!empty($video['thumbnail']['thumbnails'])) {
                     $lastThumb = end($video['thumbnail']['thumbnails']);
                     $thumbnail = $lastThumb['url'] ?? $thumbnail;
                 }
+
+                $viewsInt = $this->parseViewCount($viewsText);
 
                 $items[] = [
                     'title' => $title,
@@ -592,17 +1039,52 @@ class TrendingSearchController extends Controller
                     'news' => [[
                         'title' => $channel ?: 'Watch on YouTube',
                         'url' => "https://www.youtube.com/watch?v={$videoId}",
-                        'source' => 'YouTube'
+                        'source' => $channel ? "YouTube · {$channel}" : 'YouTube',
                     ]],
-                    'subtitle' => "🔥 Trending on YouTube in {$countryName}",
-                    'platform' => 'youtube'
+                    'subtitle' => $publishedText
+                        ? "🔥 Trending on YouTube in {$countryName} · {$publishedText}"
+                        : "🔥 Trending on YouTube in {$countryName}",
+                    'platform' => 'youtube',
+                    '_views_int' => $viewsInt,
                 ];
-                
-                if (count($items) >= $maxTrends) return $items;
+
+                if (count($items) >= $maxTrends * 2) break 2; // collect more, sort, then trim
             }
         }
-        
-        return $items;
+
+        // Re-rank by view count so the most viewed video for the country is rank #1.
+        usort($items, fn ($a, $b) => ($b['_views_int'] ?? 0) <=> ($a['_views_int'] ?? 0));
+
+        return array_slice($items, 0, $maxTrends);
+    }
+
+    /**
+     * Parse YouTube's "1.2M views" / "100K views" / "1,234 views" /
+     * "23 ألف مشاهدة" / "30 مليون" strings into an integer.
+     */
+    protected function parseViewCount(string $text): int
+    {
+        if ($text === '') return 0;
+        $clean = mb_strtolower($text);
+
+        if (preg_match('/([\d.,]+)\s*([a-zا-ي]*)/u', $clean, $m)) {
+            $num = (float) str_replace(',', '', $m[1]);
+            $unit = $m[2] ?? '';
+
+            $multipliers = [
+                'k' => 1_000, 'thousand' => 1_000, 'ألف' => 1_000, 'الف' => 1_000,
+                'm' => 1_000_000, 'million' => 1_000_000, 'مليون' => 1_000_000,
+                'b' => 1_000_000_000, 'billion' => 1_000_000_000, 'مليار' => 1_000_000_000,
+            ];
+            foreach ($multipliers as $needle => $mult) {
+                if ($needle !== '' && str_contains($unit, $needle)) {
+                    return (int) round($num * $mult);
+                }
+            }
+            return (int) round($num);
+        }
+
+        return 0;
     }
 
     /**
@@ -611,7 +1093,7 @@ class TrendingSearchController extends Controller
     protected function tryYouTubeGoogleFallback($region, $countryName, $maxTrends)
     {
         try {
-            $lang = config("keywords.countries.{$region}.lang", 'ar');
+            $lang = CountryRegistry::langFor($region);
             $searchTerms = $lang === 'ar' 
                 ? "اشهر فيديوهات يوتيوب {$countryName} اليوم"
                 : "most popular youtube videos {$countryName} today";
@@ -678,7 +1160,7 @@ class TrendingSearchController extends Controller
      */
     protected function fetchTikTokTrends($region, $countryName, $forceRefresh = false, $maxTrends = 50)
     {
-        $cacheKey = "trending_tiktok_{$region}";
+        $cacheKey = "trending_tiktok_v2_{$region}_{$maxTrends}";
         if ($forceRefresh) Cache::forget($cacheKey);
 
         // Load TikTok API settings from admin panel
@@ -713,7 +1195,7 @@ class TrendingSearchController extends Controller
 
             // Strategy 3: Use Google Trends RSS and format as TikTok hashtags
             Log::info("TikTok Trends: Primary strategies failed for {$region}, using Google Trends RSS fallback");
-            $lang = config("keywords.countries.{$region}.lang", 'ar');
+            $lang = CountryRegistry::langFor($region);
             $googleItems = $this->fetchDailyFresh($region, $lang);
             
             $items = [];
@@ -755,13 +1237,16 @@ class TrendingSearchController extends Controller
         try {
             $baseUrl = "https://{$apiHost}" . ltrim($apiEndpoint, '/');
             
-            // Common query params that work with most RapidAPI TikTok providers
+            // Common query params that work with most RapidAPI TikTok providers.
+            // Most providers cap at 100; we honour whatever admin asked for up
+            // to that ceiling.
+            $cap = min($maxTrends, 100);
             $params = [
                 'country' => strtoupper($region),
                 'country_code' => strtoupper($region),
                 'period' => 7,
-                'count' => min($maxTrends, 50),
-                'limit' => min($maxTrends, 50),
+                'count' => $cap,
+                'limit' => $cap,
             ];
 
             $response = Http::withHeaders([
@@ -820,49 +1305,79 @@ class TrendingSearchController extends Controller
     }
 
     /**
-     * Try fetching from TikTok Creative Center internal API
+     * Try fetching from TikTok Creative Center internal API.
+     *
+     * The endpoint paginates with a hard 50-per-page cap, so to support
+     * `max_trends > 50` we walk additional pages until we have enough or
+     * the API returns an empty list. Hashtags are deduped across pages,
+     * sorted by the API's "popular" weight, and cleaned up
+     * (no empty `#`, no hex colors, etc.).
      */
     protected function tryTikTokCreativeCenter($region, $maxTrends)
     {
         try {
             $url = "https://ads.tiktok.com/creative_radar_api/v1/popular_trend/hashtag/list";
-            $params = [
-                'period' => 7,
-                'page' => 1,
-                'limit' => min($maxTrends, 50),
-                'country_code' => strtoupper($region),
-                'sort_by' => 'popular',
-            ];
-
-            $response = Http::withHeaders([
-                'User-Agent' => 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
-                'Accept' => 'application/json, text/plain, */*',
-                'Referer' => 'https://ads.tiktok.com/business/creativecenter/inspiration/popular/hashtag/pc/en',
-                'Origin' => 'https://ads.tiktok.com',
-            ])->timeout(10)->get($url, $params);
-
-            if ($response->failed()) return [];
-
-            $data = $response->json();
-            if (($data['code'] ?? 0) !== 0 || !isset($data['data']['list'])) return [];
-
             $items = [];
-            foreach ($data['data']['list'] as $hashtag) {
-                $title = '#' . ($hashtag['hashtag_name'] ?? $hashtag['name'] ?? '');
-                if (empty($title) || $title === '#') continue;
+            $seen = [];
+            $page = 1;
+            $remaining = $maxTrends;
 
-                $views = $hashtag['publish_cnt'] ?? $hashtag['video_views'] ?? null;
-                $viewsFormatted = $views ? number_format($views) . ' posts' : 'Trending';
-
-                $items[] = [
-                    'title' => $title,
-                    'traffic' => $viewsFormatted,
-                    'image' => null,
-                    'news' => [],
-                    'subtitle' => "🚀 Trending on TikTok",
-                    'platform' => 'tiktok'
+            while ($remaining > 0 && $page <= 4) { // 4 pages × 50 = 200 max
+                $params = [
+                    'period' => 7,
+                    'page' => $page,
+                    'limit' => min($remaining, 50),
+                    'country_code' => strtoupper($region),
+                    'sort_by' => 'popular',
                 ];
+
+                $response = Http::withHeaders([
+                    'User-Agent' => 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+                    'Accept' => 'application/json, text/plain, */*',
+                    'Referer' => 'https://ads.tiktok.com/business/creativecenter/inspiration/popular/hashtag/pc/en',
+                    'Origin' => 'https://ads.tiktok.com',
+                ])->timeout(10)->get($url, $params);
+
+                if ($response->failed()) break;
+                $data = $response->json();
+                if (($data['code'] ?? 0) !== 0 || empty($data['data']['list'])) break;
+
+                $pageItems = 0;
+                foreach ($data['data']['list'] as $hashtag) {
+                    $name = trim((string) ($hashtag['hashtag_name'] ?? $hashtag['name'] ?? ''));
+                    if ($name === '') continue;
+
+                    $title = '#' . ltrim($name, '#');
+                    $key = $this->normalizeTitleKey($title);
+                    if ($key === '' || isset($seen[$key])) continue;
+                    $seen[$key] = true;
+
+                    $views = $hashtag['publish_cnt'] ?? $hashtag['video_views'] ?? null;
+                    $viewsInt = is_numeric($views) ? (int) $views : 0;
+                    $viewsFormatted = $viewsInt > 0 ? number_format($viewsInt) . ' posts' : 'Trending';
+
+                    $items[] = [
+                        'title' => $title,
+                        'traffic' => $viewsFormatted,
+                        'image' => null,
+                        'news' => [],
+                        'subtitle' => "🚀 Trending on TikTok",
+                        'platform' => 'tiktok',
+                        '_views_int' => $viewsInt,
+                    ];
+                    $pageItems++;
+                    if (count($items) >= $maxTrends) break;
+                }
+
+                if ($pageItems === 0 || count($items) >= $maxTrends) break;
+                $remaining = $maxTrends - count($items);
+                $page++;
             }
+
+            // Sort by view count desc — the API already does this within a
+            // single page but the multi-page merge benefits from a final pass.
+            usort($items, fn ($a, $b) => ($b['_views_int'] ?? 0) <=> ($a['_views_int'] ?? 0));
+
             return $items;
 
         } catch (\Exception $e) {
@@ -992,43 +1507,62 @@ class TrendingSearchController extends Controller
             'country' => 'required|string',
             'lang' => 'required|string',
             'platform' => 'nullable|string',
-            'headlines' => 'nullable|array'
+            'headlines' => 'nullable|array',
+            'articles' => 'nullable|array',
+            'articles.*.title' => 'required_with:articles|string',
+            'articles.*.summary' => 'nullable|string',
+            'articles.*.source' => 'nullable|string',
+            'articles.*.date' => 'nullable|string',
         ]);
 
         $user = auth()->user();
         
+        $articles = $request->get('articles', []);
+        if (empty($articles) && $request->filled('headlines')) {
+            foreach ($request->get('headlines', []) as $headline) {
+                $headline = trim((string) $headline);
+                if ($headline !== '') {
+                    $articles[] = ['title' => $headline];
+                }
+            }
+        }
+
         \Illuminate\Support\Facades\Log::info("[TrendingSearch AI] Incoming Request For: {$request->trend}", [
             'country' => $request->country,
-            'headlines_count' => count($request->get('headlines', [])),
-            'headlines' => $request->get('headlines', [])
+            'articles_count' => count($articles),
         ]);
         
         // ─── 1. Access & Credit Control ───
+        // canUseTool covers ownership + balance against the canonical cost
+        // (tool_credit_cost_trending-search-monitor). Wallet → bonus order
+        // is handled by deductToolCredits below.
         if (!$user->canUseTool('trending-search-monitor')) {
-            return response()->json(['error' => 'You do not have access to this intelligence tool.'], 403);
-        }
-
-        // Setting: trending-search-monitor_ai_analysis_credits (Default: 2)
-        $creditCost = (int) \App\Models\Setting::get('trending-search-monitor_ai_analysis_credits', 2);
-        
-        if (!$user->wallet || $user->wallet->balance_credits < $creditCost) {
-            return response()->json(['error' => "Insufficient credits for AI Deep Intel. ({$creditCost} CRS required)"], 402);
+            $cost = $user->getToolCreditCost('trending-search-monitor');
+            $hasOwnership = $user->ownsTool('trending-search-monitor');
+            $msg = $hasOwnership
+                ? "Insufficient credits for AI Deep Intel. ({$cost} CRS required)"
+                : 'You do not have access to this intelligence tool.';
+            return response()->json(['error' => $msg], $hasOwnership ? 402 : 403);
         }
 
         try {
             $service = app(\Modules\TrendingSearchMonitor\Services\TrendIntelligenceService::class);
             $result = $service->analyzeTrendWithAI(
-                $request->trend, 
-                $request->country, 
-                $request->lang, 
+                $request->trend,
+                $request->country,
+                $request->lang,
                 $request->get('platform', 'google'),
-                $request->get('headlines', [])
+                $articles
             );
-            
+
             if ($result['success']) {
-                // Deduct credits only on success
-                $user->wallet->decrement('balance_credits', $creditCost);
-                
+                // Canonical deduction → ledger / transaction / audit log.
+                if (! $user->deductToolCredits('trending-search-monitor')) {
+                    Log::critical('[Trending Search Monitor] Credits could not be deducted after successful trend analysis', [
+                        'user_id' => $user->id,
+                    ]);
+                }
+
                 \App\Models\AiUsage::create([
                     'user_id' => $user->id,
                     'tool' => 'trending-search-monitor',
@@ -1036,6 +1570,10 @@ class TrendingSearchController extends Controller
                     'model' => 'gpt-4-trend-analyst',
                     'status' => 'success',
                 ]);
+
+                // Echo the new wallet balance for live chip updates.
+                $user->load('wallet');
+                $result['balance'] = (float) ($user->wallet->balance_credits ?? 0);
 
                 return response()->json($result);
             }

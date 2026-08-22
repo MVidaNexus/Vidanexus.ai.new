@@ -25,6 +25,17 @@ return [
 
     /*
     |--------------------------------------------------------------------------
+    | Public stylesheet cache buster (style.v2.css)
+    |--------------------------------------------------------------------------
+    |
+    | Bump VIDANEXUS_STYLE_VERSION when you deploy CSS changes so browsers
+    | refetch; all Blade layouts read this single value.
+    |
+    */
+    'style_css_version' => env('VIDANEXUS_STYLE_VERSION', '32'),
+
+    /*
+    |--------------------------------------------------------------------------
     | AI Providers & Rates
     |--------------------------------------------------------------------------
     |
@@ -33,7 +44,11 @@ return [
     */
     'ai' => [
         'default_provider' => env('AI_DEFAULT_PROVIDER', 'openai'),
-        'failover_order' => ['openai', 'google', 'openrouter', 'anthropic'],
+        // Only providers actually registered by App\Providers\AIServiceProvider
+        // belong here. `anthropic` was removed because no AnthropicProvider class
+        // exists yet — leaving it in produced noisy "Provider is not registered."
+        // entries in every attempts[] array.
+        'failover_order' => ['openai', 'google', 'openrouter'],
         'markup' => 1.4, // 40% profit buffer by default
         'rates' => [
             'openai' => [

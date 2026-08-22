@@ -71,7 +71,16 @@
                  x-transition:enter-start="opacity-0 scale-95 translate-y-4"
                  x-transition:enter-end="opacity-100 scale-100 translate-y-0"
                  class="news-card glass-card flex flex-col group/news hover:bg-white/[0.04] transition-all duration-300 border-l-4 {{ $badgeConfig['cardBorder'] }} relative overflow-hidden"
-                 style="box-shadow: {{ $badgeConfig['glow'] }};">
+                 style="box-shadow: {{ $badgeConfig['glow'] }};"
+                 data-news-title="{{ $item['title'] }}">
+                
+                {{-- Multi-select checkbox --}}
+                <label class="absolute top-3 left-3 z-20 flex items-center justify-center w-6 h-6 rounded-md cursor-pointer"
+                       style="background: rgba(0,0,0,0.4); border: 1px solid rgba(255,255,255,0.15);"
+                       title="Select for analysis">
+                    <input type="checkbox" class="news-select-checkbox" value="{{ $item['title'] }}"
+                           style="accent-color:#0ea5e9;cursor:pointer;width:14px;height:14px;">
+                </label>
                 
                 {{-- Glow Effect for HIGH opportunity --}}
                 @if($level === 'high')
@@ -135,7 +144,7 @@
                 </div>
                 
                 {{-- ═══ TITLE ═══ --}}
-                <h3 class="px-5 font-bold leading-relaxed text-sm line-clamp-2 min-h-[3rem] mb-1" style="color: var(--text-main);">
+                <h3 class="px-5 pt-1 font-bold leading-relaxed text-sm line-clamp-2 min-h-[3rem] mb-1 pl-10" style="color: var(--text-main);">
                     {{ $item['title'] }}
                 </h3>
 
@@ -203,25 +212,25 @@
                                 </div>
 
                                 {{-- Reason --}}
-                                <p class="text-[10px] leading-relaxed" style="color: var(--text-muted);" x-text="analysisData.ranking_reason"></p>
+                                <p class="text-[10px] leading-relaxed text-slate-300" x-text="analysisData.ranking_reason"></p>
 
                                 {{-- Suggested Angle --}}
                                 <div>
-                                    <span class="text-[9px] font-black uppercase tracking-wider" style="color: var(--text-muted);">Content Angle:</span>
-                                    <p class="text-[11px] font-semibold mt-0.5" style="color: var(--text-main);" x-text="analysisData.suggested_angle"></p>
+                                    <span class="text-[9px] font-black uppercase tracking-wider text-slate-400">Content Angle:</span>
+                                    <p class="text-[11px] font-semibold mt-0.5 text-slate-200" x-text="analysisData.suggested_angle"></p>
                                 </div>
 
                                 {{-- Keywords --}}
                                 <div class="flex flex-wrap gap-1">
                                     <template x-for="kw in (analysisData.suggested_keywords || [])" :key="kw">
-                                        <span class="text-[9px] px-2 py-0.5 rounded-md font-bold"
-                                              style="background: rgba(168, 85, 247, 0.08); color: #a855f7; border: 1px solid rgba(168, 85, 247, 0.15);"
+                                        <span class="text-[9px] px-2 py-0.5 rounded-md font-bold text-slate-300"
+                                              style="background: rgba(148, 163, 184, 0.12); border: 1px solid rgba(148, 163, 184, 0.2);"
                                               x-text="kw"></span>
                                     </template>
                                 </div>
 
                                 {{-- Meta Row --}}
-                                <div class="flex items-center gap-3 pt-1 text-[9px] font-bold" style="color: var(--text-muted);">
+                                <div class="flex items-center gap-3 pt-1 text-[9px] font-bold text-slate-400">
                                     <span>📊 <span x-text="analysisData.content_type"></span></span>
                                     <span>🔍 Vol: <span x-text="analysisData.estimated_search_volume"></span></span>
                                     <span>⚔️ Comp: <span x-text="analysisData.competition_level"></span></span>
@@ -239,7 +248,13 @@
                             <i class="fas fa-external-link-alt text-[9px]"></i>
                         </a>
                         <span class="text-[10px] font-medium opacity-60 flex items-center gap-1" style="color: var(--text-muted);">
-                            <i class="far fa-clock text-[8px]"></i> {{ \Carbon\Carbon::parse($item['pubDate'])->diffForHumans() }}
+                            <i class="far fa-clock text-[8px]"></i>
+                            {{ \Carbon\Carbon::parse($item['pubDate'])->diffForHumans() }}
+                            @if(!empty($item['scraped_at']))
+                                <span class="mx-1">·</span>
+                                <i class="fas fa-sync text-[8px]"></i>
+                                Fetched {{ \Carbon\Carbon::parse($item['scraped_at'])->diffForHumans() }}
+                            @endif
                         </span>
                     </div>
                     

@@ -5,6 +5,7 @@ use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\Schedule;
 
 Schedule::command('tools:renew')->daily();
+Schedule::command('ledger:reconcile')->hourly();
 
 Artisan::command('inspire', function () {
     $this->comment(Inspiring::quote());

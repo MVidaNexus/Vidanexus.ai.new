@@ -14,6 +14,7 @@ class Keyword extends Model
         'category',
         'lang',
         'source',
+        'headline_title',
         'user_id',
         'assigned_admin_id',
         'visibility',

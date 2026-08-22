@@ -19,14 +19,14 @@
     
     .ai-input-base:focus {
         border-color: var(--primary-admin) !important;
-        box-shadow: 0 0 15px rgba(14, 165, 233, 0.1);
+        box-shadow: 0 0 15px rgba(0, 168, 230, 0.1);
     }
 
     .horizon-tabs { display: flex; gap: 0.25rem; margin-bottom: 2rem; border-bottom: 1px solid var(--horizon-border); padding-bottom: 1rem; overflow-x: auto; scrollbar-width: none; }
     .horizon-tabs::-webkit-scrollbar { display: none; }
-    .horizon-tab-btn { background: none; border: 1px solid transparent; color: var(--text-muted); font-size: 0.8rem; font-weight: 600; padding: 0.6rem 0.8rem; cursor: pointer; transition: all 0.3s; border-radius: 8px; font-family: 'Inter', sans-serif; display: flex; align-items: center; gap: 0.4rem; white-space: nowrap; }
+    .horizon-tab-btn { background: none; border: 1px solid transparent; color: var(--text-muted); font-size: 0.8rem; font-weight: 600; padding: 0.6rem 0.8rem; cursor: pointer; transition: all 0.3s; border-radius: 8px; font-family: 'Poppins', sans-serif; display: flex; align-items: center; gap: 0.4rem; white-space: nowrap; }
     .horizon-tab-btn:hover { color: var(--text-main); background: rgba(255,255,255,0.05); }
-    .horizon-tab-btn.active { color: var(--primary-admin); background: rgba(14, 165, 233, 0.1); border-color: rgba(14, 165, 233, 0.3); }
+    .horizon-tab-btn.active { color: var(--primary-admin); background: rgba(0, 168, 230, 0.1); border-color: rgba(0, 168, 230, 0.3); }
     .horizon-tab-pane { display: none; animation: fadeIn 0.3s ease; }
     .horizon-tab-pane.active { display: block; }
     @keyframes fadeIn { from { opacity: 0; transform: translateY(5px); } to { opacity: 1; transform: translateY(0); } }
@@ -86,7 +86,7 @@
         <!-- Quick Stats -->
         <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 1rem; margin-bottom: 2rem;">
             <div class="stat-mini-card">
-                <div style="width: 40px; height: 40px; border-radius: 50%; background: rgba(14, 165, 233, 0.1); display: flex; align-items: center; justify-content: center; color: var(--primary-admin);">
+                <div style="width: 40px; height: 40px; border-radius: 50%; background: rgba(0, 168, 230, 0.1); display: flex; align-items: center; justify-content: center; color: var(--primary-admin);">
                     <i class="fas fa-bolt"></i>
                 </div>
                 <div>
@@ -104,7 +104,7 @@
                 </div>
             </div>
             <div class="stat-mini-card">
-                <div style="width: 40px; height: 40px; border-radius: 50%; background: rgba(16, 185, 129, 0.1); display: flex; align-items: center; justify-content: center; color: #10b981;">
+                <div style="width: 40px; height: 40px; border-radius: 50%; background: rgba(16, 185, 129, 0.1); display: flex; align-items: center; justify-content: center; color: #00A58B;">
                     <i class="fas fa-chart-line"></i>
                 </div>
                 <div>
@@ -128,6 +128,7 @@
             <button type="button" class="horizon-tab-btn active" onclick="switchHorizonTab('regional', this)"><i class="fas fa-globe"></i> Regional Control</button>
             <button type="button" class="horizon-tab-btn" onclick="switchHorizonTab('ranking', this)"><i class="fas fa-microchip"></i> Ranking Engine</button>
             <button type="button" class="horizon-tab-btn" onclick="switchHorizonTab('ai', this)"><i class="fas fa-brain"></i> Intelligence</button>
+            <button type="button" class="horizon-tab-btn" onclick="switchHorizonTab('credits', this)"><i class="fas fa-coins"></i> Credit System</button>
             <button type="button" class="horizon-tab-btn" onclick="switchHorizonTab('authority', this)"><i class="fas fa-shield-alt"></i> Authority Map</button>
             <button type="button" class="horizon-tab-btn" onclick="switchHorizonTab('performance', this)"><i class="fas fa-tachometer-alt"></i> Performance</button>
             <button type="button" class="horizon-tab-btn" onclick="switchHorizonTab('routing', this)"><i class="fas fa-network-wired"></i> AI Routing</button>
@@ -135,7 +136,7 @@
             <button type="button" class="horizon-tab-btn" onclick="switchHorizonTab('errors', this)"><i class="fas fa-bug"></i> Errors</button>
         </div>
 
-        <form action="{{ route('admin.horizon.update', $tool['slug']) }}" method="POST" id="config-form">
+        <form action="{{ route('admin.horizon.update', $tool['slug']) }}" method="POST" id="config-form" data-ajax-save>
             @csrf
             <input type="hidden" name="is_active" value="{{ ($settings['is_active'] ?? true) ? '1' : '0' }}" id="statusInput">
 
@@ -146,7 +147,7 @@
                     <div style="display: flex; gap: 0.75rem; flex-wrap: wrap;">
                         @php $timeWindow = $settings['time_window'] ?? '12h'; @endphp
                         @foreach(['1h' => 'Last Hour', '3h' => 'Last 3 Hours', '6h' => 'Last 6 Hours', '12h' => 'Last 12 Hours', '24h' => 'Last 24 Hours', '48h' => 'Last 48 Hours'] as $val => $label)
-                            <label style="display: flex; align-items: center; gap: 0.5rem; background: {{ $timeWindow === $val ? 'rgba(14, 165, 233, 0.1)' : 'rgba(255,255,255,0.02)' }}; border: 1px solid {{ $timeWindow === $val ? 'var(--primary-admin)' : 'var(--horizon-border)' }}; border-radius: 12px; padding: 0.75rem 1.25rem; cursor: pointer; transition: all 0.2s;">
+                            <label style="display: flex; align-items: center; gap: 0.5rem; background: {{ $timeWindow === $val ? 'rgba(0, 168, 230, 0.1)' : 'rgba(255,255,255,0.02)' }}; border: 1px solid {{ $timeWindow === $val ? 'var(--primary-admin)' : 'var(--horizon-border)' }}; border-radius: 12px; padding: 0.75rem 1.25rem; cursor: pointer; transition: all 0.2s;">
                                 <input type="radio" name="time_window" value="{{ $val }}" {{ $timeWindow === $val ? 'checked' : '' }} style="accent-color: var(--primary-admin);">
                                 <span style="font-size: 0.85rem; font-weight: 600; color: {{ $timeWindow === $val ? 'var(--primary-admin)' : 'var(--text-main)' }};">{{ $label }}</span>
                             </label>
@@ -208,12 +209,45 @@
                     </div>
                 </div>
 
+                {{-- ═══ Strict Relevance Filtering ═══ --}}
+                <div style="background: rgba(168, 85, 247, 0.05); border: 1px solid rgba(168, 85, 247, 0.2); border-radius: 16px; padding: 1.5rem; margin-bottom: 2rem;">
+                    <h3 style="margin: 0 0 0.5rem; font-size: 1rem; color: #a855f7;"><i class="fas fa-filter"></i> Strict Relevance Filtering</h3>
+                    <p style="margin: 0 0 1.25rem; font-size: 0.8rem; color: var(--text-muted); line-height: 1.5;">
+                        Google News' country / topic feeds frequently leak across borders and categories. Strict filtering re-validates every fetched article against the selected country (TLD + known publishers) and the selected topic (multilingual keyword map). Disable only if you intentionally want a broader, looser feed.
+                    </p>
+
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-bottom: 1.5rem;">
+                        <label style="display: flex; align-items: center; gap: 0.75rem; background: rgba(255,255,255,0.02); border: 1px solid var(--horizon-border); border-radius: 12px; padding: 1rem 1.25rem; cursor: pointer;">
+                            <input type="checkbox" name="strict_country_filter" value="1" {{ ($settings['strict_country_filter'] ?? true) ? 'checked' : '' }} style="accent-color: #a855f7; transform: scale(1.2);">
+                            <div>
+                                <div style="font-size: 0.85rem; font-weight: 700; color: var(--text-main);">Strict Country Match</div>
+                                <div style="font-size: 0.7rem; color: var(--text-muted); margin-top: 0.2rem;">Drop articles whose source isn't from the selected country (international wires pass when the article mentions the country).</div>
+                            </div>
+                        </label>
+                        <label style="display: flex; align-items: center; gap: 0.75rem; background: rgba(255,255,255,0.02); border: 1px solid var(--horizon-border); border-radius: 12px; padding: 1rem 1.25rem; cursor: pointer;">
+                            <input type="checkbox" name="strict_topic_filter" value="1" {{ ($settings['strict_topic_filter'] ?? true) ? 'checked' : '' }} style="accent-color: #a855f7; transform: scale(1.2);">
+                            <div>
+                                <div style="font-size: 0.85rem; font-weight: 700; color: var(--text-main);">Strict Topic Match</div>
+                                <div style="font-size: 0.7rem; color: var(--text-muted); margin-top: 0.2rem;">Drop articles that don't contain any keyword for the selected topic, or that match a different topic more strongly.</div>
+                            </div>
+                        </label>
+                    </div>
+
+                    <div>
+                        <label class="label-title">Country Source Overrides (optional)</label>
+                        <textarea name="country_source_overrides" class="ai-input-base" rows="6" style="width: 100%; border-radius: 12px; padding: 1rem; font-family: monospace; font-size: 0.78rem; outline: none;" placeholder="EG: youm7, almasryalyoum, masrawy&#10;SA: sabq, okaz, alarabiya">{{ $settings['country_source_overrides'] ?? '' }}</textarea>
+                        <p class="desc-text" style="margin-top: 0.5rem;">
+                            Add custom publisher domains/names per country. One country per line in <code>CODE: source1, source2, source3</code> format. These are appended to the built-in lists; leave blank to use defaults.
+                        </p>
+                    </div>
+                </div>
+
                 <button type="submit" class="btn-save" style="width: 100%;"><i class="fas fa-save"></i> Save Regional Intelligence</button>
             </div>
 
             <!-- TAB 2: Ranking Engine -->
             <div id="pane-ranking" class="horizon-tab-pane">
-                <div style="background: rgba(14, 165, 233, 0.05); border: 1px solid rgba(14, 165, 233, 0.2); border-radius: 16px; padding: 1.5rem; margin-bottom: 2rem;">
+                <div style="background: rgba(0, 168, 230, 0.05); border: 1px solid rgba(0, 168, 230, 0.2); border-radius: 16px; padding: 1.5rem; margin-bottom: 2rem;">
                     <h3 style="margin: 0 0 0.5rem; font-size: 1rem; color: var(--primary-admin);"><i class="fas fa-microchip"></i> Weighted Opportunity Scoring (V2.0)</h3>
                     <p style="margin: 0; font-size: 0.8rem; color: var(--text-muted); line-height: 1.5;">Configure how the system calculates "Ranking Potential". Total weight should ideally equal 100%.</p>
                 </div>
@@ -286,7 +320,7 @@
                     <textarea name="ai_analysis_prompt" rows="12" class="ai-input-base mono" style="width: 100%; border-radius: 16px; padding: 1.5rem; font-size: 0.85rem; line-height: 1.6; outline: none;" placeholder="Instructions for article analysis...">{{ $settings['ai_analysis_prompt'] }}</textarea>
                     
                     {{-- Prompt Placeholders Guide --}}
-                    <div class="rule-card" style="margin-top: 1rem; background: rgba(14, 165, 233, 0.05); border-color: rgba(14, 165, 233, 0.2);">
+                    <div class="rule-card" style="margin-top: 1rem; background: rgba(0, 168, 230, 0.05); border-color: rgba(0, 168, 230, 0.2);">
                         <h4 style="margin: 0 0 0.75rem; font-size: 0.85rem; color: var(--primary-admin);"><i class="fas fa-magic"></i> Dynamic Prompt Placeholders</h4>
                         <p style="margin: 0 0 0.75rem; font-size: 0.8rem; color: var(--text-main); font-weight: 600;">You can use the following placeholders in your prompt. The system will automatically inject live news context at runtime:</p>
                         <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; font-size: 0.75rem; font-family: monospace;">
@@ -300,19 +334,31 @@
                     <p class="desc-text"><i class="fas fa-info-circle"></i> Controls how the AI extracts entities, sentiment, and writing suggestions.</p>
                 </div>
 
-                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 2rem; margin-bottom: 2rem;">
-                    <div class="setting-card">
-                        <label class="label-title">Sync Credit Cost</label>
-                        <input type="number" name="sync_credits" value="{{ $settings['sync_credits'] }}" class="ai-input-base" style="width: 100%; border-radius: 10px; padding: 0.85rem; outline: none;">
-                    </div>
-                    <div class="setting-card">
-                        <label class="label-title">Deep AI Analysis Cost</label>
-                        <input type="number" name="ai_analysis_credits" value="{{ $settings['ai_analysis_credits'] }}" class="ai-input-base" style="width: 100%; border-radius: 10px; padding: 0.85rem; outline: none;">
-                    </div>
-                </div>
+                <p class="desc-text" style="margin-top: 1rem;"><i class="fas fa-coins" style="color: #f59e0b;"></i> Sync &amp; deep-analysis credit costs are now configured in the <strong>Credit System</strong> tab.</p>
 
                 <button type="submit" class="btn-save" style="width: 100%;"><i class="fas fa-save"></i> Save Intelligence Parameters</button>
             </div>
+
+            @include('admin.horizon.partials.credit-system-pane', [
+                'paneId'   => 'credits',
+                'subtitle' => 'Two-stage pricing: charge users on each news sync, and again when they request a deep AI analysis of a specific article.',
+                'cards' => [
+                    [
+                        'name'   => 'sync_credits',
+                        'value'  => (int) ($settings['sync_credits'] ?? 1),
+                        'label'  => 'Sync Multiplier',
+                        'badge'  => 'News Sync',
+                        'helper' => 'Credits deducted on every "Sync" of the global news feed. Cached fetches (within the configured TTL) are cost-neutral.',
+                    ],
+                    [
+                        'name'   => 'ai_analysis_credits',
+                        'value'  => (int) ($settings['ai_analysis_credits'] ?? 1),
+                        'label'  => 'Deep AI Analysis Cost',
+                        'badge'  => 'Deep AI Analysis',
+                        'helper' => 'Credits deducted when a user requests an AI breakdown of a single article (sentiment, entities, opportunity scoring).',
+                    ],
+                ],
+            ])
 
             <!-- TAB 4: Authority Map -->
             <div id="pane-authority" class="horizon-tab-pane">
@@ -443,7 +489,7 @@
                                         <div style="font-size: 0.75rem; color: var(--text-muted);">{{ $sub->email }}</div>
                                     </td>
                                     <td style="padding: 1.25rem; border-bottom: 1px solid rgba(255,255,255,0.02);">
-                                        <span style="background: rgba(16, 185, 129, 0.1); color: #10b981; padding: 0.3rem 0.6rem; border-radius: 8px; font-size: 0.75rem; font-weight: 800;">
+                                        <span style="background: rgba(16, 185, 129, 0.1); color: #00A58B; padding: 0.3rem 0.6rem; border-radius: 8px; font-size: 0.75rem; font-weight: 800;">
                                             {{ number_format($sub->wallet->balance_credits ?? 0, 1) }} CRS
                                         </span>
                                     </td>
@@ -455,7 +501,7 @@
                             </tbody>
                         </table>
                     </div>
-                    <div style="margin-top: 1.5rem;">{{ $subscribers->links() }}</div>
+                    <div style="margin-top: 1.5rem;">{{ $subscribers->links('admin.horizon.partials._pagination') }}</div>
                 </div>
             </div>
 
@@ -472,7 +518,7 @@
                         <div style="font-size: 0.8rem; color: var(--text-main); margin-bottom: 0.75rem; line-height: 1.5;">{{ $error->error_message }}</div>
                         <div style="display: flex; align-items: center; justify-content: space-between;">
                             <div style="font-size: 0.75rem; color: var(--text-muted);">Triggered by: <strong>{{ $error->user->name ?? 'SYSTEM' }}</strong></div>
-                            <button type="button" class="inspect-error-payload" data-payload="{{ json_encode(['error' => $error->error_message, 'context' => $error->tool_slug]) }}" data-title="Diagnostic Metadata" style="background: rgba(14, 165, 233, 0.1); border: 1px solid rgba(14, 165, 233, 0.2); color: var(--primary-admin); padding: 0.35rem 0.8rem; border-radius: 8px; font-size: 0.7rem; font-weight: 800; cursor: pointer;">
+                            <button type="button" class="inspect-error-payload" data-payload="{{ json_encode(['error' => $error->error_message, 'context' => $error->tool_slug]) }}" data-title="Diagnostic Metadata" style="background: rgba(0, 168, 230, 0.1); border: 1px solid rgba(0, 168, 230, 0.2); color: var(--primary-admin); padding: 0.35rem 0.8rem; border-radius: 8px; font-size: 0.7rem; font-weight: 800; cursor: pointer;">
                                 <i class="fas fa-microscope"></i> INSPECT
                             </button>
                         </div>

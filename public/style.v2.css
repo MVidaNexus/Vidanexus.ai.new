@@ -1,77 +1,87 @@
 :root {
-    /* Theme Base */
-    --bg-color: #050505;
+    /* Theme Base — Dark (Dark Navy) */
+    --bg-color: #021B3A;
+    --bg-secondary: #031428;
     --text-main: #ffffff;
-    --text-muted: rgba(255, 255, 255, 0.7);
-    --glass-bg: rgba(255, 255, 255, 0.03);
-    --glass-border: rgba(255, 255, 255, 0.1);
+    --text-muted: rgba(245, 247, 250, 0.65);
+    --glass-bg: rgba(255, 255, 255, 0.04);
+    --glass-border: rgba(0, 168, 230, 0.18);
     --glass-blur: blur(20px);
-    
-    /* Brand Colors */
-    --primary-cyan: #0ea5e9;
-    --electric-blue: #0066ff;
-    --neon-purple: #b026ff;
-    --accent-success: #10b981;
-    --success-bg: rgba(16, 185, 129, 0.1);
-    --success-border: rgba(16, 185, 129, 0.2);
-    
-    /* Typography */
-    --font-main: 'Inter', sans-serif;
-    --font-heading: 'Space Grotesk', sans-serif;
+
+    /* Vida Nexus Brand Colors */
+    --primary: #003686;        /* Primary Blue */
+    --accent: #00A58B;         /* Teal Green */
+    --accent-cyan: #00A8E6;    /* Digital Cyan */
+    --accent-success: #00A58B;
+    --success-bg: rgba(0, 165, 139, 0.12);
+    --success-border: rgba(0, 165, 139, 0.25);
+
+    /* Legacy aliases — keep so old var() references still resolve */
+    --primary-cyan: #00A8E6;
+    --electric-blue: #003686;
+    --neon-purple: #00A58B;
+
+    /* Typography — Poppins */
+    --font-main: 'Poppins', sans-serif;
+    --font-heading: 'Poppins', sans-serif;
 
     /* Theme Transition */
     --theme-transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-    --header-bg: rgba(10, 10, 15, 0.7);
-    --header-border: rgba(255, 255, 255, 0.1);
-    --pricing-card-bg: rgba(20, 20, 30, 0.6);
-    --pricing-card-shadow: 0 10px 40px rgba(0,0,0,0.5);
-    --feature-item-bg: rgba(14, 165, 233, 0.05);
+    --header-bg: rgba(2, 27, 58, 0.88);
+    --header-border: rgba(0, 168, 230, 0.15);
+    --pricing-card-bg: rgba(3, 20, 40, 0.65);
+    --pricing-card-shadow: 0 10px 40px rgba(0, 0, 0, 0.45);
+    --feature-item-bg: rgba(0, 168, 230, 0.06);
     --logo-invert: 0;
-    
+
     /* Global Title Effects */
     --title-gradient-start: #ffffff;
-    --title-glow: rgba(14, 165, 233, 0.4);
+    --title-glow: rgba(0, 168, 230, 0.4);
     --title-color: #ffffff;
-    
+
     /* Global Component Base */
-    --card-bg: rgba(20, 20, 30, 0.4);
-    --card-border: rgba(255, 255, 255, 0.1);
+    --card-bg: rgba(3, 14, 40, 0.6);
+    --card-border: rgba(0, 168, 230, 0.12);
 }
 
 [data-theme="light"] {
-    --bg-color: #f8fafc;
-    --text-main: #0f172a;
-    --text-muted: #475569;
-    --accent-success: #15803d; /* Darker forest green */
-    --success-bg: rgba(21, 128, 61, 0.1);
-    --success-border: rgba(21, 128, 61, 0.2);
-    --glass-bg: rgba(255, 255, 255, 0.8);
-    --glass-border: rgba(15, 23, 42, 0.1);
+    /* Theme Base — Light (Off White) */
+    --bg-color: #F5F7FA;
+    --bg-secondary: #E9EEF5;
+    --text-main: #0B1F3A;
+    --text-muted: #4A6080;
+    --glass-bg: rgba(255, 255, 255, 0.9);
+    --glass-border: rgba(0, 54, 134, 0.12);
     --glass-blur: blur(10px);
-    
-    /* Refine brands for light mode if needed */
-    --primary-cyan: #0891b2;
-    --electric-blue: #2563eb;
-    --neon-purple: #9333ea;
-    --header-bg: rgba(255, 255, 255, 0.8);
-    --header-border: rgba(15, 23, 42, 0.1);
+
+    /* Vida Nexus Brand Colors — light mode */
+    --primary: #003686;
+    --accent: #00A58B;
+    --accent-cyan: #00A8E6;
+    --accent-success: #00A58B;
+    --success-bg: rgba(0, 165, 139, 0.1);
+    --success-border: rgba(0, 165, 139, 0.2);
+
+    /* Legacy aliases */
+    --primary-cyan: #00A8E6;
+    --electric-blue: #003686;
+    --neon-purple: #00A58B;
+
+    --header-bg: rgba(245, 247, 250, 0.92);
+    --header-border: rgba(0, 54, 134, 0.1);
     --pricing-card-bg: #ffffff;
-    --pricing-card-shadow: 0 10px 40px rgba(15, 23, 42, 0.1);
-    --feature-item-bg: rgba(15, 23, 42, 0.03);
-    --logo-invert: 1;
-    
+    --pricing-card-shadow: 0 10px 40px rgba(0, 54, 134, 0.08);
+    --feature-item-bg: rgba(0, 54, 134, 0.04);
+    --logo-invert: 0;
+
     /* Global Component Base */
     --card-bg: #ffffff;
-    --card-border: rgba(15, 23, 42, 0.1);
-    
-    /* Refine Typography for Light Mode */
-    --text-main: #020617;
-    --text-muted: #334155;
+    --card-border: rgba(0, 54, 134, 0.1);
 
-    /* Global Title Effects */
-    --title-gradient-start: var(--text-main);
-    --title-glow: rgba(14, 165, 233, 0);
-    --title-color: var(--text-main);
+    /* Title Effects */
+    --title-gradient-start: #0B1F3A;
+    --title-glow: rgba(0, 168, 230, 0);
+    --title-color: #0B1F3A;
 }
 
 * {
@@ -94,7 +104,6 @@ body {
     background-color: var(--bg-color);
     color: var(--text-main);
     font-family: var(--font-main);
-    overflow-x: hidden !important;
     position: relative;
     width: 100% !important;
     min-height: 100vh;
@@ -128,7 +137,7 @@ body {
 .main-container, .dashboard-container, .max-w-7xl, .max-w-4xl, section, main, header, footer {
     max-width: 100% !important;
     width: 100% !important;
-    overflow-x: hidden !important;
+
 }
 
 /* Ultra-Aggressive Light Mode Title Force */
@@ -241,20 +250,19 @@ header {
 }
 
 .logo-img {
-    height: 40px;
+    height: 48px;
     width: auto;
-    filter: invert(var(--logo-invert));
 }
 
 .logo-text {
-    font-family: var(--font-heading);
-    font-weight: 800;
+    font-family: 'Poppins', sans-serif;
+    font-weight: 700;
     font-size: 1.5rem;
     letter-spacing: 2px;
 }
 
 .logo-vida { color: var(--text-main); }
-.logo-nexus { color: var(--primary-cyan); }
+.logo-nexus { color: var(--text-main); }
 
 /* Hero Section */
 .hero {
@@ -431,6 +439,26 @@ input:focus {
 .tool-card:hover {
     transform: translateY(-5px);
     border-color: var(--primary-cyan);
+    box-shadow: 0 15px 35px rgba(14, 165, 233, 0.15);
+}
+
+.tool-card.is-coming-soon {
+    position: relative;
+    overflow: hidden;
+    opacity: 0.8;
+    filter: grayscale(0.8);
+    transition: all 0.4s ease;
+}
+
+.tool-card.is-coming-soon:hover {
+    opacity: 1;
+    filter: grayscale(0.2);
+    border-color: rgba(255, 255, 255, 0.2);
+    box-shadow: 0 10px 20px rgba(0, 0, 0, 0.1);
+}
+
+html[data-theme="light"] .tool-card.is-coming-soon:hover {
+    border-color: rgba(15, 23, 42, 0.2);
 }
 
 .tool-icon {
@@ -682,7 +710,7 @@ input:checked + .dribbble-slider .cloud {
         width: 100% !important;
     }
     
-    .logo-img { height: 28px; }
+    .logo-img { height: 34px; }
     .logo-text { font-size: 1.1rem; }
     
     .section-title {
@@ -943,7 +971,7 @@ img {
     gap: 0.6rem;
     padding: 0.75rem 1.75rem;
     border-radius: 12px;
-    font-family: 'Inter', 'Segoe UI', system-ui, sans-serif;
+    font-family: 'Poppins', 'Segoe UI', system-ui, sans-serif;
     font-size: 0.925rem;
     font-weight: 600;
     letter-spacing: 0.01em;
@@ -965,7 +993,7 @@ img {
 
 /* ── Primary Button ── */
 .vn-btn-primary {
-    background: linear-gradient(135deg, #3b82f6 0%, #2563eb 50%, #1d4ed8 100%);
+    background: linear-gradient(135deg, #003686 0%, #00A8E6 50%, #00A58B 100%);
     color: #fff;
     box-shadow:
         0 1px 2px rgba(37, 99, 235, 0.15),
@@ -974,7 +1002,7 @@ img {
 }
 
 .vn-btn-primary:hover {
-    background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 50%, #1e40af 100%);
+    background: linear-gradient(135deg, #003686 0%, #0055bb 50%, #00A58B 100%);
     box-shadow:
         0 2px 4px rgba(37, 99, 235, 0.18),
         0 8px 24px rgba(37, 99, 235, 0.28),
@@ -1018,8 +1046,8 @@ img {
 
 .vn-btn-outline:hover {
     background: rgba(59, 130, 246, 0.08);
-    color: #2563eb;
-    border-color: #2563eb;
+    color: #003686;
+    border-color: #003686;
     box-shadow: 0 2px 10px rgba(59, 130, 246, 0.15);
     transform: translateY(-1px);
     text-decoration: none;
@@ -1040,7 +1068,7 @@ img {
 
 /* ── Light Mode Adjustments ── */
 html[data-theme="light"] .vn-btn-primary {
-    background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 50%, #1e40af 100%);
+    background: linear-gradient(135deg, #003686 0%, #0055bb 50%, #00A58B 100%);
     box-shadow:
         0 1px 2px rgba(30, 64, 175, 0.12),
         0 4px 12px rgba(30, 64, 175, 0.18),

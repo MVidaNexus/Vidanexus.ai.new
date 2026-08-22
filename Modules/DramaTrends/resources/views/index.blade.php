@@ -281,13 +281,14 @@ function dramaDashboard() {
             })
             .then(r => r.ok ? r.json() : r.json().then(d => { throw new Error(d.error || 'Error'); }))
             .then(data => {
-                if (data.error) { 
-                    this.error = data.error; 
+                if (data.error) {
+                    this.error = data.error;
                     this.hasData = false;
-                } 
+                }
                 else {
                     this.originalData = data;
                     this.applyFilters();
+                    if (window.VidaCredits) window.VidaCredits.apply(data);
                 }
                 this.loading = false;
             })

@@ -8,9 +8,9 @@
     
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
-    <link rel="stylesheet" href="{{ asset('style.v2.css?v=30') }}">
+    <link rel="stylesheet" href="{{ asset('style.v2.css') }}?v={{ config('vidanexus.style_css_version') }}">
     <script src="https://cdn.tailwindcss.com"></script>
     <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
@@ -21,7 +21,7 @@
                 extend: {
                     colors: {
                         primary: {
-                            cyan: '#0ea5e9',
+                            cyan: '#00A8E6',
                             purple: '#7000ff',
                         },
                         glass: {
@@ -30,7 +30,7 @@
                         }
                     },
                     fontFamily: {
-                        sans: ['Inter', 'sans-serif'],
+                        sans: ['Poppins', 'sans-serif'],
                     }
                 }
             }
@@ -45,8 +45,8 @@
             border: 1px solid rgba(255, 255, 255, 0.1);
             border-radius: 24px;
         }
-        .text-neon-cyan { color: #0ea5e9; text-shadow: 0 0 10px rgba(14, 165, 233, 0.5); }
-        .bg-neon-cyan { background-color: #0ea5e9; box-shadow: 0 0 20px rgba(14, 165, 233, 0.4); }
+        .text-neon-cyan { color: #00A8E6; text-shadow: 0 0 10px rgba(0, 168, 230, 0.5); }
+        .bg-neon-cyan { background-color: #00A8E6; box-shadow: 0 0 20px rgba(0, 168, 230, 0.4); }
     </style>
     @stack('styles')
 </head>
@@ -58,7 +58,7 @@
         @yield('content')
 
         <div class="mt-24 flex justify-center pb-12">
-            <a href="{{ route('home') }}" class="group relative px-8 py-3.5 flex items-center gap-3 overflow-hidden rounded-2xl bg-white/5 border border-white/10 backdrop-blur-xl transition-all hover:border-primary-cyan/50 hover:shadow-[0_0_30px_rgba(14, 165, 233,0.15)] active:scale-95">
+            <a href="{{ route('home') }}" class="group relative px-8 py-3.5 flex items-center gap-3 overflow-hidden rounded-2xl bg-white/5 border border-white/10 backdrop-blur-xl transition-all hover:border-primary-cyan/50 hover:shadow-[0_0_30px_rgba(0, 168, 230,0.15)] active:scale-95">
                 <i class="fas fa-th-large text-primary-cyan group-hover:scale-110 transition-transform"></i>
                 <span class="relative font-bold text-sm tracking-tight text-gray-300 group-hover:text-white transition-colors uppercase">Back to all tools</span>
                 <i class="fas fa-arrow-left text-[10px] text-gray-500 group-hover:-translate-x-1 transition-transform"></i>

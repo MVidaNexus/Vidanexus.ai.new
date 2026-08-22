@@ -14,7 +14,7 @@ return [
     |
     */
 
-    'default' => env('MAIL_MAILER', 'log'),
+    'default' => env('MAIL_MAILER', env('MAIL_USE_FAILOVER', false) ? 'failover' : 'log'),
 
     /*
     |--------------------------------------------------------------------------
@@ -99,8 +99,8 @@ return [
         'failover' => [
             'transport' => 'failover',
             'mailers' => [
-                'smtp',
-                'log',
+                env('MAIL_PRIMARY_MAILER', 'smtp'),
+                env('MAIL_FALLBACK_MAILER', 'log'),
             ],
         ],
 

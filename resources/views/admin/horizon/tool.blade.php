@@ -34,7 +34,7 @@
             </div>
         </div>
 
-        <form action="{{ route('admin.horizon.update', $tool['slug']) }}" method="POST">
+        <form action="{{ route('admin.horizon.update', $tool['slug']) }}" method="POST" data-ajax-save>
             @csrf
             
             <div style="margin-bottom: 2rem;">
@@ -62,7 +62,7 @@
             </div>
 
             @if($tool['slug'] === 'competitor-x-ray')
-            <div style="margin-bottom: 2rem; background: rgba(14, 165, 233, 0.05); padding: 1.5rem; border-radius: 16px; border: 1px solid rgba(14, 165, 233, 0.2);">
+            <div style="margin-bottom: 2rem; background: rgba(0, 168, 230, 0.05); padding: 1.5rem; border-radius: 16px; border: 1px solid rgba(0, 168, 230, 0.2);">
                 <label style="display: block; font-size: 0.8rem; color: var(--text-muted); text-transform: uppercase; letter-spacing: 1px; margin-bottom: 1rem;">SerpAPI Key (Secure Storage)</label>
                 <div style="display: flex; gap: 1rem;">
                     <input type="password" name="serpapi_key" value="{{ $settings['serpapi_key'] ?? '' }}" style="flex: 1; background: #0a0f19; border: 1px solid var(--horizon-border); border-radius: 12px; color: #fff; padding: 1rem; outline: none;" placeholder="Enter SerpAPI Key...">
@@ -82,7 +82,7 @@
                 $creditCost = (int) \App\Models\Setting::get("tool_credit_cost_{$tool['slug']}", $tool['credit_cost_per_action'] ?? 1);
                 $bonusCredits = (int) \App\Models\Setting::get("tool_bonus_credits_{$tool['slug']}", $tool['initial_bonus_credits'] ?? 10);
             @endphp
-            <div style="margin-bottom: 2rem; background: linear-gradient(135deg, rgba(14, 165, 233, 0.05), rgba(191, 0, 255, 0.05)); padding: 1.5rem; border-radius: 16px; border: 1px solid rgba(14, 165, 233, 0.2);">
+            <div style="margin-bottom: 2rem; background: linear-gradient(135deg, rgba(0, 168, 230, 0.05), rgba(191, 0, 255, 0.05)); padding: 1.5rem; border-radius: 16px; border: 1px solid rgba(0, 168, 230, 0.2);">
                 <label style="display: block; font-size: 0.8rem; color: var(--text-muted); text-transform: uppercase; letter-spacing: 1px; margin-bottom: 1.25rem;">
                     <i class="fas fa-store" style="color: var(--primary-admin); margin-right: 0.5rem;"></i> Marketplace Pricing
                 </label>
@@ -193,12 +193,12 @@
 
             @if($subscribers->hasPages())
                 <div style="margin-top: 1.5rem;">
-                    {{ $subscribers->appends(request()->query())->links() }}
+                    {{ $subscribers->appends(request()->query())->links('admin.horizon.partials._pagination') }}
                 </div>
             @endif
         </div>
 
-        <div class="card-admin" style="background: linear-gradient(135deg, rgba(191, 0, 255, 0.05), rgba(14, 165, 233, 0.05)); border-color: var(--primary-admin);">
+        <div class="card-admin" style="background: linear-gradient(135deg, rgba(191, 0, 255, 0.05), rgba(0, 168, 230, 0.05)); border-color: var(--primary-admin);">
             <h3 style="margin: 0 0 1rem; font-size: 1rem;"><i class="fas fa-shield-halved" style="color: var(--secondary-admin);"></i> Admin Note</h3>
             <p style="font-size: 0.85rem; color: var(--text-muted); line-height: 1.5; margin: 0;">
                 Modifying the system prompt for <strong>{{ $tool['name'] }}</strong> will impact the behavior of the AI engine immediately for all users. Make sure to test your prompting logic in the site's front-end after saving.

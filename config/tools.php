@@ -5,6 +5,11 @@ return [
     |--------------------------------------------------------------------------
     | System Tools Definition
     |--------------------------------------------------------------------------
+    |
+    | GenericIntelligence routes use `route` keys `dashboard.marketing.{slug}` and
+    | `dashboard.seo.{slug}`. `App\Support\GenericToolRoutes` builds web routes from
+    | these entries—edit tools here only, not duplicate slug lists in route files.
+    |
     */
     
     'all_tools' => [
@@ -21,67 +26,67 @@ return [
             'credit_cost_per_action' => 1,
             'initial_bonus_credits' => 10,
             'description' => 'The industry\'s most powerful keyword surveillance engine. Identify hidden market gaps and outrank competitors with 24/7 autonomous monitoring.',
-            'marketing_content' => '<h3 style="color: #0ea5e9; font-size: 2rem; font-weight: 800; margin-bottom: 24px; letter-spacing: -0.025em;">Keyword Surveillance Protocol</h3>
-                <p style="font-size: 1.25rem; line-height: 1.7; color: rgba(255,255,255,0.9); margin-bottom: 32px;">
+            'marketing_content' => '<h3 class="marketing-title" style="color: #0ea5e9; font-size: 2rem; font-weight: 800; margin-bottom: 24px; letter-spacing: -0.025em;">Keyword Surveillance Protocol</h3>
+                <p class="marketing-subtitle" style="font-size: 1.25rem; line-height: 1.7; margin-bottom: 32px;">
                     Stop guessing. The <strong>Keyword Spy Radar</strong> performs deep-content scans on rival domains to extract the exact high-value keywords they are using to siphon your traffic.
                 </p>
 
                 <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 24px; margin-bottom: 40px;">
-                    <div style="background: rgba(15, 23, 42, 0.6); border: 1px solid rgba(14, 165, 233, 0.2); padding: 28px; border-radius: 16px; position: relative; overflow: hidden;">
-                        <div style="position: absolute; top: 0; left: 0; width: 4px; height: 100%; background: #0ea5e9;"></div>
-                        <h4 style="color: #fff; font-size: 1.3rem; margin-bottom: 12px; display: flex; align-items: center; gap: 10px; font-weight: 900;">
+                    <div class="marketing-card" style="border-color: rgba(14, 165, 233, 0.2);">
+                        <div class="marketing-card-accent" style="background: #0ea5e9;"></div>
+                        <h4 class="marketing-card-title">
                             <span style="font-size: 1.5rem; color: #0ea5e9;"><i class="fas fa-user-secret"></i></span> Competitor Gaps
                         </h4>
-                        <p style="color: rgba(255,255,255,0.7); line-height: 1.6; margin: 0; font-style: italic; font-size: 0.9rem;">Extract the exact keywords your rivals rank for that you are missing. Dissect their content footprint to move in first.</p>
+                        <p class="marketing-card-desc">Extract the exact keywords your rivals rank for that you are missing. Dissect their content footprint to move in first.</p>
                     </div>
 
-                    <div style="background: rgba(15, 23, 42, 0.6); border: 1px solid rgba(168, 85, 247, 0.2); padding: 28px; border-radius: 16px; position: relative; overflow: hidden;">
-                        <div style="position: absolute; top: 0; left: 0; width: 4px; height: 100%; background: #a855f7;"></div>
-                        <h4 style="color: #fff; font-size: 1.3rem; margin-bottom: 12px; display: flex; align-items: center; gap: 10px; font-weight: 900;">
+                    <div class="marketing-card" style="border-color: rgba(168, 85, 247, 0.2);">
+                        <div class="marketing-card-accent" style="background: #a855f7;"></div>
+                        <h4 class="marketing-card-title">
                             <span style="font-size: 1.5rem; color: #a855f7;"><i class="fas fa-chart-line"></i></span> Trend Velocity
                         </h4>
-                        <p style="color: rgba(255,255,255,0.7); line-height: 1.6; margin: 0; font-style: italic; font-size: 0.9rem;">Identify rising topics and search momentum shifts in real-time. Catch the wave before it peaks and becomes saturated.</p>
+                        <p class="marketing-card-desc">Identify rising topics and search momentum shifts in real-time. Catch the wave before it peaks and becomes saturated.</p>
                     </div>
 
-                    <div style="background: rgba(15, 23, 42, 0.6); border: 1px solid rgba(16, 185, 129, 0.2); padding: 28px; border-radius: 16px; position: relative; overflow: hidden;">
-                        <div style="position: absolute; top: 0; left: 0; width: 4px; height: 100%; background: #10b981;"></div>
-                        <h4 style="color: #fff; font-size: 1.3rem; margin-bottom: 12px; display: flex; align-items: center; gap: 10px; font-weight: 900;">
+                    <div class="marketing-card" style="border-color: rgba(16, 185, 129, 0.2);">
+                        <div class="marketing-card-accent" style="background: #10b981;"></div>
+                        <h4 class="marketing-card-title">
                             <span style="font-size: 1.5rem; color: #10b981;"><i class="fas fa-landmark"></i></span> Niche Intelligence
                         </h4>
-                        <p style="color: rgba(255,255,255,0.7); line-height: 1.6; margin: 0; font-style: italic; font-size: 0.9rem;">Automatically discover the underlying keyword structure and sub-topic silos of any market segment or rival domain.</p>
+                        <p class="marketing-card-desc">Automatically discover the underlying keyword structure and sub-topic silos of any market segment or rival domain.</p>
                     </div>
 
-                    <div style="background: rgba(15, 23, 42, 0.6); border: 1px solid rgba(245, 158, 11, 0.2); padding: 28px; border-radius: 16px; position: relative; overflow: hidden;">
-                        <div style="position: absolute; top: 0; left: 0; width: 4px; height: 100%; background: #f59e0b;"></div>
-                        <h4 style="color: #fff; font-size: 1.3rem; margin-bottom: 12px; display: flex; align-items: center; gap: 10px; font-weight: 900;">
+                    <div class="marketing-card" style="border-color: rgba(245, 158, 11, 0.2);">
+                        <div class="marketing-card-accent" style="background: #f59e0b;"></div>
+                        <h4 class="marketing-card-title">
                             <span style="font-size: 1.5rem; color: #f59e0b;"><i class="fas fa-wave-square"></i></span> Pulse Detection
                         </h4>
-                        <p style="color: rgba(255,255,255,0.7); line-height: 1.6; margin: 0; font-style: italic; font-size: 0.9rem;">Identify 0-day content opportunities across global news feeds before they even hit the search results.</p>
+                        <p class="marketing-card-desc">Identify 0-day content opportunities across global news feeds before they even hit the search results.</p>
                     </div>
                 </div>
 
-                <div style="background: linear-gradient(135deg, rgba(14, 165, 233, 0.1), rgba(168, 85, 247, 0.1)); border-radius: 20px; padding: 40px; text-align: center; border: 1px solid rgba(255,255,255,0.1);">
-                    <h3 style="color: #fff; margin-bottom: 24px; font-size: 1.5rem; font-weight: 800; italic">Why Choose Keyword Spy Radar?</h3>
-                    <ul style="list-style: none; padding: 0; margin: 0 auto; max-width: 650px; text-align: left; display: grid; gap: 20px;">
-                        <li style="display: flex; gap: 16px; align-items: flex-start; color: rgba(255,255,255,0.85); background: rgba(255,255,255,0.03); padding: 15px; border-radius: 12px; border: 1px solid rgba(255,255,255,0.05);">
+                <div class="marketing-features-box">
+                    <h3 class="marketing-features-title">Why Choose Keyword Spy Radar?</h3>
+                    <ul class="marketing-features-list">
+                        <li class="marketing-features-item">
                             <span style="background: #10b98122; color: #10b981; width: 32px; height: 32px; border-radius: 8px; display: flex; align-items: center; justify-content: center; flex-shrink: 0; font-size: 0.9rem;"><i class="fas fa-bolt"></i></span>
                             <div>
-                                <strong style="color: #fff; display: block; margin-bottom: 2px;">Extreme Time Savings</strong>
-                                <span style="font-size: 0.9rem; color: rgba(255,255,255,0.6);">Replace 40 hours of manual research with 12 seconds of AI scanning.</span>
+                                <strong class="marketing-features-item-title">Extreme Time Savings</strong>
+                                <span class="marketing-features-item-desc">Replace 40 hours of manual research with 12 seconds of AI scanning.</span>
                             </div>
                         </li>
-                        <li style="display: flex; gap: 16px; align-items: flex-start; color: rgba(255,255,255,0.85); background: rgba(255,255,255,0.03); padding: 15px; border-radius: 12px; border: 1px solid rgba(255,255,255,0.05);">
+                        <li class="marketing-features-item">
                             <span style="background: #0ea5e922; color: #0ea5e9; width: 32px; height: 32px; border-radius: 8px; display: flex; align-items: center; justify-content: center; flex-shrink: 0; font-size: 0.9rem;"><i class="fas fa-bullseye"></i></span>
                             <div>
-                                <strong style="color: #fff; display: block; margin-bottom: 2px;">High-ROI Targeting</strong>
-                                <span style="font-size: 0.9rem; color: rgba(255,255,255,0.6);">Target low-competition keywords that are easier to rank and convert better.</span>
+                                <strong class="marketing-features-item-title">High-ROI Targeting</strong>
+                                <span class="marketing-features-item-desc">Target low-competition keywords that are easier to rank and convert better.</span>
                             </div>
                         </li>
-                        <li style="display: flex; gap: 16px; align-items: flex-start; color: rgba(255,255,255,0.85); background: rgba(255,255,255,0.03); padding: 15px; border-radius: 12px; border: 1px solid rgba(255,255,255,0.05);">
+                        <li class="marketing-features-item">
                             <span style="background: #a855f722; color: #a855f7; width: 32px; height: 32px; border-radius: 8px; display: flex; align-items: center; justify-content: center; flex-shrink: 0; font-size: 0.9rem;"><i class="fas fa-shield-halved"></i></span>
                             <div>
-                                <strong style="color: #fff; display: block; margin-bottom: 2px;">Secure Market Advantage</strong>
-                                <span style="font-size: 0.9rem; color: rgba(255,255,255,0.6);">Stay ahead of algorithm updates by following user intent shifts in real-time.</span>
+                                <strong class="marketing-features-item-title">Secure Market Advantage</strong>
+                                <span class="marketing-features-item-desc">Stay ahead of algorithm updates by following user intent shifts in real-time.</span>
                             </div>
                         </li>
                     </ul>

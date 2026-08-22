@@ -80,12 +80,12 @@
         <div class="p-8 sm:p-12">
             {{-- Mode Switcher --}}
             <div class="flex items-center gap-2 mb-10 bg-white/5 p-1.5 rounded-2xl w-fit mx-auto border border-white/5">
-                <button @click="mode = 'keyword'; results = null;" 
+                <button @click="setMode('keyword')"
                         :class="mode === 'keyword' ? 'bg-white/10 text-primary-cyan shadow-xl border-white/10' : 'text-gray-500 hover:text-white'"
                         class="px-8 py-3 rounded-xl text-sm font-black transition-all duration-300 border border-transparent">
                     <i class="fas fa-search-nodes ml-2"></i> Smart Keyword Search
                 </button>
-                <button @click="mode = 'content'; results = null;" 
+                <button @click="setMode('content')"
                         :class="mode === 'content' ? 'bg-white/10 text-primary-cyan shadow-xl border-white/10' : 'text-gray-500 hover:text-white'"
                         class="px-8 py-3 rounded-xl text-sm font-black transition-all duration-300 border border-transparent">
                     <i class="fas fa-file-invoice ml-2"></i> Full Content Analysis
@@ -268,6 +268,12 @@
             trendingSuggestions: @js($trendingSuggestions ?? []),
             categories: @js($categories ?? []),
             pInterval: null,
+            // `terminalReached` blocks duplicate completed/error alerts when
+            // multiple in-flight polls all observe the same terminal cache
+            // state. clearInterval() only stops future iterations — it cannot
+            // cancel callbacks that already started, so we need an explicit
+            // flag that any concurrent poll can check before firing its alert.
+            terminalReached: false,
 
             init() {
                 // If we have flashed results through redirect
@@ -285,6 +291,26 @@
                 const kw = urlParams.get('keyword');
                 if (kw && !this.results) {
                     this.keyword = kw;
+                }
+            },
+
+            /**
+             * Switch between keyword/content modes and clear the OTHER field so
+             * a stale value (e.g. a `?keyword=...` URL parameter left over from
+             * another tool) cannot silently override the user's new input.
+             */
+            setMode(next) {
+                if (this.mode === next) return;
+                this.mode = next;
+                this.results = null;
+                if (next === 'keyword') {
+                    this.content = '';
+                } else {
+                    this.keyword = '';
+                    // Also drop the URL parameter so a refresh doesn't repopulate it.
+                    const url = new URL(window.location.href);
+                    url.searchParams.delete('keyword');
+                    window.history.replaceState({}, '', url);
                 }
             },
 
@@ -327,23 +353,62 @@
             },
 
             showVisualAngle(headline) {
-                Swal.fire({
-                    title: '<span class="text-white font-black uppercase tracking-widest">Visual Angle Discovery</span>',
-                    html: `
-                        <div class="text-left space-y-4 p-4 font-tajawal">
-                            <div class="p-4 bg-white/5 rounded-2xl border border-white/10">
-                                <p class="text-gray-400 text-xs font-black uppercase tracking-widest mb-2">AI Image Logic</p>
-                                <p class="text-white text-sm leading-relaxed font-bold italic">"${headline.thumbnail_suggestion || 'Capture a dynamic high-contrast image representing the core entity and the news action.'}"</p>
-                            </div>
-                            <div class="flex items-center gap-3 text-emerald-400 text-[10px] font-black uppercase tracking-widest">
-                                <i class="fas fa-check-circle"></i> Best for Google Discover CTR
-                            </div>
+                const concepts = (headline.visual_concepts && headline.visual_concepts.length)
+                    ? headline.visual_concepts
+                    : this.buildVisualConcepts(headline);
+
+                const cards = concepts.map((c, i) => `
+                    <div class="p-4 rounded-2xl border border-white/10 bg-white/[0.03] text-left">
+                        <div class="text-[10px] font-black uppercase tracking-widest text-primary-cyan mb-2">Concept ${i + 1}</div>
+                        <p class="text-slate-200 text-sm leading-relaxed mb-3">${this.escapeHtml(c.description || '')}</p>
+                        <div class="grid grid-cols-2 gap-2 text-[10px]">
+                            <div><span class="text-slate-500">Palette:</span> <span class="text-slate-300">${this.escapeHtml(c.color_palette || 'High contrast')}</span></div>
+                            <div><span class="text-slate-500">Style:</span> <span class="text-slate-300">${this.escapeHtml(c.style || 'Editorial photo')}</span></div>
                         </div>
-                    `,
+                        <p class="text-[10px] text-emerald-400 mt-2"><i class="fas fa-chart-line mr-1"></i>${this.escapeHtml(c.ctr_reason || 'Boosts Discover CTR with emotional hook')}</p>
+                    </div>
+                `).join('');
+
+                Swal.fire({
+                    title: '<span class="text-white font-black uppercase tracking-widest text-sm">Visual Angle Discovery</span>',
+                    html: `<div class="space-y-3 max-h-[60vh] overflow-y-auto p-1">${cards}</div>`,
                     background: '#0d0e12',
+                    width: '560px',
                     confirmButtonText: 'Understood',
-                    confirmButtonColor: '#0ea5e9'
+                    confirmButtonColor: '#0ea5e9',
+                    customClass: { popup: 'rounded-2xl' }
                 });
+            },
+
+            buildVisualConcepts(headline) {
+                const base = (headline.thumbnail_suggestion || headline.headline || '').trim();
+                const safe = base.replace(/https?:\/\/example\.com[^\s]*/gi, '').trim()
+                    || 'Dynamic editorial image highlighting the main subject with bold contrast and clear focal point.';
+
+                return [
+                    {
+                        description: safe,
+                        color_palette: 'Cyan + deep navy + white accents',
+                        style: 'Photojournalistic close-up',
+                        ctr_reason: 'Human face + action creates immediate emotional pull',
+                    },
+                    {
+                        description: `Wide contextual scene supporting: ${safe.slice(0, 120)}`,
+                        color_palette: 'Warm amber highlights on dark background',
+                        style: 'Cinematic wide shot',
+                        ctr_reason: 'Context framing increases trust and click curiosity',
+                    },
+                    {
+                        description: `Minimal graphic treatment for: ${safe.slice(0, 100)}`,
+                        color_palette: 'Monochrome with single accent color',
+                        style: 'Minimal editorial composite',
+                        ctr_reason: 'Clean layout stands out in crowded Discover feeds',
+                    },
+                ];
+            },
+
+            escapeHtml(str) {
+                return String(str).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
             },
 
 
@@ -353,6 +418,16 @@
                 const pid = 'hl_' + Date.now();
                 this.loading = true;
                 this.results = null;
+
+                // Reset the terminal-state guard and forcibly kill any
+                // leftover poller from a previous (e.g. errored) run so we
+                // can never accumulate two concurrent setInterval loops on
+                // the same component instance.
+                this.terminalReached = false;
+                if (this.pInterval) {
+                    clearInterval(this.pInterval);
+                    this.pInterval = null;
+                }
 
                 // Show Progress
                 const overlay = document.getElementById('generation-progress-overlay');
@@ -364,12 +439,32 @@
 
                 this.startPolling(pid);
 
-                // Update URL
+                // Update URL — only meaningful in keyword mode. In content
+                // mode we strip ?keyword= entirely so a refresh doesn't
+                // re-introduce a stale word into the URL bar.
                 const url = new URL(window.location.href);
-                url.searchParams.set('keyword', this.keyword);
+                if (this.mode === 'keyword' && this.keyword) {
+                    url.searchParams.set('keyword', this.keyword);
+                } else {
+                    url.searchParams.delete('keyword');
+                }
                 window.history.pushState({}, '', url);
 
                 try {
+                    // Submit only the active field. This complements the
+                    // server-side guard in HeadlineController::generate — even
+                    // if a user bypasses the JS layer, the controller will
+                    // still drop the inactive field on its end.
+                    const payload = {
+                        type: this.mode,
+                        progress_id: pid,
+                    };
+                    if (this.mode === 'keyword') {
+                        payload.keyword = this.keyword;
+                    } else {
+                        payload.content = this.content;
+                    }
+
                     const response = await fetch("{{ route('headlines.generate') }}", {
                         method: 'POST',
                         headers: {
@@ -377,12 +472,7 @@
                             'Accept': 'application/json',
                             'X-CSRF-TOKEN': '{{ csrf_token() }}'
                         },
-                        body: new URLSearchParams({
-                            type: this.mode,
-                            keyword: this.keyword,
-                            content: this.content,
-                            progress_id: pid
-                        })
+                        body: new URLSearchParams(payload)
                     });
                     
                     const data = await response.json();
@@ -424,33 +514,59 @@
 
             startPolling(pid) {
                 this.pInterval = setInterval(async () => {
+                    // Multiple polls can be in-flight simultaneously when
+                    // the network is slow. If any one of them has already
+                    // observed the terminal state and fired the alert, the
+                    // others MUST bail out before doing it a second time.
+                    if (this.terminalReached) return;
+
+                    let data;
                     try {
                         const r = await fetch("{{ route('headlines.progress', ['id' => ':id']) }}".replace(':id', pid));
                         if (!r.ok) return;
-                        const data = await r.json();
-                        this.updateUI(data);
-                        
-                        if (data.stage === 'completed' || data.stage === 'error') {
-                            clearInterval(this.pInterval);
-                            if (data.stage === 'completed') {
-                                this.handleResults(data);
-                                // Show success toast if overlay was minimized
-                                if (document.getElementById('generation-progress-overlay').classList.contains('hidden')) {
-                                    Swal.fire({
-                                        icon: 'success',
-                                        title: 'Extraction Complete!',
-                                        text: 'New headlines have been generated successfully.',
-                                        confirmButtonText: 'View Now'
-                                    }).then(() => {
-                                        document.getElementById('results-section-anchor').scrollIntoView({behavior: 'smooth'});
-                                    });
-                                }
-                            } else {
-                                this.stopProgress();
-                                Swal.fire('Error', data.message || 'Background processing failed', 'error');
-                            }
+                        data = await r.json();
+                    } catch (e) {
+                        return;
+                    }
+
+                    // The fetch was async — recheck the guard after the await
+                    // because another concurrent poll may have raced ahead and
+                    // already handled the terminal state while we were waiting.
+                    if (this.terminalReached) return;
+
+                    this.updateUI(data);
+
+                    if (data.stage !== 'completed' && data.stage !== 'error') {
+                        return;
+                    }
+
+                    // Latch the terminal flag IMMEDIATELY so the next
+                    // concurrent poll (currently somewhere in await) returns
+                    // at the recheck above instead of firing a duplicate alert.
+                    this.terminalReached = true;
+                    clearInterval(this.pInterval);
+                    this.pInterval = null;
+
+                    if (data.stage === 'completed') {
+                        // The completed progress payload now carries the
+                        // post-deduction `balance` field, so VidaCredits.apply
+                        // animates the chip directly without a second fetch.
+                        if (window.VidaCredits) window.VidaCredits.apply(data);
+                        this.handleResults(data);
+                        if (document.getElementById('generation-progress-overlay').classList.contains('hidden')) {
+                            Swal.fire({
+                                icon: 'success',
+                                title: 'Extraction Complete!',
+                                text: 'New headlines have been generated successfully.',
+                                confirmButtonText: 'View Now'
+                            }).then(() => {
+                                document.getElementById('results-section-anchor').scrollIntoView({behavior: 'smooth'});
+                            });
                         }
-                    } catch (e) { }
+                    } else {
+                        this.stopProgress();
+                        Swal.fire('Error', data.message || 'Background processing failed', 'error');
+                    }
                 }, 1500);
             },
 

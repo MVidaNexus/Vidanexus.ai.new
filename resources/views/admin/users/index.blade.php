@@ -111,8 +111,8 @@
     }
 
     .tier-beginner { background: rgba(148, 163, 184, 0.1); color: #94a3b8; }
-    .tier-starter { background: rgba(16, 185, 129, 0.1); color: #10b981; border-color: rgba(16, 185, 129, 0.2); }
-    .tier-pro { background: rgba(14, 165, 233, 0.1); color: #0ea5e9; border-color: rgba(14, 165, 233, 0.2); }
+    .tier-starter { background: rgba(16, 185, 129, 0.1); color: #00A58B; border-color: rgba(16, 185, 129, 0.2); }
+    .tier-pro { background: rgba(0, 168, 230, 0.1); color: #00A8E6; border-color: rgba(0, 168, 230, 0.2); }
     .tier-ultimate { background: rgba(168, 85, 247, 0.1); color: #a855f7; border-color: rgba(168, 85, 247, 0.2); }
     .tier-agency { background: rgba(245, 158, 11, 0.1); color: #f59e0b; border-color: rgba(245, 158, 11, 0.2); }
 
@@ -146,7 +146,7 @@
 
     .search-box-premium:focus-within {
         border-color: var(--primary-cyan);
-        box-shadow: 0 0 20px rgba(14, 165, 233, 0.1);
+        box-shadow: 0 0 20px rgba(0, 168, 230, 0.1);
     }
 
     .search-input {
@@ -241,12 +241,12 @@
         color: var(--text-main);
         font-size: 1rem;
         transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
-        font-family: 'Space Grotesk', sans-serif;
+        font-family: 'Poppins', sans-serif;
     }
 
     .modal-input:focus {
         border-color: var(--primary-cyan);
-        box-shadow: 0 0 20px rgba(14, 165, 233, 0.15);
+        box-shadow: 0 0 20px rgba(0, 168, 230, 0.15);
         outline: none;
     }
 
@@ -256,7 +256,7 @@
     }
 
     .btn-save {
-        background: linear-gradient(135deg, var(--primary-cyan), #0ea5e9);
+        background: linear-gradient(135deg, var(--primary-cyan), #00A8E6);
         color: #fff;
         border: none;
         padding: 1.1rem 2rem;
@@ -272,7 +272,7 @@
         justify-content: center;
         gap: 10px;
         transition: all 0.3s;
-        box-shadow: 0 10px 25px rgba(14, 165, 233, 0.2);
+        box-shadow: 0 10px 25px rgba(0, 168, 230, 0.2);
     }
 
     /* Keep button text dark on cyan for better contrast if needed, but white is usually sharper in dark mode. 
@@ -281,7 +281,7 @@
 
     .btn-save:hover {
         transform: translateY(-3px) scale(1.01);
-        box-shadow: 0 15px 35px rgba(14, 165, 233, 0.4);
+        box-shadow: 0 15px 35px rgba(0, 168, 230, 0.4);
         filter: brightness(1.1);
     }
 
@@ -306,15 +306,15 @@
             <div class="stat-number">{{ number_format(\App\Models\Wallet::sum('balance_credits'), 0) }}</div>
         </div>
     </div>
-    <div class="stat-card-premium" style="--accent-glow: var(--neon-purple);">
-        <div class="stat-icon-box" style="color: var(--neon-purple);"><i class="fas fa-bolt"></i></div>
+    <div class="stat-card-premium" style="--accent-glow: var(--accent);">
+        <div class="stat-icon-box" style="color: var(--accent);"><i class="fas fa-bolt"></i></div>
         <div class="stat-info">
             <h4>Total Invocations</h4>
             <div class="stat-number">{{ number_format(\App\Models\AiUsage::count(), 0) }}</div>
         </div>
     </div>
-    <div class="stat-card-premium" style="--accent-glow: #10b981;">
-        <div class="stat-icon-box" style="color: #10b981;"><i class="fas fa-user-check"></i></div>
+    <div class="stat-card-premium" style="--accent-glow: #00A58B;">
+        <div class="stat-icon-box" style="color: #00A58B;"><i class="fas fa-user-check"></i></div>
         <div class="stat-info">
             <h4>Admin Verified</h4>
             <div class="stat-number">{{ \App\Models\User::where('is_admin', true)->count() }}</div>
@@ -329,13 +329,13 @@
 <div style="display: flex; justify-content: space-between; align-items: flex-end; margin-bottom: 2rem; gap: 2rem; flex-wrap: wrap;">
     <!-- Security Matrix Quick-Toggle -->
     <div style="background: var(--horizon-card); border: 1px solid {{ $isVerificationEnabled ? 'rgba(16, 185, 129, 0.2)' : 'rgba(239, 68, 68, 0.2)' }}; padding: 1.25rem; border-radius: 20px; display: flex; align-items: center; gap: 1.5rem; transition: all 0.3s ease; flex: 1; min-width: 300px;">
-        <div style="width: 48px; height: 48px; border-radius: 12px; background: {{ $isVerificationEnabled ? 'rgba(16, 185, 129, 0.1)' : 'rgba(239, 68, 68, 0.1)' }}; display: flex; align-items: center; justify-content: center; color: {{ $isVerificationEnabled ? '#10b981' : '#ef4444' }}; font-size: 1.25rem;">
+        <div style="width: 48px; height: 48px; border-radius: 12px; background: {{ $isVerificationEnabled ? 'rgba(16, 185, 129, 0.1)' : 'rgba(239, 68, 68, 0.1)' }}; display: flex; align-items: center; justify-content: center; color: {{ $isVerificationEnabled ? '#00A58B' : '#ef4444' }}; font-size: 1.25rem;">
             <i class="fas {{ $isVerificationEnabled ? 'fa-shield-check' : 'fa-shield-exclamation' }}"></i>
         </div>
         <div style="flex: 1;">
             <div style="font-weight: 800; color: var(--text-main); font-size: 0.9rem; letter-spacing: 0.5px;">SYSTEM-WIDE VERIFICATION</div>
             <div style="font-size: 0.75rem; color: var(--text-muted); margin-top: 0.1rem;">
-                Status: <strong style="color: {{ $isVerificationEnabled ? '#10b981' : '#ef4444' }}; text-transform: uppercase;">{{ $isVerificationEnabled ? 'Active' : 'Bypassed' }}</strong>
+                Status: <strong style="color: {{ $isVerificationEnabled ? '#00A58B' : '#ef4444' }}; text-transform: uppercase;">{{ $isVerificationEnabled ? 'Active' : 'Bypassed' }}</strong>
             </div>
         </div>
         <form action="{{ route('admin.users.toggle-verification') }}" method="POST" style="margin: 0;">
@@ -394,7 +394,7 @@
                 @php $accessibleTools = $user->getAccessibleTools(); @endphp
                 @if(count($accessibleTools) > 0)
                     @foreach(array_slice($accessibleTools, 0, 3) as $tool)
-                        <span style="font-size: 0.6rem; background: rgba(14, 165, 233, 0.1); color: var(--primary-cyan); padding: 0.2rem 0.4rem; border-radius: 4px; border: 1px solid rgba(14, 165, 233, 0.2);">
+                        <span style="font-size: 0.6rem; background: rgba(0, 168, 230, 0.1); color: var(--primary-cyan); padding: 0.2rem 0.4rem; border-radius: 4px; border: 1px solid rgba(0, 168, 230, 0.2);">
                             {{ $tool['name'] }}
                         </span>
                     @endforeach
@@ -418,7 +418,7 @@
         <!-- Activity -->
         <div style="display: flex; flex-direction: column; gap: 0.25rem;">
             <div style="font-size: 0.85rem; color: var(--text-main); font-weight: 700; display: flex; align-items: center; gap: 0.4rem;">
-                <i class="fas fa-microchip" style="font-size: 0.75rem; color: var(--neon-purple);"></i>
+                <i class="fas fa-microchip" style="font-size: 0.75rem; color: var(--accent);"></i>
                 {{ $user->aiUsages()->count() }} AI Operations
             </div>
             <div style="font-size: 0.6rem; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.5px; font-weight: 600;">
@@ -456,7 +456,7 @@
 @endforeach
 
 <div style="margin-top: 2rem; display: flex; justify-content: center;">
-    {{ $users->links() }}
+    {{ $users->links('admin.horizon.partials._pagination') }}
 </div>
 
 <!-- Credits Management Modal -->
@@ -471,7 +471,7 @@
             <div class="modal-body">
                 <div class="target-identity-badge">
                     <p style="color: var(--text-muted); font-size: 0.85rem; margin: 0; text-transform: uppercase; letter-spacing: 1px;">Target Identity</p>
-                    <p id="creditsUserName" style="color: var(--text-main); font-weight: 800; font-size: 1.1rem; margin-top: 5px; font-family: 'Space Grotesk', sans-serif;"></p>
+                    <p id="creditsUserName" style="color: var(--text-main); font-weight: 800; font-size: 1.1rem; margin-top: 5px; font-family: 'Poppins', sans-serif;"></p>
                 </div>
                 
                 <label style="display:block; font-size:0.75rem; color:var(--text-muted); text-transform:uppercase; letter-spacing:1px; margin-bottom:0.75rem; font-weight: 700;">Exact New Balance (CRS)</label>
@@ -491,7 +491,7 @@
 <div id="toolsModal" class="modal">
     <div class="modal-content" style="max-width: 600px;">
         <div class="modal-header">
-            <h3 style="background: linear-gradient(135deg, var(--neon-purple), var(--primary-cyan)); -webkit-background-clip: text; -webkit-text-fill-color: transparent;"><i class="fas fa-toolbox"></i> Precision Tool Access</h3>
+            <h3 style="background: linear-gradient(135deg, var(--accent), var(--primary-cyan)); -webkit-background-clip: text; -webkit-text-fill-color: transparent;"><i class="fas fa-toolbox"></i> Precision Tool Access</h3>
             <button onclick="closeModal('toolsModal')" style="background:none; border:none; color:var(--text-muted); cursor:pointer; font-size:1.2rem;"><i class="fas fa-times"></i></button>
         </div>
         <form id="toolsForm" method="POST">
@@ -499,8 +499,8 @@
             <div class="modal-body" style="max-height: 50vh; overflow-y: auto; scrollbar-width: thin;">
                 <div class="target-identity-badge" style="background: rgba(176, 38, 255, 0.05); border-color: rgba(176, 38, 255, 0.2);">
                     <p style="color: var(--text-muted); font-size: 0.85rem; margin: 0; text-transform: uppercase; letter-spacing: 1px;">Target Identity</p>
-                    <p id="toolsUserName" style="color: var(--text-main); font-weight: 800; font-size: 1.1rem; margin-top: 5px; font-family: 'Space Grotesk', sans-serif;"></p>
-                    <p style="color: var(--text-muted); font-size: 0.75rem; margin-top: 0.6rem;"><i class="fas fa-info-circle" style="color: var(--neon-purple);"></i> Overrides take precedence over system defaults.</p>
+                    <p id="toolsUserName" style="color: var(--text-main); font-weight: 800; font-size: 1.1rem; margin-top: 5px; font-family: 'Poppins', sans-serif;"></p>
+                    <p style="color: var(--text-muted); font-size: 0.75rem; margin-top: 0.6rem;"><i class="fas fa-info-circle" style="color: var(--accent);"></i> Overrides take precedence over system defaults.</p>
                 </div>
 
                 <div id="toolsList" style="display: grid; grid-template-columns: 1fr 1fr; gap: 1.25rem;">
@@ -509,7 +509,7 @@
             </div>
 
             <div class="modal-footer">
-                <button type="submit" class="btn-save" style="background: linear-gradient(135deg, var(--neon-purple), #8b5cf6); box-shadow: 0 10px 25px rgba(139, 92, 246, 0.2);"><i class="fas fa-save"></i> Save Access Controls</button>
+                <button type="submit" class="btn-save" style="background: linear-gradient(135deg, var(--accent), #00A58B); box-shadow: 0 10px 25px rgba(139, 92, 246, 0.2);"><i class="fas fa-save"></i> Save Access Controls</button>
             </div>
         </form>
     </div>
@@ -527,7 +527,7 @@
             <div class="modal-body">
                 <div class="target-identity-badge" style="background: rgba(255, 170, 0, 0.05); border-color: rgba(255, 170, 0, 0.2);">
                     <p style="color: var(--text-muted); font-size: 0.85rem; margin: 0; text-transform: uppercase; letter-spacing: 1px;">Target Identity</p>
-                    <p id="passwordUserName" style="color: var(--text-main); font-weight: 800; font-size: 1.1rem; margin-top: 5px; font-family: 'Space Grotesk', sans-serif;"></p>
+                    <p id="passwordUserName" style="color: var(--text-main); font-weight: 800; font-size: 1.1rem; margin-top: 5px; font-family: 'Poppins', sans-serif;"></p>
                 </div>
 
                 <label style="display:block; font-size:0.75rem; color:var(--text-muted); text-transform:uppercase; letter-spacing:1px; margin-bottom:0.75rem; font-weight: 700;">New Credentials</label>
@@ -547,7 +547,7 @@
 <div id="emailModal" class="modal">
     <div class="modal-content">
         <div class="modal-header">
-            <h3><i class="fas fa-envelope" style="color: #0ea5e9;"></i> Update Identity Email</h3>
+            <h3><i class="fas fa-envelope" style="color: #00A8E6;"></i> Update Identity Email</h3>
             <button onclick="closeModal('emailModal')" style="background:none; border:none; color:var(--text-muted); cursor:pointer; font-size:1.2rem;"><i class="fas fa-times"></i></button>
         </div>
         <form id="emailForm" method="POST">
@@ -555,7 +555,7 @@
             <div class="modal-body">
                 <div class="target-identity-badge">
                     <p style="color: var(--text-muted); font-size: 0.85rem; margin: 0; text-transform: uppercase; letter-spacing: 1px;">Target Identity</p>
-                    <p id="emailUserName" style="color: var(--text-main); font-weight: 800; font-size: 1.1rem; margin-top: 5px; font-family: 'Space Grotesk', sans-serif;"></p>
+                    <p id="emailUserName" style="color: var(--text-main); font-weight: 800; font-size: 1.1rem; margin-top: 5px; font-family: 'Poppins', sans-serif;"></p>
                 </div>
 
                 <label style="display:block; font-size:0.75rem; color:var(--text-muted); text-transform:uppercase; letter-spacing:1px; margin-bottom:0.75rem; font-weight: 700;">New Primary Email</label>
@@ -674,10 +674,10 @@
         tools.forEach(tool => {
             const div = document.createElement('div');
             div.className = "tool-item-card";
-            div.style = `background: var(--horizon-nav-hover); padding: 1rem; border-radius: 18px; border: 1px solid ${isOwned ? 'rgba(14, 165, 233, 0.2)' : 'var(--horizon-border)'}; display: flex; flex-direction: column; gap: 12px; transition: all 0.3s; position: relative; overflow: hidden;`;
+            div.style = `background: var(--horizon-nav-hover); padding: 1rem; border-radius: 18px; border: 1px solid ${isOwned ? 'rgba(0, 168, 230, 0.2)' : 'var(--horizon-border)'}; display: flex; flex-direction: column; gap: 12px; transition: all 0.3s; position: relative; overflow: hidden;`;
             
             if (isOwned) {
-                div.style.boxShadow = "inset 0 0 20px rgba(14, 165, 233, 0.03)";
+                div.style.boxShadow = "inset 0 0 20px rgba(0, 168, 230, 0.03)";
             }
 
             div.innerHTML = `
@@ -693,7 +693,7 @@
                 <button type="button" onclick="toggleToolState('${tool.slug}')" id="btn-${tool.slug}" 
                     style="border: none; padding: 0.6rem; border-radius: 10px; font-size: 0.75rem; font-weight: 800; cursor: pointer; transition: all 0.2s; 
                     background: ${isOwned ? 'rgba(239, 68, 68, 0.1)' : 'rgba(16, 185, 129, 0.1)'}; 
-                    color: ${isOwned ? '#ef4444' : '#10b981'};
+                    color: ${isOwned ? '#ef4444' : '#00A58B'};
                     border: 1px solid ${isOwned ? 'rgba(239, 68, 68, 0.2)' : 'rgba(16, 185, 129, 0.2)'};">
                     <i class="fas ${isOwned ? 'fa-lock' : 'fa-unlock'}"></i> ${isOwned ? 'Revoke Access' : 'Quick Unlock'}
                 </button>
@@ -733,7 +733,7 @@
             btn.style.color = '#000';
             btn.style.borderColor = 'var(--primary-cyan)';
             card.style.borderHeader = '1px solid var(--primary-cyan)';
-            card.style.boxShadow = '0 0 20px rgba(14, 165, 233, 0.2)';
+            card.style.boxShadow = '0 0 20px rgba(0, 168, 230, 0.2)';
         }
     }
 

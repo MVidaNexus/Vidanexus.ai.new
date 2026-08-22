@@ -210,6 +210,7 @@
                         return;
                     }
                     this.headlineAnalysis = data;
+                    if (window.VidaCredits) window.VidaCredits.apply(data);
                 });
             },
 
@@ -236,6 +237,7 @@
                         return;
                     }
                     this.contentAnalysis = data;
+                    if (window.VidaCredits) window.VidaCredits.apply(data);
                 });
             }
         }

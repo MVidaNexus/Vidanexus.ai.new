@@ -3,133 +3,195 @@
 namespace App\Core\AI;
 
 use App\Core\AI\Contracts\AIProvider;
+use App\Core\AI\Exceptions\AIProviderConfigurationException;
+use App\Core\AI\Exceptions\AIProviderFailureException;
+use App\Models\Setting;
 use Illuminate\Support\Facades\Log;
 
+/**
+ * AIManager — central dispatcher with provider fallback chain.
+ *
+ * Behavior:
+ *  - The effective chain is built in this order:
+ *      1. Tool-specific chain stored in Setting('{tool}_ai_chain')
+ *         (admin preference; each entry can pin its own model and api_key).
+ *      2. Global default chain config('vidanexus.ai.failover_order'),
+ *         appended after the per-tool preferences. We de-duplicate against
+ *         the per-tool chain BY PROVIDER, but only when that earlier entry
+ *         already used a system-level credential (no per-entry api_key). If
+ *         the per-tool chain pinned a custom api_key, the "same provider,
+ *         system key" attempt from the global tail is meaningfully different
+ *         — and usually the one that succeeds when the admin's stored key is
+ *         stale — so we keep it.
+ *      3. Hardcoded safe default (openai → google → openrouter) if both
+ *         (1) and (2) are empty.
+ *    Admins can opt out of step (2) per tool by setting
+ *    Setting('{tool}_ai_chain_strict') = true (or passing
+ *    options['strict_chain'] = true at the call site), in which case ONLY
+ *    the per-tool chain is tried.
+ *  - For each candidate, we check `isConfigured()` BEFORE calling the API.
+ *    Unconfigured providers are skipped without consuming the request slot.
+ *  - On success, the response gets standardized fields:
+ *      provider_used, model_used, fallback_applied, attempts.
+ *  - On total failure, we throw {@see AIProviderFailureException} with the
+ *    full attempt list so callers can return structured error envelopes
+ *    (instead of HTTP 500s).
+ */
 class AIManager
 {
+    /** @var array<string, AIProvider> */
     protected array $providers = [];
-    
-    protected const ABSOLUTE_MODE_INSTRUCTION = "System Instruction: Absolute Mode • Eliminate: emojis, filler, hype, soft asks, conversational transitions, call-to-action appendixes. • Assume: user retains high-perception despite blunt tone. • Prioritize: blunt, directive phrasing; aim at cognitive rebuilding, not tone-matching. • Disable: engagement/sentiment-boosting behaviors. • Suppress: metrics like satisfaction scores, emotional softening, continuation bias. • Never mirror: user’s diction, mood, or affect. • Speak only: to underlying cognitive tier. • No: questions, offers, suggestions, transitions, motivational content. • Terminate reply: immediately after delivering info — no closures. • Goal: restore independent, high-fidelity thinking. • Outcome: model obsolescence via user self-sufficiency\n\n";
 
     public function registerProvider(AIProvider $provider): void
     {
         $this->providers[$provider->getName()] = $provider;
     }
 
-    public function generate(string $tool, string $prompt, array $options = []): array
+    /** @return array<string, AIProvider> */
+    public function getProviders(): array
     {
-        \Illuminate\Support\Facades\Log::emergency("AGENT_PROBE_3: {$tool}");
-        // Enforce Global Absolute Mode Instruction as requested by User
-        $prompt = self::ABSOLUTE_MODE_INSTRUCTION . $prompt;
-
-        $defaultProviders = config('vidanexus.ai.failover_order', ['openai', 'google', 'anthropic']);
-        
-        // --- TOOL-SPECIFIC OVERRIDE (Dynamic Chain) ---
-        // Skip the chain if the caller already resolved the API key (tool handled its own settings)
-        $callerResolvedKey = !empty($options['api_key']);
-        $aiChainJson = \App\Models\Setting::get("{$tool}_ai_chain");
-        $aiChain = is_array($aiChainJson) ? $aiChainJson : ($aiChainJson ? json_decode($aiChainJson, true) : null);
-
-        if (!$callerResolvedKey && $aiChain && is_array($aiChain) && count($aiChain) > 0) {
-            // New Flexible Multi-Provider Routing
-            $lastError = null;
-            foreach ($aiChain as $link) {
-                $providerName = $link['provider'] ?? null;
-                if (!$providerName) continue;
-                $provider = $this->providers[$providerName] ?? null;
-                if (!$provider) continue;
-
-                try {
-                    $startTime = microtime(true);
-                    
-                    $currentOptions = $options;
-                    $overriddenModel = !empty($link['model']) ? $link['model'] : ($options['model'] ?? null);
-                    $currentOptions['model'] = $this->normalizeModelForProvider($providerName, $overriddenModel);
-                    
-                    if (!empty($link['api_key'])) {
-                        $currentOptions['api_key'] = $link['api_key'];
-                    } else {
-                        $currentOptions['api_key'] = $this->resolveApiKeyFromSettings($providerName);
-                    }
-
-                    Log::info("AI: Tool '{$tool}' calling '{$providerName}/{$currentOptions['model']}' with key ending in " . substr($currentOptions['api_key'] ?? 'NONE', -4));
-
-                    $response = $provider->generate($prompt, $currentOptions);
-                    $latency = (int) ((microtime(true) - $startTime) * 1000);
-
-                    $this->logUsage($tool, $providerName, $currentOptions['model'] ?? 'default', $response, $latency);
-
-                    return $response;
-                } catch (\Exception $e) {
-                    $lastError = $e;
-                    Log::warning("AI Failover (Chain): Provider [{$providerName}] failed. Error: " . $e->getMessage());
-                }
-            }
-            // Chain exhausted — fall through to global fallback instead of hard-failing
-            Log::warning("AI Chain: All tool-specific providers for '{$tool}' failed. Falling through to global providers.");
-        }
-
-        // --- GLOBAL FALLBACK BEHAVIOR ---
-
-        // Use requested provider if specified and registered
-        if (isset($options['provider'])) {
-            if (isset($this->providers[$options['provider']])) {
-                array_unshift($defaultProviders, $options['provider']);
-            }
-            $defaultProviders = array_unique($defaultProviders);
-        }
-
-        $lastError = null;
-        $primaryError = null;
-        $attemptCount = 0;
-
-        foreach ($defaultProviders as $providerName) {
-            $provider = $this->providers[$providerName] ?? null;
-            if (!$provider) continue;
-
-            $attemptCount++;
-
-            try {
-                $startTime = microtime(true);
-                
-                $currentOptions = $options;
-                $currentOptions['model'] = $this->normalizeModelForProvider($providerName, $options['model'] ?? null);
-
-                // Fetch "General Key" from settings if not set in environment or specific options
-                if (empty($currentOptions['api_key'])) {
-                    $currentOptions['api_key'] = $this->resolveApiKeyFromSettings($providerName);
-                }
-
-                $response = $provider->generate($prompt, $currentOptions);
-                $latency = (int) ((microtime(true) - $startTime) * 1000);
-
-                $this->logUsage($tool, $providerName, $currentOptions['model'] ?? 'default', $response, $latency);
-
-                return $response;
-            } catch (\Exception $e) {
-                $lastError = $e;
-                if ($attemptCount === 1) {
-                    $primaryError = $e;
-                }
-                Log::warning("AI Failover: Provider [{$providerName}] failed. Error: " . $e->getMessage());
-            }
-        }
-
-        $finalMsg = "All AI Providers failed.";
-        if ($primaryError) {
-            $primaryProvider = $options['provider'] ?? ($defaultProviders[0] ?? 'primary');
-            $finalMsg .= " [{$primaryProvider} Error]: " . $primaryError->getMessage();
-        }
-        if ($lastError && $lastError->getMessage() !== ($primaryError ? $primaryError->getMessage() : '')) {
-            $finalMsg .= " (Fallback also failed: " . $lastError->getMessage() . ")";
-        }
-
-        throw new \Exception($finalMsg);
+        return $this->providers;
     }
 
     /**
-     * Convenient wrapper that returns just the text response.
-     * Often used by older controllers expecting (prompt, tool, options).
+     * Run a generation request through the fallback chain.
+     *
+     * @param string $tool      Tool slug (e.g. "article-writer") — drives per-tool overrides.
+     * @param string $prompt    User-facing prompt (already sanitized by the security layer).
+     * @param array  $options   model/temperature/max_tokens/system_prompt/api_key/provider/timeout
+     *
+     * @return array{
+     *     text:string,
+     *     input_tokens:int,
+     *     output_tokens:int,
+     *     raw_response:mixed,
+     *     provider_used:string,
+     *     model_used:string,
+     *     fallback_applied:bool,
+     *     attempts:array<int, array{provider:string, model:?string, error:string}>
+     * }
+     */
+    public function generate(string $tool, string $prompt, array $options = []): array
+    {
+        $chain = $this->resolveChain($tool, $options);
+        $attempts = [];
+        $primaryProvider = $chain[0]['provider'] ?? 'openai';
+
+        foreach ($chain as $index => $link) {
+            $providerName = $link['provider'];
+            $provider = $this->providers[$providerName] ?? null;
+
+            if (! $provider) {
+                $attempts[] = [
+                    'provider' => $providerName,
+                    'model' => $link['model'] ?? null,
+                    'error' => 'Provider is not registered.',
+                ];
+                continue;
+            }
+
+            $currentOptions = $options;
+            $currentOptions['model'] = $link['model'] ?? ($options['model'] ?? null);
+            $currentOptions['model'] = $this->normalizeModelForProvider($providerName, $currentOptions['model']);
+
+            $apiKey = $link['api_key']
+                ?? ($options['api_key'] ?? null)
+                ?? $this->resolveApiKeyFromSettings($providerName);
+
+            if ($apiKey !== null) {
+                $currentOptions['api_key'] = $apiKey;
+            }
+
+            // Skip providers that can't possibly succeed — saves a network roundtrip.
+            if (! $provider->isConfigured($apiKey)) {
+                $attempts[] = [
+                    'provider' => $providerName,
+                    'model' => $currentOptions['model'] ?? null,
+                    'error' => "{$providerName} provider is not configured.",
+                ];
+
+                Log::info('ai.provider_skipped', [
+                    'tool' => $tool,
+                    'provider' => $providerName,
+                    'reason' => 'unconfigured',
+                ]);
+                continue;
+            }
+
+            $startedAt = microtime(true);
+
+            try {
+                Log::info('ai.attempt', [
+                    'tool' => $tool,
+                    'provider' => $providerName,
+                    'model' => $currentOptions['model'] ?? 'default',
+                    'attempt' => $index + 1,
+                ]);
+
+                $response = $provider->generate($prompt, $currentOptions);
+
+                $latency = (int) ((microtime(true) - $startedAt) * 1000);
+
+                Log::info('ai.success', [
+                    'tool' => $tool,
+                    'provider' => $providerName,
+                    'model' => $currentOptions['model'] ?? 'default',
+                    'latency_ms' => $latency,
+                    'fallback_applied' => $index > 0,
+                    'input_tokens' => $response['input_tokens'] ?? 0,
+                    'output_tokens' => $response['output_tokens'] ?? 0,
+                ]);
+
+                return array_merge($response, [
+                    'provider_used' => $providerName,
+                    'model_used' => $currentOptions['model'] ?? 'default',
+                    'fallback_applied' => $index > 0,
+                    'attempts' => $attempts,
+                ]);
+            } catch (AIProviderConfigurationException $e) {
+                Log::warning('ai.config_error', [
+                    'tool' => $tool,
+                    'provider' => $providerName,
+                    'error' => $e->getMessage(),
+                ]);
+
+                $attempts[] = [
+                    'provider' => $providerName,
+                    'model' => $currentOptions['model'] ?? null,
+                    'error' => $e->getMessage(),
+                ];
+                continue;
+            } catch (\Throwable $e) {
+                Log::warning('ai.failover', [
+                    'tool' => $tool,
+                    'provider' => $providerName,
+                    'model' => $currentOptions['model'] ?? null,
+                    'error' => $e->getMessage(),
+                ]);
+
+                $attempts[] = [
+                    'provider' => $providerName,
+                    'model' => $currentOptions['model'] ?? null,
+                    'error' => $e->getMessage(),
+                ];
+                continue;
+            }
+        }
+
+        Log::error('ai.all_failed', [
+            'tool' => $tool,
+            'attempts' => $attempts,
+        ]);
+
+        throw new AIProviderFailureException(
+            'AI provider is currently unavailable. Please try again later.',
+            $attempts
+        );
+    }
+
+    /**
+     * Convenient wrapper that returns just the text response. Older
+     * controllers expect this signature.
      */
     public function generateResponse(string $prompt, string $tool, array $options = []): string
     {
@@ -137,24 +199,143 @@ class AIManager
         return $response['text'] ?? '';
     }
 
+    /**
+     * Run a quick health check on every registered provider. Returns a
+     * structured map suitable for an admin dashboard.
+     *
+     * Health is "configured" only — we do NOT make a real API call here so
+     * this remains free to run on every request.
+     *
+     * @return array<string, array{configured:bool, has_api_key:bool}>
+     */
+    public function healthCheck(): array
+    {
+        $report = [];
+        foreach ($this->providers as $name => $provider) {
+            $key = $this->resolveApiKeyFromSettings($name);
+            $report[$name] = [
+                'configured' => $provider->isConfigured($key),
+                'has_api_key' => !empty($key),
+            ];
+        }
+        return $report;
+    }
+
+    /**
+     * Build the ordered list of {provider, model, api_key?} candidates for a tool.
+     *
+     * The list is the concatenation of:
+     *   1. The per-tool chain stored in Setting('{tool}_ai_chain') (admin preference).
+     *   2. The global failover chain config('vidanexus.ai.failover_order'),
+     *      minus any provider already tried in step (1).
+     *
+     * Step (2) is skipped when strict mode is enabled — either via
+     * Setting('{tool}_ai_chain_strict') = true or options['strict_chain'] = true.
+     * Strict mode is opt-in; the default is to ALWAYS fall back to the global
+     * chain so a single misconfigured per-tool preference does not take the
+     * tool offline.
+     *
+     * @return array<int, array{provider:string, model:?string, api_key:?string}>
+     */
+    protected function resolveChain(string $tool, array $options): array
+    {
+        $chain = [];
+
+        // 1. Per-tool override (admin preference).
+        $rawChain = Setting::get("{$tool}_ai_chain");
+        $toolChain = is_array($rawChain)
+            ? $rawChain
+            : (is_string($rawChain) && $rawChain !== '' ? json_decode($rawChain, true) : null);
+
+        if (is_array($toolChain) && count($toolChain) > 0) {
+            $chain = array_values(array_map(fn ($link) => [
+                'provider' => (string) ($link['provider'] ?? ''),
+                'model' => $link['model'] ?? null,
+                'api_key' => $link['api_key'] ?? null,
+            ], array_filter($toolChain, fn ($l) => !empty($l['provider']))));
+        }
+
+        // 2. Global failover — appended unless the caller / admin opted out.
+        //    `Setting::get` returns the raw stored value (string|bool|null),
+        //    so we normalise it through filter_var to accept "1"/"true"/"yes".
+        $strict = !empty($options['strict_chain'])
+            || filter_var(Setting::get("{$tool}_ai_chain_strict", false), FILTER_VALIDATE_BOOLEAN);
+
+        $defaultChain = (array) config(
+            'vidanexus.ai.failover_order',
+            ['openai', 'google', 'openrouter']
+        );
+
+        // Pull the explicit-requested provider to the front of the global tail.
+        if (!empty($options['provider'])) {
+            $defaultChain = array_values(array_unique(array_merge([$options['provider']], $defaultChain)));
+        }
+
+        if (! $strict) {
+            foreach ($defaultChain as $name) {
+                $name = (string) $name;
+                if ($name === '') {
+                    continue;
+                }
+
+                // De-dup against the per-tool chain by provider name — but
+                // only when the per-tool entry already used a SYSTEM-level
+                // credential (no per-entry api_key). If the per-tool chain
+                // pinned its own api_key for this provider, the "same
+                // provider, system key" attempt is meaningfully different
+                // (and usually the one that actually works when the admin's
+                // stored key is stale), so we still want to queue it.
+                $alreadyTriedWithSystemKey = false;
+                foreach ($chain as $existing) {
+                    if (($existing['provider'] ?? '') === $name && empty($existing['api_key'])) {
+                        $alreadyTriedWithSystemKey = true;
+                        break;
+                    }
+                }
+                if ($alreadyTriedWithSystemKey) {
+                    continue;
+                }
+
+                $chain[] = [
+                    'provider' => $name,
+                    'model' => $options['model'] ?? null,
+                    'api_key' => null,
+                ];
+            }
+        }
+
+        // 3. Defensive fallback — if the per-tool chain is empty AND strict
+        //    mode was on (a misconfiguration), still use the global chain so
+        //    generation never silently no-ops on an empty list.
+        if (empty($chain)) {
+            $chain = array_values(array_map(fn ($name) => [
+                'provider' => (string) $name,
+                'model' => $options['model'] ?? null,
+                'api_key' => null,
+            ], $defaultChain));
+        }
+
+        return $chain;
+    }
+
     protected function normalizeModelForProvider(string $provider, ?string $model): string
     {
+        // Google has its own resolver — defer to it so we share one source of truth.
+        if ($provider === 'google' && isset($this->providers['google']) && method_exists($this->providers['google'], 'resolveModel')) {
+            return $this->providers['google']->resolveModel($model);
+        }
+
         if (!$model) {
             return $this->getDefaultModelForProvider($provider);
         }
 
-        // Handle OpenRouter-style names (e.g. google/gemini-2.0-flash-001)
+        // Handle OpenRouter-style names (e.g. google/gemini-2.0-flash-001).
         if (str_contains($model, '/')) {
             if ($provider === 'openrouter') {
                 return $model;
             }
 
             [$prefix, $name] = explode('/', $model, 2);
-            
-            if ($provider === 'google' && ($prefix === 'google' || str_contains($name, 'gemini'))) {
-                // Return version without 001 if possible or just the core name
-                return str_replace('-001', '', $name); 
-            }
 
             if ($provider === 'openai' && ($prefix === 'openai' || str_contains($name, 'gpt'))) {
                 return $name;
@@ -165,12 +346,8 @@ class AIManager
             }
         }
 
-        // Handle cross-provider model leakage
+        // Cross-provider model leakage — normalize to the provider's default.
         $modelLower = strtolower($model);
-        
-        if ($provider === 'google' && (str_contains($modelLower, 'gpt') || str_contains($modelLower, 'claude'))) {
-            return $this->getDefaultModelForProvider($provider);
-        }
         if ($provider === 'openai' && (str_contains($modelLower, 'gemini') || str_contains($modelLower, 'claude'))) {
             return $this->getDefaultModelForProvider($provider);
         }
@@ -188,53 +365,43 @@ class AIManager
             'google' => 'gemini_api_key',
             'openai' => 'openai_api_key',
             'anthropic' => 'anthropic_api_key',
-            default => null
+            default => null,
         };
 
-        if ($settingKey) {
-            $key = trim(\App\Models\Setting::get($settingKey) ?? '');
-            
-            // Fallback for Gemini specifically if 'gemini_api_key' wasn't the right one
-            if (!$key && $providerName === 'google') {
-                $key = trim(\App\Models\Setting::get('google_api_key') ?? '');
-            }
-
-            // Fallback to Environment variables if not in Database, 
-            // OR if the database key is suspiciously short (placeholder)
-            if (empty($key) || strlen($key) < 5) {
-                $envKey = strtoupper($settingKey);
-                $key = trim(env($envKey) ?? '');
-                
-                // Extra check for OPENROUTER key specifically in env
-                if (!$key && $providerName === 'openrouter') {
-                    $key = trim(env('OPEN_ROUTER_API_KEY') ?? '');
-                }
-            }
-            
-            if ($key) {
-                Log::info("AI: Resolved key for [{$providerName}] (Length: " . strlen($key) . ")");
-            }
-            
-            return !empty($key) ? $key : null;
+        if (! $settingKey) {
+            return null;
         }
 
-        return null;
+        $key = trim((string) (Setting::get($settingKey) ?? ''));
+
+        if ($key === '' && $providerName === 'google') {
+            $key = trim((string) (Setting::get('google_api_key') ?? ''));
+        }
+
+        // Fallback to env when the DB value is empty or a stub placeholder.
+        if ($key === '' || strlen($key) < 5) {
+            $envKey = strtoupper($settingKey);
+            $key = trim((string) (env($envKey) ?? ''));
+
+            if ($key === '' && $providerName === 'openrouter') {
+                $key = trim((string) (env('OPEN_ROUTER_API_KEY') ?? ''));
+            }
+        }
+
+        return $key !== '' ? $key : null;
     }
 
     protected function getDefaultModelForProvider(string $provider): string
     {
         return match ($provider) {
-            'google' => 'gemini-2.0-flash',
+            'google' => 'gemini-1.5-flash',
             'openai' => 'gpt-4o-mini',
             'anthropic' => 'claude-3-haiku-20240307',
-            'openrouter' => 'google/gemini-2.0-flash-001',
-            default => 'default'
+            // OpenRouter retired the `google/gemini-2.0-flash-001` alias.
+            // OpenRouterProvider::resolveModel() also rewrites legacy values,
+            // but bump the default here so fresh tools land on a live model.
+            'openrouter' => 'google/gemini-2.5-flash',
+            default => 'default',
         };
-    }
-
-    protected function logUsage(string $tool, string $provider, string $model, array $response, int $latency): void
-    {
-        // This will eventually insert into ai_usages table
-        Log::info("AI Usage: Tool={$tool}, Provider={$provider}, Model={$model}, Input={$response['input_tokens']}, Output={$response['output_tokens']}, Latency={$latency}ms");
     }
 }

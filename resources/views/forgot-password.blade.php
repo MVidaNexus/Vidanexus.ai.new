@@ -1,27 +1,16 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>VidaNexus AI — Password Recovery</title>
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
-    <link rel="stylesheet" href="{{ asset('style.v2.css?v=30') }}">
+@extends('layouts.marketing')
+
+@section('title', 'VidaNexus AI — Password Recovery')
+
+@push('styles')
     <style>
         .glass-panel { max-width: 450px; padding: 2.5rem; text-align: center; }
-        .success-msg { background: rgba(16, 185, 129, 0.1); border: 1px solid rgba(16, 185, 129, 0.3); color: #10b981; padding: 1rem; border-radius: 10px; margin-bottom: 1.5rem; font-size: 0.9rem; line-height: 1.6; }
+        .success-msg { background: rgba(16, 185, 129, 0.1); border: 1px solid rgba(16, 185, 129, 0.3); color: #00A58B; padding: 1rem; border-radius: 10px; margin-bottom: 1.5rem; font-size: 0.9rem; line-height: 1.6; }
         .error-msg { background: rgba(239, 68, 68, 0.1); border: 1px solid rgba(239, 68, 68, 0.3); color: #ef4444; padding: 1rem; border-radius: 10px; margin-bottom: 1.5rem; font-size: 0.9rem; }
     </style>
-    <script>(function(){const t=localStorage.getItem("theme")||"dark";document.documentElement.setAttribute("data-theme",t);})();</script>
-</head>
-<body>
-    <canvas id="techCanvas"></canvas>
-    <div class="glow-orb orb-1"></div>
-    <div class="main-container">
-        @include('partials.header')
+@endpush
 
+@section('content')
         <main class="hero">
             <div class="glass-panel">
                 <div style="margin-bottom: 2rem;">
@@ -66,7 +55,4 @@
                 </div>
             </div>
         </main>
-    </div>
-    <script src="{{ asset('script.js?v=14') }}"></script>
-</body>
-</html>
+@endsection

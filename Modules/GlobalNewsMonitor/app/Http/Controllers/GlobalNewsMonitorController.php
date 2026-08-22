@@ -2,6 +2,7 @@
 
 namespace Modules\GlobalNewsMonitor\Http\Controllers;
 
+use App\Support\CountryRegistry;
 use Illuminate\Http\Request;
 use Illuminate\Routing\Controller;
 use Illuminate\Support\Facades\Cache;
@@ -20,55 +21,16 @@ class GlobalNewsMonitorController extends Controller
     {
         $isAjax = $request->ajax();
         
-        // Professional Dynamic Filters from Settings & Config
-        // Always generate the canonical list from config('keywords.countries') as the fallback
-        $defaultFallbackMap = config('keywords.countries', []);
-        $fallbackText = [];
-        foreach($defaultFallbackMap as $code => $data) {
-            $fallbackText[] = $code . ':' . $data['name'] . ' ' . ($data['flag'] ?? '🌐');
-        }
-        $configDefault = implode("\n", $fallbackText);
         $availableCountriesText = \App\Models\Setting::get('global-news-monitor_available_countries', '');
-        // If setting is empty/missing, use the canonical config list
-        if (empty(trim($availableCountriesText))) {
-            $availableCountriesText = $configDefault;
-        }
         $activeCountriesRaw = \App\Models\Setting::get('global-news-monitor_countries', '[]');
         $activeCountries = is_array($activeCountriesRaw) ? $activeCountriesRaw : json_decode($activeCountriesRaw, true);
-        
-        $countryMap = [];
-        foreach(explode("\n", $availableCountriesText) as $line) {
-            $parts = explode(':', trim($line));
-            if(count($parts) >= 2) {
-                $code = strtoupper(trim($parts[0]));
-                if(empty($activeCountries) || in_array($code, $activeCountries)) {
-                    $nameStr = trim($parts[1]);
-                    
-                    // Try to extract flag from the end of the text (emojis)
-                    $flag = '';
-                    if (preg_match('/(.*?)\s*([\x{1F1E6}-\x{1F1FF}]{2}|[\p{So}\p{Sk}]+)$/u', $nameStr, $matches)) {
-                        $nameStr = trim($matches[1]);
-                        $flag = trim($matches[2]);
-                    }
-                    
-                    $sysConfig = config("keywords.countries.{$code}");
-                    
-                    if ($sysConfig) {
-                        $countryMap[$code] = [
-                            'name' => $nameStr ?: $sysConfig['name'],
-                            'flag' => $flag ?: $sysConfig['flag'],
-                            'lang' => $sysConfig['lang']
-                        ];
-                    } else {
-                        $countryMap[$code] = [
-                            'name' => $nameStr,
-                            'flag' => $flag ?: '🌐',
-                            'lang' => in_array($code, ['US', 'GB', 'FR', 'CA', 'AU', 'PL']) ? 'en' : 'ar'
-                        ];
-                    }
-                }
-            }
-        }
+
+        // effectiveMap intersects the tool list with the global visibility
+        // registry — countries hidden globally never leak into this tool.
+        $countryMap = CountryRegistry::effectiveMap(
+            (string) $availableCountriesText,
+            is_array($activeCountries) ? $activeCountries : null
+        );
 
         $availableTopicsText = \App\Models\Setting::get('global-news-monitor_available_topics', "WORLD:World\nNATION:Nation\nBUSINESS:Business\nTECHNOLOGY:Technology\nENTERTAINMENT:Entertainment\nSPORTS:Sports\nSCIENCE:Science\nHEALTH:Health");
         $activeTopicsRaw = \App\Models\Setting::get('global-news-monitor_topics', '[]');
@@ -98,11 +60,9 @@ class GlobalNewsMonitorController extends Controller
         if(empty($countryMap)) $countryMap = ['US' => ['name' => 'United States', 'flag' => '🇺🇸', 'lang' => 'en']];
         if(empty($topicsMap)) $topicsMap = ['WORLD' => ['name' => 'World', 'icon' => 'fas fa-globe']];
 
-        $region = $request->get('region', 'EG');
-        if (!array_key_exists($region, $countryMap)) {
-            $region = 'EG';
-        }
-        $currentCountry = $countryMap[$region];
+        $resolved = CountryRegistry::resolveRegion($request->get('region'), $countryMap, CountryRegistry::defaultRegion());
+        $region = $resolved['region'];
+        $currentCountry = $resolved['country'];
         $topic = $request->get('topic', 'WORLD');
         if (!array_key_exists($topic, $topicsMap)) {
             $topic = array_key_first($topicsMap) ?: 'WORLD';
@@ -130,29 +90,41 @@ class GlobalNewsMonitorController extends Controller
             }
         }
 
-        $cacheKey = "google_news_radar_v3_{$region}_{$topic}";
+        $cacheKey = "google_news_radar_v5_{$region}_{$topic}";
 
         if ($forceRefresh) {
             Cache::forget($cacheKey);
         }
 
         // Read admin-configured time window
-        $timeWindow = \App\Models\Setting::get('global-news-monitor_time_window', '12h');
+        $timeWindow = \App\Models\Setting::get('global-news-monitor_time_window', '24h');
 
         $countryName = $currentCountry['name'] ?? '';
-        $lang = $currentCountry['lang'] ?? 'ar'; // Define $lang here
+        $lang = CountryRegistry::langFor($region);
 
         $googleNews = [];
         if ($isAjax || $forceRefresh) {
-            $googleNews = Cache::remember($cacheKey, 300, function () use ($region, $topic, $timeWindow, $currentCountry) {
-                return $this->service->fetchGoogleNews($region, $topic, $currentCountry['lang'] ?? 'ar', $timeWindow, $currentCountry['name'] ?? '');
-            });
+            $cached = $forceRefresh ? null : Cache::get($cacheKey);
+            if (is_array($cached) && count($cached) > 0) {
+                $googleNews = $cached;
+            } else {
+                Cache::forget($cacheKey);
+                $googleNews = $this->service->fetchGoogleNews($region, $topic, $lang, $timeWindow, $countryName);
+                if (count($googleNews) > 0) {
+                    Cache::put($cacheKey, $googleNews, 300);
+                }
+            }
         }
 
         if ($shouldCharge && !empty($googleNews)) {
-            auth()->user()->wallet->decrement('balance_credits', 1);
+            $chargeUser = auth()->user();
+            if (! $chargeUser->deductToolCredits('global-news-monitor')) {
+                \Illuminate\Support\Facades\Log::critical('[Global News Monitor] Credits could not be deducted after successful fetch', [
+                    'user_id' => $chargeUser->id,
+                ]);
+            }
             \App\Models\AiUsage::create([
-                'user_id' => auth()->id(),
+                'user_id' => $chargeUser->id,
                 'tool' => 'global-news-monitor',
                 'provider' => 'rss',
                 'model' => 'google-news',
@@ -165,14 +137,25 @@ class GlobalNewsMonitorController extends Controller
 
         // Handle AJAX requests
         if ($isAjax) {
-            $html = view('globalnewsmonitor::partials.news_grid', compact('googleNews', 'region', 'lang', 'thresholdHigh', 'thresholdModerate'))->render();
+            $html = view('globalnewsmonitor::partials.news_grid', compact('googleNews', 'region', 'lang', 'thresholdHigh', 'thresholdModerate', 'topic'))->render();
+
+            // Echo the post-deduction wallet balance so the front-end can
+            // animate the chip in place (credits-live.js / VidaCredits.apply).
+            $balance = null;
+            if ($shouldCharge && !empty($googleNews)) {
+                $balanceUser = auth()->user();
+                $balanceUser->load('wallet');
+                $balance = (float) ($balanceUser->wallet->balance_credits ?? 0);
+            }
+
             return response()->json([
                 'html' => $html,
                 'stats' => [
                     'total' => count($googleNews),
                     'high' => collect($googleNews)->where('seo_score', '>=', $thresholdHigh)->count(),
                     'moderate' => collect($googleNews)->where('seo_score', '>=', $thresholdModerate)->where('seo_score', '<', $thresholdHigh)->count()
-                ]
+                ],
+                'balance' => $balance,
             ]);
         }
 
@@ -186,14 +169,15 @@ class GlobalNewsMonitorController extends Controller
     public function analyzeArticle(Request $request)
     {
         $user = auth()->user();
-        
-        if (!$user->canUseTool('global-news-monitor')) {
-            return response()->json(['success' => false, 'message' => 'Tool access denied.'], 403);
-        }
+        $slug = 'global-news-monitor';
 
-        $syncCredits = 1;
-        if (!$user->wallet || $user->wallet->balance_credits < $syncCredits) {
-            return response()->json(['success' => false, 'message' => 'Insufficient balance. Required: 1 Credit.'], 402);
+        if (! $user->canUseTool($slug)) {
+            $cost = $user->getToolCreditCost($slug);
+            $hasOwnership = $user->ownsTool($slug);
+            $msg = $hasOwnership
+                ? "Insufficient balance. Required: {$cost} CRS."
+                : 'Tool access denied.';
+            return response()->json(['success' => false, 'message' => $msg], $hasOwnership ? 402 : 403);
         }
 
         $title = $request->input('title', '');
@@ -209,15 +193,96 @@ class GlobalNewsMonitorController extends Controller
         $result = $this->service->analyzeArticleWithAI($title, $description, $country, $lang, $topic);
 
         if ($result['success']) {
-            // Charge credits only on success
-            $user->wallet->decrement('balance_credits', $syncCredits);
+            if (! $user->deductToolCredits($slug)) {
+                \Illuminate\Support\Facades\Log::critical('[Global News Monitor] Credits could not be deducted after successful analysis', [
+                    'user_id' => $user->id,
+                ]);
+            }
             \App\Models\AiUsage::create([
                 'user_id'  => $user->id,
-                'tool'     => 'global-news-monitor',
+                'tool'     => $slug,
                 'provider' => 'ai',
                 'model'    => 'ai-analysis',
                 'status'   => 'success',
             ]);
+            $user->load('wallet');
+            $result['balance'] = (float) ($user->wallet->balance_credits ?? 0);
+        }
+
+        return response()->json($result);
+    }
+
+    /**
+     * Extract keywords from selected titles (client-side aggregation helper).
+     */
+    public function extractKeywords(Request $request)
+    {
+        $titles = $request->input('titles', []);
+        if (! is_array($titles) || empty($titles)) {
+            return response()->json(['success' => false, 'message' => 'No titles provided.'], 422);
+        }
+
+        $titles = array_values(array_filter(array_map('trim', $titles)));
+        $keywords = $this->service->extractKeywordsFromTitles($titles);
+
+        return response()->json([
+            'success' => true,
+            'keywords' => $keywords,
+            'count' => count($keywords),
+        ]);
+    }
+
+    /**
+     * Generate a unified content brief from multiple selected titles.
+     */
+    public function generateBrief(Request $request)
+    {
+        $user = auth()->user();
+        $slug = 'global-news-monitor';
+
+        if (! $user->canUseTool($slug)) {
+            $cost = $user->getToolCreditCost($slug);
+            $hasOwnership = $user->ownsTool($slug);
+            $msg = $hasOwnership
+                ? "Insufficient balance. Required: {$cost} CRS."
+                : 'Tool access denied.';
+
+            return response()->json(['success' => false, 'message' => $msg], $hasOwnership ? 402 : 403);
+        }
+
+        $titles = $request->input('titles', []);
+        if (! is_array($titles) || count($titles) < 1) {
+            return response()->json(['success' => false, 'message' => 'Select at least one title.'], 422);
+        }
+
+        $titles = array_values(array_filter(array_map('trim', $titles)));
+        $keywords = $request->input('keywords', []);
+        if (! is_array($keywords) || empty($keywords)) {
+            $keywords = $this->service->extractKeywordsFromTitles($titles);
+        }
+
+        $country = $request->input('country', 'EG');
+        $lang = $request->input('lang', 'ar');
+        $topic = $request->input('topic', 'WORLD');
+
+        $result = $this->service->generateMultiTitleBrief($titles, $keywords, $country, $lang, $topic);
+
+        if ($result['success']) {
+            if (! $user->deductToolCredits($slug)) {
+                \Illuminate\Support\Facades\Log::critical('[Global News Monitor] Credits could not be deducted after successful brief generation', [
+                    'user_id' => $user->id,
+                ]);
+            }
+            \App\Models\AiUsage::create([
+                'user_id'  => $user->id,
+                'tool'     => $slug,
+                'provider' => 'ai',
+                'model'    => 'multi-title-brief',
+                'status'   => 'success',
+            ]);
+            $user->load('wallet');
+            $result['balance'] = (float) ($user->wallet->balance_credits ?? 0);
+            $result['keywords'] = $keywords;
         }
 
         return response()->json($result);

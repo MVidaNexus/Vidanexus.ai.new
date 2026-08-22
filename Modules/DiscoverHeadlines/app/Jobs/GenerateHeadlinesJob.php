@@ -8,6 +8,7 @@ use Illuminate\Foundation\Bus\Dispatchable;
 use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Queue\SerializesModels;
 use Modules\DiscoverHeadlines\Services\HeadlineService;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Log;
 
 class GenerateHeadlinesJob implements ShouldQueue
@@ -15,7 +16,17 @@ class GenerateHeadlinesJob implements ShouldQueue
     use Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
 
     public $timeout = 300;
-    public $tries = 2;
+
+    /**
+     * One attempt is enough — `AIManager::generate` already walks the entire
+     * provider failover chain internally. A queue-level retry would only
+     * burn another round of credits without improving the odds, and it
+     * causes the progress cache to flip back to `searching` / `ai_processing`
+     * after the frontend already showed the user an error alert. That mid-
+     * flow flip-flop is what produced the duplicate "success/error" toasts
+     * users were reporting.
+     */
+    public $tries = 1;
 
     protected $userId;
     protected $params;
@@ -44,5 +55,23 @@ class GenerateHeadlinesJob implements ShouldQueue
             Log::error("[GenerateHeadlinesJob] Failed for PID: {$pid}. Error: " . $e->getMessage());
             throw $e;
         }
+    }
+
+    /**
+     * Persist failure for the headlines progress poller when the queue gives up.
+     */
+    public function failed(?\Throwable $e): void
+    {
+        $progressId = $this->params['progress_id'] ?? null;
+        if (! $progressId) {
+            return;
+        }
+
+        $message = $e ? $e->getMessage() : 'Background job failed after retries.';
+
+        Cache::put("gen_progress_{$progressId}", [
+            'stage' => 'error',
+            'message' => $message,
+        ], 600);
     }
 }

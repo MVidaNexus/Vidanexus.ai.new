@@ -3,59 +3,56 @@
 @section('title', $tool['name'])
 
 @section('content')
-<div x-data="genericTool()" class="max-w-7xl mx-auto pb-20 relative">
+<div x-data="genericTool()" class="container position-relative pb-5">
     
-    <!-- Background Decoration -->
-    <div class="fixed top-20 right-0 w-96 h-96 bg-primary-cyan/5 blur-3xl -z-10 rounded-full"></div>
-    <div class="fixed bottom-0 left-0 w-64 h-64 bg-primary-purple/5 blur-3xl -z-10 rounded-full"></div>
-
     <!-- Header Section -->
-    <div class="mb-12">
-        <div class="flex items-center gap-6 mb-4">
-            <div class="w-16 h-16 rounded-2xl flex items-center justify-center text-3xl shadow-lg border" 
-                style="background: {{ $tool['color'] }}15; color: {{ $tool['color'] }}; border-color: {{ $tool['color'] }}30;">
+    <div class="mb-5 mt-4">
+        <div class="d-flex align-items-center gap-4 mb-4">
+            <div class="rounded-3 d-flex align-items-center justify-content-center shadow border flex-shrink-0" 
+                style="width: 70px; height: 70px; font-size: 2.2rem; background: {{ $tool['color'] }}15; color: {{ $tool['color'] }}; border-color: {{ $tool['color'] }}30;">
                 <i class="fas {{ $tool['icon'] }}"></i>
             </div>
             <div>
-                <h1 class="text-4xl md:text-5xl font-black tracking-tight">{{ $tool['name'] }}</h1>
-                <p class="text-gray-400 text-lg font-medium">{{ $tool['tagline'] }}</p>
+                <h1 class="display-5 fw-bold mb-2" style="color: var(--text-main); letter-spacing: -1px;">{{ $tool['name'] }}</h1>
+                <p class="fs-5 mb-0" style="color: var(--text-muted);">{{ $tool['tagline'] }}</p>
             </div>
         </div>
-        <div class="p-4 bg-white/5 border border-white/10 rounded-2xl inline-flex items-center gap-4">
-            <span class="px-3 py-1 bg-primary-cyan/20 text-primary-cyan border border-primary-cyan/30 rounded-lg text-xs font-black uppercase tracking-wider">
-                <i class="fas fa-shopping-bag mr-2"></i> Marketplace Module
+        <div class="p-3 rounded-3 d-inline-flex align-items-center gap-3 shadow-sm" style="background: var(--glass-bg); border: 1px solid var(--glass-border);">
+            <span class="badge rounded-pill" style="background: rgba(0, 168, 230, 0.15); color: var(--primary-cyan); border: 1px solid rgba(0, 168, 230, 0.3); font-size: 0.75rem; padding: 0.5rem 0.8rem; letter-spacing: 1px; text-transform: uppercase;">
+                <i class="fas fa-shopping-bag me-1"></i> Marketplace Module
             </span>
-            <div class="h-4 w-px bg-white/10"></div>
-            <span class="text-gray-400 text-xs font-bold flex items-center gap-2">
-                <i class="fas fa-coins text-primary-cyan"></i>
-                Pay-per-Action ({{ $tool['credit_cost_per_action'] ?? 1 }} CR)
+            <div style="width: 1px; height: 16px; background: var(--glass-border);"></div>
+            <span class="d-flex align-items-center gap-2" style="color: var(--text-muted); font-size: 0.85rem; font-weight: bold;">
+                <i class="fas fa-coins" style="color: var(--primary-cyan);"></i>
+                Pay-per-Action ({{ auth()->user()->getToolCreditCost($tool['slug']) }} CR)
             </span>
         </div>
     </div>
 
-    <div class="grid grid-cols-1 lg:grid-cols-12 gap-8">
+    <div class="row g-4">
         <!-- Input Panel -->
-        <div class="lg:col-span-12 glass-card p-8">
-            <h3 class="text-xl font-bold mb-6 flex items-center gap-3">
-                <i class="fas fa-terminal text-primary-cyan"></i>
-                Intelligence Parameters
-            </h3>
-            
-            <div class="space-y-6">
-                <div>
-                    <label class="block text-xs font-black text-gray-400 uppercase tracking-widest mb-3">Your Requirement / Input</label>
+        <div class="col-12">
+            <div class="card p-4 p-md-5 shadow-sm">
+                <h3 class="fs-4 fw-bold mb-4 d-flex align-items-center gap-3" style="color: var(--text-main);">
+                    <i class="fas fa-terminal" style="color: var(--primary-cyan);"></i>
+                    Intelligence Parameters
+                </h3>
+                
+                <div class="mb-4">
+                    <label class="d-block text-uppercase fw-bold mb-2" style="font-size: 0.8rem; letter-spacing: 2px; color: var(--text-muted);">Your Requirement / Input</label>
                     <textarea x-model="userInput" rows="6" 
                         placeholder="Describe what you need the AI to generate for {{ $tool['name'] }}..."
-                        class="w-full bg-white/5 border border-white/10 rounded-2xl px-6 py-4 focus:outline-none focus:border-primary-cyan/50 transition-all text-white placeholder-gray-600 resize-none"></textarea>
+                        class="premium-generic-input"></textarea>
                 </div>
 
-                <div class="flex justify-end">
+                <div class="d-flex justify-content-end">
                     <button @click="generate()" :disabled="loading || !userInput"
-                        class="group relative px-12 py-4 bg-primary-cyan text-black font-black rounded-2xl overflow-hidden transition-all hover:scale-105 active:scale-95 shadow-xl disabled:opacity-50 disabled:grayscale">
-                        <span class="relative z-10 flex items-center gap-3">
-                            <i class="fas" :class="loading ? 'fa-spinner fa-spin' : '{{ $tool['icon'] }}'"></i>
-                            <span x-text="loading ? 'Generating Intelligence...' : 'Execute AI Generation'"></span>
-                        </span>
+                        class="btn border-0 fw-bold shadow px-5 py-3 rounded-3 d-flex align-items-center gap-3" 
+                        style="background: var(--primary-cyan); color: #000; font-size: 1.1rem; transition: all 0.3s;" 
+                        onmouseover="this.style.transform='translateY(-2px)'; this.style.boxShadow='0 10px 20px rgba(0, 168, 230, 0.3)';" 
+                        onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='0 4px 6px rgba(0,0,0,0.1)';">
+                        <i class="fas" :class="loading ? 'fa-spinner fa-spin' : '{{ $tool['icon'] }}'"></i>
+                        <span x-text="loading ? 'Generating Intelligence...' : 'Execute AI Generation'"></span>
                     </button>
                 </div>
             </div>
@@ -63,41 +60,44 @@
 
         <!-- Output Panel -->
         <template x-if="response">
-            <div class="lg:col-span-12 glass-card p-8 border-l-4" style="border-left-color: {{ $tool['color'] }};" x-transition>
-                <div class="flex justify-between items-center mb-8">
-                    <h3 class="text-2xl font-black tracking-tight flex items-center gap-4">
-                        <i class="fas fa-microchip" style="color: {{ $tool['color'] }};"></i>
-                        Generated Intelligence Output
-                    </h3>
-                    <div class="flex gap-2">
-                        <button @click="copyToClipboard()" class="p-3 bg-white/5 border border-white/10 rounded-xl hover:bg-white/10 transition-all group relative">
-                            <i class="fas fa-copy text-gray-400 group-hover:text-primary-cyan"></i>
-                            <span class="absolute -top-10 left-1/2 -translate-x-1/2 px-2 py-1 bg-black text-white text-[10px] rounded opacity-0 group-hover:opacity-100 transition-opacity">Copy</span>
+            <div class="col-12" x-transition>
+                <div class="card p-4 p-md-5 border-start border-4 shadow" style="border-left-color: {{ $tool['color'] }} !important;">
+                    <div class="d-flex justify-content-between align-items-center mb-4">
+                        <h3 class="fs-3 fw-bold d-flex align-items-center gap-3 m-0" style="color: var(--text-main);">
+                            <i class="fas fa-microchip" style="color: {{ $tool['color'] }};"></i>
+                            Generated Intelligence Output
+                        </h3>
+                        <button @click="copyToClipboard()" class="btn btn-sm" style="background: var(--glass-bg); border: 1px solid var(--glass-border); color: var(--text-muted);" title="Copy">
+                            <i class="fas fa-copy"></i> Copy
                         </button>
                     </div>
-                </div>
 
-                <div class="p-6 bg-black/40 border border-white/5 rounded-2xl leading-relaxed text-gray-200 whitespace-pre-wrap font-medium" x-text="response"></div>
+                    <div class="premium-generic-output" x-text="response"></div>
 
-                <div class="mt-8 p-4 bg-primary-cyan/5 border border-primary-cyan/10 rounded-2xl italic text-sm text-gray-400">
-                    <i class="fas fa-info-circle mr-2 text-primary-cyan"></i>
-                    This output was generated using the VidaNexus AI Absolute Mode for high-fidelity technical precision.
+                    <div class="mt-4 p-3 rounded-3 d-flex gap-3 align-items-start" style="background: rgba(0, 168, 230, 0.05); border: 1px solid rgba(0, 168, 230, 0.1);">
+                        <i class="fas fa-info-circle mt-1" style="color: var(--primary-cyan);"></i>
+                        <span style="color: var(--text-muted); font-size: 0.9rem; font-style: italic;">
+                            This output was generated using the VidaNexus AI Absolute Mode for high-fidelity technical precision.
+                        </span>
+                    </div>
                 </div>
             </div>
         </template>
 
         <!-- Features Matrix -->
-        <div class="lg:col-span-12 mt-12">
-            <h3 class="text-sm font-black text-gray-500 uppercase tracking-[0.2em] mb-8 text-center">Module Capabilities Matrix</h3>
-            <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+        <div class="col-12 mt-5">
+            <h3 class="text-center text-uppercase fw-bold mb-4" style="font-size: 0.85rem; letter-spacing: 3px; color: var(--text-muted);">Module Capabilities Matrix</h3>
+            <div class="row g-4">
                 @foreach($tool['features'] as $feature)
-                    <div class="glass-card p-6 flex items-start gap-4 hover:border-white/20 transition-all group">
-                        <div class="w-12 h-12 rounded-xl bg-white/5 flex items-center justify-center text-primary-cyan group-hover:scale-110 transition-transform Shrink-0">
-                            <i class="fas {{ $feature['icon'] }}"></i>
-                        </div>
-                        <div>
-                            <h4 class="font-bold mb-1 text-gray-200">{{ $feature['title'] }}</h4>
-                            <p class="text-xs text-gray-500 leading-relaxed">{{ $feature['desc'] }}</p>
+                    <div class="col-12 col-md-4">
+                        <div class="premium-generic-feature p-4 d-flex align-items-start gap-3 h-100">
+                            <div class="rounded-3 d-flex align-items-center justify-content-center flex-shrink-0" style="width: 48px; height: 48px; background: rgba(255, 255, 255, 0.05); color: var(--primary-cyan); font-size: 1.2rem;">
+                                <i class="fas {{ $feature['icon'] }}"></i>
+                            </div>
+                            <div>
+                                <h4 class="fw-bold mb-2" style="font-size: 1.1rem; color: var(--text-main);">{{ $feature['title'] }}</h4>
+                                <p class="mb-0" style="font-size: 0.85rem; line-height: 1.6; color: var(--text-muted);">{{ $feature['desc'] }}</p>
+                            </div>
                         </div>
                     </div>
                 @endforeach
@@ -133,6 +133,13 @@ function genericTool() {
                 const data = await res.json();
                 if (data.status === 'success') {
                     this.response = data.response;
+                    if (window.VidaCredits) {
+                        if (typeof data.balance !== 'undefined') {
+                            window.VidaCredits.updateAll(data.balance);
+                        } else {
+                            window.VidaCredits.refresh();
+                        }
+                    }
                     Swal.fire({
                         icon: 'success',
                         title: 'Intelligence Generated',

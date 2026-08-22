@@ -18,7 +18,7 @@
     
     .ai-input-base:focus-within {
         border-color: var(--vn-input-focus) !important;
-        box-shadow: 0 0 10px rgba(14, 165, 233, 0.1);
+        box-shadow: 0 0 10px rgba(0, 168, 230, 0.1);
     }
     
     .ai-chain-label {
@@ -37,9 +37,9 @@
 <style>
     .horizon-tabs { display: flex; gap: 0.25rem; margin-bottom: 2rem; border-bottom: 1px solid var(--horizon-border); padding-bottom: 1rem; overflow-x: auto; scrollbar-width: none; }
     .horizon-tabs::-webkit-scrollbar { display: none; }
-    .horizon-tab-btn { background: none; border: 1px solid transparent; color: var(--text-muted); font-size: 0.8rem; font-weight: 600; padding: 0.6rem 0.8rem; cursor: pointer; transition: all 0.3s; border-radius: 8px; font-family: 'Inter', sans-serif; display: flex; align-items: center; gap: 0.4rem; white-space: nowrap; }
+    .horizon-tab-btn { background: none; border: 1px solid transparent; color: var(--text-muted); font-size: 0.8rem; font-weight: 600; padding: 0.6rem 0.8rem; cursor: pointer; transition: all 0.3s; border-radius: 8px; font-family: 'Poppins', sans-serif; display: flex; align-items: center; gap: 0.4rem; white-space: nowrap; }
     .horizon-tab-btn:hover { color: var(--text-main); background: rgba(255,255,255,0.05); }
-    .horizon-tab-btn.active { color: var(--primary-admin); background: rgba(14, 165, 233, 0.1); border-color: rgba(14, 165, 233, 0.3); }
+    .horizon-tab-btn.active { color: var(--primary-admin); background: rgba(0, 168, 230, 0.1); border-color: rgba(0, 168, 230, 0.3); }
     .horizon-tab-pane { display: none; animation: fadeIn 0.3s ease; }
     .horizon-tab-pane.active { display: block; }
     @keyframes fadeIn { from { opacity: 0; transform: translateY(5px); } to { opacity: 1; transform: translateY(0); } }
@@ -65,7 +65,7 @@
             <button type="button" class="horizon-tab-btn" onclick="switchHorizonTab('errors', this)"><i class="fas fa-bug"></i> Errors</button>
         </div>
 
-        <form action="{{ route('admin.horizon.update', $tool['slug']) }}" method="POST" id="config-form">
+        <form action="{{ route('admin.horizon.update', $tool['slug']) }}" method="POST" id="config-form" data-ajax-save>
             @csrf
 
             <!-- TAB 1: AI Intelligence -->
@@ -78,7 +78,7 @@
                     </p>
                 </div>
 
-                <div class="card-admin" style="background: linear-gradient(135deg, rgba(14, 165, 233, 0.05), rgba(191, 0, 255, 0.05)); border: 1px solid var(--primary-admin); margin-bottom: 2rem; padding: 1.5rem; border-radius: 16px;">
+                <div class="card-admin" style="background: linear-gradient(135deg, rgba(0, 168, 230, 0.05), rgba(191, 0, 255, 0.05)); border: 1px solid var(--primary-admin); margin-bottom: 2rem; padding: 1.5rem; border-radius: 16px;">
                     <h3 style="margin: 0 0 1rem; font-size: 1rem;"><i class="fas fa-microchip" style="color: var(--secondary-admin);"></i> Core Intelligence Rules</h3>
                     <p style="font-size: 0.85rem; color: var(--text-muted); line-height: 1.5; margin: 0;">
                         Modifying the system prompt for <strong>{{ $tool['name'] }}</strong> will impact all future keyword extraction cycles. Use precise constraints for optimal SEO discovery.
@@ -92,7 +92,7 @@
 
             <!-- TAB 2: Radar Sources -->
             <div id="pane-sources" class="horizon-tab-pane">
-                <div style="background: rgba(14, 165, 233, 0.05); border: 1px solid rgba(14, 165, 233, 0.2); border-radius: 12px; padding: 1.25rem; margin-bottom: 2rem;">
+                <div style="background: rgba(0, 168, 230, 0.05); border: 1px solid rgba(0, 168, 230, 0.2); border-radius: 12px; padding: 1.25rem; margin-bottom: 2rem;">
                     <p style="margin: 0; font-size: 0.85rem; color: var(--text-main); line-height: 1.5;">
                         <i class="fas fa-satellite-dish" style="color: var(--primary-cyan); margin-right: 0.5rem;"></i>
                         These global sources provide the foundational data for the Radar. User-added URLs will be intelligently merged at runtime.
@@ -158,6 +158,15 @@
                         </div>
                         <p style="font-size: 0.7rem; color: var(--text-muted); margin-top: 0.75rem;">How strict the system is matching similar words. 100% means exact match; 90% merges singular/plural terms.</p>
                     </div>
+
+                    <div>
+                        <label style="display: block; font-size: 0.75rem; color: var(--text-muted); text-transform: uppercase; letter-spacing: 1px; margin-bottom: 1rem;">Keywords per Headline</label>
+                        <div class="ai-input-base" style="display: flex; align-items: center; gap: 0.75rem; border-radius: 12px; padding: 0 1rem; background: rgba(0,0,0,0.2) !important;">
+                            <i class="fas fa-layer-group" style="color: var(--primary-admin); font-size: 0.9rem;"></i>
+                            <input type="number" min="1" max="5" name="keywords_per_headline" value="{{ App\Models\Setting::get('ai-keyword-radar_keywords_per_headline', 3) }}" style="flex: 1; background: transparent; border: none; color: #fff; padding: 1.25rem 0; outline: none; font-size: 1rem; font-weight: 600;">
+                        </div>
+                        <p style="font-size: 0.7rem; color: var(--text-muted); margin-top: 0.75rem;">How many distinct Target Search Queries the AI extracts from each scraped title. Use 3 to capture the entity, the event, and the user intent — exactly like asking ChatGPT to split one news headline into multiple SEO keywords. Use <code>[KeywordsPerHeadline]</code> in your custom prompt to reference this value.</p>
+                    </div>
                 </div>
 
                 <button type="submit" class="btn-save" style="width: 100%;">
@@ -184,7 +193,7 @@
                     }
                     .draggable-item:hover {
                         border-color: var(--primary-admin);
-                        background: rgba(14, 165, 233, 0.05);
+                        background: rgba(0, 168, 230, 0.05);
                         transform: translateX(4px);
                     }
                     .draggable-item.dragging {
@@ -204,7 +213,7 @@
                         font-weight: 700;
                         font-size: 0.95rem;
                         color: var(--text-main);
-                        font-family: 'Space Grotesk', sans-serif;
+                        font-family: 'Poppins', sans-serif;
                     }
                     .strategy-tag {
                         font-size: 0.6rem;
@@ -213,9 +222,9 @@
                         letter-spacing: 1.5px;
                         padding: 4px 10px;
                         border-radius: 6px;
-                        background: rgba(14, 165, 233, 0.1);
+                        background: rgba(0, 168, 230, 0.1);
                         color: var(--primary-admin);
-                        border: 1px solid rgba(14, 165, 233, 0.2);
+                        border: 1px solid rgba(0, 168, 230, 0.2);
                     }
                     /* Custom Pagination Styles */
                     .horizon-pagination nav {
@@ -241,7 +250,7 @@
                         padding: 8px 14px;
                         border-radius: 10px;
                         text-decoration: none;
-                        font-family: 'Space Grotesk', sans-serif;
+                        font-family: 'Poppins', sans-serif;
                         font-weight: 600;
                         font-size: 0.9rem;
                         transition: all 0.2s;
@@ -255,7 +264,7 @@
                         background: var(--primary-admin);
                         color: #fff;
                         border-color: var(--primary-admin);
-                        box-shadow: 0 0 15px rgba(14, 165, 233, 0.3);
+                        box-shadow: 0 0 15px rgba(0, 168, 230, 0.3);
                     }
                     .horizon-pagination .page-item.disabled .page-link {
                         opacity: 0.3;
@@ -279,7 +288,7 @@
                 <div style="margin-bottom: 3rem;">
                     <div style="display: flex; align-items: center; gap: 0.75rem; margin-bottom: 0.5rem;">
                         <i class="fas fa-microchip" style="color: var(--primary-admin);"></i>
-                        <h3 style="margin: 0; font-size: 1.1rem; color: var(--text-main); font-family: 'Space Grotesk', sans-serif;">Fallback Scrutiny Order</h3>
+                        <h3 style="margin: 0; font-size: 1.1rem; color: var(--text-main); font-family: 'Poppins', sans-serif;">Fallback Scrutiny Order</h3>
                     </div>
                     <p style="color: var(--text-muted); font-size: 0.85rem; margin-bottom: 2rem; line-height: 1.6;">Define the priority of discovery methods. The system will cycle through these in order until results are found.</p>
                     
@@ -347,18 +356,18 @@
                         <div style="width: 90px; height: 90px; border-radius: 24px; background: linear-gradient(135deg, rgba(245, 158, 11, 0.2), rgba(245, 158, 11, 0.05)); border: 1px solid rgba(245, 158, 11, 0.2); display: flex; align-items: center; justify-content: center; color: #f59e0b; font-size: 3rem; margin: 0 auto 1.5rem; transform: rotate(-5deg);">
                             <i class="fas fa-coins"></i>
                         </div>
-                        <h3 style="font-family: 'Space Grotesk', sans-serif; font-size: 1.75rem; margin: 0 0 0.5rem; color: var(--text-main);">Financial Unit Calibration</h3>
+                        <h3 style="font-family: 'Poppins', sans-serif; font-size: 1.75rem; margin: 0 0 0.5rem; color: var(--text-main);">Financial Unit Calibration</h3>
                         <p style="color: var(--text-muted); font-size: 1rem;">Set the operational cost for each manual tool synchronization.</p>
                     </div>
 
                     <div style="background: linear-gradient(180deg, rgba(255,255,255,0.03) 0%, rgba(255,255,255,0.01) 100%); border: 1px solid var(--horizon-border); border-radius: 28px; padding: 3rem; text-align: center; box-shadow: 0 20px 40px rgba(0,0,0,0.2);">
                         <label style="display: block; font-size: 0.85rem; color: var(--text-muted); text-transform: uppercase; letter-spacing: 2px; margin-bottom: 1.5rem;">Sync Multiplier</label>
                         <div style="display: flex; align-items: center; justify-content: center; gap: 1.5rem; margin-bottom: 2.5rem;">
-                            <input type="number" name="sync_credits" value="{{ App\Models\Setting::get('ai-keyword-radar_sync_credits', 1) }}" style="width: 160px; background: #000; border: 2px solid var(--primary-admin); color: var(--primary-admin); padding: 1.25rem; border-radius: 20px; font-size: 3rem; font-weight: 800; text-align: center; outline: none; font-family: 'Space Grotesk'; box-shadow: 0 0 30px rgba(14, 165, 233, 0.2);">
+                            <input type="number" name="sync_credits" value="{{ App\Models\Setting::get('ai-keyword-radar_sync_credits', 1) }}" style="width: 160px; background: #000; border: 2px solid var(--primary-admin); color: var(--primary-admin); padding: 1.25rem; border-radius: 20px; font-size: 3rem; font-weight: 800; text-align: center; outline: none; font-family: 'Poppins'; box-shadow: 0 0 30px rgba(0, 168, 230, 0.2);">
                             <span style="font-size: 1.5rem; font-weight: 600; color: var(--text-muted); opacity: 0.6;">CREDITS</span>
                         </div>
                         
-                        <div style="background: rgba(14, 165, 233, 0.05); border-radius: 16px; padding: 1.25rem; border: 1px solid rgba(14, 165, 233, 0.1); display: flex; align-items: flex-start; gap: 1rem; text-align: left;">
+                        <div style="background: rgba(0, 168, 230, 0.05); border-radius: 16px; padding: 1.25rem; border: 1px solid rgba(0, 168, 230, 0.1); display: flex; align-items: flex-start; gap: 1rem; text-align: left;">
                             <i class="fas fa-info-circle" style="color: var(--primary-admin); margin-top: 3px;"></i>
                             <p style="margin: 0; font-size: 0.85rem; color: var(--text-muted); line-height: 1.6;">
                                 This value represents the total credits deducted from a user's wallet upon initiating a manual "Sync". automated tasks are cost-neutral.
@@ -396,7 +405,7 @@
                         @foreach($aiChain as $index => $link)
                             <div class="ai-provider-row" style="display: grid; grid-template-columns: 1fr 1fr 2fr auto; gap: 1.25rem; align-items: center; padding: 1.5rem; border-radius: 20px; position: relative; background: rgba(255,255,255,0.02); border: 1px solid var(--horizon-border);">
                                 @if($index === 0)
-                                    <div style="position: absolute; top: -12px; left: 1.5rem; background: var(--primary-admin); color: #000; font-size: 0.65rem; font-weight: 900; padding: 3px 12px; border-radius: 6px; text-transform: uppercase; box-shadow: 0 4px 10px rgba(14, 165, 233, 0.3);">Primary Engine</div>
+                                    <div style="position: absolute; top: -12px; left: 1.5rem; background: var(--primary-admin); color: #000; font-size: 0.65rem; font-weight: 900; padding: 3px 12px; border-radius: 6px; text-transform: uppercase; box-shadow: 0 4px 10px rgba(0, 168, 230, 0.3);">Primary Engine</div>
                                 @else
                                     <div class="fallback-label-v2" style="position: absolute; top: -12px; left: 1.5rem; background: #333; color: #fff; font-size: 0.65rem; font-weight: 800; padding: 3px 12px; border-radius: 6px; text-transform: uppercase; border: 1px solid rgba(255,255,255,0.1);">Fallback Node #{{ $index }}</div>
                                 @endif
@@ -431,7 +440,7 @@
                     </div>
                 </div>
 
-                <div style="background: rgba(14, 165, 233, 0.05); border-radius: 16px; padding: 1.5rem; border: 1px solid rgba(14, 165, 233, 0.1); display: flex; align-items: flex-start; gap: 1rem; margin-bottom: 2rem;">
+                <div style="background: rgba(0, 168, 230, 0.05); border-radius: 16px; padding: 1.5rem; border: 1px solid rgba(0, 168, 230, 0.1); display: flex; align-items: flex-start; gap: 1rem; margin-bottom: 2rem;">
                     <i class="fas fa-info-circle" style="color: var(--primary-admin); margin-top: 3px;"></i>
                     <p style="margin: 0; font-size: 0.85rem; color: var(--text-muted); line-height: 1.6;">
                         High-availability routing ensures that if the Primary node fails (rate limited or offline), the system will automatically attempt extraction using fallback nodes in sequence.
@@ -516,24 +525,24 @@
         <div id="pane-analytics" class="horizon-tab-pane">
             <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); gap: 1.5rem; margin-bottom: 2.5rem;">
                 <!-- Today -->
-                <div style="background: linear-gradient(135deg, rgba(14, 165, 233, 0.1), rgba(14, 165, 233, 0.02)); border: 1px solid rgba(14, 165, 233, 0.2); border-radius: 20px; padding: 1.5rem; display: flex; align-items: center; gap: 1.25rem;">
-                    <div style="width: 50px; height: 50px; border-radius: 14px; background: rgba(14, 165, 233, 0.1); display: flex; align-items: center; justify-content: center; color: var(--primary-admin); font-size: 1.25rem;">
+                <div style="background: linear-gradient(135deg, rgba(0, 168, 230, 0.1), rgba(0, 168, 230, 0.02)); border: 1px solid rgba(0, 168, 230, 0.2); border-radius: 20px; padding: 1.5rem; display: flex; align-items: center; gap: 1.25rem;">
+                    <div style="width: 50px; height: 50px; border-radius: 14px; background: rgba(0, 168, 230, 0.1); display: flex; align-items: center; justify-content: center; color: var(--primary-admin); font-size: 1.25rem;">
                         <i class="fas fa-bolt"></i>
                     </div>
                     <div>
                         <div style="font-size: 0.7rem; color: var(--text-muted); text-transform: uppercase; letter-spacing: 1.5px; font-weight: 700; margin-bottom: 2px;">Daily Velocity</div>
-                        <div style="font-size: 1.5rem; font-weight: 800; font-family: 'Space Grotesk';">{{ number_format($stats['today_usage'] ?? 0) }}</div>
+                        <div style="font-size: 1.5rem; font-weight: 800; font-family: 'Poppins';">{{ number_format($stats['today_usage'] ?? 0) }}</div>
                     </div>
                 </div>
 
                 <!-- This Month -->
                 <div style="background: linear-gradient(135deg, rgba(16, 185, 129, 0.1), rgba(16, 185, 129, 0.02)); border: 1px solid rgba(16, 185, 129, 0.2); border-radius: 20px; padding: 1.5rem; display: flex; align-items: center; gap: 1.25rem;">
-                    <div style="width: 50px; height: 50px; border-radius: 14px; background: rgba(16, 185, 129, 0.1); display: flex; align-items: center; justify-content: center; color: #10b981; font-size: 1.25rem;">
+                    <div style="width: 50px; height: 50px; border-radius: 14px; background: rgba(16, 185, 129, 0.1); display: flex; align-items: center; justify-content: center; color: #00A58B; font-size: 1.25rem;">
                         <i class="fas fa-calendar-check"></i>
                     </div>
                     <div>
                         <div style="font-size: 0.7rem; color: var(--text-muted); text-transform: uppercase; letter-spacing: 1.5px; font-weight: 700; margin-bottom: 2px;">Monthly Volume</div>
-                        <div style="font-size: 1.5rem; font-weight: 800; font-family: 'Space Grotesk';">{{ number_format($stats['this_month_usage'] ?? 0) }}</div>
+                        <div style="font-size: 1.5rem; font-weight: 800; font-family: 'Poppins';">{{ number_format($stats['this_month_usage'] ?? 0) }}</div>
                     </div>
                 </div>
 
@@ -544,7 +553,7 @@
                     </div>
                     <div>
                         <div style="font-size: 0.7rem; color: var(--text-muted); text-transform: uppercase; letter-spacing: 1.5px; font-weight: 700; margin-bottom: 2px;">Lifetime Pulse</div>
-                        <div style="font-size: 1.5rem; font-weight: 800; font-family: 'Space Grotesk';">{{ number_format($stats['lifetime_usage'] ?? 0) }}</div>
+                        <div style="font-size: 1.5rem; font-weight: 800; font-family: 'Poppins';">{{ number_format($stats['lifetime_usage'] ?? 0) }}</div>
                     </div>
                 </div>
 
@@ -556,7 +565,7 @@
                         </div>
                         <div>
                             <div style="font-size: 0.7rem; color: #f59e0b; text-transform: uppercase; letter-spacing: 1.5px; font-weight: 700; margin-bottom: 2px;">Filtered Output</div>
-                            <div style="font-size: 1.5rem; font-weight: 800; font-family: 'Space Grotesk';">{{ number_format($stats['filtered_usage']) }}</div>
+                            <div style="font-size: 1.5rem; font-weight: 800; font-family: 'Poppins';">{{ number_format($stats['filtered_usage']) }}</div>
                         </div>
                     </div>
                 @endif
@@ -587,7 +596,7 @@
 
             <div style="background: rgba(255,255,255,0.02); border: 1px solid var(--horizon-border); border-radius: 24px; padding: 2rem; box-shadow: 0 10px 30px rgba(0,0,0,0.1);">
                 <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 2rem;">
-                    <h3 style="margin: 0; font-size: 1.1rem; font-family: 'Space Grotesk', sans-serif; display: flex; align-items: center; gap: 0.75rem;">
+                    <h3 style="margin: 0; font-size: 1.1rem; font-family: 'Poppins', sans-serif; display: flex; align-items: center; gap: 0.75rem;">
                         <i class="fas fa-users-crown" style="color: var(--primary-admin);"></i> 
                         {{ (request('from_date') || request('to_date')) ? 'Activity Breakdown (Filtered)' : 'Core User Utilization' }}
                     </h3>
@@ -641,7 +650,7 @@
             <div style="background: rgba(255,255,255,0.02); border: 1px solid var(--horizon-border); border-radius: 24px; padding: 2.5rem;">
                 <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 2.5rem;">
                     <div>
-                        <h3 style="margin: 0; font-size: 1.25rem; font-family: 'Space Grotesk', sans-serif; display: flex; align-items: center; gap: 0.75rem; color: #ef4444;">
+                        <h3 style="margin: 0; font-size: 1.25rem; font-family: 'Poppins', sans-serif; display: flex; align-items: center; gap: 0.75rem; color: #ef4444;">
                             <i class="fas fa-microchip-ai" style="animation: pulse 2s infinite;"></i> 
                             System Anomaly Logs
                         </h3>
@@ -676,7 +685,7 @@
                                         <div style="font-size: 0.7rem; color: var(--text-muted); opacity: 0.6;">{{ $error->created_at->diffForHumans() }}</div>
                                     </td>
                                     <td style="padding: 1.5rem;">
-                                        <span style="display: inline-block; padding: 4px 10px; background: rgba(14, 165, 233, 0.1); border-radius: 8px; font-size: 0.75rem; color: var(--primary-admin); border: 1px solid rgba(14, 165, 233, 0.2); font-weight: 700; text-transform: uppercase;">
+                                        <span style="display: inline-block; padding: 4px 10px; background: rgba(0, 168, 230, 0.1); border-radius: 8px; font-size: 0.75rem; color: var(--primary-admin); border: 1px solid rgba(0, 168, 230, 0.2); font-weight: 700; text-transform: uppercase;">
                                             {{ $error->component ?? 'Kernel' }}
                                         </span>
                                     </td>
@@ -701,9 +710,9 @@
                                 <tr>
                                     <td colspan="5" style="padding: 5rem 0; text-align: center; color: var(--text-muted);">
                                         <div style="width: 100px; height: 100px; background: rgba(16, 185, 129, 0.05); border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto 2rem; border: 1px solid rgba(16, 185, 129, 0.1);">
-                                            <i class="fas fa-shield-check" style="font-size: 3rem; color: #10b981; opacity: 0.5;"></i>
+                                            <i class="fas fa-shield-check" style="font-size: 3rem; color: #00A58B; opacity: 0.5;"></i>
                                         </div>
-                                        <div style="font-family: 'Space Grotesk', sans-serif; font-size: 1.25rem; font-weight: 700; color: var(--text-main);">Zero Anomalies Detected</div>
+                                        <div style="font-family: 'Poppins', sans-serif; font-size: 1.25rem; font-weight: 700; color: var(--text-main);">Zero Anomalies Detected</div>
                                         <div style="font-size: 0.9rem; margin-top: 0.5rem; opacity: 0.6;">The radar system is operating within optimal parameters.</div>
                                     </td>
                                 </tr>
@@ -852,7 +861,7 @@
                         width: '850px',
                         showConfirmButton: true,
                         confirmButtonText: 'Acknowledged',
-                        confirmButtonColor: '#0ea5e9',
+                        confirmButtonColor: '#00A8E6',
                         padding: '1.5rem 1rem'
                     });
                 } catch (err) {

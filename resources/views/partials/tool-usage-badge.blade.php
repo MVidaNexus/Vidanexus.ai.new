@@ -78,7 +78,10 @@
     <div class="badge-divider" style="text-align: right; border-left: 1px solid var(--glass-border); padding-left: 1.5rem;">
         <div style="font-size: 0.7rem; color: var(--text-muted); font-weight: 700; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 2px;">Your Balance</div>
         <div style="font-size: 1.1rem; font-weight: 800; color: {{ $balanceColor }}; font-family: var(--font-heading);">
-            {{ number_format($balance, 1) }} <span style="font-size: 0.75rem; font-weight: 400; opacity: 0.7;">CRS</span>
+            <span class="js-credit-balance"
+                  data-credit-value="{{ (float) $balance }}"
+                  data-decimals="1">{{ number_format($balance, 1) }}</span>
+            <span style="font-size: 0.75rem; font-weight: 400; opacity: 0.7;">CRS</span>
         </div>
     </div>
 </div>

@@ -6,7 +6,7 @@
     <title>Vida Nexus — AI Solutions Coming Soon</title>
     <link rel="preload" as="image" href="{{ asset('assets/logo.png') }}" fetchpriority="high">
     <link rel="preload" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" as="style">
-    <link rel="preload" href="{{ asset('style.v2.css?v=30') }}" as="style">
+    <link rel="preload" href="{{ asset('style.v2.css') }}?v={{ config('vidanexus.style_css_version') }}" as="style">
     <meta name="description" content="Vida Nexus offers next-generation AI solutions, empowering businesses with professional machine learning, automation, and data analytics.">
     <meta name="keywords" content="AI, Artificial Intelligence, Machine Learning, Vida Nexus, AI Services Egypt, AI Automation, Data Analytics, Intelligence Innovation">
     <meta name="author" content="Vida Nexus">
@@ -56,11 +56,11 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link rel="canonical" href="https://vidanexus.ai/">
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=Space+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&display=swap" rel="stylesheet">
     <link rel="icon" type="image/png" href="{{ asset('assets/logo.png') }}">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
-    <link rel="stylesheet" href="{{ asset('style.v2.css?v=30') }}">
-    <script>(function(){const t=localStorage.getItem("theme")||"dark";document.documentElement.setAttribute("data-theme",t);})();</script>
+    <link rel="stylesheet" href="{{ asset('style.v2.css') }}?v={{ config('vidanexus.style_css_version') }}">
+    <script>(function(){const t=localStorage.getItem("theme")||"light";document.documentElement.setAttribute("data-theme",t);})();</script>
 </head>
 <body>
     <canvas id="techCanvas" style="position:fixed;top:0;left:0;width:100vw;height:100vh;z-index:0;pointer-events:none;display:block;"></canvas>
@@ -71,7 +71,7 @@
     <div class="main-container">
         <header class="header">
             <div class="logo-container">
-                <img src="{{ asset('assets/logo.png') }}" alt="Vida Nexus - Next-Generation AI Solutions & Innovation" class="logo-img" id="logoImg" fetchpriority="high">
+                <img src="{{ asset('assets/logo.svg') }}" alt="Vida Nexus - Next-Generation AI Solutions & Innovation" class="logo-img" id="logoImg" fetchpriority="high">
                 <div class="logo-text">
                     <span class="logo-vida">VIDA</span>
                     <span class="logo-nexus">NEXUS</span>
@@ -198,7 +198,7 @@
 
                 if (response.ok) {
                     note.textContent = 'Thank you! You have been added to our waitlist.';
-                    note.style.color = '#0ea5e9';
+                    note.style.color = '#00A8E6';
                     form.reset();
                 } else {
                     note.textContent = data.message || 'Something went wrong. Please try again.';

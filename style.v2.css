@@ -87,7 +87,7 @@ body {
     font-family: var(--font-main);
     min-height: 100vh;
     width: 100vw;
-    overflow-x: clip;
+    /* overflow-x: clip; */
     transition: var(--theme-transition);
 }
 
@@ -161,12 +161,12 @@ html[data-theme="light"] .gradient-text {
 /* Layout */
 html {
     max-width: 100vw;
-    overflow-x: clip;
+    /* overflow-x: clip; */
 }
 
 body {
     max-width: 100vw;
-    overflow-x: clip;
+    /* overflow-x: clip; */
 }
 
 .main-container {

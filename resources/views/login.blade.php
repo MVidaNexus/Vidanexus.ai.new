@@ -1,38 +1,27 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>VidaNexus AI — Secure Login</title>
+@extends('layouts.marketing')
+
+@section('title', 'VidaNexus AI — Secure Login')
+
+@push('meta')
     <meta name="description" content="Access your VidaNexus AI dashboard. Secure, planetary-scale intelligent automation at your fingertips.">
-    
-    <!-- OpenGraph -->
     <meta property="og:type" content="website">
     <meta property="og:title" content="VidaNexus AI — Secure Login">
     <meta property="og:description" content="Access your VidaNexus AI dashboard. Secure, planetary-scale intelligent automation at your fingertips.">
     <meta property="og:image" content="{{ asset('assets/social-preview.png?v=2') }}">
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&family=Space+Grotesk:wght@700;800&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
-    <link rel="stylesheet" href="{{ asset('style.v2.css?v=30') }}">
-    <link rel="icon" type="image/png" href="{{ asset('assets/logo.png') }}">
-    <script>(function(){const t=localStorage.getItem("theme")||"dark";document.documentElement.setAttribute("data-theme",t);})();</script>
-</head>
-<body>
-    <canvas id="techCanvas"></canvas>
-    <div class="glow-orb orb-1"></div>
-    <div class="glow-orb orb-2"></div>
-    <div class="glow-orb orb-3"></div>
+@endpush
 
-    <div class="main-container">
-        @include('partials.header')
-
+@section('content')
         <main class="hero">
 
             <div class="glass-panel" style="max-width: 450px; padding: 3rem;">
                 <h2 style="font-family: var(--font-heading); font-size: 2rem; margin-bottom: 2rem; color: var(--text-main);">Authorized Access</h2>
-                
+
+                @if(session('status'))
+                    <div style="background: rgba(16, 185, 129, 0.1); border: 1px solid rgba(16, 185, 129, 0.3); color: #00A58B; padding: 0.85rem 1rem; border-radius: 10px; margin-bottom: 1.25rem; font-size: 0.9rem;">
+                        {{ session('status') }}
+                    </div>
+                @endif
+
                 <form action="/login" method="POST" style="text-align: left;">
                     @csrf
                     @if(request()->has('redirect'))
@@ -68,13 +57,13 @@
                 </form>
 
                 <div style="margin-top: 2rem; color: var(--text-muted); font-size: 0.85rem;">
-                    Don't have an account? <a href="/register{{ request()->has('redirect') ? '?redirect=' . request('redirect') : '' }}" style="color: var(--primary-cyan); text-decoration: none;">Request Access</a>
+                    Don't have an account? <a href="/register{{ request()->has('redirect') ? '?redirect=' . request('redirect') : '' }}" style="color: var(--primary-cyan); text-decoration: none;">Sign Up</a>
                 </div>
             </div>
         </main>
-    </div>
+@endsection
 
-    <script src="{{ asset('script.js?v=14') }}"></script>
+@push('scripts')
     <script>
         function togglePassword(inputId, iconId) {
             const input = document.getElementById(inputId);
@@ -90,5 +79,4 @@
             }
         }
     </script>
-</body>
-</html>
+@endpush

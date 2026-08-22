@@ -110,10 +110,80 @@
                 <i class="fas fa-bolt text-amber-400 mr-1.5"></i> 
                 <span x-text="stats.moderate"></span> moderate
             </span>
+            <span x-show="selectedTitles.length > 0" class="text-primary-cyan">
+                <i class="fas fa-check-square mr-1.5"></i>
+                <span x-text="selectedTitles.length"></span> selected
+            </span>
         </div>
-        <div class="flex items-center gap-2 text-[10px]" style="color: var(--text-muted);">
-            <div class="w-2 h-2 bg-emerald-400 rounded-full animate-pulse"></div>
-            <span>System Operational</span>
+        <div class="flex items-center gap-2 flex-wrap">
+            <template x-if="selectedTitles.length > 0">
+                <div class="flex items-center gap-2">
+                    <button @click="clearSelection()" type="button"
+                            class="px-3 py-1.5 rounded-lg text-[10px] font-bold border border-white/10 text-gray-400 hover:text-white transition-colors">
+                        Clear
+                    </button>
+                    <button @click="generateAnalysis()" type="button"
+                            :disabled="generatingBrief || selectedTitles.length === 0"
+                            class="vn-btn vn-btn-primary px-4 py-1.5 rounded-lg text-[10px] font-bold flex items-center gap-1.5 disabled:opacity-40">
+                        <i class="fas fa-spinner animate-spin" x-show="generatingBrief"></i>
+                        <i class="fas fa-wand-magic-sparkles" x-show="!generatingBrief"></i>
+                        Generate Analysis
+                    </button>
+                </div>
+            </template>
+            <div class="flex items-center gap-2 text-[10px]" style="color: var(--text-muted);">
+                <div class="w-2 h-2 bg-emerald-400 rounded-full animate-pulse"></div>
+                <span>System Operational</span>
+            </div>
+        </div>
+    </div>
+
+    {{-- Multi-select summary panel --}}
+    <div x-show="selectedTitles.length > 0" x-transition
+         class="glass-card p-5 mb-6 border border-primary-cyan/20"
+         style="display: none;">
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+            <div class="lg:col-span-1">
+                <h3 class="text-sm font-black text-white mb-3 flex items-center gap-2">
+                    <i class="fas fa-list-check text-primary-cyan"></i> Selected Titles
+                </h3>
+                <ul class="space-y-2 max-h-40 overflow-y-auto">
+                    <template x-for="(title, idx) in selectedTitles" :key="idx">
+                        <li class="text-[11px] text-gray-400 flex items-start gap-2">
+                            <button @click="removeTitle(title)" type="button" class="text-red-400 hover:text-red-300 mt-0.5 flex-shrink-0">
+                                <i class="fas fa-times text-[9px]"></i>
+                            </button>
+                            <span class="line-clamp-2" x-text="title"></span>
+                        </li>
+                    </template>
+                </ul>
+            </div>
+            <div class="lg:col-span-1">
+                <h3 class="text-sm font-black text-white mb-3 flex items-center gap-2">
+                    <i class="fas fa-tags text-primary-cyan"></i> Combined Keywords
+                </h3>
+                <div class="flex flex-wrap gap-1.5 min-h-[2rem]">
+                    <template x-if="combinedKeywords.length === 0">
+                        <span class="text-[11px] text-gray-600 italic">Select titles to extract keywords…</span>
+                    </template>
+                    <template x-for="kw in combinedKeywords" :key="kw">
+                        <span class="text-[10px] px-2 py-0.5 rounded-md font-bold"
+                              style="background: rgba(14, 165, 233, 0.08); color: #0ea5e9; border: 1px solid rgba(14, 165, 233, 0.15);"
+                              x-text="'#' + kw"></span>
+                    </template>
+                </div>
+            </div>
+            <div class="lg:col-span-1" x-show="briefResult">
+                <h3 class="text-sm font-black text-white mb-3 flex items-center gap-2">
+                    <i class="fas fa-file-lines text-primary-cyan"></i> Content Brief
+                </h3>
+                <template x-if="briefResult">
+                    <div class="space-y-2 text-[11px]" style="color: var(--text-muted);">
+                        <p class="font-bold text-white" x-text="briefResult.headline"></p>
+                        <p x-text="briefResult.summary"></p>
+                    </div>
+                </template>
+            </div>
         </div>
     </div>
 
@@ -160,6 +230,10 @@ function newsMonitor() {
         showHighChanceOnly: false,
         showBreakingOnly: false,
         isInitial: {{ $isInitial ? 'true' : 'false' }},
+        selectedTitles: [],
+        combinedKeywords: [],
+        generatingBrief: false,
+        briefResult: null,
         stats: {
             total: {{ count($googleNews) }},
             high: {{ collect($googleNews)->where('seo_score', '>=', $thresholdHigh)->count() }},
@@ -170,6 +244,140 @@ function newsMonitor() {
         init() {
             console.log('News Intelligence Monitor Initialized');
             this.updateStats();
+            this.bindSelectionDelegation();
+            if (this.isInitial) {
+                this.refreshNews(true);
+            }
+        },
+
+        bindSelectionDelegation() {
+            const container = document.getElementById('news-container');
+            if (!container || container._selectionBound) return;
+            container._selectionBound = true;
+            container.addEventListener('change', (e) => {
+                if (!e.target.matches('.news-select-checkbox')) return;
+                const title = e.target.value;
+                if (e.target.checked) {
+                    if (!this.selectedTitles.includes(title)) {
+                        this.selectedTitles.push(title);
+                    }
+                } else {
+                    this.selectedTitles = this.selectedTitles.filter(t => t !== title);
+                }
+                this.refreshKeywords();
+            });
+        },
+
+        syncCheckboxStates() {
+            document.querySelectorAll('.news-select-checkbox').forEach(cb => {
+                cb.checked = this.selectedTitles.includes(cb.value);
+            });
+        },
+
+        async refreshKeywords() {
+            if (!this.selectedTitles.length) {
+                this.combinedKeywords = [];
+                return;
+            }
+            try {
+                const res = await fetch('{{ route("dashboard.global-news-monitor.extract-keywords") }}', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.content || '{{ csrf_token() }}',
+                        'Accept': 'application/json'
+                    },
+                    body: JSON.stringify({ titles: this.selectedTitles })
+                });
+                const data = await res.json();
+                if (data.success) {
+                    this.combinedKeywords = data.keywords || [];
+                }
+            } catch (err) {
+                console.error('Keyword extraction failed', err);
+            }
+        },
+
+        removeTitle(title) {
+            this.selectedTitles = this.selectedTitles.filter(t => t !== title);
+            this.syncCheckboxStates();
+            this.refreshKeywords();
+            if (!this.selectedTitles.length) {
+                this.briefResult = null;
+            }
+        },
+
+        clearSelection() {
+            this.selectedTitles = [];
+            this.combinedKeywords = [];
+            this.briefResult = null;
+            this.syncCheckboxStates();
+        },
+
+        async generateAnalysis() {
+            if (!this.selectedTitles.length || this.generatingBrief) return;
+            this.generatingBrief = true;
+            this.briefResult = null;
+
+            try {
+                const res = await fetch('{{ route("dashboard.global-news-monitor.generate-brief") }}', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.content || '{{ csrf_token() }}',
+                        'Accept': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        titles: this.selectedTitles,
+                        keywords: this.combinedKeywords,
+                        country: this.region,
+                        lang: this.lang,
+                        topic: this.topic
+                    })
+                });
+                const data = await res.json();
+                if (!res.ok || !data.success) {
+                    throw new Error(data.message || 'Brief generation failed.');
+                }
+                this.briefResult = data.brief;
+                if (data.keywords) {
+                    this.combinedKeywords = data.keywords;
+                }
+                if (window.VidaCredits) window.VidaCredits.apply(data);
+
+                Swal.fire({
+                    title: 'Content Brief Ready',
+                    html: this.renderBriefHtml(data.brief),
+                    background: '#0d0e12',
+                    color: '#fff',
+                    width: '560px',
+                    confirmButtonText: 'Close',
+                    confirmButtonColor: '#0ea5e9'
+                });
+            } catch (err) {
+                Swal.fire('Analysis Error', err.message || 'Could not generate brief.', 'error');
+            } finally {
+                this.generatingBrief = false;
+            }
+        },
+
+        renderBriefHtml(brief) {
+            if (!brief) return '';
+            const list = (items) => (items || []).map(i => `<li class="text-sm text-gray-300">${this.escapeHtml(i)}</li>`).join('');
+            const kws = (brief.suggested_keywords || []).map(k => `<span class="text-[10px] px-2 py-0.5 rounded-md bg-purple-500/10 text-purple-400 border border-purple-500/20 mr-1">${this.escapeHtml(k)}</span>`).join('');
+            return `
+                <div class="text-left space-y-4">
+                    <div><div class="text-[9px] font-black text-gray-500 uppercase mb-1">Headline</div><p class="text-white font-bold">${this.escapeHtml(brief.headline || '')}</p></div>
+                    <div><div class="text-[9px] font-black text-gray-500 uppercase mb-1">Summary</div><p class="text-sm text-gray-300">${this.escapeHtml(brief.summary || '')}</p></div>
+                    <div><div class="text-[9px] font-black text-gray-500 uppercase mb-1">Key Themes</div><ul class="list-disc pl-4">${list(brief.key_themes)}</ul></div>
+                    <div><div class="text-[9px] font-black text-gray-500 uppercase mb-1">Content Outline</div><ul class="list-disc pl-4">${list(brief.content_outline)}</ul></div>
+                    <div><div class="text-[9px] font-black text-gray-500 uppercase mb-1">Angle</div><p class="text-sm text-white">${this.escapeHtml(brief.recommended_angle || '')}</p></div>
+                    <div class="flex flex-wrap gap-1">${kws}</div>
+                </div>`;
+        },
+
+        escapeHtml(str) {
+            return String(str).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
         },
         
         updateStats() {
@@ -184,13 +392,13 @@ function newsMonitor() {
         changeRegion(newRegion) {
             if (this.region === newRegion) return;
             this.region = newRegion;
-            this.refreshNews();
+            this.refreshNews(true);
         },
 
         changeTopic(newTopic) {
             if (this.topic === newTopic) return;
             this.topic = newTopic;
-            this.refreshNews();
+            this.refreshNews(true);
         },
 
 
@@ -227,13 +435,23 @@ function newsMonitor() {
                 if (type === 'json' && data.html) {
                     document.getElementById('news-container').innerHTML = data.html;
                     this.isInitial = false;
+                    this.bindSelectionDelegation();
+                    this.syncCheckboxStates();
                     if (data.stats) {
                         this.stats = data.stats;
                     }
+                    if (window.VidaCredits) window.VidaCredits.apply(data);
                 } else if (type === 'html') {
                     document.getElementById('news-container').innerHTML = data;
                     this.isInitial = false;
+                    this.bindSelectionDelegation();
+                    this.syncCheckboxStates();
+                    if (window.VidaCredits) window.VidaCredits.refresh();
                 }
+            })
+            .catch((err) => {
+                console.error('[News Monitor]', err);
+                Swal.fire('Fetch Error', 'Could not load news. Check your connection and click Get News again.', 'error');
             })
             .finally(() => this.loading = false);
         }
@@ -272,6 +490,7 @@ function analyzeArticle(el, title, description, country, lang, topic) {
         if (data.success && data.analysis) {
             alpineData.analysisData = data.analysis;
             alpineData.showAnalysis = true;
+            if (window.VidaCredits) window.VidaCredits.apply(data);
         } else {
             const msg = data.message || 'Analysis failed. Please try again.';
             if (typeof Swal !== 'undefined') {

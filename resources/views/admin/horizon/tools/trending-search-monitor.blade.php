@@ -19,14 +19,14 @@
     
     .ai-input-base:focus {
         border-color: var(--primary-admin) !important;
-        box-shadow: 0 0 15px rgba(14, 165, 233, 0.1);
+        box-shadow: 0 0 15px rgba(0, 168, 230, 0.1);
     }
 
     .horizon-tabs { display: flex; gap: 0.25rem; margin-bottom: 2rem; border-bottom: 1px solid var(--horizon-border); padding-bottom: 1rem; overflow-x: auto; scrollbar-width: none; }
     .horizon-tabs::-webkit-scrollbar { display: none; }
-    .horizon-tab-btn { background: none; border: 1px solid transparent; color: var(--text-muted); font-size: 0.8rem; font-weight: 600; padding: 0.6rem 0.8rem; cursor: pointer; transition: all 0.3s; border-radius: 8px; font-family: 'Inter', sans-serif; display: flex; align-items: center; gap: 0.4rem; white-space: nowrap; }
+    .horizon-tab-btn { background: none; border: 1px solid transparent; color: var(--text-muted); font-size: 0.8rem; font-weight: 600; padding: 0.6rem 0.8rem; cursor: pointer; transition: all 0.3s; border-radius: 8px; font-family: 'Poppins', sans-serif; display: flex; align-items: center; gap: 0.4rem; white-space: nowrap; }
     .horizon-tab-btn:hover { color: var(--text-main); background: rgba(255,255,255,0.05); }
-    .horizon-tab-btn.active { color: var(--primary-admin); background: rgba(14, 165, 233, 0.1); border-color: rgba(14, 165, 233, 0.3); }
+    .horizon-tab-btn.active { color: var(--primary-admin); background: rgba(0, 168, 230, 0.1); border-color: rgba(0, 168, 230, 0.3); }
     .horizon-tab-pane { display: none; animation: fadeIn 0.3s ease; }
     .horizon-tab-pane.active { display: block; }
     @keyframes fadeIn { from { opacity: 0; transform: translateY(5px); } to { opacity: 1; transform: translateY(0); } }
@@ -52,7 +52,7 @@
         padding: 1.25rem;
         transition: all 0.3s;
     }
-    .source-toggle-card:hover { border-color: var(--primary-admin); background: rgba(14, 165, 233, 0.05); }
+    .source-toggle-card:hover { border-color: var(--primary-admin); background: rgba(0, 168, 230, 0.05); }
 </style>
 @endsection
 
@@ -87,7 +87,7 @@
         <!-- Quick Stats -->
         <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 1rem; margin-bottom: 2rem;">
             <div class="stat-mini-card">
-                <div style="width: 40px; height: 40px; border-radius: 50%; background: rgba(14, 165, 233, 0.1); display: flex; align-items: center; justify-content: center; color: var(--primary-admin);">
+                <div style="width: 40px; height: 40px; border-radius: 50%; background: rgba(0, 168, 230, 0.1); display: flex; align-items: center; justify-content: center; color: var(--primary-admin);">
                     <i class="fas fa-bolt"></i>
                 </div>
                 <div>
@@ -105,7 +105,7 @@
                 </div>
             </div>
             <div class="stat-mini-card">
-                <div style="width: 40px; height: 40px; border-radius: 50%; background: rgba(16, 185, 129, 0.1); display: flex; align-items: center; justify-content: center; color: #10b981;">
+                <div style="width: 40px; height: 40px; border-radius: 50%; background: rgba(16, 185, 129, 0.1); display: flex; align-items: center; justify-content: center; color: #00A58B;">
                     <i class="fas fa-chart-line"></i>
                 </div>
                 <div>
@@ -129,13 +129,14 @@
             <button type="button" class="horizon-tab-btn active" onclick="switchHorizonTab('regional', this)"><i class="fas fa-globe"></i> Regional Control</button>
             <button type="button" class="horizon-tab-btn" onclick="switchHorizonTab('sources', this)"><i class="fas fa-satellite-dish"></i> Sources Mapping</button>
             <button type="button" class="horizon-tab-btn" onclick="switchHorizonTab('ai', this)"><i class="fas fa-brain"></i> AI Intelligence</button>
+            <button type="button" class="horizon-tab-btn" onclick="switchHorizonTab('credits', this)"><i class="fas fa-coins"></i> Credit System</button>
             <button type="button" class="horizon-tab-btn" onclick="switchHorizonTab('performance', this)"><i class="fas fa-tachometer-alt"></i> Performance</button>
             <button type="button" class="horizon-tab-btn" onclick="switchHorizonTab('routing', this)"><i class="fas fa-network-wired"></i> AI Routing</button>
             <button type="button" class="horizon-tab-btn" onclick="switchHorizonTab('analytics', this)"><i class="fas fa-chart-area"></i> Analytics</button>
             <button type="button" class="horizon-tab-btn" onclick="switchHorizonTab('errors', this)"><i class="fas fa-bug"></i> Errors</button>
         </div>
 
-        <form action="{{ route('admin.horizon.update', $tool['slug']) }}" method="POST" id="config-form">
+        <form action="{{ route('admin.horizon.update', $tool['slug']) }}" method="POST" id="config-form" data-ajax-save>
             @csrf
             <input type="hidden" name="is_active" value="{{ ($settings['is_active'] ?? true) ? '1' : '0' }}" id="statusInput">
 
@@ -178,7 +179,7 @@
                     <div class="source-toggle-card">
                          <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 1.5rem;">
                             <div style="display: flex; align-items: center; gap: 1rem;">
-                                <div style="width: 40px; height: 40px; border-radius: 10px; background: rgba(14, 165, 233, 0.1); display: flex; align-items: center; justify-content: center; color: #0ea5e9;">
+                                <div style="width: 40px; height: 40px; border-radius: 10px; background: rgba(0, 168, 230, 0.1); display: flex; align-items: center; justify-content: center; color: #00A8E6;">
                                     <i class="fab fa-google"></i>
                                 </div>
                                 <h4 style="margin: 0; font-size: 0.9rem;">Google Trends</h4>
@@ -312,15 +313,10 @@
             <!-- TAB 3: AI Intelligence -->
             <div id="pane-ai" class="horizon-tab-pane">
                  <div class="setting-card">
-                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 2rem; margin-bottom: 2rem;">
-                        <div class="setting-card">
-                            <label class="label-title">Analysis Credit Cost</label>
-                            <input type="number" name="ai_analysis_credits" value="{{ $settings['ai_analysis_credits'] ?? 2 }}" class="ai-input-base" style="width: 100%; border-radius: 10px; padding: 0.85rem; outline: none;">
-                        </div>
-                        <div class="setting-card">
-                            <label class="label-title">Default AI Model</label>
-                            <input type="text" name="ai_model" value="{{ $settings['ai_model'] ?? 'gpt-4o-mini' }}" class="ai-input-base" style="width: 100%; border-radius: 10px; padding: 0.85rem; outline: none;">
-                        </div>
+                    <div class="setting-card" style="margin-bottom: 2rem;">
+                        <label class="label-title">Default AI Model</label>
+                        <input type="text" name="ai_model" value="{{ $settings['ai_model'] ?? 'gpt-4o-mini' }}" class="ai-input-base" style="width: 100%; border-radius: 10px; padding: 0.85rem; outline: none;">
+                        <p class="desc-text" style="margin-top: 0.5rem;"><i class="fas fa-coins" style="color: #f59e0b;"></i> Per-action credit cost is now configured in the <strong>Credit System</strong> tab.</p>
                     </div>
 
                     <label class="label-title">Neural Decoding Prompt</label>
@@ -332,6 +328,27 @@
                 </div>
                 <button type="submit" class="btn-save" style="width: 100%; margin-top: 1.5rem;"><i class="fas fa-save"></i> Commit Strategy Prompt</button>
             </div>
+
+            @include('admin.horizon.partials.credit-system-pane', [
+                'paneId'   => 'credits',
+                'subtitle' => 'Two-stage pricing: charge users on each trends sync, and again when they request an AI strategy breakdown of a specific trend.',
+                'cards' => [
+                    [
+                        'name'   => 'credit_cost',
+                        'value'  => (int) \App\Models\Setting::get("tool_credit_cost_{$tool['slug']}", $tool['credit_cost_per_action'] ?? 1),
+                        'label'  => 'Sync Fetch Cost',
+                        'badge'  => 'Trends Sync',
+                        'helper' => 'Credits deducted on every "Sync" of the trending feed. Cached fetches (within the configured TTL) are cost-neutral.',
+                    ],
+                    [
+                        'name'   => 'ai_analysis_credits',
+                        'value'  => (int) ($settings['ai_analysis_credits'] ?? 2),
+                        'label'  => 'Deep AI Analysis Cost',
+                        'badge'  => 'Deep AI Analysis',
+                        'helper' => 'Credits deducted when a user requests an AI strategy breakdown of a single trend (sentiment, ROI estimate, recommendations).',
+                    ],
+                ],
+            ])
 
             <!-- TAB 4: Performance -->
             <div id="pane-performance" class="horizon-tab-pane">
@@ -347,7 +364,18 @@
                 </div>
                 <div class="setting-card" style="margin-bottom: 2rem;">
                     <label class="label-title">Max Trends per Platform</label>
-                    <input type="number" name="max_trends" value="{{ $settings['max_trends'] ?? 20 }}" class="ai-input-base" style="width: 100%; border-radius: 10px; padding: 0.85rem; outline: none;">
+                    @php $currentMax = (int) ($settings['max_trends'] ?? 50); @endphp
+                    <div style="display: flex; gap: 0.75rem; align-items: center; flex-wrap: wrap;">
+                        <input type="number" name="max_trends" value="{{ $currentMax }}" min="10" max="100" step="1" class="ai-input-base" style="flex: 1; min-width: 140px; border-radius: 10px; padding: 0.85rem; outline: none;">
+                        <div style="display: flex; gap: 0.4rem;" id="max-trends-presets">
+                            @foreach([20, 50, 100] as $preset)
+                                <button type="button" onclick="document.querySelector('input[name=max_trends]').value={{ $preset }};this.parentNode.querySelectorAll('button').forEach(b=>b.classList.remove('active'));this.classList.add('active');" class="horizon-tab-btn {{ $currentMax === $preset ? 'active' : '' }}" style="padding: 0.5rem 0.9rem; font-size: 0.75rem; border-radius: 8px;">
+                                    {{ $preset }}
+                                </button>
+                            @endforeach
+                        </div>
+                    </div>
+                    <p class="desc-text">Each source (Google / X / TikTok / YouTube) honours this cap independently. Hard ceiling is 100 to keep render time predictable.</p>
                 </div>
                  <button type="submit" class="btn-save" style="width: 100%;"><i class="fas fa-save"></i> Update Engine Parameters</button>
             </div>
@@ -433,7 +461,7 @@
                                         <div style="font-size: 0.75rem; color: var(--text-muted);">{{ optional($sub)->email ?? '' }}</div>
                                     </td>
                                     <td style="padding: 1.25rem; border-bottom: 1px solid rgba(255,255,255,0.02);">
-                                        <span style="background: rgba(16, 185, 129, 0.1); color: #10b981; padding: 0.3rem 0.6rem; border-radius: 8px; font-size: 0.75rem; font-weight: 800;">
+                                        <span style="background: rgba(16, 185, 129, 0.1); color: #00A58B; padding: 0.3rem 0.6rem; border-radius: 8px; font-size: 0.75rem; font-weight: 800;">
                                             {{ number_format((optional($sub->wallet)->balance_credits ?? 0), 1) }} CRS
                                         </span>
                                     </td>

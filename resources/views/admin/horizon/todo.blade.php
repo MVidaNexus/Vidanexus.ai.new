@@ -4,12 +4,12 @@
 
 @section('content')
 <div style="max-width: 1000px; margin: 0 auto;">
-    <div style="background: linear-gradient(135deg, rgba(14, 165, 233, 0.1), rgba(191, 0, 255, 0.1)); border: 1px solid var(--horizon-border); border-radius: 24px; padding: 2.5rem; margin-bottom: 3rem; position: relative; overflow: hidden;">
+    <div style="background: linear-gradient(135deg, rgba(0, 168, 230, 0.1), rgba(191, 0, 255, 0.1)); border: 1px solid var(--horizon-border); border-radius: 24px; padding: 2.5rem; margin-bottom: 3rem; position: relative; overflow: hidden;">
         <div style="position: absolute; top: -50px; right: -50px; width: 200px; height: 200px; background: var(--primary-admin); filter: blur(100px); opacity: 0.1;"></div>
         
         <div style="display: flex; justify-content: space-between; align-items: flex-start; gap: 2rem;">
             <div>
-                <h2 style="font-family: 'Space Grotesk', sans-serif; font-size: 2rem; margin: 0 0 1rem; color: var(--text-main);">
+                <h2 style="font-family: 'Poppins', sans-serif; font-size: 2rem; margin: 0 0 1rem; color: var(--text-main);">
                     <i class="fas fa-rocket" style="color: var(--primary-admin); margin-right: 0.75rem;"></i> Evolution Phase: v2.0
                 </h2>
                 <p style="color: var(--text-muted); font-size: 1.1rem; line-height: 1.6; max-width: 700px; margin: 0;">
@@ -86,7 +86,7 @@
                 </div>
                 <div>
                     <label style="display: block; font-size: 0.8rem; color: var(--text-muted); margin-bottom: 0.5rem;">Color</label>
-                    <input type="color" name="color" value="#0ea5e9" class="modal-input" style="height: 42px; padding: 4px;">
+                    <input type="color" name="color" value="#00A8E6" class="modal-input" style="height: 42px; padding: 4px;">
                 </div>
             </div>
             <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem; margin-bottom: 2rem;">

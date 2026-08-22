@@ -7,12 +7,28 @@ use Illuminate\Http\Request;
 use App\Models\User;
 use Modules\AIKeywordRadar\Models\Keyword;
 use Modules\AIKeywordRadar\Services\KeywordService;
-use App\Models\Category;
+use Modules\AIKeywordRadar\Support\KeywordPayload;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Log;
 
 class AIKeywordRadarController extends Controller
 {
+    /**
+     * Max "Inject Market Source" URLs (Arabic + English combined) for non-admin users.
+     */
+    private const MAX_MARKET_SOURCES_NON_ADMIN = 5;
+
+    /**
+     * Time filter tokens exposed by the radar UI. Anything outside this
+     * allow-list is coerced to the default "Last 60 Minutes" so we never
+     * propagate junk filter strings (or skip filtering entirely by accident).
+     *
+     * @var array<int, string>
+     */
+    private const ALLOWED_TIME_FILTERS = [
+        '60m', '24h', 'all',
+    ];
+
     protected $service;
 
     public function __construct(KeywordService $service)
@@ -25,43 +41,19 @@ class AIKeywordRadarController extends Controller
      */
     public function index(Request $request)
     {
-        $lang = $request->get('lang', 'ar');
-        $region = $request->get('region', 'EG');
-        $isAjax = $request->ajax();
-
-        $countryMap = config('keywords.countries', []);
-        $topicsMap = config('keywords.news_topics', [
-            'WORLD' => ['name' => 'World', 'icon' => 'fas fa-globe'],
-            'NATION' => ['name' => 'Nation', 'icon' => 'fas fa-flag'],
-            'BUSINESS' => ['name' => 'Business', 'icon' => 'fas fa-chart-line'],
-            'TECHNOLOGY' => ['name' => 'Technology', 'icon' => 'fas fa-microchip'],
-            'ENTERTAINMENT' => ['name' => 'Entertainment', 'icon' => 'fas fa-film'],
-            'SPORTS' => ['name' => 'Sports', 'icon' => 'fas fa-running'],
-            'SCIENCE' => ['name' => 'Science', 'icon' => 'fas fa-flask'],
-            'HEALTH' => ['name' => 'Health', 'icon' => 'fas fa-heartbeat']
-        ]);
-
-        $currentCountry = $countryMap[strtoupper($region)] ?? ['name' => $region, 'flag' => '🌐'];
-        $currentCountry['code'] = strtoupper($region);
-
         $settings = auth()->user()->settings ?? [];
         $enableEn = !empty($settings['enable_keywords_en']);
 
         // Fetch Target Keywords
         $userId = auth()->id();
-        $retentionLimit = now()->subMinutes(1440);
-        
-        // Fetch Arabic Keywords
-        $targetKeywordsAr = Cache::remember("target_keywords_{$userId}_ar", 300, function () use ($userId, $retentionLimit) {
-            return $this->fetchKeywordsFromDb($userId, 'ar', 'Target', $retentionLimit);
-        });
+        $cacheTtl = $request->boolean('refresh') ? 0 : 60;
+
+        $targetKeywordsAr = $this->loadKeywordsForBox($userId, 'ar', 'Target', null, $cacheTtl);
 
         // Fetch English Keywords if enabled
         $targetKeywordsEn = [];
         if ($enableEn) {
-            $targetKeywordsEn = Cache::remember("target_keywords_{$userId}_en", 300, function () use ($userId, $retentionLimit) {
-                return $this->fetchKeywordsFromDb($userId, 'en', 'Target', $retentionLimit);
-            });
+            $targetKeywordsEn = $this->loadKeywordsForBox($userId, 'en', 'Target', null, $cacheTtl);
         }
 
         // Fetch Custom Box Keywords
@@ -71,50 +63,50 @@ class AIKeywordRadarController extends Controller
             $boxId = $box['id'] ?? '';
             if (empty($boxId)) continue;
             
-            $customBoxKeywords[$boxId] = Cache::remember("target_keywords_{$userId}_{$boxId}", 300, function () use ($userId, $box, $retentionLimit) {
-                $boxLang = $box['lang'] ?? 'ar';
-                $category = "Target:{$box['id']}";
-                return $this->fetchKeywordsFromDb($userId, $boxLang, $category, $retentionLimit);
-            });
+            $boxLang = $box['lang'] ?? 'ar';
+            $category = "Target:{$box['id']}";
+            $customBoxKeywords[$boxId] = $this->loadKeywordsForBox($userId, $boxLang, $category, $boxId, $cacheTtl);
         }
 
         $stats = [
             'total' => Keyword::where('user_id', $userId)->count(),
+            'retention_hours' => KeywordPayload::retentionHours(),
         ];
 
         return view('aikeywordradar::index', compact('stats', 'targetKeywordsAr', 'targetKeywordsEn', 'enableEn', 'customBoxes', 'customBoxKeywords'));
     }
 
+    private function loadKeywordsForBox(int $userId, string $lang, string $category, ?string $boxId, int $cacheTtl): array
+    {
+        $cacheKey = $boxId ? "target_keywords_{$userId}_{$boxId}" : "target_keywords_{$userId}_{$lang}";
+
+        if ($cacheTtl <= 0) {
+            Cache::forget($cacheKey);
+        }
+
+        return Cache::remember($cacheKey, $cacheTtl > 0 ? $cacheTtl : 1, function () use ($userId, $lang, $category) {
+            return $this->fetchKeywordsFromDb($userId, $lang, $category);
+        });
+    }
+
     /**
      * Helper: fetch keywords from DB for a given user/lang/category
      */
-    private function fetchKeywordsFromDb($userId, $lang, $category, $retentionLimit)
+    private function fetchKeywordsFromDb($userId, $lang, $category)
     {
         $dbKeywords = Keyword::where('user_id', $userId)
             ->where('category', $category)
-            ->where('lang', $lang)
-            ->where(function($q) use ($retentionLimit) {
-                $q->where('published_at', '>=', $retentionLimit)
-                  ->orWhere(function($q2) use ($retentionLimit) {
-                      $q2->whereNull('published_at')
-                         ->where('created_at', '>=', $retentionLimit);
-                  });
-            })
-            ->orderByRaw('COALESCE(published_at, created_at) DESC')
+            ->where('lang', $lang);
+        KeywordPayload::applyRetentionScope($dbKeywords);
+        $dbKeywords = $dbKeywords
+            ->orderByRaw('COALESCE(synced_at, published_at, created_at) DESC')
             ->take(500)
             ->get();
 
         if ($dbKeywords->isNotEmpty()) {
-            return $dbKeywords->map(function($kw) {
-                return [
-                    'text' => $kw->keyword,
-                    'source' => $kw->source,
-                    'published_at' => $kw->published_at ? $kw->published_at->toIso8601String() : null,
-                    'synced_at' => $kw->synced_at ? $kw->synced_at->toIso8601String() : null,
-                    'created_at' => $kw->created_at->toIso8601String(),
-                ];
-            })->toArray();
+            return KeywordPayload::fromCollection($dbKeywords);
         }
+
         return [];
     }
 
@@ -123,8 +115,13 @@ class AIKeywordRadarController extends Controller
      */
     public function settings()
     {
-        $settings = auth()->user()->settings ?? [];
-        return view('aikeywordradar::settings', compact('settings'));
+        $user = auth()->user();
+        $settings = $user->settings ?? [];
+
+        return view('aikeywordradar::settings', [
+            'settings' => $settings,
+            'keywordRadarMarketSourceLimit' => $user->isAdmin() ? null : self::MAX_MARKET_SOURCES_NON_ADMIN,
+        ]);
     }
 
     /**
@@ -141,6 +138,17 @@ class AIKeywordRadarController extends Controller
 
         $user = auth()->user();
         $settings = $user->settings ?? [];
+
+        $arClean = $this->parseDedupedCompetitorLines($request->input('keywords_competitors'));
+        $enClean = $this->parseDedupedCompetitorLines($request->input('keywords_competitors_en'));
+
+        if (! $user->isAdmin() && count($arClean) + count($enClean) > self::MAX_MARKET_SOURCES_NON_ADMIN) {
+            return back()
+                ->withErrors([
+                    'market_sources' => 'Standard accounts may add up to '.self::MAX_MARKET_SOURCES_NON_ADMIN.' market sources combined (Arabic + English). Remove some sources or use an administrator account.',
+                ])
+                ->withInput();
+        }
         
         // Handle checkbox which might not be sent if unchecked
         $settings['enable_keywords_en'] = $request->has('enable_keywords_en');
@@ -152,16 +160,12 @@ class AIKeywordRadarController extends Controller
                 $boxes = json_decode($value, true) ?? [];
                 foreach ($boxes as &$box) {
                     if (isset($box['competitors'])) {
-                        $boxRaw = preg_split('/\r\n|\r|\n/', (string)$box['competitors']);
+                        $boxRaw = explode("\n", $box['competitors']);
                         $boxNorms = [];
                         $boxClean = [];
                         foreach ($boxRaw as $u) {
                             $u = trim($u);
                             if (empty($u)) continue;
-                            if (!preg_match('/^https?:\/\//i', $u)) {
-                                $u = 'https://' . $u;
-                            }
-                            $u = rtrim($u, '/');
                             
                             // Normalize for comparison
                             $norm = preg_replace('/^https?:\/\//', '', strtolower($u));
@@ -179,28 +183,13 @@ class AIKeywordRadarController extends Controller
                 continue;
             }
 
-            if ($key === 'keywords_competitors' || $key === 'keywords_competitors_en') {
-                $raw = preg_split('/\r\n|\r|\n/', (string)$value);
-                $norms = [];
-                $clean = [];
-                foreach ($raw as $u) {
-                    $u = trim($u);
-                    if (empty($u)) continue;
-                    if (!preg_match('/^https?:\/\//i', $u)) {
-                        $u = 'https://' . $u;
-                    }
-                    $u = rtrim($u, '/');
-                    
-                    // Normalize for comparison
-                    $norm = preg_replace('/^https?:\/\//', '', strtolower($u));
-                    $norm = preg_replace('/^www\./', '', $norm);
-                    $norm = rtrim($norm, '/');
+            if ($key === 'keywords_competitors') {
+                $settings[$key] = implode("\n", $arClean);
+                continue;
+            }
 
-                    if (in_array($norm, $norms)) continue;
-                    $norms[] = $norm;
-                    $clean[] = $u;
-                }
-                $settings[$key] = implode("\n", $clean);
+            if ($key === 'keywords_competitors_en') {
+                $settings[$key] = implode("\n", $enClean);
                 continue;
             }
 
@@ -218,25 +207,25 @@ class AIKeywordRadarController extends Controller
     public function sync(Request $request)
     {
         $user = auth()->user();
-        
-        if (!$user->canUseTool('ai-keyword-radar')) {
-            $msg = $user->getLimitReachedMessage('Keyword Radar', 'ai-keyword-radar');
-            if ($request->ajax()) return response()->json(['success' => false, 'message' => $msg], 403);
+        $slug = 'ai-keyword-radar';
+
+        if (! $user->canUseTool($slug)) {
+            $cost = $user->getToolCreditCost($slug);
+            $hasOwnership = $user->ownsTool($slug);
+            $msg = $hasOwnership
+                ? "Insufficient balance to update trends. Required: {$cost} Credits."
+                : $user->getLimitReachedMessage('Keyword Radar', $slug);
+            if ($request->ajax()) {
+                return response()->json(['success' => false, 'message' => $msg], $hasOwnership ? 402 : 403);
+            }
             return back()->with('error', $msg);
         }
 
-        $syncCredits = (int)\App\Models\Setting::get('ai-keyword-radar_sync_credits', 1);
-
-        if (!$user->wallet || $user->wallet->balance_credits < $syncCredits) {
-            if ($request->ajax()) {
-                return response()->json(['success' => false, 'message' => "Insufficient balance to update trends. Required: {$syncCredits} Credits."], 403);
-            }
-            return back()->with('error', "Insufficient balance to update trends. Required: {$syncCredits} Credits.");
-        }
+        $syncCredits = $user->getToolCreditCost($slug);
 
         try {
             $lang = $request->get('lang', 'ar');
-            $timeFilter = $request->get('time_filter', '60m');
+            $timeFilter = $this->normalizeTimeFilter($request->get('time_filter', '60m'));
             $boxId = $request->get('box_id');
 
             $user->refresh();
@@ -276,56 +265,46 @@ class AIKeywordRadarController extends Controller
                 }
             }
 
-            // Count current keywords so frontend can detect new ones
-            // MUST use the same retention filter as getKeywordsJSON to be comparable!
-            $retentionVal = (int)\App\Models\Setting::get('ai-keyword-radar_retention_hours', 24);
-            $retentionLimit = now()->subHours($retentionVal);
-
+            // Count current keywords so frontend can detect new ones.
+            // Use applyRetentionScope to match exactly what getKeywordsJSON returns.
             $category = $boxId ? "Target:{$boxId}" : 'Target';
-            $currentCount = \Modules\AIKeywordRadar\Models\Keyword::where('user_id', $user->id)
+            $currentCountQuery = \Modules\AIKeywordRadar\Models\Keyword::where('user_id', $user->id)
                 ->where('category', $category)
-                ->where('lang', $lang)
-                ->where(function($q) use ($retentionLimit) {
-                    $q->where('published_at', '>=', $retentionLimit)
-                      ->orWhere(function($q2) use ($retentionLimit) {
-                          $q2->whereNull('published_at')
-                             ->where('created_at', '>=', $retentionLimit);
-                      });
-                })
-                ->count();
+                ->where('lang', $lang);
+            KeywordPayload::applyRetentionScope($currentCountQuery);
+            $currentCount = $currentCountQuery->count();
 
             // Prevent overlapping syncs — if one is already running, don't start another
-            $lockKey = "sync_lock_{$user->id}_{$lang}" . ($boxId ? "_{$boxId}" : '');
-            if (Cache::has($lockKey)) {
+            if (KeywordPayload::isSyncLocked($user->id, $lang, $boxId)) {
                 $msg = 'A sync is already running. Please wait for it to finish.';
                 if ($request->ajax()) return response()->json(['success' => false, 'message' => $msg], 429);
                 return back()->with('error', $msg);
             }
-            // Set lock for 10 minutes (max job duration)
-            Cache::put($lockKey, true, 600);
+            KeywordPayload::acquireSyncLock($user->id, $lang, $boxId);
 
             // Clear ANY stale/old sync jobs from the queue before dispatching
             // This prevents old serialized jobs (with outdated code) from executing
-            \DB::table('jobs')->where('queue', 'default')
+            \DB::table('jobs')->whereIn('queue', ['default', 'keyword-radar'])
                 ->where('payload', 'like', '%SyncKeywordsJob%')
                 ->delete();
-            
-            // Dispatch fresh job
-            \Modules\AIKeywordRadar\Jobs\SyncKeywordsJob::dispatch($user->id, $lang, $syncCredits, $timeFilter, $boxId);
-            
+
+            // Dispatch fresh job to a dedicated queue so --once always picks it up
+            \Modules\AIKeywordRadar\Jobs\SyncKeywordsJob::dispatch($user->id, $lang, $syncCredits, $timeFilter, $boxId)
+                ->onQueue('keyword-radar');
+
             Log::info("[Keyword Radar Sync] Job dispatched for user #{$user->id} ({$lang}) Filter: {$timeFilter}");
 
-            // Spawn queue worker in background
+            // Spawn queue worker targeting only the keyword-radar queue
             $php = PHP_BINARY;
             $artisan = base_path('artisan');
             $logFile = storage_path('logs/queue-worker.log');
-            $cmd = "nohup {$php} {$artisan} queue:work --once --timeout=600 --memory=512 >> {$logFile} 2>&1 &";
+            $cmd = "nohup {$php} {$artisan} queue:work --queue=keyword-radar --once --timeout=600 --memory=512 >> {$logFile} 2>&1 &";
             exec($cmd);
             
             Log::info("[Keyword Radar Sync] Queue worker spawned in background.");
 
             $boxLabel = $boxId ? " (Custom Box)" : " (" . ($lang === 'en' ? 'EN' : 'AR') . ")";
-            $filterLabel = ($timeFilter === 'all' ? 'All Time' : ($timeFilter === '24h' ? 'Last 24 Hours' : 'Last 60 Minutes'));
+            $filterLabel = $this->service->describeTimeFilter($timeFilter);
             $successMsg = "Sync{$boxLabel} started in background (Filter: {$filterLabel}). Keywords will appear automatically when ready.";
             
             if ($request->ajax()) {
@@ -341,6 +320,9 @@ class AIKeywordRadarController extends Controller
 
             return back()->with('success', $successMsg);
         } catch (\Exception $e) {
+            if (isset($lang)) {
+                KeywordPayload::releaseSyncLock($user->id, $lang, $boxId ?? null);
+            }
             Log::error("[Keyword Radar Sync] Exception: " . $e->getMessage());
             if ($request->ajax()) {
                 return response()->json(['success' => false, 'message' => 'Sync failed: ' . $e->getMessage()], 500);
@@ -356,21 +338,16 @@ class AIKeywordRadarController extends Controller
         $boxId = $request->get('box_id');
         $category = $boxId ? "Target:{$boxId}" : 'Target';
         
-        $retentionVal = (int)\App\Models\Setting::get('ai-keyword-radar_retention_hours', 24);
-        $retentionLimit = now()->subHours($retentionVal);
-        
         $cacheKey = $boxId ? "target_keywords_{$userId}_{$boxId}" : "target_keywords_{$userId}_{$lang}";
-        
-        // Always refresh from DB when called via AJAX for refresh
-        $keywords = $this->fetchKeywordsFromDb($userId, $lang, $category, $retentionLimit);
-        
-        // Update cache for web views
+
+        $keywords = $this->fetchKeywordsFromDb($userId, $lang, $category);
+
         Cache::put($cacheKey, $keywords, 3600);
 
         return response()->json([
             'success' => true,
             'keywords' => $keywords,
-            'sync_running' => Cache::has("sync_lock_{$userId}_{$lang}")
+            'sync_running' => KeywordPayload::isSyncLocked($userId, $lang, $boxId),
         ]);
     }
 
@@ -453,5 +430,59 @@ class AIKeywordRadarController extends Controller
                 'message' => $e->getMessage()
             ], 500);
         }
+    }
+
+    /**
+     * Coerce arbitrary user-supplied time filter input into one of the
+     * tokens the radar actually supports. Accepts a few aliases (e.g. "1h",
+     * "1d") and falls back to "60m" for anything unknown.
+     */
+    private function normalizeTimeFilter(mixed $value): string
+    {
+        if (! is_string($value) && ! is_int($value)) {
+            return '60m';
+        }
+        $token = strtolower(trim((string) $value));
+        if ($token === '') {
+            return '60m';
+        }
+
+        $aliases = [
+            '1h'  => '60m',
+            '2h'  => '120m',
+            '3h'  => '180m',
+            '6h'  => '360m',
+            '1d'  => '24h',
+            'any' => 'all',
+        ];
+        $token = $aliases[$token] ?? $token;
+
+        return in_array($token, self::ALLOWED_TIME_FILTERS, true) ? $token : '60m';
+    }
+
+    /**
+     * @return list<string>
+     */
+    private function parseDedupedCompetitorLines(?string $value): array
+    {
+        $raw = explode("\n", (string) $value);
+        $norms = [];
+        $clean = [];
+        foreach ($raw as $u) {
+            $u = trim($u);
+            if ($u === '') {
+                continue;
+            }
+            $norm = preg_replace('/^https?:\/\//', '', strtolower($u));
+            $norm = preg_replace('/^www\./', '', (string) $norm);
+            $norm = rtrim($norm, '/');
+            if (in_array($norm, $norms, true)) {
+                continue;
+            }
+            $norms[] = $norm;
+            $clean[] = $u;
+        }
+
+        return $clean;
     }
 }

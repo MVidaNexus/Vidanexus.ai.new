@@ -3,23 +3,42 @@
 namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
-use Illuminate\Http\Request;
+use App\Models\Coupon;
 use App\Models\Setting;
 use App\Models\User;
 use App\Models\Wallet;
-use Nwidart\Modules\Facades\Module;
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\DB;
+use Nwidart\Modules\Facades\Module;
 
 class SystemSettingsController extends Controller
 {
     /**
      * Display the system settings management page.
      */
-    public function index()
+    public function index(?string $tab = null)
     {
+        $allowedTabs = [
+            'availability',
+            'welcome',
+            'credit-system',
+            'trial',
+            'coupons',
+            'packages',
+            'smtp',
+            'scripts',
+            'infrastructure',
+            'ledger',
+            'command',
+            'markdown',
+            'countries',
+        ];
+        $activeTab = in_array($tab, $allowedTabs, true) ? $tab : 'availability';
+
         $tools = config('tools.all_tools', []);
         $settings = Setting::getAllSettings();
-        
+
         // System Stats for Infrastructure & Ledger Tabs
         $stats = [
             'total_users' => User::count(),
@@ -35,30 +54,82 @@ class SystemSettingsController extends Controller
                 ->take(15)
                 ->get(),
         ];
-        
+
         $walletBalance = auth()->user()->wallet->balance_credits ?? 0;
 
-        return view('admin.horizon.settings', compact('tools', 'settings', 'stats', 'walletBalance'));
+        $coupons = Coupon::with('assignedUser')
+            ->withCount('redemptions')
+            ->latest()
+            ->get();
+
+        $users = User::select('id', 'name', 'email')->orderBy('name')->get();
+
+        return view('admin.horizon.settings', compact('tools', 'settings', 'stats', 'walletBalance', 'coupons', 'users', 'activeTab', 'allowedTabs'));
     }
 
-    public function update(Request $request)
+    public function update(Request $request, ?string $tab = null)
     {
         try {
+            $allowedTabs = [
+                'availability',
+                'welcome',
+                'credit-system',
+                'trial',
+                'coupons',
+                'packages',
+                'smtp',
+                'scripts',
+                'infrastructure',
+                'ledger',
+                'command',
+                'markdown',
+                'countries',
+            ];
+            $activeTab = in_array($tab, $allowedTabs, true) ? $tab : 'availability';
             $input = $request->except('_token');
             $tools = config('tools.all_tools', []);
             $envData = [];
-            
+
+            // ─── Country Registry ─────────────────────────────────────
+            // The "Countries" tab writes a master multiline list and a
+            // per-country visibility array. Saved under reserved keys so
+            // tools never collide with their own per-tool country lists.
+            if ($activeTab === 'countries') {
+                $registryText = (string) $request->input('global_country_registry', '');
+                Setting::set('global_country_registry', $registryText, 'textarea', 'country_registry');
+
+                $visible = $request->input('global_country_visibility', []);
+                if (! is_array($visible)) {
+                    $visible = [];
+                }
+                $visible = array_values(array_filter(array_map(
+                    fn ($c) => \App\Support\CountryRegistry::normalizeCode((string) $c),
+                    $visible
+                )));
+                Setting::set('global_country_visibility', json_encode($visible), 'json', 'country_registry');
+
+                // Forget the per-key cache wrapper as well so the next
+                // page load re-reads from the database.
+                \Illuminate\Support\Facades\Cache::forget('setting_global_country_registry');
+                \Illuminate\Support\Facades\Cache::forget('setting_global_country_visibility');
+                \App\Support\CountryRegistry::clearGlobalCache();
+
+                return redirect()->route('admin.horizon.settings.tab', ['tab' => 'countries'])
+                    ->with('success', 'Country registry updated. Hidden countries will disappear from every tool on the next request.');
+            }
+
             // Handle all input fields
             foreach ($input as $key => $value) {
                 if ($key === 'packages' && is_array($value)) {
                     // Ensure popular toggles are consistently boolean-like
-                    foreach(['lite', 'standard', 'pro', 'enterprise'] as $pkgKey) {
+                    foreach (['lite', 'standard', 'pro', 'enterprise'] as $pkgKey) {
                         if (isset($value[$pkgKey])) {
                             $value[$pkgKey]['popular'] = isset($value[$pkgKey]['popular']) && $value[$pkgKey]['popular'] == '1';
                             unset($value[$pkgKey]['popular_hidden']);
                         }
                     }
                     Setting::set('marketplace_packages', json_encode($value), 'json', 'marketplace');
+
                     continue;
                 }
 
@@ -69,7 +140,7 @@ class SystemSettingsController extends Controller
 
                 $type = 'integer';
                 $group = 'general';
-                
+
                 if (str_starts_with($key, 'plan_credits_')) {
                     $group = 'plan_credits';
                 } elseif (str_starts_with($key, 'plan_active_')) {
@@ -101,6 +172,10 @@ class SystemSettingsController extends Controller
                 } elseif (str_ends_with($key, '_model')) {
                     $group = 'tool_ai_config';
                     $type = 'text';
+                } elseif (str_starts_with($key, 'trial_tool_')) {
+                    $group = 'trial_package';
+                    $type = 'boolean';
+                    $value = ($value === 'on' || $value == 1);
                 } elseif (str_starts_with($key, 'markdown_ai_')) {
                     $group = 'markdown_ai';
                     $type = str_contains($key, '_enabled') ? 'boolean' : (str_contains($key, '_ttl') ? 'integer' : 'text');
@@ -111,42 +186,90 @@ class SystemSettingsController extends Controller
                     $group = 'scripts';
                     $type = 'text';
                 }
-                
+
                 // Handle SMTP / .env keys separately
                 if (str_starts_with($key, 'MAIL_')) {
                     $envData[$key] = $value;
+
                     continue;
                 }
 
+                if (
+                    str_starts_with($key, 'plan_credits_') ||
+                    str_starts_with($key, 'tool_credit_cost_') ||
+                    str_starts_with($key, 'tool_bonus_credits_')
+                ) {
+                    $value = max(0, (int) $value);
+                }
+
                 Setting::set($key, $value, $type, $group);
+
+                // Reverse-mirror: when the canonical per-tool cost is saved,
+                // also keep the legacy per-tool admin page key in lockstep so
+                // both views display the same number. The per-tool admin form
+                // writes the opposite direction in HorizonController.
+                if (str_starts_with($key, 'tool_credit_cost_')) {
+                    $slug = substr($key, strlen('tool_credit_cost_'));
+                    $legacyKey = "{$slug}_sync_credits";
+                    Setting::set($legacyKey, max(0, (int) $value), 'number', 'tool_settings');
+                }
             }
 
             // Persist .env changes if any
-            if (!empty($envData)) {
+            if (! empty($envData)) {
                 try {
                     $this->updateEnv($envData);
                 } catch (\Exception $e) {
-                    \Log::warning('Failed to update .env: ' . $e->getMessage());
+                    \Log::warning('Failed to update .env: '.$e->getMessage());
                 }
             }
 
             // Handle Checkboxes (ensure false is saved if missing)
-            if (!$request->has('markdown_ai_enabled')) {
+            if (! $request->has('markdown_ai_enabled')) {
                 Setting::set('markdown_ai_enabled', false, 'boolean', 'markdown_ai');
             }
 
             foreach ($tools as $tool) {
+                $slug = $tool['slug'] ?? null;
+                if (! $slug) {
+                    continue;
+                }
+
                 $availKey = "tool_available_{$tool['slug']}";
-                if (!$request->has($availKey)) {
+                if (! $request->has($availKey)) {
                     Setting::set($availKey, false, 'boolean', 'tool_availability');
+                }
+
+                // Guarantee marketplace keys exist for every tool.
+                $unlockKey = "tool_unlock_price_{$slug}";
+                $creditKey = "tool_credit_cost_{$slug}";
+                $bonusKey = "tool_bonus_credits_{$slug}";
+
+                if (Setting::get($unlockKey, null) === null) {
+                    Setting::set($unlockKey, max(0, (int) ($tool['unlock_price'] ?? 99)), 'integer', 'marketplace_pricing');
+                }
+                if (Setting::get($creditKey, null) === null) {
+                    Setting::set($creditKey, max(0, (int) ($tool['credit_cost_per_action'] ?? 1)), 'integer', 'tool_usage_pricing');
+                }
+                if (Setting::get($bonusKey, null) === null) {
+                    Setting::set($bonusKey, max(0, (int) ($tool['initial_bonus_credits'] ?? 10)), 'integer', 'marketplace_bonuses');
+                }
+
+                // Guarantee trial_tool_ key exists and is false if not submitted (unchecked checkbox)
+                $trialKey = "trial_tool_{$slug}";
+                if (! $request->has($trialKey)) {
+                    Setting::set($trialKey, false, 'boolean', 'trial_package');
                 }
             }
 
-            return back()->with('success', 'System settings matrix updated successfully.');
+            return redirect()->route('admin.horizon.settings.tab', ['tab' => $activeTab])
+                ->with('success', 'System settings matrix updated successfully.');
 
         } catch (\Throwable $e) {
-            \Log::error('SystemSettings update CRASHED: ' . $e->getMessage() . "\n" . $e->getTraceAsString());
-            return back()->with('error', 'Error saving settings: ' . $e->getMessage());
+            \Log::error('SystemSettings update CRASHED: '.$e->getMessage()."\n".$e->getTraceAsString());
+
+            return redirect()->route('admin.horizon.settings.tab', ['tab' => $activeTab ?? 'availability'])
+                ->with('error', 'Error saving settings: '.$e->getMessage());
         }
     }
 
@@ -158,13 +281,14 @@ class SystemSettingsController extends Controller
             'OPENROUTER_API_KEY' => env('OPENROUTER_API_KEY'),
             'FAWATERK_API_KEY' => env('FAWATERK_API_KEY'),
             'FAWATERK_VENDOR_KEY' => env('FAWATERK_VENDOR_KEY'),
+            'FAWATERK_SANDBOX_MODE' => config('services.fawaterk.sandbox_mode'),
         ];
 
         // Also get tool routing for the second tab
         $allSettings = Setting::all();
         $toolConfig = [];
         $tools = config('tools.all_tools', []);
-        
+
         foreach ($allSettings as $setting) {
             if (preg_match('/^([a-z0-9-]+)_(provider|model|api_key|is_active|ai_chain)$/', $setting->key, $matches)) {
                 $toolSlug = $matches[1];
@@ -175,25 +299,35 @@ class SystemSettingsController extends Controller
                 $toolConfig[$toolSlug]['is_active'] = $setting->value;
             }
         }
-        
+
         return view('admin.horizon.api-keys', compact('keys', 'toolConfig', 'tools'));
     }
 
     public function updateApiKeys(Request $request)
     {
+        $request->validate([
+            'FAWATERK_SANDBOX_MODE' => 'required|in:auto,sandbox,live',
+        ]);
+
         $data = $request->only([
-            'OPENAI_API_KEY', 
-            'GEMINI_API_KEY', 
+            'OPENAI_API_KEY',
+            'GEMINI_API_KEY',
             'OPENROUTER_API_KEY',
             'FAWATERK_API_KEY',
-            'FAWATERK_VENDOR_KEY'
+            'FAWATERK_VENDOR_KEY',
         ]);
-        
+        $data['FAWATERK_SANDBOX'] = match ($request->input('FAWATERK_SANDBOX_MODE')) {
+            'auto' => 'auto',
+            'sandbox' => 'true',
+            'live' => 'false',
+        };
+
         try {
             $this->updateEnv($data);
+
             return back()->with('success', 'General API Keys updated successfully and persisted to .env');
         } catch (\Exception $e) {
-            return back()->with('error', 'Failed to update .env file: ' . $e->getMessage());
+            return back()->with('error', 'Failed to update .env file: '.$e->getMessage());
         }
     }
 
@@ -206,6 +340,9 @@ class SystemSettingsController extends Controller
             'OPENROUTER_API_KEY' => env('OPENROUTER_API_KEY'),
             'FAWATERK_API_KEY' => env('FAWATERK_API_KEY'),
             'FAWATERK_VENDOR_KEY' => env('FAWATERK_VENDOR_KEY'),
+            'FAWATERK_SANDBOX' => config('services.fawaterk.sandbox_mode')
+                .' → '.(config('services.fawaterk.sandbox') ? 'staging' : 'live')
+                .' (APP_ENV='.config('app.env').')',
         ];
 
         // 2. Scrape Database Settings
@@ -227,9 +364,9 @@ class SystemSettingsController extends Controller
                 $toolConfig[$toolSlug]['is_active'] = $value;
             }
             // Generic API/Token/Secret keys
-            elseif (str_contains(strtolower($key), 'key') || 
-                str_contains(strtolower($key), 'token') || 
-                str_contains(strtolower($key), 'secret') || 
+            elseif (str_contains(strtolower($key), 'key') ||
+                str_contains(strtolower($key), 'token') ||
+                str_contains(strtolower($key), 'secret') ||
                 str_contains(strtolower($key), 'credential')) {
                 $databaseKeys[$key] = $value;
             }
@@ -243,17 +380,17 @@ class SystemSettingsController extends Controller
     protected function updateEnv(array $data)
     {
         $path = base_path('.env');
-        
-        if (!file_exists($path)) {
-            throw new \Exception(".env file not found at " . $path);
+
+        if (! file_exists($path)) {
+            throw new \Exception('.env file not found at '.$path);
         }
 
         $content = file_get_contents($path);
-        
+
         foreach ($data as $key => $value) {
             // Secure value (remove any newlines or dangerous characters)
             $value = str_replace(["\n", "\r"], '', $value);
-            
+
             // Check if key exists
             if (preg_match("/^{$key}=.*/m", $content)) {
                 $content = preg_replace("/^{$key}=.*/m", "{$key}={$value}", $content);
@@ -264,8 +401,11 @@ class SystemSettingsController extends Controller
         }
 
         file_put_contents($path, $content);
-        
-        // Clear config cache if possible (requires artisan or clear cache manually)
-        // In some shared hosting, we might just rely on the next request.
+
+        try {
+            Artisan::call('config:clear');
+        } catch (\Throwable) {
+            // Best-effort so .env edits still persist if artisan is unavailable.
+        }
     }
 }

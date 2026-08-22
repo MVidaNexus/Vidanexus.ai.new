@@ -8,7 +8,7 @@
         $colorClass = 'purple-500';
         $icon = 'fas fa-layer-group';
         $loadingModel = "loading['sync_{$customBoxId}']";
-        $selectedModel = "selectedKeywords['{$customBoxId}']";
+        $syncProp = "sync_{$customBoxId}";
         $boxKey = $customBoxId;
         $boxSettings = collect(auth()->user()->settings['keywords_custom_boxes'] ?? [])->firstWhere('id', $customBoxId);
         $userCompetitors = $boxSettings['competitors'] ?? '';
@@ -21,7 +21,7 @@
         $colorVar = $lang === 'ar' ? 'var(--primary-cyan)' : '#3b82f6';
         $icon = $lang === 'ar' ? 'fas fa-crosshairs' : 'fas fa-globe-americas';
         $loadingModel = $lang === 'ar' ? "loading['syncAr']" : "loading['syncEn']";
-        $selectedModel = "selectedKeywords['{$lang}']";
+        $syncProp = $lang === 'ar' ? 'syncAr' : 'syncEn';
         $boxKey = $lang;
         $userCompetitors = auth()->user()->settings['keywords_competitors' . ($lang === 'en' ? '_en' : '')] ?? '';
         $hasCompetitors = !empty(trim($userCompetitors));
@@ -37,7 +37,8 @@
         {{-- Sort Dropdown --}}
         <div class="relative" x-data="{ sortOpen: false, currentSort: 'Newest Publish' }" @click.away="sortOpen = false">
             <button type="button" @click="sortOpen = !sortOpen" 
-                style="display:inline-flex;align-items:center;gap:6px;padding:6px 14px;border-radius:12px;font-size:11px;font-weight:700;white-space:nowrap;background:#0f172a;border:1px solid rgba(255,255,255,0.15);color:#fff;cursor:pointer;">
+                style="display:inline-flex;align-items:center;gap:6px;padding:6px 14px;border-radius:12px;font-size:11px;font-weight:700;white-space:nowrap;background:var(--card-bg);border:1px solid var(--glass-border);color:var(--text-main);box-shadow:0 2px 10px rgba(0,0,0,0.05);cursor:pointer;transition:all 0.2s;"
+                onmouseover="this.style.background='var(--glass-bg)'" onmouseout="this.style.background='var(--card-bg)'">
                 <i class="fas fa-sort-amount-down text-[10px]" style="color: {{ $colorVar }};"></i> 
                 <span x-text="currentSort">Latest Published</span>
                 <i class="fas fa-chevron-down text-[8px] opacity-60 transition-transform duration-200" :class="{'rotate-180': sortOpen}"></i>
@@ -49,25 +50,25 @@
                  x-transition:leave="transition ease-in duration-100"
                  x-transition:leave-start="opacity-100"
                  x-transition:leave-end="opacity-0"
-                 style="position:absolute;top:calc(100% + 6px);{{ $isAr ? 'right:0' : 'left:0' }};width:220px;background:#0f172a;border:1px solid rgba(255,255,255,0.12);border-radius:14px;overflow:hidden;z-index:9999;box-shadow:0 15px 40px rgba(0,0,0,0.6);">
-                <div style="padding:8px 14px;font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:0.08em;color:rgba(255,255,255,0.3);border-bottom:1px solid rgba(255,255,255,0.06);">
+                 style="position:absolute;top:calc(100% + 6px);{{ $isAr ? 'right:0' : 'left:0' }};width:220px;background:var(--card-bg);border:1px solid var(--glass-border);border-radius:14px;overflow:hidden;z-index:9999;box-shadow:0 15px 40px rgba(0,0,0,0.15);">
+                <div style="padding:8px 14px;font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:0.08em;color:var(--text-muted);border-bottom:1px solid var(--glass-border);">
                     <i class="fas fa-satellite-dish text-[8px] mr-1 opacity-40"></i> Sort Radar Findings
                 </div>
-                <button type="button" @click="sortOpen = false; currentSort = 'Newest Sync'; window.executeKeywordSort('{{ $boxKey }}', 'pulldate');"
-                    style="display:flex;align-items:center;gap:10px;width:100%;text-align:{{ $isAr ? 'right' : 'left' }};padding:10px 14px;background:transparent;color:#fff;border:none;cursor:pointer;font-size:12px;font-weight:600;transition:background 0.15s;"
-                    onmouseover="this.style.background='rgba(255,255,255,0.08)'" onmouseout="this.style.background='transparent'">
+                <button type="button" @click="sortOpen = false; currentSort = 'Newest Sync'; window.executeKeywordSort('{{ $lang }}', 'pulldate');"
+                    style="display:flex;align-items:center;gap:10px;width:100%;text-align:{{ $isAr ? 'right' : 'left' }};padding:10px 14px;background:transparent;color:var(--text-main);border:none;cursor:pointer;font-size:12px;font-weight:600;transition:background 0.15s;"
+                    onmouseover="this.style.background='var(--glass-bg)'" onmouseout="this.style.background='transparent'">
                     <span style="display:flex;align-items:center;justify-content:center;width:26px;height:26px;border-radius:7px;background:rgba(245,158,11,0.15);color:#f59e0b;flex-shrink:0;font-size:10px;"><i class="fas fa-satellite-dish"></i></span>
                     <span>Radar Detection</span>
                 </button>
-                <button type="button" @click="sortOpen = false; currentSort = 'Newest Publish'; window.executeKeywordSort('{{ $boxKey }}', 'pubdate');"
-                    style="display:flex;align-items:center;gap:10px;width:100%;text-align:{{ $isAr ? 'right' : 'left' }};padding:10px 14px;background:transparent;color:#fff;border:none;border-top:1px solid rgba(255,255,255,0.04);cursor:pointer;font-size:12px;font-weight:600;transition:background 0.15s;"
-                    onmouseover="this.style.background='rgba(255,255,255,0.08)'" onmouseout="this.style.background='transparent'">
+                <button type="button" @click="sortOpen = false; currentSort = 'Newest Publish'; window.executeKeywordSort('{{ $lang }}', 'pubdate');"
+                    style="display:flex;align-items:center;gap:10px;width:100%;text-align:{{ $isAr ? 'right' : 'left' }};padding:10px 14px;background:transparent;color:var(--text-main);border:none;border-top:1px solid var(--glass-border);cursor:pointer;font-size:12px;font-weight:600;transition:background 0.15s;"
+                    onmouseover="this.style.background='var(--glass-bg)'" onmouseout="this.style.background='transparent'">
                     <span style="display:flex;align-items:center;justify-content:center;width:26px;height:26px;border-radius:7px;background:rgba(14,165,233,0.15);color:#0ea5e9;flex-shrink:0;font-size:10px;"><i class="fas fa-clock"></i></span>
                     <span>Market Timestamp</span>
                 </button>
-                <button type="button" @click="sortOpen = false; currentSort = 'A → Z'; window.executeKeywordSort('{{ $boxKey }}', 'alphabetical');"
-                    style="display:flex;align-items:center;gap:10px;width:100%;text-align:{{ $isAr ? 'right' : 'left' }};padding:10px 14px;background:transparent;color:#fff;border:none;border-top:1px solid rgba(255,255,255,0.04);cursor:pointer;font-size:12px;font-weight:600;transition:background 0.15s;"
-                    onmouseover="this.style.background='rgba(255,255,255,0.08)'" onmouseout="this.style.background='transparent'">
+                <button type="button" @click="sortOpen = false; currentSort = 'A → Z'; window.executeKeywordSort('{{ $lang }}', 'alphabetical');"
+                    style="display:flex;align-items:center;gap:10px;width:100%;text-align:{{ $isAr ? 'right' : 'left' }};padding:10px 14px;background:transparent;color:var(--text-main);border:none;border-top:1px solid var(--glass-border);cursor:pointer;font-size:12px;font-weight:600;transition:background 0.15s;"
+                    onmouseover="this.style.background='var(--glass-bg)'" onmouseout="this.style.background='transparent'">
                     <span style="display:flex;align-items:center;justify-content:center;width:26px;height:26px;border-radius:7px;background:rgba(168,85,247,0.15);color:#a855f7;flex-shrink:0;font-size:10px;"><i class="fas fa-sort-alpha-down"></i></span>
                     <span>Alphabetical (A-Z)</span>
                 </button>
@@ -75,11 +76,42 @@
         </div>
 
         {{-- Time Filter + Sync --}}
-        <div class="relative" x-data="{ timeOpen: false, timeLabel: 'Last 60m', timeValue: '60m' }" @click.away="timeOpen = false">
+        <div class="relative" x-data="{
+                timeOpen: false,
+                timeLabel: 'Last 60m',
+                timeValue: '60m',
+                hoverValue: null,
+                timeOptions: [
+                    { value: '60m',  label: 'Last 60m',  title: 'Last 60 Minutes',  hint: 'Most recent content only',         icon: 'fas fa-history',       color: '#10b981' },
+                    { value: '24h',  label: 'Last 24h',  title: 'Last 24 Hours',    hint: 'Today\u2019s trending content',    icon: 'fas fa-calendar-day',  color: '#f59e0b' },
+                    { value: 'all',  label: 'All Time',  title: 'All Time Content', hint: 'No time restriction',              icon: 'fas fa-infinity',      color: '#3b82f6' },
+                ],
+                selectTime(opt) {
+                    this.timeValue = opt.value;
+                    this.timeLabel = opt.label;
+                    this.timeOpen = false;
+                    if (typeof window.applyKeywordTimeFilter === 'function') {
+                        window.applyKeywordTimeFilter('{{ $lang }}', opt.value);
+                    }
+                },
+                optionBg(opt) {
+                    if (this.hoverValue === opt.value) return 'var(--glass-bg)';
+                    if (this.timeValue === opt.value) return opt.color + '22';
+                    return 'transparent';
+                },
+                init() {
+                    this.$nextTick(() => {
+                        if (typeof window.applyKeywordTimeFilter === 'function') {
+                            window.applyKeywordTimeFilter('{{ $lang }}', this.timeValue);
+                        }
+                    });
+                }
+             }" @click.away="timeOpen = false">
             <div class="flex items-center gap-2">
                 {{-- Time Filter Button --}}
                 <button type="button" @click="timeOpen = !timeOpen" 
-                    style="display:inline-flex;align-items:center;gap:6px;padding:6px 14px;border-radius:12px;font-size:11px;font-weight:700;white-space:nowrap;background:#0f172a;border:1px solid rgba(255,255,255,0.15);color:#fff;cursor:pointer;">
+                    style="display:inline-flex;align-items:center;gap:6px;padding:6px 14px;border-radius:12px;font-size:11px;font-weight:700;white-space:nowrap;background:var(--card-bg);border:1px solid var(--glass-border);color:var(--text-main);box-shadow:0 2px 10px rgba(0,0,0,0.05);cursor:pointer;transition:all 0.2s;"
+                    onmouseover="this.style.background='var(--glass-bg)'" onmouseout="this.style.background='var(--card-bg)'">
                     <i class="fas fa-clock text-[10px]" style="color: #10b981;"></i> 
                     <span x-text="timeLabel">Last 60m</span>
                     <i class="fas fa-chevron-down text-[8px] opacity-60 transition-transform duration-200" :class="{'rotate-180': timeOpen}"></i>
@@ -87,7 +119,7 @@
 
                 {{-- Sync Button --}}
                 <button @click="syncCompetitors('{{ $lang }}', timeValue, '{{ $customBoxId ?? '' }}')" :disabled="{{ $loadingModel }}" 
-                    style="display:inline-flex;align-items:center;gap:6px;padding:6px 16px;border-radius:12px;font-size:11px;font-weight:900;color:#000;white-space:nowrap;border:1px solid rgba(255,255,255,0.1);background:{{ $colorVar }};box-shadow:0 4px 20px {{ $colorVar }}35;cursor:pointer;transition:transform 0.15s;"
+                    style="display:inline-flex;align-items:center;gap:6px;padding:6px 16px;border-radius:12px;font-size:11px;font-weight:900;color:#fff;white-space:nowrap;border:1px solid rgba(255,255,255,0.2);background:{{ $colorVar }};box-shadow:0 4px 20px {{ $colorVar }}35;cursor:pointer;transition:transform 0.15s;"
                     onmouseover="if(!this.disabled)this.style.transform='scale(1.05)'" onmouseout="this.style.transform='scale(1)'">
                     <i class="fas fa-sync-alt text-[10px]" :class="{ 'fa-spin': {{ $loadingModel }} }"></i> 
                     <span x-text="{{ $loadingModel }} ? 'Initial Scanning...' : 'Refresh Radar'"></span>
@@ -102,55 +134,41 @@
                  x-transition:leave="transition ease-in duration-100"
                  x-transition:leave-start="opacity-100"
                  x-transition:leave-end="opacity-0"
-                 style="position:absolute;top:calc(100% + 6px);{{ $isAr ? 'right:0' : 'left:0' }};width:240px;background:#0f172a;border:1px solid rgba(255,255,255,0.12);border-radius:14px;overflow:hidden;z-index:9999;box-shadow:0 15px 40px rgba(0,0,0,0.6);">
-                <div style="padding:8px 14px;font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:0.08em;color:rgba(255,255,255,0.3);border-bottom:1px solid rgba(255,255,255,0.06);">
+                 style="position:absolute;top:calc(100% + 6px);{{ $isAr ? 'right:0' : 'left:0' }};width:260px;max-height:360px;overflow-y:auto;background:var(--card-bg);border:1px solid var(--glass-border);border-radius:14px;z-index:9999;box-shadow:0 15px 40px rgba(0,0,0,0.15);">
+                <div style="padding:8px 14px;font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:0.08em;color:var(--text-muted);border-bottom:1px solid var(--glass-border);position:sticky;top:0;background:var(--card-bg);z-index:1;">
                     <i class="fas fa-filter text-[8px] mr-1 opacity-40"></i> Select Time Range
                 </div>
 
-                {{-- 60 Minutes --}}
-                <button type="button" @click="timeOpen = false; timeLabel = 'Last 60m'; timeValue = '60m'; window.filterKeywordsByTime('{{ $boxKey }}', '60m')"
-                    style="display:flex;align-items:center;justify-content:space-between;width:100%;text-align:{{ $isAr ? 'right' : 'left' }};padding:10px 14px;background:transparent;color:#fff;border:none;cursor:pointer;transition:background 0.15s;"
-                    :style="timeValue === '60m' ? 'background:rgba(16,185,129,0.08)' : ''"
-                    onmouseover="this.style.background='rgba(255,255,255,0.08)'" onmouseout="this.style.background=this.getAttribute(':style')?.includes('60m')?'rgba(16,185,129,0.08)':'transparent'">
-                    <div style="display:flex;align-items:center;gap:10px;">
-                        <span style="display:flex;align-items:center;justify-content:center;width:30px;height:30px;border-radius:8px;background:rgba(16,185,129,0.15);color:#10b981;flex-shrink:0;font-size:11px;"><i class="fas fa-history"></i></span>
-                        <div style="display:flex;flex-direction:column;">
-                            <span style="font-size:12px;font-weight:700;line-height:1.3;">Last 60 Minutes</span>
-                            <span style="font-size:9px;color:rgba(255,255,255,0.35);font-weight:500;">Most recent content only</span>
+                <template x-for="(opt, idx) in timeOptions" :key="opt.value">
+                    <button type="button"
+                        @click="selectTime(opt)"
+                        @mouseenter="hoverValue = opt.value"
+                        @mouseleave="hoverValue = null"
+                        style="display:flex;align-items:center;justify-content:space-between;gap:12px;width:100%;min-height:56px;padding:12px 14px;text-align:{{ $isAr ? 'right' : 'left' }};color:var(--text-main);border:none;cursor:pointer;transition:background 0.15s;background:transparent;"
+                        :style="{
+                            background: optionBg(opt),
+                            borderTop: idx > 0 ? '1px solid var(--glass-border)' : 'none'
+                        }">
+                        <div style="display:flex;align-items:center;gap:10px;min-width:0;flex:1;">
+                            <span
+                                style="display:flex;align-items:center;justify-content:center;width:32px;height:32px;border-radius:8px;flex-shrink:0;font-size:12px;"
+                                :style="{
+                                    background: opt.color + '26',
+                                    color: opt.color
+                                }">
+                                <i :class="opt.icon"></i>
+                            </span>
+                            <div style="display:flex;flex-direction:column;min-width:0;">
+                                <span style="font-size:12px;font-weight:700;line-height:1.3;color:var(--text-main);" x-text="opt.title"></span>
+                                <span style="font-size:10px;line-height:1.4;color:var(--text-muted);font-weight:500;margin-top:2px;" x-text="opt.hint"></span>
+                            </div>
                         </div>
-                    </div>
-                    <i class="fas fa-check text-[10px]" x-show="timeValue === '60m'" style="color:#10b981;"></i>
-                </button>
-
-                {{-- 24 Hours --}}
-                <button type="button" @click="timeOpen = false; timeLabel = 'Last 24h'; timeValue = '24h'; window.filterKeywordsByTime('{{ $boxKey }}', '24h')"
-                    style="display:flex;align-items:center;justify-content:space-between;width:100%;text-align:{{ $isAr ? 'right' : 'left' }};padding:10px 14px;background:transparent;color:#fff;border:none;border-top:1px solid rgba(255,255,255,0.04);cursor:pointer;transition:background 0.15s;"
-                    :style="timeValue === '24h' ? 'background:rgba(245,158,11,0.08)' : ''"
-                    onmouseover="this.style.background='rgba(255,255,255,0.08)'" onmouseout="this.style.background=''">
-                    <div style="display:flex;align-items:center;gap:10px;">
-                        <span style="display:flex;align-items:center;justify-content:center;width:30px;height:30px;border-radius:8px;background:rgba(245,158,11,0.15);color:#f59e0b;flex-shrink:0;font-size:11px;"><i class="fas fa-calendar-day"></i></span>
-                        <div style="display:flex;flex-direction:column;">
-                            <span style="font-size:12px;font-weight:700;line-height:1.3;">Last 24 Hours</span>
-                            <span style="font-size:9px;color:rgba(255,255,255,0.35);font-weight:500;">Today's trending content</span>
-                        </div>
-                    </div>
-                    <i class="fas fa-check text-[10px]" x-show="timeValue === '24h'" style="color:#f59e0b;"></i>
-                </button>
-
-                {{-- All Time --}}
-                <button type="button" @click="timeOpen = false; timeLabel = 'All Time'; timeValue = 'all'; window.filterKeywordsByTime('{{ $boxKey }}', 'all')"
-                    style="display:flex;align-items:center;justify-content:space-between;width:100%;text-align:{{ $isAr ? 'right' : 'left' }};padding:10px 14px;background:transparent;color:#fff;border:none;border-top:1px solid rgba(255,255,255,0.04);cursor:pointer;transition:background 0.15s;"
-                    :style="timeValue === 'all' ? 'background:rgba(59,130,246,0.08)' : ''"
-                    onmouseover="this.style.background='rgba(255,255,255,0.08)'" onmouseout="this.style.background=''">
-                    <div style="display:flex;align-items:center;gap:10px;">
-                        <span style="display:flex;align-items:center;justify-content:center;width:30px;height:30px;border-radius:8px;background:rgba(59,130,246,0.15);color:#3b82f6;flex-shrink:0;font-size:11px;"><i class="fas fa-infinity"></i></span>
-                        <div style="display:flex;flex-direction:column;">
-                            <span style="font-size:12px;font-weight:700;line-height:1.3;">All Time Content</span>
-                            <span style="font-size:9px;color:rgba(255,255,255,0.35);font-weight:500;">No time restriction</span>
-                        </div>
-                    </div>
-                    <i class="fas fa-check text-[10px]" x-show="timeValue === 'all'" style="color:#3b82f6;"></i>
-                </button>
+                        <i class="fas fa-check"
+                           style="font-size:11px;flex-shrink:0;"
+                           x-show="timeValue === opt.value"
+                           :style="{ color: opt.color }"></i>
+                    </button>
+                </template>
             </div>
         </div>
 
@@ -164,18 +182,40 @@
 </div>
 
 {{-- Main Card - NO overflow-hidden on the wrapper, only on content area --}}
-<div x-init="if(!selectedKeywords['{{ $boxKey }}']) selectedKeywords['{{ $boxKey }}'] = []; $nextTick(() => { window.filterKeywordsByTime('{{ $boxKey }}', '60m'); });"
-     class="glass-card flex flex-col h-[75vh] lg:h-[calc(100vh-160px)] relative border border-white/5 glass-border-light" style="border-top-color: {{ $colorVar }}40; overflow: hidden;" dir="{{ $isAr ? 'rtl' : 'ltr' }}">
+<div class="glass-card flex flex-col h-[75vh] lg:h-[calc(100vh-160px)] relative border border-white/5 glass-border-light" style="border-top-color: {{ $colorVar }}40; overflow: hidden;" dir="{{ $isAr ? 'rtl' : 'ltr' }}">
     {{-- Full-Box Loading Overlay --}}
     <div id="sync-loading-{{ $lang }}" x-show="{{ $loadingModel }}" class="absolute inset-0 z-50 flex items-center justify-center backdrop-blur-md" style="display: none; background: var(--glass-bg);">
-        <div class="flex flex-col items-center">
+        <div class="flex flex-col items-center px-6 text-center max-w-xs">
             <div class="radar-spinner mb-5">
                 <div class="radar-circle"></div>
                 <div class="radar-circle radar-circle-2"></div>
                 <div class="radar-dot"></div>
             </div>
-            <span class="text-sm font-bold" style="color: var(--text-main);">Scanning competitor headlines...</span>
-            <span class="text-[10px] mt-2" style="color: var(--text-muted);">Extracting keywords using AI — this may take up to 2 minutes</span>
+            <span class="text-sm font-bold" style="color: var(--text-main);"
+                  x-text="syncCountdown['{{ $syncProp }}']?.waiting
+                    ? '{{ $isAr ? 'مسح قيد التشغيل — يرجى الانتظار' : 'Scan in progress — please wait' }}'
+                    : '{{ $isAr ? 'جاري مسح عناوين المنافسين…' : 'Scanning competitor headlines…' }}'">
+                {{ $isAr ? 'جاري مسح عناوين المنافسين…' : 'Scanning competitor headlines…' }}
+            </span>
+
+            <template x-if="syncCountdown['{{ $syncProp }}']">
+                <div class="mt-4 w-full flex flex-col items-center gap-2">
+                    <span class="text-3xl font-black tabular-nums tracking-wider"
+                          :style="{ color: (syncCountdown['{{ $syncProp }}']?.remaining > 0) ? '{{ $colorVar }}' : '#f59e0b' }"
+                          x-text="syncCountdownClock('{{ $syncProp }}')">--:--</span>
+                    <span class="text-[11px] font-semibold" style="color: var(--text-muted);"
+                          x-text="syncCountdownLabel('{{ $syncProp }}', '{{ $lang }}')"></span>
+                    <div class="w-full h-1.5 rounded-full overflow-hidden mt-1" style="background: var(--glass-border);">
+                        <div class="h-full rounded-full transition-all duration-1000 ease-linear"
+                             style="background: {{ $colorVar }};"
+                             :style="{ width: syncCountdownPercent('{{ $syncProp }}') + '%' }"></div>
+                    </div>
+                </div>
+            </template>
+
+            <span class="text-[10px] mt-3 leading-relaxed" style="color: var(--text-muted);">
+                {{ $isAr ? 'معالجة كل عنوان بالذكاء الاصطناعي — ابقَ على هذه الصفحة' : 'Processing each headline with AI — keep this page open' }}
+            </span>
         </div>
     </div>
 
@@ -193,21 +233,36 @@
         
         <div class="flex items-center gap-2 sm:gap-2.5 flex-wrap {{ $isAr ? '' : 'flex-row-reverse' }}">
             @if(!empty($targetKeywords))
-                <div class="flex items-center gap-2 bg-white/5 px-2 py-1 rounded-lg border border-white/5 whitespace-nowrap">
-                    <input type="checkbox" 
-                           @click="toggleSelectAll('{{ $boxKey }}', @js(array_map(fn($kw) => is_array($kw) ? ($kw['text'] ?? $kw['keyword'] ?? '') : $kw, $targetKeywords)))"
-                           :checked="{{ $selectedModel }}.length === {{ count($targetKeywords) }} && {{ count($targetKeywords) }} > 0"
-                           class="w-4 h-4 rounded border-gray-300 dark:border-white/10 bg-white/5 cursor-pointer" style="color: {{ $colorVar }};">
-                    <span class="text-[10px] font-bold text-gray-400">All</span>
-                </div>
-
-                <template x-if="{{ $selectedModel }} && {{ $selectedModel }}.length > 0">
-                    <button @click="copySelectedKeywords('{{ $boxKey }}')" 
-                        style="display:inline-flex;align-items:center;gap:6px;padding:4px 10px;color:#000;border-radius:8px;font-size:9px;font-weight:900;white-space:nowrap;background:{{ $colorVar }};cursor:pointer;">
+                @php
+                    $allKeywordTexts = array_values(array_filter(array_map(
+                        fn ($kw) => is_array($kw) ? trim($kw['text'] ?? $kw['keyword'] ?? '') : trim((string) $kw),
+                        $targetKeywords
+                    )));
+                @endphp
+                <div class="flex items-center gap-1.5 flex-wrap {{ $isAr ? '' : 'flex-row-reverse' }}">
+                    <label class="flex items-center gap-1.5 px-2 py-1 rounded-lg text-[9px] font-bold cursor-pointer"
+                           style="background:var(--card-bg);border:1px solid var(--glass-border);color:var(--text-muted);">
+                        <input type="checkbox"
+                               class="kw-select-all-{{ $boxKey }}"
+                               style="accent-color:{{ $colorVar }};width:14px;height:14px;cursor:pointer;"
+                               @change="toggleSelectAll('{{ $boxKey }}', @js($allKeywordTexts))">
+                        <span>{{ $isAr ? 'تحديد الكل' : 'Select All' }}</span>
+                    </label>
+                    <button type="button"
+                            @click="copySelectedKeywords('{{ $boxKey }}')"
+                            :disabled="selectedCount('{{ $boxKey }}') === 0"
+                            style="display:inline-flex;align-items:center;gap:5px;padding:4px 10px;border-radius:8px;font-size:9px;font-weight:900;white-space:nowrap;background:{{ $colorVar }};color:#000;cursor:pointer;border:none;opacity:1;"
+                            :style="selectedCount('{{ $boxKey }}') === 0 ? 'opacity:0.35;cursor:not-allowed;' : ''">
                         <i class="far fa-copy"></i>
-                        <span>Copy (<span x-text="{{ $selectedModel }}.length"></span>)</span>
+                        <span>{{ $isAr ? 'نسخ المحدد' : 'Copy Selected' }}</span>
+                        (<span x-text="selectedCount('{{ $boxKey }}')">0</span>)
                     </button>
-                </template>
+                    <button type="button"
+                            @click="clearSelection('{{ $boxKey }}')"
+                            style="display:inline-flex;align-items:center;gap:5px;padding:4px 10px;border-radius:8px;font-size:9px;font-weight:700;white-space:nowrap;background:var(--card-bg);border:1px solid var(--glass-border);color:var(--text-muted);cursor:pointer;">
+                        {{ $isAr ? 'مسح' : 'Clear' }}
+                    </button>
+                </div>
 
                 <form action="{{ route('dashboard.ai-keyword-radar.delete-all', ['lang' => $lang]) }}" method="POST" onsubmit="return confirm('Are you sure you want to delete all keywords?')" class="flex-shrink-0">
                     @csrf
@@ -220,7 +275,7 @@
                     </button>
                 </form>
             @endif
-            <span class="keyword-count-badge-{{ $boxKey }}" style="font-size:10px;font-weight:700;padding:4px 10px;border-radius:8px;background:rgba(255,255,255,0.05);color:#94a3b8;white-space:nowrap;">{{ count($targetKeywords ?? []) }} Keywords</span>
+            <span data-keyword-count style="font-size:10px;font-weight:700;padding:4px 10px;border-radius:8px;background:rgba(255,255,255,0.05);color:#94a3b8;white-space:nowrap;">{{ count($targetKeywords ?? []) }} Keywords</span>
         </div>
     </div>
 
@@ -230,101 +285,165 @@
         <div id="sync-notification-{{ $lang }}" style="display: none;" class="mb-4"></div>
 
         @if(!empty($targetKeywords))
-            <div class="space-y-2.5 keyword-container-{{ $boxKey }}">
-                @foreach($targetKeywords as $kw)
+            @php
+                $headlineGroups = [];
+                $ungroupedKeywords = [];
+                foreach ($targetKeywords as $kw) {
+                    $headlineTitle = is_array($kw) ? trim($kw['headline_title'] ?? '') : '';
+                    if ($headlineTitle !== '' && \Modules\AIKeywordRadar\Services\KeywordService::headlineMatchesLanguage($headlineTitle, $lang)) {
+                        $headlineGroups[$headlineTitle][] = $kw;
+                    } else {
+                        $ungroupedKeywords[] = $kw;
+                    }
+                }
+            @endphp
+            <div class="space-y-4 keyword-container-{{ $lang }}">
+                @foreach($headlineGroups as $headlineTitle => $groupKeywords)
                     @php
-                        $text = is_array($kw) ? ($kw['text'] ?? $kw['keyword'] ?? '') : $kw;
-                        $source = is_array($kw) ? ($kw['source'] ?? 'AI') : 'AI';
-                        
-                        $createdAt = (is_array($kw) && !empty($kw['created_at'])) ? \Carbon\Carbon::parse($kw['created_at']) : null;
-                        $syncedAt = (is_array($kw) && !empty($kw['synced_at'])) ? \Carbon\Carbon::parse($kw['synced_at']) : $createdAt;
-                        $publishedAt = (is_array($kw) && !empty($kw['published_at'])) ? \Carbon\Carbon::parse($kw['published_at']) : null;
-                        
-                        // Fallback publish date to sync date if explicit feed publish date is unavailable
-                        $effectivePubAt = $publishedAt ?? $syncedAt ?? $createdAt;
-                        
-                        $syncTs = $syncedAt ? $syncedAt->timestamp : ($createdAt ? $createdAt->timestamp : time());
-                        $pubTs = $effectivePubAt ? $effectivePubAt->timestamp : $syncTs;
-                        
-                        $syncIso = $syncedAt ? $syncedAt->toIso8601String() : ($createdAt ? $createdAt->toIso8601String() : '');
-                        $pubIso = $effectivePubAt ? $effectivePubAt->toIso8601String() : $syncIso;
-                        
-                        $syncFormatted = $syncedAt ? $syncedAt->timezone('Africa/Cairo')->format('Y-m-d g:i A') : '';
-                        $pubFormatted = $effectivePubAt ? $effectivePubAt->timezone('Africa/Cairo')->format('Y-m-d g:i A') : '';
-                        $isExactPub = !empty($publishedAt);
+                        $firstKw = $groupKeywords[0];
+                        $source = is_array($firstKw) ? ($firstKw['source'] ?? 'AI') : 'AI';
+                        $syncTime = null;
+                        $pubTime = null;
+                        $pullTs = 0;
+                        $pubTs = 0;
+                        $groupKeywordTexts = [];
+                        $primaryKeyword = '';
+                        foreach ($groupKeywords as $gkw) {
+                            $kwText = is_array($gkw) ? trim($gkw['text'] ?? $gkw['keyword'] ?? '') : trim((string) $gkw);
+                            if ($kwText !== '') {
+                                $groupKeywordTexts[] = $kwText;
+                                if ($primaryKeyword === '') {
+                                    $primaryKeyword = $kwText;
+                                }
+                            }
+                            $st = $gkw['synced_at'] ?? $gkw['created_at'] ?? null;
+                            $pt = $gkw['published_at'] ?? null;
+                            if ($st) {
+                                $ts = \Carbon\Carbon::parse($st)->timestamp;
+                                if ($ts > $pullTs) { $pullTs = $ts; $syncTime = $st; }
+                            }
+                            if ($pt) {
+                                $ts = \Carbon\Carbon::parse($pt)->timestamp;
+                                if ($ts > $pubTs) { $pubTs = $ts; $pubTime = $pt; }
+                            }
+                        }
+                        $actionQuery = $primaryKeyword !== '' ? $primaryKeyword : $headlineTitle;
                     @endphp
-                    @if(!empty($text))
-                    <div data-pulldate="{{ $syncTs }}" data-pubdate="{{ $pubTs }}" class="keyword-row group" style="display:flex;align-items:flex-start;justify-content:space-between;padding:12px 16px;border-radius:16px;border:1px solid var(--glass-border);background:var(--glass-bg);gap:10px;transition:all 0.25s ease;">
-                        <div class="flex items-start gap-2.5 flex-1 min-w-0">
-                            {{-- Selection & Index --}}
-                            <div class="flex flex-col items-center gap-2 mt-1">
-                                <input type="checkbox" 
-                                       x-model="{{ $selectedModel }}" 
-                                       value="{{ $text }}"
-                                       class="w-4 h-4 rounded border-gray-300 dark:border-white/10 bg-white/5 flex-shrink-0 cursor-pointer" style="color: {{ $colorVar }};">
-                                <span class="keyword-num" style="flex-shrink:0;width:28px;height:28px;display:flex;align-items:center;justify-content:center;border-radius:8px;font-weight:900;font-size:10px;background:var(--card-bg);border:1px solid var(--glass-border);color:{{ $colorVar }};box-shadow:0 2px 6px rgba(0,0,0,0.15);">{{ str_pad($loop->iteration, 2, '0', STR_PAD_LEFT) }}</span>
-                            </div>
-
-                            {{-- Content Area --}}
-                            <div class="flex flex-col min-w-0 flex-1 pt-0.5">
-                                <span class="font-bold text-sm sm:text-base break-words leading-tight mb-1.5" style="color: var(--text-main);">{{ $text }}</span>
-                                
-                                <div class="flex flex-wrap items-center gap-2 mb-2">
-                                    <span style="font-size:8px;color:#f87171;background:rgba(248,113,113,0.1);padding:2px 8px;border-radius:8px;font-weight:700;text-transform:uppercase;border:1px solid rgba(248,113,113,0.2);">{{ $source }}</span>
-                                </div>
-
-                                {{-- Metadata / Timestamps (Visible for All Users) --}}
-                                <div class="flex flex-wrap items-center gap-3 pt-1 border-t border-white/5" style="border-{{ $isAr ? 'right' : 'left' }}:2px solid {{ $colorVar }}30;padding-{{ $isAr ? 'right' : 'left' }}:0.6rem;">
-                                    {{-- Published Time (Strictly when explicit publication date exists) --}}
-                                    @if($isExactPub && !empty($pubIso))
-                                    <div class="flex items-center gap-1.5 text-[9px]" title="{{ $pubFormatted ? ($isAr ? 'تاريخ النشر في موقع المنافس: ' : 'Published at: ') . $pubFormatted : '' }}">
-                                        <i class="fas fa-history text-[9px] opacity-70" style="color: var(--primary-cyan);"></i>
-                                        <span class="opacity-60 font-semibold" style="color: var(--text-muted);">{{ $isAr ? 'نُشر:' : 'Published:' }}</span>
-                                        <span class="font-bold" style="color: var(--primary-cyan);" x-text="getRelativeTime('{{ $pubIso }}', '{{ $lang }}')"></span>
+                    <div data-pulldate="{{ $pullTs }}" data-pubdate="{{ $pubTs }}" class="headline-card keyword-row group" style="border-radius:18px;border:1px solid var(--glass-border);background:var(--card-bg);overflow:hidden;transition:all 0.25s ease;">
+                        {{-- Scraped headline header --}}
+                        <div style="padding:14px 16px 10px;border-bottom:1px solid var(--glass-border);background:var(--glass-bg);">
+                            <div class="flex items-start gap-2.5 {{ $isAr ? '' : 'flex-row-reverse' }}">
+                                <span style="flex-shrink:0;width:28px;height:28px;display:flex;align-items:center;justify-content:center;border-radius:8px;font-weight:900;font-size:10px;background:{{ $colorVar }}15;border:1px solid {{ $colorVar }}30;color:{{ $colorVar }};">
+                                    <i class="fas fa-newspaper text-[10px]"></i>
+                                </span>
+                                <div class="flex-1 min-w-0">
+                                    <h3 class="font-black text-sm sm:text-base break-words leading-snug mb-1.5" style="color:var(--text-main);">{{ $headlineTitle }}</h3>
+                                    <div class="flex flex-wrap items-center gap-2">
+                                        <span style="font-size:8px;color:#f87171;background:rgba(248,113,113,0.1);padding:2px 8px;border-radius:8px;font-weight:700;text-transform:uppercase;border:1px solid rgba(248,113,113,0.2);">{{ $source }}</span>
+                                        <span style="font-size:9px;color:var(--text-muted);font-weight:600;">{{ count($groupKeywords) }} {{ count($groupKeywords) === 1 ? 'keyword' : 'keywords' }}</span>
+                                    </div>
+                                    @if($pubTime || $syncTime)
+                                    <div style="display:flex;flex-wrap:wrap;gap:10px;margin-top:8px;">
+                                        @if($pubTime)
+                                            @php $pubCarbon = \Carbon\Carbon::parse($pubTime); @endphp
+                                            <span class="text-[9px] font-bold" style="color:var(--text-muted);"
+                                                  title="{{ $pubCarbon->timezone(config('app.timezone'))->format('Y-m-d H:i:s T') }}">
+                                                <i class="fas fa-clock text-[8px] opacity-50" style="color:var(--primary-cyan);"></i>
+                                                {{ $isAr ? 'نُشر:' : 'Published:' }}
+                                                <span style="color:var(--primary-cyan);">{{ $pubCarbon->diffForHumans() }}</span>
+                                            </span>
+                                        @endif
+                                        @if($syncTime)
+                                            @php $syncCarbon = \Carbon\Carbon::parse($syncTime); @endphp
+                                            <span class="text-[9px] font-bold" style="color:var(--text-muted);"
+                                                  title="{{ $syncCarbon->timezone(config('app.timezone'))->format('Y-m-d H:i:s T') }}">
+                                                <i class="fas fa-sync text-[8px] opacity-50" style="color:#f59e0b;"></i>
+                                                {{ $isAr ? 'جُلب:' : 'Fetched:' }}
+                                                <span style="color:#f59e0b;">{{ $syncCarbon->diffForHumans() }}</span>
+                                            </span>
+                                        @endif
                                     </div>
                                     @endif
+                                </div>
 
-                                    {{-- Synced Time --}}
-                                    @if(!empty($syncIso))
-                                    <div class="flex items-center gap-1.5 text-[9px]" title="{{ $syncFormatted ? ($isAr ? 'تاريخ السحب بالمنصة: ' : 'Synced to dashboard: ') . $syncFormatted : '' }}">
-                                        <i class="fas fa-satellite-dish text-[9px] opacity-70" style="color: #f59e0b;"></i>
-                                        <span class="opacity-60 font-semibold" style="color: var(--text-muted);">{{ $isAr ? 'سُحب:' : 'Synced:' }}</span>
-                                        <span class="font-bold" style="color: #f59e0b;" x-text="getRelativeTime('{{ $syncIso }}', '{{ $lang }}')"></span>
-                                    </div>
+                                {{-- Card actions (single copy removed — use keyword checkboxes + Copy Selected) --}}
+                                <div class="flex items-center gap-1.5 flex-shrink-0 pt-0.5">
+                                    @if(!empty($groupKeywordTexts))
+                                    <a href="https://www.google.com/search?q={{ urlencode($actionQuery) }}&gl={{ \App\Support\CountryRegistry::defaultRegion($lang) }}" target="_blank"
+                                        style="width:30px;height:30px;display:flex;align-items:center;justify-content:center;border-radius:9px;background:var(--card-bg);border:1px solid var(--glass-border);color:var(--text-muted);text-decoration:none;transition:all 0.2s;"
+                                        title="Google"
+                                        onmouseover="this.style.color='{{ $colorVar }}';this.style.borderColor='{{ $colorVar }}'"
+                                        onmouseout="this.style.color='var(--text-muted)';this.style.borderColor='var(--glass-border)'">
+                                        <i class="fab fa-google text-[10px]"></i>
+                                    </a>
+                                    <a href="{{ route('headlines.index', ['keyword' => $actionQuery]) }}" target="_blank"
+                                        style="width:30px;height:30px;display:flex;align-items:center;justify-content:center;border-radius:9px;color:#fff;background:linear-gradient(135deg,var(--primary-cyan,#0ea5e9),#6366f1);border:1px solid rgba(255,255,255,0.15);text-decoration:none;transition:all 0.2s;"
+                                        title="{{ $isAr ? 'اكتشاف' : 'Discover' }}"
+                                        onmouseover="this.style.transform='scale(1.08)'" onmouseout="this.style.transform='scale(1)'">
+                                        <i class="fas fa-magic text-[10px]"></i>
+                                    </a>
+                                    <a href="{{ route('dashboard.article-writer.index', ['keyword' => $actionQuery]) }}" target="_blank"
+                                        style="width:30px;height:30px;display:flex;align-items:center;justify-content:center;border-radius:9px;color:#fff;background:linear-gradient(135deg,#a855f7,#6366f1);border:1px solid rgba(255,255,255,0.15);text-decoration:none;transition:all 0.2s;"
+                                        title="{{ $isAr ? 'كتابة' : 'Write' }}"
+                                        onmouseover="this.style.transform='scale(1.08)'" onmouseout="this.style.transform='scale(1)'">
+                                        <i class="fas fa-pen-fancy text-[10px]"></i>
+                                    </a>
                                     @endif
                                 </div>
                             </div>
                         </div>
-                        
-                        {{-- Actions Sidebar --}}
-                        <div class="flex flex-col sm:flex-row lg:flex-row items-center gap-1.5 flex-shrink-0 pt-1">
-                            <div class="flex flex-col gap-1.5">
-                                <button onclick="copyToClipboard('{{ addslashes($text) }}')" class="keyword-action-btn" style="width:32px;height:32px;display:flex;align-items:center;justify-content:center;border-radius:10px;background:var(--card-bg);border:1px solid var(--glass-border);color:var(--text-muted);cursor:pointer;transition:all 0.2s;" title="Copy"
-                                    onmouseover="this.style.color='var(--primary-cyan)';this.style.borderColor='var(--primary-cyan)'" onmouseout="this.style.color='var(--text-muted)';this.style.borderColor='var(--glass-border)'">
-                                    <i class="far fa-copy text-[10px]"></i>
-                                </button>
-                                <a href="https://www.google.com/search?q={{ urlencode($text) }}&gl={{ $lang === 'en' ? 'US' : 'EG' }}" target="_blank" style="width:32px;height:32px;display:flex;align-items:center;justify-content:center;border-radius:10px;background:var(--card-bg);border:1px solid var(--glass-border);color:var(--text-muted);transition:all 0.2s;text-decoration:none;" title="Google Search"
-                                    onmouseover="this.style.color='var(--primary-cyan)';this.style.borderColor='var(--primary-cyan)'" onmouseout="this.style.color='var(--text-muted)';this.style.borderColor='var(--glass-border)'">
-                                    <i class="fab fa-google text-[10px]"></i>
-                                </a>
+
+                        {{-- AI keywords as tags --}}
+                        <div class="p-3 sm:p-4">
+                            <div class="flex flex-wrap gap-2">
+                            @foreach($groupKeywords as $kw)
+                                @php
+                                    $text = is_array($kw) ? ($kw['text'] ?? $kw['keyword'] ?? '') : $kw;
+                                @endphp
+                                @if(!empty($text))
+                                <div class="keyword-tag keyword-chip-row" style="display:inline-flex;align-items:center;gap:6px;max-width:100%;">
+                                    <input type="checkbox"
+                                           class="kw-select-{{ $boxKey }}"
+                                           value="{{ $text }}"
+                                           style="accent-color:{{ $colorVar }};width:15px;height:15px;cursor:pointer;flex-shrink:0;"
+                                           @change="toggleKeyword('{{ $boxKey }}', @js($text), $event.target.checked)">
+                                    <span style="display:inline-flex;align-items:center;gap:5px;padding:7px 14px;border-radius:999px;font-size:12px;font-weight:700;line-height:1.3;border:1px solid {{ $colorVar }}35;background:{{ $colorVar }}12;color:{{ $colorVar }};max-width:100%;text-align:{{ $isAr ? 'right' : 'left' }};">
+                                        <i class="fas fa-hashtag text-[9px] opacity-60 flex-shrink-0"></i>
+                                        <span class="break-words">{{ $text }}</span>
+                                    </span>
+                                </div>
+                                @endif
+                            @endforeach
                             </div>
-                            <a href="{{ route('headlines.index', ['keyword' => $text]) }}" target="_blank" 
-                                style="display:inline-flex;align-items:center;justify-content:center;gap:4px;border-radius:10px;font-size:0.65rem;font-weight:900;padding:0.4rem 0.6rem;min-width:32px;height:32px;text-decoration:none;color:#fff;background:linear-gradient(135deg, var(--primary-cyan, #0ea5e9), #6366f1);border:1px solid rgba(255,255,255,0.15);transition:all 0.2s;cursor:pointer;" 
-                                title="Discover"
-                                onmouseover="this.style.transform='scale(1.1)';this.style.boxShadow='0 4px 15px rgba(14,165,233,0.3)'" onmouseout="this.style.transform='scale(1)';this.style.boxShadow='none'">
-                                <i class="fas fa-magic text-[10px]"></i>
-                                <span class="hidden sm:inline">Magic</span>
-                            </a>
-                            <a href="{{ route('dashboard.article-writer.index', ['keyword' => $text]) }}" target="_blank" 
-                                style="display:inline-flex;align-items:center;justify-content:center;gap:4px;border-radius:10px;font-size:0.65rem;font-weight:900;padding:0.4rem 0.6rem;min-width:32px;height:32px;text-decoration:none;color:#fff;background:linear-gradient(135deg, #a855f7, #6366f1);border:1px solid rgba(255,255,255,0.15);transition:all 0.2s;cursor:pointer;" 
-                                title="Write with AI"
-                                onmouseover="this.style.transform='scale(1.1)';this.style.boxShadow='0 4px 15px rgba(168,85,247,0.3)'" onmouseout="this.style.transform='scale(1)';this.style.boxShadow='none'">
-                                <i class="fas fa-pen-fancy text-[10px]"></i>
-                            </a>
                         </div>
                     </div>
-                    @endif
                 @endforeach
+
+                {{-- Legacy keywords without headline grouping — tags only --}}
+                @if(!empty($ungroupedKeywords))
+                <div data-pulldate="0" data-pubdate="0" class="keyword-row" style="padding:12px 16px;border-radius:16px;border:1px solid var(--glass-border);background:var(--glass-bg);">
+                    <div class="flex flex-wrap gap-2">
+                    @foreach($ungroupedKeywords as $kw)
+                        @php
+                            $text = is_array($kw) ? ($kw['text'] ?? $kw['keyword'] ?? '') : $kw;
+                        @endphp
+                        @if(!empty($text))
+                        <label class="keyword-tag keyword-chip-row" style="display:inline-flex;align-items:center;gap:6px;cursor:pointer;">
+                            <input type="checkbox"
+                                   class="kw-select-{{ $boxKey }}"
+                                   value="{{ $text }}"
+                                   style="accent-color:{{ $colorVar }};width:15px;height:15px;cursor:pointer;"
+                                   @change="toggleKeyword('{{ $boxKey }}', @js($text), $event.target.checked)">
+                            <span style="display:inline-flex;align-items:center;gap:5px;padding:7px 14px;border-radius:999px;font-size:12px;font-weight:700;border:1px solid {{ $colorVar }}35;background:{{ $colorVar }}12;color:{{ $colorVar }};">
+                                <i class="fas fa-hashtag text-[9px] opacity-60"></i>
+                                <span>{{ $text }}</span>
+                            </span>
+                        </label>
+                        @endif
+                    @endforeach
+                    </div>
+                </div>
+                @endif
             </div>
         @else
             <div class="flex flex-col items-center justify-center h-full text-center py-12 px-4">
@@ -333,7 +452,25 @@
                         <i class="fas fa-robot text-3xl"></i>
                     </div>
                     <h4 class="font-black text-xl mb-3" style="color: var(--text-main);">Radar Intelligence Active</h4>
-                    <p class="text-sm mb-8 max-w-sm mx-auto leading-relaxed" style="color: var(--text-muted);">Competitors configured. Capture current market shifts and hidden trends now.</p>
+                    @php
+                        $storedCategory = $customBoxId ? "Target:{$customBoxId}" : 'Target';
+                        $storedCount = \Modules\AIKeywordRadar\Models\Keyword::where('user_id', auth()->id())
+                            ->where('category', $storedCategory)->where('lang', $lang)->count();
+                    @endphp
+                    @if($storedCount > 0)
+                        <p class="text-sm mb-4 max-w-sm mx-auto leading-relaxed" style="color: #f59e0b;">
+                            You have {{ $storedCount }} saved keyword(s) outside the current {{ $stats['retention_hours'] ?? 24 }}h window.
+                            Click <strong>Refresh Radar</strong> (use <strong>Last 24h</strong>) to pull fresh results.
+                        </p>
+                    @else
+                        <p class="text-sm mb-4 max-w-sm mx-auto leading-relaxed" style="color: var(--text-muted);">
+                            {{ $isAr ? 'لا توجد نتائج في نافذة الوقت الحالية. جرّب' : 'No results in the current time window. Try' }}
+                            <strong>{{ $isAr ? 'آخر 24 ساعة' : 'Last 24h' }}</strong>
+                            {{ $isAr ? 'أو' : 'or' }}
+                            <strong>{{ $isAr ? 'كل الوقت' : 'All Time' }}</strong>
+                            {{ $isAr ? 'ثم اضغط تحديث الرادار.' : 'then click Refresh Radar.' }}
+                        </p>
+                    @endif
                     <div class="flex items-center gap-2">
                         <button @click="syncCompetitors('{{ $lang }}', timeValue, '{{ $customBoxId ?? '' }}')" :disabled="{{ $loadingModel }}" 
                             class="flex items-center gap-2 px-3 py-1.5 rounded-lg border border-primary-cyan/30 text-primary-cyan hover:bg-primary-cyan/10 transition-all text-xs disabled:opacity-50">

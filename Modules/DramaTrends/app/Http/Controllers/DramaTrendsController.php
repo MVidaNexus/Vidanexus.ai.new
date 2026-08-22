@@ -50,14 +50,16 @@ class DramaTrendsController extends Controller
     {
         set_time_limit(120);
         $user = auth()->user();
+        $slug = 'drama-trends';
 
-        if (!$user->canUseTool('drama-trends')) {
-            $msg = $user->getLimitReachedMessage('Drama Trends', 'drama-trends');
-            return response()->json(['error' => $msg], 403);
-        }
-
-        if (!$user->wallet || $user->wallet->balance_credits < 1) {
-            return response()->json(['error' => 'Insufficient balance for Drama tracking.'], 402);
+        // canUseTool checks ownership AND balance against the canonical cost.
+        if (! $user->canUseTool($slug)) {
+            $cost = $user->getToolCreditCost($slug);
+            $hasOwnership = $user->ownsTool($slug);
+            $msg = $hasOwnership
+                ? "Insufficient balance. Required: {$cost} CRS."
+                : $user->getLimitReachedMessage('Drama Trends', $slug);
+            return response()->json(['error' => $msg], $hasOwnership ? 402 : 403);
         }
 
         $startDate = $request->input('startDate', '2026-02-19');
@@ -72,14 +74,20 @@ class DramaTrendsController extends Controller
         $data = $this->service->fetchRamadanTrends($startDate, $endDate, $forceRefresh);
 
         if (!isset($data['error'])) {
-            $user->wallet->decrement('balance_credits', 1);
+            if (! $user->deductToolCredits($slug)) {
+                \Illuminate\Support\Facades\Log::critical('[Drama Trends] Credits could not be deducted after successful fetch', [
+                    'user_id' => $user->id,
+                ]);
+            }
             \App\Models\AiUsage::create([
                 'user_id'  => $user->id,
-                'tool'     => 'drama-trends',
+                'tool'     => $slug,
                 'provider' => 'api',
                 'model'    => 'drama-trends',
                 'status'   => 'success',
             ]);
+            $user->load('wallet');
+            $data['balance'] = (float) ($user->wallet->balance_credits ?? 0);
         }
 
         return response()->json($data);

@@ -19,14 +19,14 @@
     
     .ai-input-base:focus {
         border-color: var(--primary-admin) !important;
-        box-shadow: 0 0 15px rgba(14, 165, 233, 0.1);
+        box-shadow: 0 0 15px rgba(0, 168, 230, 0.1);
     }
 
     .horizon-tabs { display: flex; gap: 0.25rem; margin-bottom: 2rem; border-bottom: 1px solid var(--horizon-border); padding-bottom: 1rem; overflow-x: auto; scrollbar-width: none; }
     .horizon-tabs::-webkit-scrollbar { display: none; }
-    .horizon-tab-btn { background: none; border: 1px solid transparent; color: var(--text-muted); font-size: 0.8rem; font-weight: 600; padding: 0.6rem 0.8rem; cursor: pointer; transition: all 0.3s; border-radius: 8px; font-family: 'Inter', sans-serif; display: flex; align-items: center; gap: 0.4rem; white-space: nowrap; }
+    .horizon-tab-btn { background: none; border: 1px solid transparent; color: var(--text-muted); font-size: 0.8rem; font-weight: 600; padding: 0.6rem 0.8rem; cursor: pointer; transition: all 0.3s; border-radius: 8px; font-family: 'Poppins', sans-serif; display: flex; align-items: center; gap: 0.4rem; white-space: nowrap; }
     .horizon-tab-btn:hover { color: var(--text-main); background: rgba(255,255,255,0.05); }
-    .horizon-tab-btn.active { color: var(--primary-admin); background: rgba(14, 165, 233, 0.1); border-color: rgba(14, 165, 233, 0.3); }
+    .horizon-tab-btn.active { color: var(--primary-admin); background: rgba(0, 168, 230, 0.1); border-color: rgba(0, 168, 230, 0.3); }
     .horizon-tab-pane { display: none; animation: fadeIn 0.3s ease; }
     .horizon-tab-pane.active { display: block; }
     @keyframes fadeIn { from { opacity: 0; transform: translateY(5px); } to { opacity: 1; transform: translateY(0); } }
@@ -99,7 +99,7 @@
         <!-- Quick Stats -->
         <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 1rem; margin-bottom: 2rem;">
             <div class="stat-mini-card">
-                <div style="width: 40px; height: 40px; border-radius: 50%; background: rgba(14, 165, 233, 0.1); display: flex; align-items: center; justify-content: center; color: var(--primary-admin);">
+                <div style="width: 40px; height: 40px; border-radius: 50%; background: rgba(0, 168, 230, 0.1); display: flex; align-items: center; justify-content: center; color: var(--primary-admin);">
                     <i class="fas fa-bolt"></i>
                 </div>
                 <div>
@@ -117,7 +117,7 @@
                 </div>
             </div>
             <div class="stat-mini-card">
-                <div style="width: 40px; height: 40px; border-radius: 50%; background: rgba(16, 185, 129, 0.1); display: flex; align-items: center; justify-content: center; color: #10b981;">
+                <div style="width: 40px; height: 40px; border-radius: 50%; background: rgba(16, 185, 129, 0.1); display: flex; align-items: center; justify-content: center; color: #00A58B;">
                     <i class="fas fa-chart-line"></i>
                 </div>
                 <div>
@@ -141,19 +141,19 @@
             <button type="button" class="horizon-tab-btn active" onclick="switchHorizonTab('ai', this)"><i class="fas fa-brain"></i> Intelligence</button>
             <button type="button" class="horizon-tab-btn" onclick="switchHorizonTab('personas', this)"><i class="fas fa-users-gear"></i> Personas & Tones</button>
             <button type="button" class="horizon-tab-btn" onclick="switchHorizonTab('content', this)"><i class="fas fa-sliders-h"></i> Content Options</button>
-            <button type="button" class="horizon-tab-btn" onclick="switchHorizonTab('pricing', this)"><i class="fas fa-coins"></i> Credit System</button>
+            <button type="button" class="horizon-tab-btn" onclick="switchHorizonTab('credits', this)"><i class="fas fa-coins"></i> Credit System</button>
             <button type="button" class="horizon-tab-btn" onclick="switchHorizonTab('routing', this)"><i class="fas fa-network-wired"></i> AI Routing</button>
             <button type="button" class="horizon-tab-btn" onclick="switchHorizonTab('analytics', this)"><i class="fas fa-chart-area"></i> Analytics</button>
             <button type="button" class="horizon-tab-btn" onclick="switchHorizonTab('errors', this)"><i class="fas fa-bug"></i> Errors</button>
         </div>
 
-        <form action="{{ route('admin.horizon.update', $tool['slug']) }}" method="POST" id="config-form">
+        <form action="{{ route('admin.horizon.update', $tool['slug']) }}" method="POST" id="config-form" data-ajax-save>
             @csrf
             <input type="hidden" name="is_active" value="{{ ($settings['is_active'] ?? true) ? '1' : '0' }}" id="statusInput">
 
             <!-- TAB 1: AI Intelligence — Prompt Engineering Lab -->
             <div id="pane-ai" class="horizon-tab-pane active">
-                <div style="margin-bottom: 2rem; padding: 1.25rem; background: linear-gradient(135deg, rgba(14, 165, 233, 0.08), rgba(16, 185, 129, 0.05)); border: 1px solid rgba(14, 165, 233, 0.15); border-radius: 12px;">
+                <div style="margin-bottom: 2rem; padding: 1.25rem; background: linear-gradient(135deg, rgba(0, 168, 230, 0.08), rgba(16, 185, 129, 0.05)); border: 1px solid rgba(0, 168, 230, 0.15); border-radius: 12px;">
                     <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 0.75rem;">
                         <div style="display: flex; align-items: center; gap: 0.75rem;">
                             <i class="fas fa-satellite-dish" style="color: var(--primary-admin);"></i>
@@ -181,7 +181,7 @@
                         <i class="fas fa-flask" style="color: #a855f7;"></i>
                         <h4 style="margin: 0; font-size: 0.9rem; color: var(--text-main); font-weight: 800;">Prompt Engineering Lab</h4>
                     </div>
-                    <p style="margin: 0; font-size: 0.75rem; color: var(--text-muted); line-height: 1.6;">Each section of the generated article has its own dedicated prompt. Use <code style="background: rgba(0,0,0,0.3); color: var(--primary-admin); padding: 0.15rem 0.4rem; border-radius: 4px;">[keyword]</code> <code style="background: rgba(0,0,0,0.3); color: #10b981; padding: 0.15rem 0.4rem; border-radius: 4px;">[news_context]</code> as placeholders.</p>
+                    <p style="margin: 0; font-size: 0.75rem; color: var(--text-muted); line-height: 1.6;">Each section of the generated article has its own dedicated prompt. Use <code style="background: rgba(0,0,0,0.3); color: var(--primary-admin); padding: 0.15rem 0.4rem; border-radius: 4px;">[keyword]</code> <code style="background: rgba(0,0,0,0.3); color: #00A58B; padding: 0.15rem 0.4rem; border-radius: 4px;">[news_context]</code> as placeholders.</p>
                 </div>
 
                 <!-- 1. TITLE ENGINEERING PROMPT -->
@@ -192,15 +192,15 @@
                 </div>
 
                 <!-- 2. ARTICLE BODY PROMPT -->
-                <div class="config-section" style="border-color: rgba(14, 165, 233, 0.3); background: rgba(14, 165, 233, 0.03);">
-                    <h4><i class="fas fa-align-left" style="color: var(--primary-admin);"></i> Article Body Prompt <span style="font-size: 0.6rem; background: rgba(14, 165, 233, 0.15); color: var(--primary-admin); padding: 0.2rem 0.5rem; border-radius: 6px; margin-left: 0.5rem;">Core Content Engine</span></h4>
+                <div class="config-section" style="border-color: rgba(0, 168, 230, 0.3); background: rgba(0, 168, 230, 0.03);">
+                    <h4><i class="fas fa-align-left" style="color: var(--primary-admin);"></i> Article Body Prompt <span style="font-size: 0.6rem; background: rgba(0, 168, 230, 0.15); color: var(--primary-admin); padding: 0.2rem 0.5rem; border-radius: 6px; margin-left: 0.5rem;">Core Content Engine</span></h4>
                     <p style="font-size: 0.7rem; color: var(--text-muted); margin-bottom: 0.75rem; line-height: 1.5;">Master prompt for the main article body. Controls research depth, comprehensiveness, E-E-A-T compliance, and content structure.</p>
                     <textarea name="prompt_body" rows="18" class="ai-input-base mono" style="width: 100%; border-radius: 12px; padding: 1rem; line-height: 1.6; font-size: 0.78rem; outline: none;">{{ $settings['prompt_body'] }}</textarea>
                 </div>
 
                 <!-- 3. QUICK SUMMARY PROMPT -->
                 <div class="config-section">
-                    <h4><i class="fas fa-bolt" style="color: #10b981;"></i> Quick Summary Prompt</h4>
+                    <h4><i class="fas fa-bolt" style="color: #00A58B;"></i> Quick Summary Prompt</h4>
                     <p style="font-size: 0.7rem; color: var(--text-muted); margin-bottom: 0.75rem; line-height: 1.5;">Controls the executive summary box that appears right after the H1 title.</p>
                     <textarea name="prompt_summary" rows="6" class="ai-input-base mono" style="width: 100%; border-radius: 12px; padding: 1rem; line-height: 1.6; font-size: 0.78rem; outline: none;">{{ $settings['prompt_summary'] }}</textarea>
                 </div>
@@ -276,7 +276,7 @@
 
                     <!-- RIGHT: TARGET AUDIENCES -->
                     <div>
-                        <h3 style="font-size: 0.8rem; text-transform: uppercase; letter-spacing: 1.5px; color: #10b981; margin-bottom: 1.5rem; display: flex; align-items: center; gap: 0.5rem;">
+                        <h3 style="font-size: 0.8rem; text-transform: uppercase; letter-spacing: 1.5px; color: #00A58B; margin-bottom: 1.5rem; display: flex; align-items: center; gap: 0.5rem;">
                             <i class="fas fa-bullseye"></i> Audience Personas
                         </h3>
 
@@ -286,7 +286,7 @@
                         </div>
 
                         <div class="rule-card" style="border-color: rgba(16, 185, 129, 0.4); background: rgba(16, 185, 129, 0.03);">
-                            <label style="display: block; font-size: 0.7rem; color: #10b981; text-transform: uppercase; margin-bottom: 0.5rem; font-weight: 800;">Industry Professionals</label>
+                            <label style="display: block; font-size: 0.7rem; color: #00A58B; text-transform: uppercase; margin-bottom: 0.5rem; font-weight: 800;">Industry Professionals</label>
                             <textarea name="directive_professionals" rows="4" class="ai-input-base mono" style="width: 100%; border-radius: 10px; padding: 0.75rem; font-size: 0.75rem; outline: none;">{{ $settings['directive_professionals'] }}</textarea>
                         </div>
 
@@ -333,7 +333,7 @@
                 <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 2rem; margin-bottom: 2rem;">
                     <!-- Target Audiences -->
                     <div class="config-section">
-                        <h4><i class="fas fa-users" style="color: #10b981;"></i> Target Audiences</h4>
+                        <h4><i class="fas fa-users" style="color: #00A58B;"></i> Target Audiences</h4>
                         <p style="font-size: 0.7rem; color: var(--text-muted); margin-bottom: 1rem; line-height: 1.5;">One audience per line: <code>value:Label</code></p>
                         <textarea name="available_audiences" rows="6" class="ai-input-base" style="width: 100%; border-radius: 12px; padding: 1rem; font-family: monospace; font-size: 0.8rem; outline: none;">{{ $settings['available_audiences'] }}</textarea>
                     </div>
@@ -378,18 +378,18 @@
                         <i class="fas fa-coins"></i>
                     </div>
                     
-                    <h2 style="margin: 0 0 0.5rem; font-family: 'Space Grotesk', sans-serif; font-size: 1.5rem; font-weight: 800;">Financial Unit Calibration</h2>
+                    <h2 style="margin: 0 0 0.5rem; font-family: 'Poppins', sans-serif; font-size: 1.5rem; font-weight: 800;">Financial Unit Calibration</h2>
                     <p style="margin: 0 auto 3rem; color: var(--text-muted); font-size: 0.9rem; max-width: 500px;">Set the operational cost for each article generation request.</p>
                     
                     <div style="max-width: 450px; margin: 0 auto; background: rgba(255,255,255,0.02); border: 1px solid var(--horizon-border); border-radius: 24px; padding: 2.5rem; position: relative;">
                         <div style="font-size: 0.7rem; color: var(--text-muted); text-transform: uppercase; letter-spacing: 2px; font-weight: 800; margin-bottom: 1.5rem; opacity: 0.6;">Cost Per Article</div>
                         
                         <div style="display: flex; align-items: center; justify-content: center; gap: 1rem;">
-                            <input type="number" name="credit_cost" value="{{ $creditCost }}" min="0" class="ai-input-base" style="width: 90px; height: 80px; font-size: 2.5rem; font-weight: 800; text-align: center; border-radius: 16px; border: 2px solid var(--primary-admin); background: rgba(14, 165, 233, 0.05) !important; color: var(--primary-admin);">
+                            <input type="number" name="credit_cost" value="{{ $creditCost }}" min="0" class="ai-input-base" style="width: 90px; height: 80px; font-size: 2.5rem; font-weight: 800; text-align: center; border-radius: 16px; border: 2px solid var(--primary-admin); background: rgba(0, 168, 230, 0.05) !important; color: var(--primary-admin);">
                             <span style="font-size: 1.25rem; font-weight: 700; color: var(--text-muted); letter-spacing: 1px;">CREDITS</span>
                         </div>
 
-                        <div style="margin-top: 2.5rem; background: rgba(14, 165, 233, 0.05); border: 1px solid rgba(14, 165, 233, 0.1); border-radius: 12px; padding: 1rem; display: flex; gap: 0.75rem; text-align: left;">
+                        <div style="margin-top: 2.5rem; background: rgba(0, 168, 230, 0.05); border: 1px solid rgba(0, 168, 230, 0.1); border-radius: 12px; padding: 1rem; display: flex; gap: 0.75rem; text-align: left;">
                             <div style="color: var(--primary-admin); font-size: 1rem; margin-top: 2px;"><i class="fas fa-info-circle"></i></div>
                             <p style="margin: 0; font-size: 0.75rem; color: var(--text-muted); line-height: 1.5;">This value is deducted from the user's wallet upon successful article generation. Failed generations are cost-neutral.</p>
                         </div>
@@ -495,7 +495,7 @@
                                         <div style="font-size: 0.7rem; color: var(--text-muted);">{{ $sub->email }}</div>
                                     </td>
                                     <td style="padding: 1.25rem; border-bottom: 1px solid rgba(255,255,255,0.02);">
-                                        <span style="background: rgba(16, 185, 129, 0.1); color: #10b981; padding: 0.2rem 0.5rem; border-radius: 6px; font-size: 0.7rem; font-weight: 800;">
+                                        <span style="background: rgba(16, 185, 129, 0.1); color: #00A58B; padding: 0.2rem 0.5rem; border-radius: 6px; font-size: 0.7rem; font-weight: 800;">
                                             {{ number_format($sub->wallet->balance_credits ?? 0, 1) }} CRS
                                         </span>
                                     </td>
@@ -528,7 +528,7 @@
                         <div style="display: flex; align-items: center; justify-content: space-between;">
                             <div style="font-size: 0.7rem; color: var(--text-muted);">Triggered by: <strong>{{ $error->user->name ?? 'System' }}</strong></div>
                             @if($error->payload)
-                            <button type="button" class="inspect-error-payload" data-payload="{{ json_encode($error->payload) }}" data-title="Diagnostic Payload" style="background: rgba(14, 165, 233, 0.1); border: 1px solid rgba(14, 165, 233, 0.2); color: var(--primary-admin); padding: 0.3rem 0.7rem; border-radius: 6px; font-size: 0.65rem; font-weight: 800; cursor: pointer;">
+                            <button type="button" class="inspect-error-payload" data-payload="{{ json_encode($error->payload) }}" data-title="Diagnostic Payload" style="background: rgba(0, 168, 230, 0.1); border: 1px solid rgba(0, 168, 230, 0.2); color: var(--primary-admin); padding: 0.3rem 0.7rem; border-radius: 6px; font-size: 0.65rem; font-weight: 800; cursor: pointer;">
                                 <i class="fas fa-microscope"></i> INSPECT
                             </button>
                             @endif
@@ -543,7 +543,7 @@
                     @endforelse
 
                     @if($toolErrors->hasPages())
-                        <div style="margin-top: 1.5rem;">{{ $toolErrors->appends(request()->query())->links() }}</div>
+                        <div style="margin-top: 1.5rem;">{{ $toolErrors->appends(request()->query())->links('admin.horizon.partials._pagination') }}</div>
                     @endif
                 </div>
             </div>
@@ -659,7 +659,7 @@
                     width: '850px',
                     showConfirmButton: true,
                     confirmButtonText: 'Acknowledged',
-                    confirmButtonColor: '#0ea5e9',
+                    confirmButtonColor: '#00A8E6',
                     padding: '1.5rem 1rem'
                 });
             } catch (err) {

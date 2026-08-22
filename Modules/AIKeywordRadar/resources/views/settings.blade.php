@@ -26,6 +26,26 @@
             {{ session('success') }}
         </div>
     @endif
+
+    @error('market_sources')
+        <div class="mb-6 p-4 bg-red-500/10 border border-red-500/25 text-red-400 rounded-xl flex items-center gap-3 font-bold">
+            <div class="flex items-center justify-center w-10 h-10 rounded-lg bg-red-500/20 text-red-400">
+                <i class="fas fa-exclamation-triangle text-xl"></i>
+            </div>
+            {{ $message }}
+        </div>
+    @enderror
+
+    @if(($keywordRadarMarketSourceLimit ?? null) !== null)
+        <div class="mb-6 p-4 rounded-xl border border-amber-500/20 bg-amber-500/5 text-amber-200/90 text-sm flex items-start gap-3">
+            <i class="fas fa-info-circle mt-0.5 text-amber-400"></i>
+            <div>
+                <p class="font-bold text-amber-100 mb-1">Market source limit</p>
+                <p class="text-xs leading-relaxed text-amber-200/80">Your plan allows up to <strong>{{ $keywordRadarMarketSourceLimit }}</strong> market sources in total across <strong>Arabic</strong> and <strong>English</strong> intelligence lists. Administrator accounts have no limit.</p>
+                <p id="market_source_quota_hint" class="text-xs font-mono mt-2 text-amber-300/90"></p>
+            </div>
+        </div>
+    @endif
     <!-- Strategic Intelligence Protocol Info -->
     <div class="glass-card p-6 mb-10 border-primary-cyan/20 bg-primary-cyan/[0.02]">
         <div class="flex items-start gap-4">
@@ -55,7 +75,7 @@
                 'colorHex' => '#f97316',
                 'placeholder' => 'https://youm7.com',
                 'fieldName' => 'keywords_competitors',
-                'competitors' => $settings['keywords_competitors'] ?? '',
+                'competitors' => old('keywords_competitors', $settings['keywords_competitors'] ?? ''),
             ])
 
             {{-- English Competitors --}}
@@ -88,7 +108,7 @@
                         'colorHex' => '#3b82f6',
                         'placeholder' => 'https://techcrunch.com',
                         'fieldName' => 'keywords_competitors_en',
-                        'competitors' => $settings['keywords_competitors_en'] ?? '',
+                        'competitors' => old('keywords_competitors_en', $settings['keywords_competitors_en'] ?? ''),
                     ])
                 </div>
             </div>
@@ -176,6 +196,9 @@
 
 @push('scripts')
 <script>
+    const IS_KEYWORD_RADAR_ADMIN = @json(auth()->user()->isAdmin());
+    const KEYWORD_RADAR_MARKET_SOURCE_LIMIT = @json($keywordRadarMarketSourceLimit);
+
     const BOX_COLORS = [
         { name: 'Green', hex: '#10b981' },
         { name: 'Purple', hex: '#a855f7' },
@@ -200,6 +223,26 @@
         u = u.replace(/^www\./, '');      // Remove www.
         if (u.endsWith('/')) u = u.slice(0, -1);
         return u;
+    }
+
+    function getTotalMarketSources() {
+        return (competitors.ar?.length || 0) + (competitors.en?.length || 0);
+    }
+
+    function marketSourcesRemaining() {
+        if (IS_KEYWORD_RADAR_ADMIN || KEYWORD_RADAR_MARKET_SOURCE_LIMIT === null) {
+            return Infinity;
+        }
+        return Math.max(0, KEYWORD_RADAR_MARKET_SOURCE_LIMIT - getTotalMarketSources());
+    }
+
+    function updateMarketSourceQuotaHint() {
+        const el = document.getElementById('market_source_quota_hint');
+        if (!el) return;
+        if (IS_KEYWORD_RADAR_ADMIN || KEYWORD_RADAR_MARKET_SOURCE_LIMIT === null) return;
+        const t = getTotalMarketSources();
+        const max = KEYWORD_RADAR_MARKET_SOURCE_LIMIT;
+        el.textContent = `Using ${t} of ${max} market sources (Arabic + English combined).`;
     }
 
     function initCompetitors() {
@@ -247,6 +290,7 @@
 
         renderCompetitors('ar');
         renderCompetitors('en');
+        updateMarketSourceQuotaHint();
         renderCustomBoxes();
         renderColorPicker();
 
@@ -308,6 +352,7 @@
         }
 
         textarea.value = listItems.join('\n');
+        updateMarketSourceQuotaHint();
     }
 
     function renderCompetitorCard(url, lang, index, colorClass, boxId = null) {
@@ -613,6 +658,18 @@
             return;
         }
 
+        if (marketSourcesRemaining() <= 0) {
+            Swal.fire({
+                icon: 'warning',
+                title: 'Market source limit',
+                text: `Standard accounts may add up to ${KEYWORD_RADAR_MARKET_SOURCE_LIMIT} market sources combined (Arabic + English). Remove a source or contact an administrator.`,
+                background: '#0f172a',
+                color: '#fff',
+                confirmButtonColor: '#f59e0b'
+            });
+            return;
+        }
+
         try {
             new URL(url);
             competitors[lang].push(url);
@@ -662,14 +719,21 @@
                 let addedCount = 0;
                 const container = boxId ? customBoxes.find(b => b.id === boxId) : null;
                 const targetArray = boxId ? (container.competitors || '').split('\n').filter(u => u.trim()) : competitors[lang];
+                let room = boxId ? Infinity : marketSourcesRemaining();
+                let skippedForCap = false;
 
                 data.urls.forEach(url => {
                     const normUrl = normalizeUrl(url);
                     const isDup = targetArray.some(u => normalizeUrl(u) === normUrl);
+                    if (!boxId && room <= 0) {
+                        if (!isDup) skippedForCap = true;
+                        return;
+                    }
                     if (!isDup) {
                         targetArray.push(url);
                         statuses[url] = { state: 'idle', message: 'AI Suggested', count: 0 };
                         addedCount++;
+                        if (!boxId) room--;
                     }
                 });
 
@@ -678,6 +742,19 @@
                     renderCustomBoxes();
                 } else {
                     renderCompetitors(lang);
+                    if (skippedForCap) {
+                        Swal.fire({
+                            icon: addedCount > 0 ? 'info' : 'warning',
+                            title: 'Market source limit',
+                            text: addedCount > 0
+                                ? `Added ${addedCount} new source(s). Additional suggestions were skipped (standard accounts: max ${KEYWORD_RADAR_MARKET_SOURCE_LIMIT} combined).`
+                                : `No new sources added — standard accounts are limited to ${KEYWORD_RADAR_MARKET_SOURCE_LIMIT} market sources (Arabic + English combined).`,
+                            background: '#0f172a',
+                            color: '#fff',
+                            confirmButtonColor: '#0ea5e9'
+                        });
+                        return;
+                    }
                 }
                 Swal.fire({ icon: 'success', title: 'AI Suggestions Ready!', text: `Added ${addedCount} new competitor(s).`, background: '#0f172a', color: '#fff', confirmButtonColor: '#0ea5e9' });
             } else {
@@ -768,15 +845,36 @@
                 try { new URL(u); return true; } catch { return false; }
             });
             let addedCount = 0;
+            let room = marketSourcesRemaining();
+            let skippedDueToCap = false;
             urls.forEach(url => {
-                if (!competitors[lang].includes(url)) {
+                const isNew = !competitors[lang].some(u => normalizeUrl(u) === normalizeUrl(url));
+                if (room <= 0) {
+                    if (isNew) skippedDueToCap = true;
+                    return;
+                }
+                if (isNew) {
                     competitors[lang].push(url);
                     statuses[url] = { state: 'idle', message: 'Imported', count: 0 };
                     addedCount++;
+                    room--;
                 }
             });
             renderCompetitors(lang);
             input.value = '';
+            if (skippedDueToCap) {
+                Swal.fire({
+                    icon: addedCount > 0 ? 'warning' : 'warning',
+                    title: 'Import partially applied',
+                    text: addedCount > 0
+                        ? `Added ${addedCount} URL(s). Remaining lines were skipped (max ${KEYWORD_RADAR_MARKET_SOURCE_LIMIT} market sources for standard accounts).`
+                        : `Could not add URLs — standard accounts are limited to ${KEYWORD_RADAR_MARKET_SOURCE_LIMIT} market sources (Arabic + English combined).`,
+                    background: '#0f172a',
+                    color: '#fff',
+                    confirmButtonColor: '#f59e0b'
+                });
+                return;
+            }
             Swal.fire({
                 icon: addedCount > 0 ? 'success' : 'info',
                 title: addedCount > 0 ? 'Import Successful!' : 'No New URLs',

@@ -55,7 +55,7 @@
                                 <div style="font-size: 0.65rem; color: var(--aw-text-dim); margin-top: 4px; display: flex; gap: 0.5rem;">
                                     <span x-text="item.word_count + ' words'"></span>
                                     <span>•</span>
-                                    <span x-text="item.model"></span>
+                                    <span x-text="item.language?.toUpperCase() || 'EN'"></span>
                                 </div>
                             </div>
                             <!-- Delete Button -->
@@ -278,8 +278,6 @@
                             <div style="min-width: 0; flex: 1;">
                                 <h3 style="font-size: 1.05rem; font-weight: 800; color: #fff; margin: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; max-width: 550px;" x-text="currentArticle.title"></h3>
                                 <div style="font-size: 0.65rem; font-weight: 800; color: var(--aw-text-label); text-transform: uppercase; letter-spacing: 1px; margin-top: 2px; display: flex; gap: 0.75rem;">
-                                    <span x-text="'Model: ' + currentArticle.model"></span>
-                                    <span>•</span>
                                     <span x-text="currentArticle.word_count + ' words'"></span>
                                     <span>•</span>
                                     <span x-text="currentArticle.language.toUpperCase()"></span>
@@ -344,13 +342,62 @@
                                      x-text="(currentArticle.meta_description || '').length + '/155 chars'"></div>
                             </div>
 
+                            <!-- Suggested URL / Slug (English + Arabic) -->
+                            <div style="margin-bottom: 1.5rem; padding: 1.5rem; background: var(--aw-surface); border: 1px solid var(--aw-border); border-radius: 16px;">
+                                <div class="aw-label" style="margin-bottom: 0.75rem;">
+                                    <i class="fas fa-link"></i> Suggested URL / Slug
+                                </div>
+
+                                <!-- English slug -->
+                                <div style="margin-bottom: 0.85rem;">
+                                    <div style="font-size: 0.6rem; font-weight: 800; color: var(--aw-text-label); text-transform: uppercase; letter-spacing: 1.5px; margin-bottom: 0.4rem; display: flex; align-items: center; gap: 0.4rem;">
+                                        <span style="background: var(--aw-cyan-10); color: var(--aw-cyan); padding: 0.15rem 0.5rem; border-radius: 6px; font-size: 0.6rem;">EN</span>
+                                        English URL
+                                    </div>
+                                    <div style="display: flex; gap: 0.5rem; align-items: stretch;">
+                                        <div style="flex: 1; padding: 0.85rem 1rem; background: rgba(0,0,0,0.25); border: 1px solid var(--aw-border); border-radius: 10px; font-family: 'JetBrains Mono', monospace; font-size: 0.85rem; color: #fff; direction: ltr; word-break: break-all; line-height: 1.5;">
+                                            <span style="color: var(--aw-text-dim);" x-text="suggestedDomain() + '/'"></span><span style="color: var(--aw-cyan); font-weight: 700;" x-text="slugEn() || '—'"></span>
+                                        </div>
+                                        <button @click="copyValue(slugEn(), 'English slug')"
+                                                :disabled="!slugEn()"
+                                                style="background: var(--aw-cyan-10); border: 1px solid var(--aw-cyan-20); color: var(--aw-cyan); padding: 0 1rem; border-radius: 10px; font-size: 0.75rem; font-weight: 800; cursor: pointer; transition: all 0.2s;"
+                                                :style="!slugEn() ? 'opacity: 0.4; cursor: not-allowed;' : ''">
+                                            <i class="fas fa-copy"></i>
+                                        </button>
+                                    </div>
+                                </div>
+
+                                <!-- Arabic slug -->
+                                <div>
+                                    <div style="font-size: 0.6rem; font-weight: 800; color: var(--aw-text-label); text-transform: uppercase; letter-spacing: 1.5px; margin-bottom: 0.4rem; display: flex; align-items: center; gap: 0.4rem;">
+                                        <span style="background: rgba(168,85,247,0.1); color: #a855f7; padding: 0.15rem 0.5rem; border-radius: 6px; font-size: 0.6rem;">AR</span>
+                                        Arabic URL
+                                    </div>
+                                    <div style="display: flex; gap: 0.5rem; align-items: stretch;">
+                                        <div style="flex: 1; padding: 0.85rem 1rem; background: rgba(0,0,0,0.25); border: 1px solid var(--aw-border); border-radius: 10px; font-family: 'JetBrains Mono', monospace; font-size: 0.85rem; color: #fff; word-break: break-all; line-height: 1.5;">
+                                            <span style="color: var(--aw-text-dim); direction: ltr; display: inline-block;" x-text="suggestedDomain() + '/'"></span><span style="color: #a855f7; font-weight: 700;" x-text="slugAr() || '—'"></span>
+                                        </div>
+                                        <button @click="copyValue(slugAr(), 'Arabic slug')"
+                                                :disabled="!slugAr()"
+                                                style="background: rgba(168,85,247,0.1); border: 1px solid rgba(168,85,247,0.2); color: #a855f7; padding: 0 1rem; border-radius: 10px; font-size: 0.75rem; font-weight: 800; cursor: pointer; transition: all 0.2s;"
+                                                :style="!slugAr() ? 'opacity: 0.4; cursor: not-allowed;' : ''">
+                                            <i class="fas fa-copy"></i>
+                                        </button>
+                                    </div>
+                                </div>
+
+                                <p style="font-size: 0.7rem; color: var(--aw-text-dim); margin-top: 0.85rem; margin-bottom: 0; line-height: 1.5;">
+                                    Auto-generated from the article title. Both slugs are sanitized for SEO — English is lowercase ASCII, Arabic preserves native letters with hyphens.
+                                </p>
+                            </div>
+
                             <!-- Google Preview -->
                             <div style="margin-bottom: 1.5rem; padding: 1.5rem; background: #fff; border-radius: 16px; color: #000;">
                                 <div class="aw-label" style="margin-bottom: 0.75rem; color: rgba(0,0,0,0.4);">
                                     <i class="fab fa-google" style="color: #4285f4;"></i> Google SERP Preview
                                 </div>
                                 <div style="font-size: 1.15rem; color: #1a0dab; font-weight: 400; margin-bottom: 2px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;" x-text="currentArticle.title || 'Untitled'"></div>
-                                <div style="font-size: 0.8rem; color: #006621; margin-bottom: 4px;">https://yoursite.com/article/...</div>
+                                <div style="font-size: 0.8rem; color: #006621; margin-bottom: 4px;" x-text="'https://' + suggestedDomain() + '/' + (currentArticle.language === 'ar' ? (slugAr() || slugEn() || '...') : (slugEn() || slugAr() || '...'))"></div>
                                 <div style="font-size: 0.85rem; color: #545454; line-height: 1.5;" x-text="currentArticle.meta_description || 'No meta description available'"></div>
                             </div>
 
@@ -872,7 +919,15 @@ function articleWriter() {
                     this.history.unshift(data.article);
                     this.view = 'result';
                     this.articleTab = 'read';
-                    
+
+                    if (window.VidaCredits) {
+                        if (typeof data.balance !== 'undefined') {
+                            window.VidaCredits.updateAll(data.balance);
+                        } else {
+                            window.VidaCredits.refresh();
+                        }
+                    }
+
                     Swal.fire({
                         toast: true,
                         position: 'top-end',
@@ -987,6 +1042,45 @@ function articleWriter() {
                 timer: 1500,
                 background: '#17181c',
                 color: '#fff'
+            });
+        },
+
+        // ─── Slug / suggested-URL helpers ────────────────────────────
+        // Read slugs from seo_data (the controller persists them there).
+        // The values may arrive as a parsed object (Eloquent cast) or as
+        // a raw JSON string depending on the response shape, so we
+        // normalize both cases.
+        seoData() {
+            if (!this.currentArticle) return {};
+            const raw = this.currentArticle.seo_data;
+            if (!raw) return {};
+            if (typeof raw === 'string') {
+                try { return JSON.parse(raw) || {}; } catch (e) { return {}; }
+            }
+            return raw;
+        },
+        slugEn() {
+            return (this.seoData().slug_en || '').toString();
+        },
+        slugAr() {
+            return (this.seoData().slug_ar || '').toString();
+        },
+        suggestedDomain() {
+            return this.seoData().site_domain || '{{ parse_url(config('app.url', 'https://yoursite.com'), PHP_URL_HOST) ?: 'yoursite.com' }}';
+        },
+        copyValue(value, label) {
+            if (!value) return;
+            navigator.clipboard.writeText(value).then(() => {
+                Swal.fire({
+                    toast: true,
+                    position: 'top-end',
+                    icon: 'success',
+                    title: (label || 'Value') + ' copied',
+                    showConfirmButton: false,
+                    timer: 1500,
+                    background: '#17181c',
+                    color: '#fff'
+                });
             });
         },
 

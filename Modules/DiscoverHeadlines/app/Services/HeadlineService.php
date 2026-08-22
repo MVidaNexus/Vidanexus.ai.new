@@ -3,6 +3,8 @@
 namespace Modules\DiscoverHeadlines\Services;
 
 use App\Core\AI\AIManager;
+use App\Support\CountryRegistry;
+use App\Support\GoogleNewsRss;
 use App\Models\Setting;
 use App\Models\User;
 use App\Models\AiUsage;
@@ -28,10 +30,19 @@ class HeadlineService
         $user = User::find($userId);
         if (!$user) return ['status' => 'error', 'message' => 'User not found'];
 
-        $keyword = $params['keyword'] ?? '';
-        $content = $params['content'] ?? '';
         $type = $params['type'] ?? 'keyword';
-        $region = strtoupper($params['country'] ?? 'EG');
+
+        // Defense-in-depth: even if a caller (or a stale form field) sent
+        // both `keyword` and `content`, the active mode wins. In content
+        // mode the user's pasted text IS the source of truth — a leftover
+        // keyword from a previous tab would otherwise override it via the
+        // [Keyword] placeholder in the prompt and produce a headline that
+        // has nothing to do with what they typed.
+        $keyword = $type === 'keyword' ? (string) ($params['keyword'] ?? '') : '';
+        $content = $type === 'content' ? (string) ($params['content'] ?? '') : '';
+
+        $region = CountryRegistry::normalizeCode($params['country'] ?? null)
+            ?: CountryRegistry::defaultRegion();
         $progressId = $params['progress_id'] ?? null;
         $variantsCount = $params['variants'] ?? 7;
 
@@ -64,14 +75,26 @@ class HeadlineService
             $discoverRules = $this->getDiscoverRules($isArabic);
             $technicalWrapper = $this->getHeadlinesTechnicalWrapper($variantsCount, $region, $isArabic);
 
+            // In keyword mode the user's typed keyword is what every prompt
+            // rule refers to with [Keyword]. In content mode we have no
+            // keyword — re-anchor [Keyword] to "the primary subject derived
+            // from the context below" so the same rule set (especially the
+            // Strict Relevance Mandate) makes the AI lock onto whatever the
+            // CONTENT is actually about, not a stale or unrelated input.
+            $promptKeyword = $keyword !== ''
+                ? $keyword
+                : ($isArabic
+                    ? 'الموضوع الرئيسي المستخرج من السياق الإخباري أدناه'
+                    : 'the primary subject derived from the news context below');
+
             $dbProvider = Setting::get("discover-headlines_provider", 'openrouter');
             $dbModel = Setting::get("discover-headlines_model", 'google/gemini-2.0-flash-001');
             $dbPrompt = Setting::get("discover-headlines_prompt");
 
             if ($dbPrompt) {
                 $finalPrompt = str_replace(
-                    ['[Keyword]', '[keyword]', '[NewsContext]', '[variants]'], 
-                    [$keyword, $keyword, $newsContext, $variantsCount], 
+                    ['[Keyword]', '[keyword]', '[NewsContext]', '[variants]'],
+                    [$promptKeyword, $promptKeyword, $newsContext, $variantsCount],
                     $dbPrompt
                 );
                 $finalPrompt .= "\n\n" . $technicalWrapper;
@@ -80,25 +103,33 @@ class HeadlineService
                 $userStyle = $this->getDefaultHeadlinesStyle($isArabic);
                 $sysRole = $isArabic ? "أنت محترف صياغة عناوين إخبارية." : "You are a professional news headline specialist.";
                 $prompt = "{$sysRole}\n\n" . $userStyle . "\n\n" . $discoverRules . "\n\n" . $technicalWrapper;
-                $prompt = str_replace(['[Keyword]', '[keyword]'], $keyword, $prompt);
+                $prompt = str_replace(['[Keyword]', '[keyword]'], $promptKeyword, $prompt);
                 $prompt = str_replace('[NewsContext]', $newsContext, $prompt);
                 $finalPrompt = $prompt;
             }
 
-            // AI Routing Config
+            // AI Routing Config — `json_mode` makes OpenAI / OpenRouter set
+            // response_format=json_object so models that support structured
+            // output never wrap their reply in prose or markdown. The
+            // accompanying `system_prompt` reinforces that constraint for
+            // models (e.g. Gemini via OpenRouter) that don't enforce the API
+            // flag on the server side.
             $aiChain = Setting::get("discover-headlines_ai_chain", []);
             $aiConfig = [
                 'provider' => $dbProvider,
                 'model' => $dbModel,
                 'temperature' => 0.8,
+                'json_mode' => true,
+                'system_prompt' => 'You are a strict JSON generator. Your entire response MUST be a single valid JSON object matching the schema described in the user message. Do not include markdown, prose, comments, or trailing text — emit JSON only.',
             ];
             if (!empty($aiChain)) $aiConfig['chain'] = $aiChain;
 
             // Call AI
             $aiResponse = $this->aiManager->generate('discover-headlines', $finalPrompt, $aiConfig);
-            $generatedText = $aiResponse['text'];
-            
-            // Cleaning Markdown
+            $generatedText = (string) ($aiResponse['text'] ?? '');
+
+            // Strip the most common markdown fences the model might still emit
+            // even with json_mode (some providers wrap JSON in ```json ... ```).
             if (preg_match('/```(?:json|markdown|text|)?\s*(.*?)\s*```/s', $generatedText, $matches)) {
                 $generatedText = $matches[1];
             }
@@ -110,12 +141,16 @@ class HeadlineService
             // 4. Advanced Scoring
             $scoredHeadlines = $this->scoreHeadlines($extracted, $keyword ?? '');
 
-            // 5. Billing logic ONLY on success
+            // 5. Billing logic ONLY on success — route through the canonical
+            // service so the admin "Action Cost" (tool_credit_cost_discover-headlines)
+            // is respected and ledger/transactions/audit log get written.
             if (!empty($scoredHeadlines)) {
-                if ($user->wallet) {
-                    $user->wallet->decrement('balance_credits', 1);
+                if (! $user->deductToolCredits('discover-headlines')) {
+                    Log::critical('[Discover Headlines] Credits could not be deducted after successful generation', [
+                        'user_id' => $user->id,
+                    ]);
                 }
-                
+
                 AiUsage::create([
                     'user_id' => $user->id,
                     'tool' => 'discover-headlines',
@@ -127,12 +162,19 @@ class HeadlineService
                 ToolError::log('discover-headlines', new \Exception("AI produced 0 scored headlines. Raw response: " . substr($generatedText, 0, 100)), 'Content Formatting', $user->id);
             }
 
+            // Pull the post-deduction wallet balance so the polling
+            // progress endpoint can hand it to credits-live.js and the
+            // chip animates without an extra /credits/balance roundtrip.
+            $user->load('wallet');
+            $balance = (float) ($user->wallet->balance_credits ?? 0);
+
             $finalResult = [
                 'status' => 'success',
                 'headlines' => $generatedText,
                 'scored' => $scoredHeadlines,
                 'keyword' => $keyword,
-                'type' => $type
+                'type' => $type,
+                'balance' => $balance,
             ];
 
             if ($progressId) {
@@ -144,57 +186,252 @@ class HeadlineService
 
         } catch (\Exception $e) {
             Log::error("HeadlineService Error: " . $e->getMessage());
+
+            // Surface the last provider-level error to the frontend instead
+            // of the generic "AI provider is currently unavailable" wrapper.
+            // The full attempts array is logged via AIManager::ai.all_failed
+            // for ops; users just need the actionable upstream message.
+            $userMessage = 'Operation failed: ' . $e->getMessage();
+            if ($e instanceof \App\Core\AI\Exceptions\AIProviderFailureException && !empty($e->attempts)) {
+                // `$e->attempts` is a readonly property — end() takes its
+                // argument by reference and would throw "Cannot modify
+                // readonly property". Indexing by array_key_last avoids
+                // mutating the internal pointer.
+                $lastKey = array_key_last($e->attempts);
+                $last = $lastKey !== null ? $e->attempts[$lastKey] : null;
+                $providerMsg = is_array($last) ? trim((string) ($last['error'] ?? '')) : '';
+                if ($providerMsg !== '') {
+                    $userMessage = 'AI generation failed: ' . $providerMsg;
+                }
+            }
+
             if ($progressId) {
-                $this->updateProgress($progressId, 'error', 'Operation failed: ' . $e->getMessage());
+                $this->updateProgress($progressId, 'error', $userMessage);
             }
             throw $e;
         }
     }
 
+    /**
+     * Parse the AI response into a normalized list of headline objects.
+     *
+     * Models occasionally return JSON in messy ways (markdown fences, leading
+     * prose, double-escaped quotes from over-eager structured-output coercion,
+     * or even a JSON string containing JSON). We walk a small set of recovery
+     * strategies before falling back to a plain-text line-split — and the
+     * plain-text branch explicitly REJECTS lines that still look like JSON so
+     * a single un-parseable blob never renders as a fake "headline" in the UI
+     * (which was the bug behind the raw-JSON card users were seeing).
+     */
     protected function extractHeadlines($text)
     {
-        $extracted = [];
-        $jsonTarget = $text;
-        if (preg_match('/\{(?:[^{}]|(?R))*\}/s', $text, $matches)) {
-            $jsonTarget = $matches[0];
+        $decoded = $this->decodeJsonFlexible($text);
+
+        if (is_array($decoded)) {
+            return $this->normalizeHeadlineList($decoded);
         }
 
-        $decoded = @json_decode($jsonTarget, true);
-        
-        if (is_array($decoded) && (isset($decoded['headlines']) || isset($decoded[0]))) {
-            $items = $decoded['headlines'] ?? $decoded;
-            foreach ($items as $item) {
-                if (is_array($item)) {
-                    $extracted[] = [
-                        'headline' => $item['headline'] ?? $item['title'] ?? $item['text'] ?? $item['keyword'] ?? '',
-                        'sentiment' => $item['sentiment'] ?? 'Neutral',
-                        'entities' => $item['entities'] ?? $item['keywords'] ?? [],
-                        'lsi_keywords' => $item['lsi_keywords'] ?? $item['lsi'] ?? [],
-                        'thumbnail_suggestion' => $item['thumbnail_suggestion'] ?? $item['thumbnail'] ?? $item['visual_angle'] ?? '',
-                    ];
-                }
+        // JSON parsing failed entirely. Log enough to diagnose without dumping
+        // the full response (could be many KB).
+        Log::warning('[Discover Headlines] AI response is not valid JSON', [
+            'json_error' => json_last_error_msg(),
+            'snippet' => mb_substr((string) $text, 0, 240),
+            'length' => mb_strlen((string) $text),
+        ]);
+
+        return $this->extractHeadlinesPlainText($text);
+    }
+
+    /**
+     * Try several decode strategies in order. Return the first array we get.
+     * Strings that themselves contain JSON (double-encoded) are re-decoded.
+     */
+    protected function decodeJsonFlexible(string $text): mixed
+    {
+        $trimmed = trim($text);
+
+        // Drop any markdown fence the upstream caller might have missed (we
+        // also strip in HeadlineService::generate, but doing it here keeps the
+        // parser usable from other call sites in the future).
+        if (preg_match('/```(?:json|markdown|text)?\s*(.*?)\s*```/s', $trimmed, $m)) {
+            $trimmed = trim($m[1]);
+        }
+
+        $candidates = [$trimmed];
+
+        // Substring from the first { to the last } — handles "prose then JSON
+        // then prose" output from chatty models. We deliberately don't use a
+        // recursive brace regex because JSON string values can legally contain
+        // unbalanced braces inside quoted strings, which broke the previous
+        // implementation.
+        $first = strpos($trimmed, '{');
+        $last  = strrpos($trimmed, '}');
+        if ($first !== false && $last !== false && $last > $first) {
+            $candidates[] = substr($trimmed, $first, $last - $first + 1);
+        }
+
+        // Some models (especially when forced into structured-output mode but
+        // then asked to "wrap in quotes for safety") emit \"foo\" instead of
+        // "foo". stripslashes on the candidates recovers those.
+        foreach (array_values($candidates) as $candidate) {
+            $candidates[] = stripslashes($candidate);
+        }
+
+        foreach ($candidates as $candidate) {
+            if ($candidate === '') {
+                continue;
             }
-        } else {
-            $lines = explode("\n", $text);
-            foreach ($lines as $line) {
-                $line = trim($line);
-                if (empty($line) || mb_strlen($line) < 10) continue;
-                $extracted[] = [
-                    'headline' => preg_replace('/^\d+[\.\)]\s*/', '', $line),
-                    'sentiment' => 'Factual',
-                    'entities' => [], 'lsi_keywords' => [], 'thumbnail_suggestion' => '',
-                ];
+
+            $tryDecoded = json_decode($candidate, true);
+
+            // Double-encoded: the decode returned a string whose contents are
+            // still JSON. Decode one more level.
+            if (is_string($tryDecoded)
+                && (str_contains($tryDecoded, '"headlines"') || str_contains($tryDecoded, '"headline"'))
+            ) {
+                $tryDecoded = json_decode($tryDecoded, true);
             }
+
+            if (is_array($tryDecoded)) {
+                return $tryDecoded;
+            }
+        }
+
+        return null;
+    }
+
+    /**
+     * Map a decoded JSON structure into our canonical headline shape. Accepts
+     * either {headlines: [...]} or a bare top-level list.
+     *
+     * @return array<int, array<string, mixed>>
+     */
+    protected function normalizeHeadlineList(array $decoded): array
+    {
+        $items = $decoded['headlines']
+            ?? $decoded['data']
+            ?? $decoded['results']
+            ?? $decoded;
+
+        if (! is_array($items)) {
+            return [];
+        }
+
+        $out = [];
+        foreach ($items as $item) {
+            if (! is_array($item)) {
+                continue;
+            }
+
+            $headline = (string) ($item['headline'] ?? $item['title'] ?? $item['text'] ?? $item['keyword'] ?? '');
+            $headline = trim($headline);
+
+            // Defense in depth — don't let an item whose `headline` field is
+            // itself raw JSON sneak through (some models put the JSON inside
+            // the headline field when confused).
+            if ($headline === '' || $this->looksLikeJsonFragment($headline)) {
+                continue;
+            }
+
+            $out[] = [
+                'headline' => $headline,
+                'sentiment' => (string) ($item['sentiment'] ?? 'Neutral'),
+                'entities' => $this->asStringList($item['entities'] ?? $item['keywords'] ?? []),
+                'lsi_keywords' => $this->asStringList($item['lsi_keywords'] ?? $item['lsi'] ?? []),
+                'thumbnail_suggestion' => (string) ($item['thumbnail_suggestion'] ?? $item['thumbnail'] ?? $item['visual_angle'] ?? ''),
+            ];
+        }
+
+        return $out;
+    }
+
+    /**
+     * Plain-text fallback for models that refused to emit JSON. Filters out
+     * lines that look like JSON fragments so a partial response never renders
+     * as a card.
+     *
+     * @return array<int, array<string, mixed>>
+     */
+    protected function extractHeadlinesPlainText(string $text): array
+    {
+        $extracted = [];
+        foreach (preg_split('/\r\n|\r|\n/', $text) ?: [] as $line) {
+            $line = trim((string) $line);
+            if ($line === '') {
+                continue;
+            }
+            $len = mb_strlen($line);
+            if ($len < 10 || $len > 200) {
+                continue;
+            }
+            if ($this->looksLikeJsonFragment($line)) {
+                continue;
+            }
+            $extracted[] = [
+                'headline' => preg_replace('/^\d+[\.\)]\s*/', '', $line),
+                'sentiment' => 'Factual',
+                'entities' => [],
+                'lsi_keywords' => [],
+                'thumbnail_suggestion' => '',
+            ];
         }
         return $extracted;
     }
 
+    /**
+     * Heuristic check — does this string look like it's part of a JSON
+     * payload rather than a real human-readable headline?
+     */
+    protected function looksLikeJsonFragment(string $line): bool
+    {
+        if (preg_match('/[{}\[\]]/', $line) === 1) {
+            return true;
+        }
+        if (preg_match('/"\s*(headline|headlines|sentiment|entities|lsi_keywords|thumbnail_suggestion)"\s*:/i', $line) === 1) {
+            return true;
+        }
+        return false;
+    }
+
+    /**
+     * Coerce an "anything-shaped" field into a list of trimmed strings. Some
+     * models emit comma-separated strings, some emit arrays, some emit arrays
+     * of objects with a `name` key — we accept all three.
+     *
+     * @param mixed $value
+     * @return array<int, string>
+     */
+    protected function asStringList(mixed $value): array
+    {
+        if (is_string($value)) {
+            $value = preg_split('/\s*,\s*/', $value) ?: [];
+        }
+        if (! is_array($value)) {
+            return [];
+        }
+        $out = [];
+        foreach ($value as $item) {
+            if (is_string($item)) {
+                $s = trim($item);
+                if ($s !== '') {
+                    $out[] = $s;
+                }
+                continue;
+            }
+            if (is_array($item)) {
+                $s = trim((string) ($item['name'] ?? $item['text'] ?? $item['value'] ?? ''));
+                if ($s !== '') {
+                    $out[] = $s;
+                }
+            }
+        }
+        return $out;
+    }
+
     protected function fetchNewsContext($keyword, $region, $progressId = null)
     {
-        $countryMap = config('keywords.countries', ['EG' => ['name' => 'مصر', 'flag' => '🇪🇬', 'lang' => 'ar']]);
-        $countryData = $countryMap[$region] ?? ['lang' => 'ar'];
-        $lang = $countryData['lang'] ?? 'ar';
-        $ceid = "{$region}:{$lang}";
+        $region = CountryRegistry::normalizeCode($region) ?: CountryRegistry::defaultRegion();
+        $lang = CountryRegistry::langFor($region);
 
         $cacheKey = 'headline_news_v2_' . $region . '_' . md5(mb_strtolower(trim($keyword)));
         $cached = Cache::get($cacheKey);
@@ -209,7 +446,7 @@ class HeadlineService
         
         foreach ($windows as $window) {
             $timeParam = ($window === 'broad') ? "" : " " . $window;
-            $url = "https://news.google.com/rss/search?q=" . urlencode($keyword . $timeParam) . "&hl={$lang}&gl={$region}&ceid={$ceid}";
+            $url = GoogleNewsRss::searchUrl($keyword.$timeParam, $region, $lang);
             try {
                 if ($progressId) $this->updateProgress($progressId, 'searching', "Scouring the news archive ({$window})...");
                 $response = Http::timeout(8)->get($url);

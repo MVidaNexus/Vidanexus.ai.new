@@ -11,6 +11,7 @@ class UserTool extends Model
         'tool_slug',
         'price_paid',
         'bonus_credits',
+        'allow_bonus_for_ai_usage',
         'expires_at',
         'renews_at',
         'auto_renew',
@@ -23,6 +24,7 @@ class UserTool extends Model
             'expires_at' => 'datetime',
             'renews_at' => 'datetime',
             'auto_renew' => 'boolean',
+            'allow_bonus_for_ai_usage' => 'boolean',
         ];
     }
 

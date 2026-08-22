@@ -2,14 +2,21 @@
 
 namespace App\Models;
 
+use App\Notifications\QueuedResetPassword as QueuedResetPasswordNotification;
+use App\Notifications\QueuedVerifyEmail as QueuedVerifyEmailNotification;
+use App\Services\Credits\ToolCreditConsumptionService;
 use Illuminate\Contracts\Auth\MustVerifyEmail;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
+use Illuminate\Support\Facades\Log;
+use Spatie\Permission\Traits\HasRoles;
 
 class User extends Authenticatable implements MustVerifyEmail
 {
-    use HasFactory, Notifiable;
+    use HasFactory, Notifiable, HasRoles;
+
+    protected string $guard_name = 'web';
 
     protected $fillable = [
         'name',
@@ -20,6 +27,9 @@ class User extends Authenticatable implements MustVerifyEmail
         'phone',
         'country',
         'settings',
+        'oauth_provider',
+        'oauth_provider_id',
+        'avatar_url',
     ];
 
     /**
@@ -35,7 +45,9 @@ class User extends Authenticatable implements MustVerifyEmail
      */
     public function isAdmin(): bool
     {
-        return $this->role === 'admin';
+        return $this->role === 'admin'
+            || $this->hasRole('admin')
+            || $this->hasRole('super_admin');
     }
 
     // ──────────────────────────────────────────────
@@ -55,12 +67,18 @@ class User extends Authenticatable implements MustVerifyEmail
      */
     public function ownsTool(string $slug): bool
     {
-        if ($this->isAdmin()) return true;
-        
-        $userTool = $this->ownedTools()->where('tool_slug', $slug)->first();
-        
-        if (!$userTool) return false;
-        
+        if ($this->isAdmin()) {
+            return true;
+        }
+
+        $userTool = $this->relationLoaded('ownedTools')
+            ? $this->ownedTools->firstWhere('tool_slug', $slug)
+            : $this->ownedTools()->where('tool_slug', $slug)->first();
+
+        if (! $userTool) {
+            return false;
+        }
+
         return $userTool->isActive();
     }
 
@@ -76,10 +94,21 @@ class User extends Authenticatable implements MustVerifyEmail
         }
 
         $ownedSlugs = $this->ownedTools()->pluck('tool_slug')->toArray();
+        $packageSlugs = $this->packageSubscriptions()
+            ->active()
+            ->with('tools')
+            ->get()
+            ->pluck('tools')
+            ->flatten()
+            ->pluck('tool_slug')
+            ->unique()
+            ->values()
+            ->all();
+        $allowed = array_unique(array_merge($ownedSlugs, $packageSlugs));
 
-        return array_filter($allTools, function ($tool) use ($ownedSlugs) {
-            return in_array($tool['slug'], $ownedSlugs);
-        });
+        return array_values(array_filter($allTools, function ($tool) use ($allowed) {
+            return in_array($tool['slug'], $allowed, true);
+        }));
     }
 
     /**
@@ -87,25 +116,7 @@ class User extends Authenticatable implements MustVerifyEmail
      */
     public function canUseTool(string $slug): bool
     {
-        if ($this->isAdmin()) return true;
-
-        // Must own the tool first
-        if (!$this->ownsTool($slug)) return false;
-
-        $costPerAction = $this->getToolCreditCost($slug);
-
-        // Free tools (cost = 0) are always usable once owned
-        if ($costPerAction <= 0) return true;
-
-        // 1. Check Tool-Specific Bonus Credits first
-        $userTool = $this->ownedTools()->where('tool_slug', $slug)->first();
-        if ($userTool && $userTool->bonus_credits >= $costPerAction) {
-            return true;
-        }
-
-        // 2. Fallback to Global Wallet Credits
-        $wallet = $this->wallet;
-        return $wallet && $wallet->balance_credits >= $costPerAction;
+        return app(ToolCreditConsumptionService::class)->canUse($this, $slug);
     }
 
     /**
@@ -118,31 +129,47 @@ class User extends Authenticatable implements MustVerifyEmail
     }
 
     /**
-     * Deduct credits for a tool action.
-     * Priority: Tool-Specific Bonus -> Global Wallet
+     * Deduct credits for a tool action (wallet first, then per-tool bonus when allowed).
      */
     public function deductToolCredits(string $slug): bool
     {
-        $cost = $this->getToolCreditCost($slug);
-        if ($cost <= 0) return true;
+        return app(ToolCreditConsumptionService::class)->deduct($this, $slug);
+    }
 
-        // 1. Try Tool-Specific Bonus Credits first
-        $userTool = $this->ownedTools()->where('tool_slug', $slug)->first();
-        if ($userTool && $userTool->bonus_credits >= $cost) {
-            $userTool->bonus_credits -= $cost;
-            $userTool->save();
-            return true;
-        }
+    public function sendEmailVerificationNotification(): void
+    {
+        $this->logAuthMailDispatch('verify_email');
+        $this->notify(new QueuedVerifyEmailNotification);
+    }
 
-        // 2. Fallback to Global Wallet
-        if (!$this->wallet || $this->wallet->balance_credits < $cost) {
-            return false;
-        }
+    public function sendPasswordResetNotification($token): void
+    {
+        $this->logAuthMailDispatch('password_reset');
+        $this->notify(new QueuedResetPasswordNotification($token));
+    }
 
-        $this->wallet->balance_credits -= $cost;
-        $this->wallet->save();
+    /**
+     * Debug tap for every auth-related email dispatch (verify, reset, etc.).
+     * Writes to the `mail` log channel so all auth sends share one audit trail.
+     */
+    protected function logAuthMailDispatch(string $event): void
+    {
+        $request = request();
+        $caller = app()->runningInConsole()
+            ? 'console'
+            : ($request?->method().' '.($request?->fullUrl() ?? 'n/a'));
 
-        return true;
+        Log::channel('mail')->info('auth_mail.dispatch', [
+            'event' => $event,
+            'user_id' => $this->getKey(),
+            'email' => $this->email,
+            'verified' => (bool) $this->email_verified_at,
+            'mailer' => config('mail.default'),
+            'from' => config('mail.from.address'),
+            'queue_connection' => config('queue.default'),
+            'queue_name' => 'emails',
+            'caller' => $caller,
+        ]);
     }
 
     // ──────────────────────────────────────────────
@@ -175,17 +202,26 @@ class User extends Authenticatable implements MustVerifyEmail
 
     /**
      * Get the available limit (Marketplace bridge).
-     * Returns the total points available (Bonus + Wallet) for that tool.
+     * Returns CRS usable for AI on this tool (wallet + bonus only when bonus may be consumed for usage).
      */
     public function getDailyToolLimit(string $slug = null): int
     {
-        if ($this->isAdmin()) return 999999;
-        if (!$slug) return 0;
-        
-        $bonus = $this->ownedTools()->where('tool_slug', $slug)->first()?->bonus_credits ?? 0;
-        $wallet = $this->wallet->balance_credits ?? 0;
-        
-        return (int) ($bonus + $wallet);
+        if ($this->isAdmin()) {
+            return 999999;
+        }
+        if (! $slug) {
+            return 0;
+        }
+
+        $ut = $this->ownedTools()->where('tool_slug', $slug)->first();
+        $bonus = 0;
+        if ($ut && ($ut->allow_bonus_for_ai_usage ?? true)) {
+            $bonus = (int) ($ut->bonus_credits ?? 0);
+        }
+
+        $wallet = (int) ($this->wallet->balance_credits ?? 0);
+
+        return $wallet + $bonus;
     }
 
     /**
@@ -214,11 +250,27 @@ class User extends Authenticatable implements MustVerifyEmail
     }
 
     /**
+     * External OAuth identities linked to this user (Google, GitHub, Microsoft, …).
+     */
+    public function socialAccounts(): \Illuminate\Database\Eloquent\Relations\HasMany
+    {
+        return $this->hasMany(SocialAccount::class);
+    }
+
+    /**
      * Get subscriptions for the user (legacy).
      */
     public function subscriptions(): \Illuminate\Database\Eloquent\Relations\HasMany
     {
         return $this->hasMany(Subscription::class);
+    }
+
+    /**
+     * SaaS bundles: a user may hold multiple active package subscriptions at once.
+     */
+    public function packageSubscriptions(): \Illuminate\Database\Eloquent\Relations\HasMany
+    {
+        return $this->hasMany(UserPackageSubscription::class);
     }
 
     /**

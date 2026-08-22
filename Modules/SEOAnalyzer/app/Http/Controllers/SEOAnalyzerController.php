@@ -29,28 +29,38 @@ class SEOAnalyzerController extends Controller
     public function analyzeHeadline(Request $request)
     {
         $user = auth()->user();
-        
-        if (!$user->canUseTool('seo-analyzer')) {
-            $msg = $user->getLimitReachedMessage('محلل SEO الذكي', 'seo-analyzer');
-            return response()->json(['status' => 'error', 'message' => $msg], 403);
-        }
+        $slug = 'seo-analyzer';
 
-        if (!$user->wallet || $user->wallet->balance_credits < 1) {
-            return response()->json(['status' => 'error', 'message' => 'رصيدك غير كافٍ لتحليل العناوين.'], 402);
+        if (! $user->canUseTool($slug)) {
+            $cost = $user->getToolCreditCost($slug);
+            $hasOwnership = $user->ownsTool($slug);
+            $msg = $hasOwnership
+                ? "رصيدك غير كافٍ لتحليل العناوين. التكلفة: {$cost} CRS."
+                : $user->getLimitReachedMessage('محلل SEO الذكي', $slug);
+            return response()->json(['status' => 'error', 'message' => $msg], $hasOwnership ? 402 : 403);
         }
 
         $headline = $request->input('headline');
         $analysis = $this->seoService->analyzeHeadline($headline);
-        
-        $user->wallet->decrement('balance_credits', 1);
+
+        if (! $user->deductToolCredits($slug)) {
+            \Illuminate\Support\Facades\Log::critical('[SEO Analyzer] Credits could not be deducted after headline analysis', [
+                'user_id' => $user->id,
+            ]);
+        }
         \App\Models\AiUsage::create([
             'user_id' => $user->id,
-            'tool' => 'seo-analyzer',
+            'tool' => $slug,
             'provider' => 'local',
             'model' => 'headline-analyzer',
             'status' => 'success',
         ]);
-        
+
+        $user->load('wallet');
+        if (is_array($analysis)) {
+            $analysis['balance'] = (float) ($user->wallet->balance_credits ?? 0);
+        }
+
         return response()->json($analysis);
     }
 
@@ -60,29 +70,39 @@ class SEOAnalyzerController extends Controller
     public function analyzeContent(Request $request)
     {
         $user = auth()->user();
-        
-        if (!$user->canUseTool('seo-analyzer')) {
-            $msg = $user->getLimitReachedMessage('محلل SEO الذكي', 'seo-analyzer');
-            return response()->json(['status' => 'error', 'message' => $msg], 403);
-        }
+        $slug = 'seo-analyzer';
 
-        if (!$user->wallet || $user->wallet->balance_credits < 1) {
-            return response()->json(['status' => 'error', 'message' => 'رصيدك غير كافٍ لتحليل المحتوى.'], 402);
+        if (! $user->canUseTool($slug)) {
+            $cost = $user->getToolCreditCost($slug);
+            $hasOwnership = $user->ownsTool($slug);
+            $msg = $hasOwnership
+                ? "رصيدك غير كافٍ لتحليل المحتوى. التكلفة: {$cost} CRS."
+                : $user->getLimitReachedMessage('محلل SEO الذكي', $slug);
+            return response()->json(['status' => 'error', 'message' => $msg], $hasOwnership ? 402 : 403);
         }
 
         $content = $request->input('content');
         $keyword = $request->input('keyword', '');
         $analysis = $this->seoService->analyzeContent($content, $keyword);
-        
-        $user->wallet->decrement('balance_credits', 1);
+
+        if (! $user->deductToolCredits($slug)) {
+            \Illuminate\Support\Facades\Log::critical('[SEO Analyzer] Credits could not be deducted after content analysis', [
+                'user_id' => $user->id,
+            ]);
+        }
         \App\Models\AiUsage::create([
             'user_id' => $user->id,
-            'tool' => 'seo-analyzer',
+            'tool' => $slug,
             'provider' => 'local',
             'model' => 'content-analyzer',
             'status' => 'success',
         ]);
-        
+
+        $user->load('wallet');
+        if (is_array($analysis)) {
+            $analysis['balance'] = (float) ($user->wallet->balance_credits ?? 0);
+        }
+
         return response()->json($analysis);
     }
 }

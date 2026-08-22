@@ -34,7 +34,7 @@
                 </div>
             @endif
 
-            <form action="{{ route('admin.horizon.api-keys.update') }}" method="POST">
+            <form action="{{ route('admin.horizon.api-keys.update') }}" method="POST" data-ajax-save>
                 @csrf
                 <div style="display: flex; flex-direction: column; gap: 2rem; margin-bottom: 3rem;">
                     
@@ -46,7 +46,7 @@
                             </div>
                             <div>
                                 <h3 style="margin: 0; font-size: 1rem; color: var(--text-main);">Payment Gateway: Fawaterk</h3>
-                                <p style="margin: 0; font-size: 0.75rem; color: var(--text-muted);">Main payment processing credentials used across the platform.</p>
+                                <p style="margin: 0; font-size: 0.75rem; color: var(--text-muted);">By default, sandbox (staging API) is used when <code style="font-size: 0.7rem;">APP_ENV</code> is local, development, dev, testing, or staging; production uses the live API. Override below if needed (use test keys with sandbox).</p>
                             </div>
                         </div>
                         
@@ -66,6 +66,14 @@
                                     <input type="text" name="FAWATERK_VENDOR_KEY" value="{{ $keys['FAWATERK_VENDOR_KEY'] }}" class="api-input" style="width: 100%; padding: 0.85rem 1rem 0.85rem 2.75rem; background: var(--vn-input-bg); border: 1px solid var(--vn-input-border); border-radius: 12px; color: var(--text-main); font-family: 'JetBrains Mono', monospace; font-size: 0.85rem; outline: none; transition: all 0.3s ease;">
                                 </div>
                             </div>
+                        </div>
+                        <div style="margin-top: 1rem;">
+                            <label style="display: block; font-size: 0.75rem; color: var(--text-muted); text-transform: uppercase; letter-spacing: 1px; margin-bottom: 0.5rem;">Fawaterak API environment</label>
+                            <select name="FAWATERK_SANDBOX_MODE" class="api-input" style="width: 100%; max-width: 36rem; padding: 0.65rem 1rem; background: var(--vn-input-bg); border: 1px solid var(--vn-input-border); border-radius: 12px; color: var(--text-main); font-size: 0.85rem;">
+                                <option value="auto" @selected(($keys['FAWATERK_SANDBOX_MODE'] ?? 'auto') === 'auto')>Automatic (dev → sandbox, production → live)</option>
+                                <option value="sandbox" @selected(($keys['FAWATERK_SANDBOX_MODE'] ?? '') === 'sandbox')>Always sandbox (staging API)</option>
+                                <option value="live" @selected(($keys['FAWATERK_SANDBOX_MODE'] ?? '') === 'live')>Always live (production API)</option>
+                            </select>
                         </div>
                     </div>
 
@@ -121,7 +129,7 @@
                 </div>
             </div>
 
-            <div style="background: var(--horizon-primary-bg); border: 1px dashed rgba(14, 165, 233, 0.3); padding: 0.75rem 1.25rem; border-radius: 12px; margin-bottom: 2rem; font-size: 0.75rem; color: var(--primary-admin);">
+            <div style="background: var(--horizon-primary-bg); border: 1px dashed rgba(0, 168, 230, 0.3); padding: 0.75rem 1.25rem; border-radius: 12px; margin-bottom: 2rem; font-size: 0.75rem; color: var(--primary-admin);">
                 <i class="fas fa-info-circle mr-2"></i> To modify AI configurations or private API keys, navigate to the <strong>Individual Tool Control</strong> pages in the sidebar.
             </div>
 
@@ -248,7 +256,7 @@
                                             <i class="fas fa-shield-alt mr-1"></i> PRIVATE KEY
                                         </span>
                                     @else
-                                        <span style="background: rgba(14, 165, 233, 0.1); color: var(--primary-admin); padding: 0.25rem 0.75rem; border-radius: 20px; font-size: 0.7rem; font-weight: 700; border: 1px solid rgba(14, 165, 233, 0.2);">
+                                        <span style="background: rgba(0, 168, 230, 0.1); color: var(--primary-admin); padding: 0.25rem 0.75rem; border-radius: 20px; font-size: 0.7rem; font-weight: 700; border: 1px solid rgba(0, 168, 230, 0.2);">
                                             <i class="fas fa-globe mr-1"></i> GLOBAL (.env)
                                         </span>
                                     @endif
@@ -292,7 +300,7 @@
     .tab-btn.active {
         background: var(--horizon-primary-bg);
         color: var(--primary-admin);
-        box-shadow: 0 4px 15px rgba(14, 165, 233, 0.1);
+        box-shadow: 0 4px 15px rgba(0, 168, 230, 0.1);
     }
     .tab-panel { display: none; }
     .tab-panel.active { display: block; animation: fadeIn 0.4s ease; }
@@ -302,7 +310,7 @@
         to { opacity: 1; transform: translateY(0); }
     }
 
-    .api-input:focus { border-color: var(--primary-admin) !important; box-shadow: 0 0 15px rgba(14, 165, 233, 0.1) !important; }
+    .api-input:focus { border-color: var(--primary-admin) !important; box-shadow: 0 0 15px rgba(0, 168, 230, 0.1) !important; }
     .tool-row:hover { background: var(--horizon-nav-hover); }
 </style>
 

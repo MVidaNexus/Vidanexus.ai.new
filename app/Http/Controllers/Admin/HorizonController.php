@@ -33,6 +33,11 @@ class HorizonController extends Controller
                 $query->where('role', '!=', 'admin')->orWhereNull('role');
             })->whereHas('ownedTools')->count(),
             'total_requests' => DB::table('ai_usages')->count(),
+            'failed_jobs' => DB::table('failed_jobs')->count(),
+            'payment_failures_24h' => DB::table('payment_intents')
+                ->where('state', 'failed')
+                ->where('updated_at', '>=', now()->subDay())
+                ->count(),
         ];
 
         return view('admin.horizon.dashboard', compact('tools', 'stats'));
@@ -96,6 +101,11 @@ class HorizonController extends Controller
             // Authority Sources
             $settings['major_authority_sources'] = Setting::get("{$slug}_major_authority_sources", "سكاي نيوز\nالجزيرة\nالعربية\nرويترز\nفرانس 24\nالشرق الأوسط\nbbc\ncnn\nreuters\nny times\nwashington post\nguardian\nbloomberg\nassociated press");
             $settings['mid_authority_sources'] = Setting::get("{$slug}_mid_authority_sources", "اليوم السابع\nالبيان\nالخليج\nالوطن\nالمصري اليوم\nالشروق\nعكاظ\nسبق\nforbes\ntechcrunch\nwired\nverge");
+
+            // Strict Relevance Filters (country + topic)
+            $settings['strict_country_filter'] = (bool) Setting::get("{$slug}_strict_country_filter", 1);
+            $settings['strict_topic_filter'] = (bool) Setting::get("{$slug}_strict_topic_filter", 1);
+            $settings['country_source_overrides'] = Setting::get("{$slug}_country_source_overrides", "");
         }
 
         // Specific settings for Trending Search Monitor
@@ -229,6 +239,11 @@ class HorizonController extends Controller
             'api_keys' => 'nullable|array',
             'competitors' => 'nullable|string',
             'rss_feeds' => 'nullable|string',
+            'unlock_price' => 'nullable|integer|min:0',
+            'credit_cost' => 'nullable|integer|min:0',
+            'bonus_credits' => 'nullable|integer|min:0',
+            'sync_credits' => 'nullable|integer|min:0',
+            'ai_analysis_credits' => 'nullable|integer|min:0',
         ]);
 
         Setting::set("{$slug}_prompt", $request->prompt, 'textarea', 'tool_settings');
@@ -282,7 +297,12 @@ class HorizonController extends Controller
                 Setting::set("{$slug}_scraping_depth", $request->scraping_depth, 'number', 'tool_settings');
             }
             if ($request->has('sync_credits')) {
-                Setting::set("{$slug}_sync_credits", $request->sync_credits, 'number', 'tool_settings');
+                $syncCreditsValue = max(0, (int) $request->sync_credits);
+                Setting::set("{$slug}_sync_credits", $syncCreditsValue, 'number', 'tool_settings');
+                // Mirror to the canonical per-tool cost key so the active sync
+                // controller (which uses `tool_credit_cost_{slug}`) honors the
+                // admin's chosen value.
+                Setting::set("tool_credit_cost_{$slug}", $syncCreditsValue, 'number', 'tool_settings');
             }
             if ($request->has('min_chars')) {
                 Setting::set("{$slug}_min_chars", $request->min_chars, 'number', 'tool_settings');
@@ -295,6 +315,10 @@ class HorizonController extends Controller
             }
             if ($request->has('similarity_threshold')) {
                 Setting::set("{$slug}_similarity_threshold", $request->similarity_threshold, 'number', 'tool_settings');
+            }
+            if ($request->has('keywords_per_headline')) {
+                $perHeadline = max(1, min(5, (int) $request->keywords_per_headline));
+                Setting::set("{$slug}_keywords_per_headline", $perHeadline, 'number', 'tool_settings');
             }
 
             // Clear relevant caches
@@ -355,7 +379,10 @@ class HorizonController extends Controller
                 Setting::set("{$slug}_max_articles_per_fetch", (int)$request->max_articles_per_fetch, 'number', 'tool_settings');
             }
             if ($request->has('sync_credits')) {
-                Setting::set("{$slug}_sync_credits", (int)$request->sync_credits, 'number', 'tool_settings');
+                $syncCreditsValue = max(0, (int) $request->sync_credits);
+                Setting::set("{$slug}_sync_credits", $syncCreditsValue, 'number', 'tool_settings');
+                // Mirror to canonical per-tool cost key (active deduction path).
+                Setting::set("tool_credit_cost_{$slug}", $syncCreditsValue, 'number', 'tool_settings');
             }
             if ($request->has('ai_analysis_credits')) {
                 Setting::set("{$slug}_ai_analysis_credits", (int)$request->ai_analysis_credits, 'number', 'tool_settings');
@@ -368,13 +395,23 @@ class HorizonController extends Controller
             if ($request->has('mid_authority_sources')) {
                 Setting::set("{$slug}_mid_authority_sources", $request->mid_authority_sources, 'textarea', 'tool_settings');
             }
-            
-            // Clear news cache so new settings take effect
-            $keys = \Illuminate\Support\Facades\Cache::getStore();
-            // Simple approach: flush all news-related cache keys
+
+            // Strict Relevance Filters
+            // (checkbox inputs are absent from the request when unchecked, so always write the resolved value)
+            Setting::set("{$slug}_strict_country_filter", $request->boolean('strict_country_filter') ? 1 : 0, 'boolean', 'tool_settings');
+            Setting::set("{$slug}_strict_topic_filter", $request->boolean('strict_topic_filter') ? 1 : 0, 'boolean', 'tool_settings');
+            if ($request->has('country_source_overrides')) {
+                Setting::set("{$slug}_country_source_overrides", (string) $request->input('country_source_overrides'), 'textarea', 'tool_settings');
+            }
+
+            // Bust the cached news payloads so new filter settings take effect on the next sync.
+            // The runtime cache key is "google_news_radar_v4_{REGION}_{TOPIC}" — the previous
+            // version of this loop had a typo that produced "google_news_radar_{EG}_..." and
+            // never actually invalidated anything.
             foreach (['EG','SA','AE','KW','QA','BH','OM','IQ','JO','LB','MA','DZ','TN','LY','PS','SY','YE','US','GB','FR','PL'] as $cc) {
                 foreach (['GENERAL','WORLD','NATION','BUSINESS','TECHNOLOGY','ENTERTAINMENT','SPORTS','SCIENCE','HEALTH'] as $tp) {
-                    \Illuminate\Support\Facades\Cache::forget("google_news_radar_{{$cc}}_{$tp}");
+                    \Illuminate\Support\Facades\Cache::forget("google_news_radar_v4_{$cc}_{$tp}");
+                    \Illuminate\Support\Facades\Cache::forget("google_news_radar_v3_{$cc}_{$tp}");
                 }
             }
         }

@@ -71,7 +71,7 @@ class RenewToolSubscriptions extends Command
                 \App\Models\Transaction::create([
                     'id' => (string) \Illuminate\Support\Str::uuid(),
                     'wallet_id' => $user->wallet->id,
-                    'type' => 'deduction',
+                    'type' => 'withdrawal',
                     'amount' => $renewalPrice,
                     'tool_name' => 'Monthly Renewal: ' . $toolConfig['name'],
                     'idempotency_key' => 'RENEW_' . $toolSlug . '_' . $user->id . '_' . $newExpiry->format('Ym'),

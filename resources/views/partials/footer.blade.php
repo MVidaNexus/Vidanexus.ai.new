@@ -11,7 +11,7 @@
             <div class="footer-col brand-col">
                 <a href="/" style="text-decoration: none;">
                     <div class="logo-container" style="margin-bottom: 1.5rem;">
-                        <img src="{{ asset('assets/logo.png') }}" alt="VidaNexus" class="logo-img" style="height: 32px;">
+                        <img src="{{ asset('assets/logo.svg') }}" alt="VidaNexus" class="logo-img" style="height: 32px;">
                         <div class="logo-text" style="font-size: 1.5rem;">
                             <span class="logo-vida">VIDA</span>
                             <span class="logo-nexus">NEXUS</span>
@@ -83,14 +83,14 @@
     <button id="btn-scroll-top" onclick="window.scrollTo({top:0,behavior:'smooth'})" aria-label="Back to top" style="
         width: 48px; height: 48px;
         border-radius: 50%;
-        border: 1px solid var(--glass-border, rgba(14, 165, 233,0.25));
+        border: 1px solid var(--glass-border, rgba(0, 168, 230,0.25));
         background: var(--card-bg, rgba(10,15,30,0.85));
         backdrop-filter: blur(12px);
-        color: var(--primary-cyan, #0ea5e9);
+        color: var(--primary-cyan, #00A8E6);
         display: flex; align-items: center; justify-content: center;
         cursor: pointer;
         transition: all 0.35s cubic-bezier(.4,0,.2,1);
-        box-shadow: 0 4px 20px rgba(0,0,0,0.3), 0 0 15px rgba(14, 165, 233,0.08);
+        box-shadow: 0 4px 20px rgba(0,0,0,0.3), 0 0 15px rgba(0, 168, 230,0.08);
         opacity: 0;
         transform: translateY(20px) scale(0.8);
         pointer-events: none;
@@ -125,9 +125,9 @@
         box-shadow: 0 6px 30px rgba(37,211,102,0.5), 0 0 40px rgba(37,211,102,0.3) !important;
     }
     #btn-scroll-top:hover {
-        background: rgba(14, 165, 233,0.15) !important;
-        border-color: rgba(14, 165, 233,0.5) !important;
-        box-shadow: 0 4px 25px rgba(14, 165, 233,0.2), 0 0 20px rgba(14, 165, 233,0.15) !important;
+        background: rgba(0, 168, 230,0.15) !important;
+        border-color: rgba(0, 168, 230,0.5) !important;
+        box-shadow: 0 4px 25px rgba(0, 168, 230,0.2), 0 0 20px rgba(0, 168, 230,0.15) !important;
     }
     #btn-scroll-top.visible {
         opacity: 1 !important;

@@ -10,6 +10,7 @@
         'trending-search-monitor' => 'Trending Search Monitor',
     ];
     $name = is_array($slug) ? ($slug['name'] ?? 'Unknown Tool') : ($toolNames[$slug] ?? $slug);
+    $safeName = e($name);
     $user = auth()->user();
 
     $hasBalance = $user->wallet && $user->wallet->balance_credits >= 1.0;
@@ -19,11 +20,11 @@
     
     if (!$user->ownsTool($slugStr)) {
         $title = "Tool Access Locked";
-        $desc = "You haven't subscribed to <span style='color: #ef4444; font-weight: 700;'>\"{$name}\"</span> yet. This is a premium tool that requires a monthly subscription.";
+        $desc = "You haven't subscribed to <span style='color: #ef4444; font-weight: 700;'>\"{$safeName}\"</span> yet. This is a premium tool that requires a monthly subscription.";
         $badge = "LOCKED";
     } else {
         $title = "Action Credits Exhausted";
-        $desc = "Your current credit balance is too low to perform this action. Please top up your wallet to continue using <span style='color: #ef4444; font-weight: 700;'>\"{$name}\"</span>.";
+        $desc = "Your current credit balance is too low to perform this action. Please top up your wallet to continue using <span style='color: #ef4444; font-weight: 700;'>\"{$safeName}\"</span>.";
         $badge = "INSUFFICIENT FUNDS";
     }
 @endphp
@@ -82,8 +83,8 @@
             <a href="/pricing" class="vn-btn-primary" style="
                 display: flex; align-items: center; justify-content: center; gap: 0.5rem;
                 padding: 1rem; border-radius: 12px; font-weight: 700; text-decoration: none;
-                background: linear-gradient(135deg, #0ea5e9 0%, #0284c7 100%);
-                color: #fff; box-shadow: 0 10px 20px rgba(14, 165, 233, 0.25);
+                background: linear-gradient(135deg, #00A8E6 0%, #0284c7 100%);
+                color: #fff; box-shadow: 0 10px 20px rgba(0, 168, 230, 0.25);
                 transition: all 0.3s ease;
             ">
                 <i class="fas fa-coins" style="font-size: 0.8rem;"></i>

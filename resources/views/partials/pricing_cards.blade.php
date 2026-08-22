@@ -23,7 +23,7 @@
             'price' => '650',
             'desc' => 'High-volume SEO & Content.',
             'icon' => 'fa-bolt-lightning',
-            'color' => 'var(--neon-purple)'
+            'color' => 'var(--accent)'
         ],
         'enterprise' => [
             'name' => 'Power Node',
@@ -53,10 +53,10 @@
             display: flex;
             flex-direction: column;
             overflow: hidden;
-            box-shadow: {{ !empty($pkg['popular']) ? '0 20px 40px rgba(14, 165, 233, 0.15)' : 'var(--pricing-card-shadow)' }};
+            box-shadow: {{ !empty($pkg['popular']) ? '0 20px 40px rgba(0, 168, 230, 0.15)' : 'var(--pricing-card-shadow)' }};
         ">
             @if(!empty($pkg['popular']))
-                <div style="position: absolute; top: 1.2rem; right: -2.5rem; background: linear-gradient(135deg, var(--primary-cyan), #0066ff); color: #fff; font-size: 0.65rem; font-weight: 800; padding: 6px 40px; transform: rotate(45deg); letter-spacing: 1px; box-shadow: 0 5px 15px rgba(0, 102, 255, 0.3);">
+                <div style="position: absolute; top: 1.2rem; right: -2.5rem; background: linear-gradient(135deg, var(--primary-cyan), #003686); color: #fff; font-size: 0.65rem; font-weight: 800; padding: 6px 40px; transform: rotate(45deg); letter-spacing: 1px; box-shadow: 0 5px 15px rgba(0, 102, 255, 0.3);">
                     BEST VALUE
                 </div>
             @endif
@@ -133,7 +133,7 @@
         width: 100%;
         max-width: 100% !important;
     ">
-        <div class="corporate-accent-bar" style="position: absolute; top: 0; left: 0; width: 6px; height: 100%; background: linear-gradient(180deg, var(--neon-purple), var(--primary-cyan)); opacity: 0.8;"></div>
+        <div class="corporate-accent-bar" style="position: absolute; top: 0; left: 0; width: 6px; height: 100%; background: linear-gradient(180deg, var(--accent), var(--primary-cyan)); opacity: 0.8;"></div>
 
         <!-- Left Content: Icon & Text -->
         <div class="corporate-left" style="display: flex; align-items: center; gap: 1.5rem; width: 35%; padding-left: 1rem;">

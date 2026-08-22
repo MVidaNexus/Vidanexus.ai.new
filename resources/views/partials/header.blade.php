@@ -1,5 +1,5 @@
 @if(session('impersonate_admin_id'))
-    <div style="background: linear-gradient(90deg, var(--neon-purple), var(--primary-cyan)); color: #fff; padding: 0.6rem; text-align: center; font-size: 0.9rem; font-weight: 600; position: fixed; top: 0; left: 0; right: 0; z-index: 1001; display: flex; justify-content: center; align-items: center; gap: 1rem; box-shadow: 0 4px 15px rgba(0,0,0,0.3);">
+    <div style="background: linear-gradient(90deg, var(--accent), var(--primary-cyan)); color: #fff; padding: 0.6rem; text-align: center; font-size: 0.9rem; font-weight: 600; position: fixed; top: 0; left: 0; right: 0; z-index: 1001; display: flex; justify-content: center; align-items: center; gap: 1rem; box-shadow: 0 4px 15px rgba(0,0,0,0.3);">
         <span><i class="fas fa-user-secret"></i> You are currently viewing as <strong>{{ auth()->user()->name }}</strong></span>
         <a href="{{ route('admin.stop-impersonating') }}" style="background: #fff; color: #000; padding: 0.3rem 0.8rem; border-radius: 6px; text-decoration: none; font-size: 0.8rem; transition: all 0.3s;" onmouseover="this.style.transform='scale(1.05)'" onmouseout="this.style.transform='scale(1)'">
             Return to Admin
@@ -18,7 +18,7 @@
     </style>
     <a href="/" style="text-decoration: none;">
         <div class="logo-container">
-            <img src="{{ asset('assets/logo.png') }}" alt="VidaNexus" class="logo-img">
+            <img src="{{ asset('assets/logo.svg') }}" alt="VidaNexus" class="logo-img">
             <div class="logo-text">
                 <span class="logo-vida">VIDA</span>
                 <span class="logo-nexus">NEXUS</span>
@@ -67,9 +67,13 @@
                 <span>My Dashboard</span>
             </a>
 
-            <div class="feature-chip" style="background: rgba(14, 165, 233, 0.05); border-color: var(--primary-cyan); margin: 0; padding: 0.5rem 1rem;">
+            <div class="feature-chip" style="background: rgba(0, 168, 230, 0.05); border-color: var(--primary-cyan); margin: 0; padding: 0.5rem 1rem;">
                 <i class="fas fa-wallet" style="color: var(--primary-cyan);"></i>
-                <span style="font-weight: 700;">{{ number_format(auth()->user()->wallet->balance_credits ?? 0, 2) }} Credits</span>
+                <span style="font-weight: 700;"
+                      class="js-credit-balance"
+                      data-credit-value="{{ (float) (auth()->user()->wallet->balance_credits ?? 0) }}"
+                      data-decimals="2"
+                      data-suffix=" Credits">{{ number_format(auth()->user()->wallet->balance_credits ?? 0, 2) }} Credits</span>
             </div>
 
             <form action="/logout" method="POST" style="margin: 0;">
@@ -89,7 +93,7 @@
 <!-- Global Session Alerts -->
 @if(session('error') || session('success') || session('status'))
 <div id="global-alert" style="position: fixed; top: 100px; left: 50%; transform: translateX(-50%); z-index: 2000; width: 90%; max-width: 600px; animation: slideDown 0.5s ease-out;">
-    <div style="backdrop-filter: blur(15px); background: {{ session('error') ? 'rgba(255, 75, 75, 0.15)' : 'rgba(14, 165, 233, 0.15)' }}; border: 1px solid {{ session('error') ? '#ff4b4b44' : 'var(--primary-cyan)44' }}; border-radius: 12px; padding: 1rem 1.5rem; display: flex; align-items: center; gap: 1rem; box-shadow: 0 10px 30px rgba(0,0,0,0.5);">
+    <div style="backdrop-filter: blur(15px); background: {{ session('error') ? 'rgba(255, 75, 75, 0.15)' : 'rgba(0, 168, 230, 0.15)' }}; border: 1px solid {{ session('error') ? '#ff4b4b44' : 'var(--primary-cyan)44' }}; border-radius: 12px; padding: 1rem 1.5rem; display: flex; align-items: center; gap: 1rem; box-shadow: 0 10px 30px rgba(0,0,0,0.5);">
         <i class="fas {{ session('error') ? 'fa-exclamation-circle' : 'fa-check-circle' }}" style="color: {{ session('error') ? '#ff4b4b' : 'var(--primary-cyan)' }}; font-size: 1.2rem;"></i>
         <span style="color: var(--text-main); font-size: 0.95rem; font-weight: 500;">{{ session('error') ?? session('success') ?? session('status') }}</span>
         <button onclick="document.getElementById('global-alert').remove()" style="background: none; border: none; color: var(--text-muted); cursor: pointer; margin-left: auto;">
@@ -122,7 +126,7 @@
 <div class="mobile-sidebar" id="mobileSidebar" dir="ltr">
     <a href="/">
         <div class="logo-container" style="padding-bottom: 2rem; border-bottom: 1px solid var(--header-border);">
-            <img src="{{ asset('assets/logo.png') }}" alt="VidaNexus" class="logo-img">
+            <img src="{{ asset('assets/logo.svg') }}" alt="VidaNexus" class="logo-img">
             <div class="logo-text">
                 <span class="logo-vida">VIDA</span>
                 <span class="logo-nexus">NEXUS</span>
@@ -153,13 +157,14 @@
     @endguest
 
     @auth
+        <meta name="credits-balance-url" content="{{ route('dashboard.credits.balance') }}">
         <div style="border-top: 1px solid var(--glass-border); padding-top: 1.5rem; margin-top: 1.5rem;">
             <div style="padding: 0 1rem 0.5rem; color: var(--text-muted); font-size: 0.9rem;">My Dashboard</div>
             @if(auth()->user()->isAdmin())
                 <a href="{{ route('admin.horizon.index') }}" style="color: var(--primary-cyan);"><i class="fas fa-user-shield" style="width: 25px;"></i> Admin Control</a>
             @endif
             <a href="/dashboard" style="color: var(--text-main); text-decoration: none;"><i class="fas fa-desktop" style="width: 25px;"></i> Dashboard</a>
-            <div style="padding: 1rem; color: var(--primary-cyan); font-weight: bold; font-family: var(--font-heading);"><i class="fas fa-wallet" style="width: 25px;"></i> {{ number_format(auth()->user()->wallet->balance_credits ?? 0, 2) }} Credits</div>
+            <div style="padding: 1rem; color: var(--primary-cyan); font-weight: bold; font-family: var(--font-heading);"><i class="fas fa-wallet" style="width: 25px;"></i> <span class="js-credit-balance" data-credit-value="{{ (float) (auth()->user()->wallet->balance_credits ?? 0) }}" data-decimals="2" data-suffix=" Credits">{{ number_format(auth()->user()->wallet->balance_credits ?? 0, 2) }} Credits</span></div>
             
             <form action="/logout" method="POST" style="margin: 0; padding: 0; width: 100%;">
                 @csrf
@@ -170,3 +175,12 @@
         </div>
     @endauth
 </div>
+
+@auth
+    <style>
+        .js-credit-balance { transition: color 0.35s ease, text-shadow 0.35s ease; }
+        .credit-flash-down { color: #ff4b4b !important; text-shadow: 0 0 12px rgba(255,75,75,0.6); }
+        .credit-flash-up   { color: #10b981 !important; text-shadow: 0 0 12px rgba(16,185,129,0.6); }
+    </style>
+    <script src="{{ asset('credits-live.js') }}?v=2" defer></script>
+@endauth

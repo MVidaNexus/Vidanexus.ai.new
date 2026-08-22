@@ -7,22 +7,22 @@
     <link rel="icon" type="image/png" href="{{ asset('assets/logo.png') }}">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Space+Grotesk:wght@700&family=JetBrains+Mono&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&family=JetBrains+Mono&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
-    <link rel="stylesheet" href="{{ asset('style.v2.css?v=30') }}">
-    <script>(function(){const t=localStorage.getItem("theme")||"dark";document.documentElement.setAttribute("data-theme",t);})();</script>
+    <link rel="stylesheet" href="{{ asset('style.v2.css') }}?v={{ config('vidanexus.style_css_version') }}">
+    <script>(function(){const t=localStorage.getItem("theme")||"light";document.documentElement.setAttribute("data-theme",t);})();</script>
     <style>
         :root {
-            --horizon-bg: #050505;
+            --horizon-bg: #021B3A;
             --horizon-card: rgba(20, 20, 30, 0.4);
             --horizon-border: rgba(255, 255, 255, 0.1);
             --horizon-nav-hover: rgba(255, 255, 255, 0.05);
             --horizon-icon-bg: rgba(255, 255, 255, 0.05);
             --primary-admin: var(--primary-cyan);
-            --secondary-admin: var(--neon-purple);
-            --horizon-primary-bg: rgba(14, 165, 233, 0.1);
+            --secondary-admin: var(--accent);
+            --horizon-primary-bg: rgba(0, 168, 230, 0.1);
             --horizon-secondary-bg: rgba(191, 0, 255, 0.1);
-            --horizon-success: #10b981;
+            --horizon-success: #00A58B;
             --horizon-success-bg: rgba(16, 185, 129, 0.1);
             
             /* Premium Input System */
@@ -108,11 +108,12 @@
         body {
             background-color: var(--horizon-bg);
             color: var(--text-main);
-            font-family: 'Inter', sans-serif;
+            font-family: 'Poppins', sans-serif;
             margin: 0;
             display: flex;
             min-height: 100vh;
             transition: background-color 0.3s ease, color 0.3s ease;
+            overflow-x: hidden;
         }
 
         .horizon-sidebar {
@@ -130,6 +131,35 @@
             overflow-y: auto;
             scrollbar-width: thin;
             scrollbar-color: var(--horizon-border) transparent;
+        }
+
+        .horizon-sidebar-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 0.75rem;
+            margin-bottom: 1.5rem;
+        }
+
+        .sidebar-close-btn,
+        .sidebar-toggle-btn {
+            width: 36px;
+            height: 36px;
+            border-radius: 10px;
+            border: 1px solid var(--horizon-border);
+            background: var(--horizon-nav-hover);
+            color: var(--text-main);
+            display: none;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: all 0.25s ease;
+        }
+
+        .sidebar-close-btn:hover,
+        .sidebar-toggle-btn:hover {
+            border-color: var(--primary-admin);
+            color: var(--primary-admin);
         }
 
         .horizon-sidebar::-webkit-scrollbar {
@@ -174,6 +204,57 @@
             padding-left: 1rem;
         }
 
+        .nav-tools-group {
+            margin-bottom: 0.4rem;
+        }
+
+        .nav-tools-toggle {
+            width: 100%;
+            margin-top: 0.4rem;
+            padding: 0.65rem 1rem;
+            font-size: 0.65rem;
+            text-transform: uppercase;
+            letter-spacing: 1.5px;
+            color: var(--primary-admin);
+            font-weight: 800;
+            cursor: pointer;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-radius: 12px;
+            border: 1px solid transparent;
+            background: transparent;
+            transition: all 0.2s ease;
+        }
+
+        .nav-tools-toggle:hover {
+            background: var(--horizon-nav-hover);
+            border-color: var(--horizon-border);
+        }
+
+        .nav-tools-toggle.active {
+            background: var(--horizon-nav-hover);
+            color: var(--text-main);
+            border-color: var(--horizon-border);
+        }
+
+        .nav-tools-toggle .toggle-icon {
+            transition: transform 0.3s ease;
+        }
+
+        .nav-tools-group:not(.is-open) .toggle-icon {
+            transform: rotate(-90deg);
+        }
+
+        .nav-tools-content {
+            margin-top: 0.25rem;
+            display: none;
+        }
+
+        .nav-tools-group.is-open .nav-tools-content {
+            display: block;
+        }
+
         .nav-link {
             display: flex;
             align-items: center;
@@ -195,20 +276,56 @@
         .nav-link.active {
             border-left: 3px solid var(--primary-admin);
             color: var(--primary-admin);
-            background: linear-gradient(90deg, rgba(14, 165, 233, 0.1), transparent);
+            background: linear-gradient(90deg, rgba(0, 168, 230, 0.1), transparent);
         }
 
         .horizon-main {
             flex: 1;
             margin-left: 280px;
             padding: 2.5rem;
+            min-width: 0;
         }
 
         .horizon-header {
             display: flex;
             justify-content: space-between;
             align-items: center;
-            margin-bottom: 3rem;
+            margin-bottom: 2rem;
+            position: sticky;
+            top: 1rem;
+            z-index: 90;
+            background: color-mix(in srgb, var(--horizon-bg) 88%, transparent);
+            backdrop-filter: blur(14px);
+            border: 1px solid var(--horizon-border);
+            border-radius: 18px;
+            padding: 1rem 1.2rem;
+        }
+
+        .horizon-header-left {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            min-width: 0;
+        }
+
+        .horizon-header-meta p {
+            color: var(--text-muted);
+            margin: 0.35rem 0 0;
+        }
+
+        .sidebar-overlay {
+            position: fixed;
+            inset: 0;
+            background: rgba(2, 6, 23, 0.5);
+            z-index: 95;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.25s ease;
+        }
+
+        body.sidebar-open .sidebar-overlay {
+            opacity: 1;
+            pointer-events: auto;
         }
 
         .admin-badge {
@@ -220,7 +337,7 @@
             text-transform: uppercase;
             letter-spacing: 1.5px;
             color: #000;
-            box-shadow: 0 0 20px rgba(14, 165, 233, 0.2);
+            box-shadow: 0 0 20px rgba(0, 168, 230, 0.2);
         }
 
         .logo-text-vida {
@@ -258,24 +375,85 @@
 
         .btn-save:hover {
             transform: translateY(-2px);
-            box-shadow: 0 5px 15px rgba(14, 165, 233, 0.4);
+            box-shadow: 0 5px 15px rgba(0, 168, 230, 0.4);
         }
 
         pre, code, textarea.mono {
             font-family: 'JetBrains Mono', monospace;
         }
+
+        /* Brief green pulse after an AJAX form save confirms inputs persisted */
+        .admin-ajax-saved {
+            animation: adminAjaxSavedFlash 1.1s ease;
+        }
+
+        @keyframes adminAjaxSavedFlash {
+            0%   { box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.0); border-color: var(--horizon-border); }
+            30%  { box-shadow: 0 0 0 4px rgba(16, 185, 129, 0.35); border-color: var(--horizon-success); }
+            100% { box-shadow: 0 0 0 0 rgba(16, 185, 129, 0); }
+        }
+
+        @media (max-width: 1200px) {
+            .horizon-main {
+                padding: 1.5rem;
+            }
+        }
+
+        @media (max-width: 992px) {
+            .sidebar-toggle-btn,
+            .sidebar-close-btn {
+                display: inline-flex;
+            }
+
+            .horizon-sidebar {
+                transform: translateX(-100%);
+                transition: transform 0.25s ease, background 0.3s ease;
+            }
+
+            body.sidebar-open .horizon-sidebar {
+                transform: translateX(0);
+            }
+
+            .horizon-main {
+                margin-left: 0;
+            }
+
+            .horizon-header {
+                top: 0.75rem;
+                padding: 0.9rem 1rem;
+            }
+        }
+
+        @media (max-width: 768px) {
+            .horizon-header {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 1rem;
+            }
+
+            .horizon-header > div:last-child {
+                width: 100%;
+                justify-content: space-between;
+            }
+        }
     </style>
     @yield('styles')
 </head>
 <body>
+    <div class="sidebar-overlay" id="sidebar-overlay" onclick="toggleSidebar(false)"></div>
     <aside class="horizon-sidebar">
-        <a href="{{ route('admin.horizon.index') }}" class="horizon-logo" style="text-decoration: none;">
-            <img src="{{ asset('assets/logo.png') }}" alt="VidaNexus" style="height: 32px; width: auto;">
-            <div style="display: flex; flex-direction: column; line-height: 1.1; margin-left: 0.25rem;">
-                <span class="logo-text-vida" style="font-family: 'Space Grotesk', sans-serif; font-weight: 800; font-size: 1.1rem; letter-spacing: 1px;">VIDA</span>
-                <span style="font-family: 'Space Grotesk', sans-serif; font-weight: 800; color: var(--primary-admin); font-size: 0.7rem; letter-spacing: 3px; margin-top: -2px;">NEXUS</span>
-            </div>
-        </a>
+        <div class="horizon-sidebar-header">
+            <a href="{{ route('admin.horizon.index') }}" class="horizon-logo" style="text-decoration: none; margin-bottom: 0;">
+                <img src="{{ asset('assets/logo.svg') }}" alt="VidaNexus" style="height: 32px; width: auto;">
+                <div style="display: flex; flex-direction: column; line-height: 1.1; margin-left: 0.25rem;">
+                    <span class="logo-text-vida" style="font-family: 'Poppins', sans-serif; font-weight: 800; font-size: 1.1rem; letter-spacing: 1px;">VIDA</span>
+                    <span style="font-family: 'Poppins', sans-serif; font-weight: 800; color: var(--primary-admin); font-size: 0.7rem; letter-spacing: 3px; margin-top: -2px;">NEXUS</span>
+                </div>
+            </a>
+            <button type="button" class="sidebar-close-btn" onclick="toggleSidebar(false)" aria-label="Close menu">
+                <i class="fas fa-times"></i>
+            </button>
+        </div>
 
         <div class="nav-group">
             <div class="nav-label">Main System</div>
@@ -285,14 +463,46 @@
             <a href="{{ route('admin.users.index') }}" class="nav-link {{ request()->routeIs('admin.users.index') ? 'active' : '' }}">
                 <i class="fas fa-users-cog"></i> Global Users
             </a>
-            <a href="{{ route('admin.horizon.settings.index') }}" class="nav-link {{ request()->routeIs('admin.horizon.settings.index') ? 'active' : '' }}">
-                <i class="fas fa-sliders-h"></i> System Settings
+            @php
+                $settingsNavItems = [
+                    'availability' => ['label' => 'Tool Availability', 'icon' => 'fa-toggle-on'],
+                    'welcome' => ['label' => 'Marketplace', 'icon' => 'fa-store'],
+                    'credit-system' => ['label' => 'Credit System', 'icon' => 'fa-coins'],
+                    'countries' => ['label' => 'Country Registry', 'icon' => 'fa-globe'],
+                    'trial' => ['label' => 'Trial Package', 'icon' => 'fa-gift'],
+                    'coupons' => ['label' => 'Coupons', 'icon' => 'fa-tag'],
+                    'packages' => ['label' => 'Credit Packages', 'icon' => 'fa-box'],
+                    'smtp' => ['label' => 'Email Setup (SMTP)', 'icon' => 'fa-envelope-open-text'],
+                    'scripts' => ['label' => 'Global Scripts', 'icon' => 'fa-code'],
+                    'infrastructure' => ['label' => 'Infrastructure', 'icon' => 'fa-server'],
+                    'ledger' => ['label' => 'Transaction Ledger', 'icon' => 'fa-coins'],
+                    'command' => ['label' => 'Command Center', 'icon' => 'fa-terminal'],
+                    'markdown' => ['label' => 'AI Crawler SEO', 'icon' => 'fa-robot'],
+                ];
+                $activeSettingsTab = request()->route('tab') ?: 'availability';
+                $inSettingsRoute = request()->routeIs('admin.horizon.settings.index') || request()->routeIs('admin.horizon.settings.tab');
+            @endphp
+            <div class="nav-tools-group {{ $inSettingsRoute ? 'is-open' : '' }}">
+                <button type="button" class="nav-tools-toggle {{ $inSettingsRoute ? 'active' : '' }}" data-tools-toggle>
+                    <span><i class="fas fa-sliders-h" style="margin-right: 0.5rem;"></i>System Settings</span>
+                    <i class="fas fa-chevron-down toggle-icon"></i>
+                </button>
+                <div class="nav-tools-content">
+                    @foreach($settingsNavItems as $tabKey => $tabMeta)
+                        <a href="{{ route('admin.horizon.settings.tab', ['tab' => $tabKey]) }}" class="nav-link {{ $inSettingsRoute && $activeSettingsTab === $tabKey ? 'active' : '' }}" style="padding-left: 2rem;">
+                            <i class="fas {{ $tabMeta['icon'] }}" style="font-size: 0.7rem;"></i> {{ $tabMeta['label'] }}
+                        </a>
+                    @endforeach
+                </div>
+            </div>
+            <a href="{{ route('admin.horizon.ledger.index') }}" class="nav-link {{ request()->routeIs('admin.horizon.ledger.index') ? 'active' : '' }}">
+                <i class="fas fa-book"></i> Financial Ledger
             </a>
             <a href="{{ route('admin.horizon.api-keys.index') }}" class="nav-link {{ request()->routeIs('admin.horizon.api-keys.index') ? 'active' : '' }}">
                 <i class="fas fa-network-wired"></i> API & Connectivity
             </a>
             <a href="{{ route('admin.horizon.roadmap') }}" class="nav-link {{ request()->routeIs('admin.horizon.roadmap') ? 'active' : '' }}">
-                <i class="fas fa-rocket" style="color: #0ea5e9;"></i> Phase: v2.0 To do
+                <i class="fas fa-rocket" style="color: #00A8E6;"></i> Phase: v2.0 To do
             </a>
         </div>
 
@@ -300,11 +510,29 @@
             <div class="nav-label">AI Tool Control</div>
             @php
                 $tools = config('tools.all_tools', []);
+                $groupedTools = collect($tools)->groupBy(function($t) {
+                    return $t['category'] ?? 'uncategorized';
+                });
             @endphp
-            @foreach($tools as $t)
-                <a href="{{ route('admin.horizon.show', $t['slug']) }}" class="nav-link {{ request()->segment(3) == $t['slug'] ? 'active' : '' }}">
-                    <i class="fas fa-circle-notch" style="font-size: 0.6rem; color: {{ $t['color'] ?? 'inherit' }};"></i> {{ $t['name'] }}
-                </a>
+            @foreach($groupedTools as $category => $categoryTools)
+                @php
+                    $isActiveCategory = collect($categoryTools)->contains(function($t) {
+                        return request()->segment(3) == $t['slug'];
+                    });
+                @endphp
+                <div class="nav-tools-group {{ $isActiveCategory ? 'is-open' : '' }}">
+                    <button type="button" class="nav-tools-toggle" data-tools-toggle>
+                        <span>{{ str_replace('_', ' ', $category) }}</span>
+                        <i class="fas fa-chevron-down toggle-icon"></i>
+                    </button>
+                    <div class="nav-tools-content">
+                        @foreach($categoryTools as $t)
+                            <a href="{{ route('admin.horizon.show', $t['slug']) }}" class="nav-link {{ request()->segment(3) == $t['slug'] ? 'active' : '' }}" style="padding-left: 2rem;">
+                                <i class="fas fa-circle-notch" style="font-size: 0.6rem; color: {{ $t['color'] ?? 'inherit' }};"></i> {{ $t['name'] }}
+                            </a>
+                        @endforeach
+                    </div>
+                </div>
             @endforeach
         </div>
 
@@ -317,9 +545,14 @@
 
     <main class="horizon-main">
         <div class="horizon-header">
-            <div>
-                <h1 style="font-family: 'Space+Grotesk', sans-serif; font-size: 1.8rem; margin: 0; color: var(--text-main);">@yield('title', 'Horizon Dashboard')</h1>
-                <p style="color: var(--text-muted); margin-top: 0.5rem;">Super Admin Management Interface</p>
+            <div class="horizon-header-left">
+                <button type="button" class="sidebar-toggle-btn" onclick="toggleSidebar(true)" aria-label="Open menu">
+                    <i class="fas fa-bars"></i>
+                </button>
+                <div class="horizon-header-meta">
+                    <h1 style="font-family: 'Space+Grotesk', sans-serif; font-size: 1.8rem; margin: 0; color: var(--text-main);">@yield('title', 'Horizon Dashboard')</h1>
+                    <p>Super Admin Management Interface</p>
+                </div>
             </div>
             <div class="flex items-center gap-6" style="display: flex; align-items: center; gap: 1.5rem;">
                 <!-- Theme Toggle -->
@@ -359,7 +592,7 @@
         </script>
 
         @if(session('success'))
-            <div style="background: rgba(16, 185, 129, 0.1); border: 1px solid rgba(16, 185, 129, 0.3); color: #10b981; padding: 1rem 1.5rem; border-radius: 12px; margin-bottom: 2.5rem; display: flex; align-items: center; gap: 1rem;">
+            <div style="background: rgba(16, 185, 129, 0.1); border: 1px solid rgba(16, 185, 129, 0.3); color: #00A58B; padding: 1rem 1.5rem; border-radius: 12px; margin-bottom: 2.5rem; display: flex; align-items: center; gap: 1rem;">
                 <i class="fas fa-check-circle"></i> {{ session('success') }}
             </div>
         @endif
@@ -373,7 +606,42 @@
         @yield('content')
     </main>
 
+    <meta name="credits-balance-url" content="{{ route('dashboard.credits.balance') }}">
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     <script src="{{ asset('script.js') }}"></script>
+    <script src="{{ asset('credits-live.js') }}?v=1" defer></script>
+    <script src="{{ asset('admin-ajax-save.js') }}?v=1" defer></script>
+    <script>
+        function toggleSidebar(open) {
+            document.body.classList.toggle('sidebar-open', open);
+        }
+
+        document.addEventListener('DOMContentLoaded', () => {
+            const isDesktop = window.matchMedia('(min-width: 993px)');
+            const closeSidebarOnDesktop = () => {
+                if (isDesktop.matches) {
+                    document.body.classList.remove('sidebar-open');
+                }
+            };
+
+            closeSidebarOnDesktop();
+            isDesktop.addEventListener('change', closeSidebarOnDesktop);
+
+            document.querySelectorAll('[data-tools-toggle]').forEach((trigger) => {
+                trigger.addEventListener('click', () => {
+                    trigger.closest('.nav-tools-group')?.classList.toggle('is-open');
+                });
+            });
+
+            document.querySelectorAll('.horizon-sidebar .nav-link').forEach((link) => {
+                link.addEventListener('click', () => {
+                    if (window.innerWidth <= 992) {
+                        document.body.classList.remove('sidebar-open');
+                    }
+                });
+            });
+        });
+    </script>
     @yield('scripts')
 </body>
 </html>

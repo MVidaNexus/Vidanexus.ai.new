@@ -48,6 +48,8 @@ class PreLaunchMiddleware
             'admin*',
             'login',
             'register',
+            'forgot-password',
+            'reset-password*',
             'api/waitlist',
             'coming-soon',
             '_debugbar*',
@@ -61,11 +63,6 @@ class PreLaunchMiddleware
 
         // 4. Allow all authenticated users (User or Admin)
         if (auth()->check()) {
-            return $next($request);
-        }
-
-        // 4. Allow authenticated admins
-        if (auth()->check() && auth()->user()->role === 'admin') {
             return $next($request);
         }
 

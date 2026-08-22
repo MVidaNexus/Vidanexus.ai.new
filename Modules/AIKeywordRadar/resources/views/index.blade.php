@@ -41,7 +41,7 @@
     </div>
 
     <!-- Professional Keyword Surveillance Protocol (Redesigned) -->
-    <div class="glass-card mb-16 border-white/5 bg-[#0f172a]/60 backdrop-blur-xl overflow-hidden shadow-2xl shadow-primary-cyan/5">
+    <div class="glass-card mb-16 border-white/5 backdrop-blur-xl overflow-hidden shadow-2xl shadow-primary-cyan/5">
         <div class="p-6 md:p-10">
             <!-- Sleek Header -->
             <div class="flex flex-col md:flex-row items-start md:items-center justify-between gap-6 mb-10 border-b border-white/5 pb-8">
@@ -131,7 +131,7 @@
     </div>
 
     @if(session('success'))
-        <div class="mb-6 p-4 bg-[#0f172a] border border-emerald-500/30 text-emerald-400 rounded-xl flex items-center justify-between gap-3 font-bold shadow-lg shadow-emerald-500/5" x-data="{ show: true }" x-show="show">
+        <div class="mb-6 p-4 glass-card border border-emerald-500/30 text-emerald-400 rounded-xl flex items-center justify-between gap-3 font-bold shadow-lg shadow-emerald-500/5" x-data="{ show: true }" x-show="show">
             <div class="flex items-center gap-3">
                 <div class="w-8 h-8 rounded-lg bg-emerald-500/20 flex items-center justify-center flex-shrink-0">
                     <i class="fas fa-check-circle text-emerald-500"></i>
@@ -143,7 +143,7 @@
     @endif
     
     @if(session('error'))
-        <div class="mb-6 p-4 bg-[#0f172a] border border-red-500/30 text-red-400 rounded-xl flex items-center justify-between gap-3 font-bold shadow-lg shadow-red-500/5" x-data="{ show: true }" x-show="show">
+        <div class="mb-6 p-4 glass-card border border-red-500/30 text-red-400 rounded-xl flex items-center justify-between gap-3 font-bold shadow-lg shadow-red-500/5" x-data="{ show: true }" x-show="show">
             <div class="flex items-center gap-3">
                 <div class="w-8 h-8 rounded-lg bg-red-500/20 flex items-center justify-center flex-shrink-0">
                     <i class="fas fa-exclamation-triangle text-red-500"></i>
@@ -184,10 +184,9 @@
         </div>
     @endif
 
-    <!-- Footer Action -->
     <div class="mt-16 mb-20 flex justify-center">
-        <a href="{{ route('dashboard.ai-keyword-radar.settings') }}" class="px-8 py-4 bg-white/5 border border-white/10 text-gray-400 font-bold rounded-2xl hover:border-primary-cyan/50 hover:text-white transition-all flex items-center gap-3">
-            <i class="fas fa-cog"></i>
+        <a href="{{ route('dashboard.ai-keyword-radar.settings') }}" class="px-8 py-4 bg-white/5 border border-white/10 text-gray-400 font-bold rounded-2xl hover:bg-white/10 hover:text-white transition-all flex items-center gap-3" style="background: var(--card-bg); border-color: var(--glass-border); color: var(--text-main); box-shadow: 0 4px 20px rgba(0,0,0,0.05);">
+            <i class="fas fa-cog" style="color: var(--primary-cyan);"></i>
             Radar Settings
         </a>
     </div>
@@ -199,10 +198,14 @@ function keywordRadar() {
     return {
         selectedKeywords: { ar: [], en: [] },
         loading: { syncAr: false, syncEn: false },
-        syncStatus: {}, // Track box syncing status
+        syncStatus: {},
+        syncCountdown: {},
         currentTime: Date.now(),
         
         init() {
+            @foreach($customBoxes ?? [] as $box)
+            this.selectedKeywords['{{ $box['id'] }}'] = [];
+            @endforeach
             // Update currentTime every 30s to refresh relative timestamps
             setInterval(() => { this.currentTime = Date.now(); }, 30000);
             
@@ -228,15 +231,87 @@ function keywordRadar() {
                 window.history.replaceState({}, document.title, window.location.pathname);
             }
             setTimeout(() => {
-                document.querySelectorAll('[class*="keyword-container-"]').forEach(container => {
-                    const classes = container.className.split(' ');
-                    const targetClass = classes.find(c => c.startsWith('keyword-container-'));
-                    if (targetClass) {
-                        const boxKey = targetClass.replace('keyword-container-', '');
-                        this.sortKeywords(boxKey, 'pubdate');
-                    }
-                });
+                this.sortKeywords('ar', 'pubdate');
+                if (document.querySelector('.keyword-container-en')) this.sortKeywords('en', 'pubdate');
             }, 100);
+
+            this._recoverActiveSyncOnLoad();
+        },
+
+        async _recoverActiveSyncOnLoad() {
+            const boxes = [{ lang: 'ar', boxId: '', prop: 'syncAr' }];
+            if (document.querySelector('.keyword-container-en')) {
+                boxes.push({ lang: 'en', boxId: '', prop: 'syncEn' });
+            }
+            for (const box of boxes) {
+                try {
+                    const url = `{{ route('dashboard.ai-keyword-radar.get-keywords') }}?lang=${box.lang}`;
+                    const res = await fetch(url, { headers: { 'X-Requested-With': 'XMLHttpRequest' } });
+                    const data = await res.json();
+                    if (data.success && data.sync_running) {
+                        this.loading[box.prop] = true;
+                        this._startSyncCountdown(box.prop, '60m');
+                        this.syncCountdown[box.prop] = { ...this.syncCountdown[box.prop], waiting: true };
+                        this._waitForActiveSync(box.prop, box.lang, box.boxId, '60m');
+                    }
+                } catch (e) {
+                    console.warn('[Sync Recovery] skipped', e.message);
+                }
+            }
+        },
+
+        _waitForActiveSync(prop, lang, boxId, timeFilter) {
+            if (this.syncCountdown[prop]?._waitingActive) return;
+
+            if (this.syncCountdown[prop]) {
+                this.syncCountdown[prop] = { ...this.syncCountdown[prop], waiting: true, _waitingActive: true };
+            }
+
+            let polls = 0;
+            const maxPolls = 150;
+            const pollMs = 5000;
+
+            const pollFn = async () => {
+                polls++;
+                if (polls > maxPolls) {
+                    this._finishSyncLoading(prop);
+                    this.showSyncNotification(lang, lang === 'ar'
+                        ? 'انتهت مهلة الانتظار. حدّث الصفحة أو أعد المحاولة.'
+                        : 'Wait timed out. Refresh the page or try again.', 'warning');
+                    return;
+                }
+
+                try {
+                    const url = `{{ route('dashboard.ai-keyword-radar.get-keywords') }}?lang=${lang}${boxId ? '&box_id='+boxId : ''}`;
+                    const res = await fetch(url, { headers: { 'X-Requested-With': 'XMLHttpRequest' } });
+                    const data = await res.json();
+
+                    if (data.success && !data.sync_running) {
+                        this._finishSyncLoading(prop);
+                        const count = (data.keywords || []).length;
+                        if (count > 0) {
+                            window.location.reload();
+                            return;
+                        }
+                        Swal.fire({
+                            title: lang === 'ar' ? 'اكتمل المسح' : 'Scan complete',
+                            text: lang === 'ar' ? 'لم يتم العثور على كلمات جديدة. جرّب آخر 24 ساعة.' : 'No new keywords found. Try Last 24h.',
+                            icon: 'info',
+                            timer: 4000,
+                            showConfirmButton: false,
+                            background: '#0f172a',
+                            color: '#fff',
+                        });
+                        return;
+                    }
+                } catch (e) {
+                    console.warn('[Sync Wait]', e.message);
+                }
+
+                setTimeout(pollFn, pollMs);
+            };
+
+            setTimeout(pollFn, pollMs);
         },
 
         showSyncNotification(lang, message, type = 'error') {
@@ -256,16 +331,90 @@ function keywordRadar() {
             el.innerHTML = `
                 <div style="display:flex;align-items:flex-start;gap:12px;padding:16px 20px;background:${c.bg};border:1px solid ${c.border};border-radius:16px;position:relative;">
                     <div style="flex-shrink:0;width:36px;height:36px;border-radius:10px;background:${c.color}18;display:flex;align-items:center;justify-content:center;color:${c.color};font-size:1.1rem;"><i class="${c.icon}"></i></div>
-                    <div style="flex:1;"><p style="margin:0;font-size:0.85rem;font-weight:600;color:${c.color};line-height:1.6;">${message}</p>${settingsLink}</div>
+                    <div style="flex:1;"><p dir="ltr" style="margin:0;font-size:0.85rem;font-weight:600;color:${c.color};line-height:1.6;text-align:left;">${message}</p>${settingsLink}</div>
                     <button onclick="this.closest('#sync-notification-${lang}').style.display='none'" style="position:absolute;top:8px;right:10px;background:none;border:none;color:${c.color};cursor:pointer;opacity:0.5;font-size:0.8rem;">&times;</button>
                 </div>`;
             el.style.display = 'block';
+        },
+
+        _estimateSyncSeconds(timeFilter) {
+            const t = String(timeFilter || '60m').toLowerCase().trim();
+            if (t === 'all' || t === 'any' || t === 'unlimited') return 540;
+            if (t === '24h' || t === '1d') return 480;
+            return 360;
+        },
+
+        _startSyncCountdown(prop, timeFilter, initialSeconds = null) {
+            this._stopSyncCountdown(prop);
+            const total = initialSeconds ?? this._estimateSyncSeconds(timeFilter);
+            const tick = () => {
+                const state = this.syncCountdown[prop];
+                if (!state) return;
+                const interval = state._interval;
+                if (state.remaining > 0) {
+                    this.syncCountdown[prop] = { ...state, remaining: state.remaining - 1, _interval: interval };
+                } else {
+                    this.syncCountdown[prop] = { ...state, overtime: state.overtime + 1, _interval: interval };
+                }
+            };
+            const intervalId = setInterval(tick, 1000);
+            this.syncCountdown[prop] = { remaining: total, total, overtime: 0, waiting: false, _interval: intervalId };
+        },
+
+        _stopSyncCountdown(prop) {
+            const state = this.syncCountdown[prop];
+            if (state?._interval) clearInterval(state._interval);
+            delete this.syncCountdown[prop];
+        },
+
+        _clearWaitingFlag(prop) {
+            if (this.syncCountdown[prop]) {
+                this.syncCountdown[prop] = { ...this.syncCountdown[prop], _waitingActive: false };
+            }
+        },
+
+        _finishSyncLoading(prop) {
+            this._clearWaitingFlag(prop);
+            this._stopSyncCountdown(prop);
+            this.loading[prop] = false;
+        },
+
+        syncCountdownClock(prop) {
+            const c = this.syncCountdown[prop];
+            if (!c) return '--:--';
+            const secs = c.remaining > 0 ? c.remaining : c.overtime;
+            const m = Math.floor(secs / 60);
+            const s = secs % 60;
+            const prefix = c.remaining > 0 ? '' : '+';
+            return prefix + String(m).padStart(2, '0') + ':' + String(s).padStart(2, '0');
+        },
+
+        syncCountdownLabel(prop, lang = 'ar') {
+            const c = this.syncCountdown[prop];
+            if (!c) return '';
+            if (c.waiting) {
+                return lang === 'ar' ? 'مسح قيد التشغيل — يرجى الانتظار' : 'Scan in progress — please wait';
+            }
+            if (c.remaining > 0) {
+                return lang === 'ar' ? 'الوقت المتبقي تقريباً' : 'approx. time remaining';
+            }
+            return lang === 'ar' ? 'يستغرق وقتاً أطول من المعتاد…' : 'Taking longer than usual…';
+        },
+
+        syncCountdownPercent(prop) {
+            const c = this.syncCountdown[prop];
+            if (!c || !c.total) return 0;
+            if (c.remaining > 0) {
+                return Math.min(100, Math.round(((c.total - c.remaining) / c.total) * 100));
+            }
+            return 100;
         },
 
         syncCompetitors(lang, timeFilter = '60m', boxId = '') {
             const prop = boxId ? `sync_${boxId}` : (lang === 'ar' ? 'syncAr' : 'syncEn');
             if (this.loading[prop]) return;
             this.loading[prop] = true;
+            this._startSyncCountdown(prop, timeFilter);
             const notifEl = document.getElementById('sync-notification-' + lang);
             if (notifEl) notifEl.style.display = 'none';
             const formData = new FormData();
@@ -273,41 +422,67 @@ function keywordRadar() {
             formData.append('lang', lang);
             formData.append('time_filter', timeFilter);
             if (boxId) formData.append('box_id', boxId);
-            fetch(`{{ route('dashboard.ai-keyword-radar.sync') }}`, { method:'POST', headers:{'X-Requested-With':'XMLHttpRequest','Accept':'application/json'}, body:formData })
+            const controller = new AbortController();
+            const syncTimeoutMs = (this._estimateSyncSeconds(timeFilter) + 30) * 1000;
+            const syncTimeout = setTimeout(() => controller.abort(), syncTimeoutMs);
+            fetch(`{{ route('dashboard.ai-keyword-radar.sync') }}`, { method:'POST', headers:{'X-Requested-With':'XMLHttpRequest','Accept':'application/json'}, body:formData, signal: controller.signal })
             .then(async res => {
                 const ct = res.headers.get('content-type') || '';
                 if (!ct.includes('application/json')) {
                     const raw = await res.text();
-                    if (res.status >= 500 || raw.startsWith('<!') || raw.startsWith('<html')) throw new Error('Server error. Please try again.');
-                    throw new Error('Unexpected response (Status: ' + res.status + ')');
+                    console.error('[Sync Error] Non-JSON response', { status: res.status, preview: raw.slice(0, 200) });
+                    throw new Error('FETCH_FAILED');
                 }
                 return res.json().then(d => ({ ok:res.ok, status:res.status, data:d }));
             })
             .then(({ ok, status, data }) => {
+                clearTimeout(syncTimeout);
                 if (!ok || !data.success) {
-                    this.loading[prop] = false;
-                    if ((status === 403 || status === 402) && data.message?.includes('Insufficient balance')) { showInsufficientBalanceAlert(data.message); return; }
-                    this.showSyncNotification(lang, data.message || 'Unknown error', status === 422 ? 'warning' : 'error');
+                    if (status === 429 && (data.sync_running || data.error_code === 'ALREADY_PROCESSING' || (data.message || '').toLowerCase().includes('already') || (data.message || '').toLowerCase().includes('progress'))) {
+                        const remain = parseInt(data.lock_remaining_seconds, 10);
+                        if (remain > 0) {
+                            this._startSyncCountdown(prop, timeFilter, remain);
+                        }
+                        this._waitForActiveSync(prop, lang, boxId, timeFilter);
+                        return;
+                    }
+                    this._finishSyncLoading(prop);
+                    const msg = this.resolveSyncError(data, status);
+                    if (data.error_code === 'INSUFFICIENT_CREDITS' || status === 402) {
+                        showInsufficientBalanceAlert(msg);
+                        return;
+                    }
+                    this.showSyncNotification(lang, msg, status === 422 ? 'warning' : 'error');
                     return;
                 }
-                
+
+                // Live-credit chip: animate the new wallet balance immediately,
+                // before any modal/redirect — so the user sees the deduction
+                // even if we later reload to refresh the keyword list.
+                if (window.VidaCredits) window.VidaCredits.apply(data);
+
                 if (data.status === 'completed') {
-                    this.loading[prop] = false;
+                    this._finishSyncLoading(prop);
+                    const added = data.new_count || 0;
+                    const icon = added > 0 ? 'success' : (data.headlines > 0 ? 'info' : 'warning');
+
+                    // Only reload when there is fresh keyword data to render,
+                    // otherwise just toast — credits already animated in place
+                    // and the existing list is still accurate.
+                    const shouldReload = added > 0;
                     Swal.fire({
-                        title: '🎯 Radar Scanning Complete',
+                        title: added > 0 ? `🎯 ${added} New Leads!` : 'Insight Update Complete',
                         text: data.message,
-                        icon: 'success',
-                        timer: 2500,
+                        icon,
+                        timer: added > 0 ? 3500 : 4000,
                         timerProgressBar: true,
                         showConfirmButton: false,
                         background: '#0f172a',
                         color: '#fff',
-                    });
-                    setTimeout(() => window.location.reload(), 1500);
+                    }).then(() => { if (shouldReload) window.location.reload(); });
                     return;
                 }
 
-                // If job dispatched to background — show toast and start polling
                 Swal.fire({
                     title: '📡 Radar Scanning',
                     text: data.message,
@@ -321,24 +496,46 @@ function keywordRadar() {
                     color: '#fff',
                 });
 
-                // Start polling for new keywords every 12 seconds
                 const initialCount = data.current_count || 0;
                 const pollLang = data.lang || lang;
                 const pollBoxId = data.box_id || boxId;
                 this._startSyncPolling(prop, pollLang, pollBoxId, initialCount);
             })
             .catch(error => {
-                this.loading[prop] = false;
+                clearTimeout(syncTimeout);
+                this._finishSyncLoading(prop);
                 console.error('[Sync Error]', error);
+                const code = error.name === 'AbortError' ? 'NETWORK_ERROR' : (error.message || 'FETCH_FAILED');
+                const msg = this.resolveSyncError({ error_code: code }, error.name === 'AbortError' ? 408 : 500);
                 Swal.fire({
                     title: 'Radar Error',
-                    text: error.message || 'Failed to initialize radar scanning.',
+                    text: msg,
                     icon: 'error',
                     background: '#0f172a',
                     color: '#fff',
                     confirmButtonColor: '#ef4444',
                 });
             });
+        },
+
+        resolveSyncError(data, status) {
+            const code = data?.error_code || '';
+            const messages = {
+                INSUFFICIENT_CREDITS: 'Insufficient credits. Please purchase more.',
+                FETCH_FAILED: 'Unable to fetch fresh data. Service may be down.',
+                ALREADY_PROCESSING: 'Refresh in progress. Please wait.',
+                NETWORK_ERROR: 'Sync took too long and was cancelled. Try Last 24h or fewer competitors.',
+                VALIDATION_ERROR: 'Invalid request data.',
+                AUTH_REQUIRED: 'Please log in to continue.',
+                TOOL_LOCKED: 'You need to unlock this tool first.',
+                SERVER_ERROR: 'Something went wrong on our side. Please try again.',
+            };
+            if (messages[code]) return messages[code];
+            if (data?.message && String(data.message).trim() !== '') return data.message;
+            if (status === 422) return messages.VALIDATION_ERROR;
+            if (status === 408 || status === 504) return messages.NETWORK_ERROR;
+            if (status >= 500) return messages.FETCH_FAILED;
+            return messages.SERVER_ERROR;
         },
 
         _startSyncPolling(prop, lang, boxId, initialCount) {
@@ -351,7 +548,7 @@ function keywordRadar() {
             const pollFn = async () => {
                 pollCount++;
                 if (pollCount > maxPolls) {
-                    this.loading[prop] = false;
+                    this._finishSyncLoading(prop);
                     Swal.fire({
                         title: 'Radar Timeout',
                         text: 'Intelligence scan is taking longer than usual. Please refresh shortly.',
@@ -374,8 +571,12 @@ function keywordRadar() {
 
                         // Case 1: New keywords found! Perfect.
                         if (newCount > initialCount) {
-                            this.loading[prop] = false;
+                            this._finishSyncLoading(prop);
                             const added = newCount - initialCount;
+                            // Polling payload has no balance — pull it from
+                            // /dashboard/credits/balance so the chip flashes
+                            // before we reload to show the new keywords.
+                            if (window.VidaCredits) window.VidaCredits.refresh();
                             await Swal.fire({
                                 title: `🎯 ${added} New Leads!`,
                                 text: `Intelligence update complete. Found ${added} high-value keywords.`,
@@ -392,8 +593,11 @@ function keywordRadar() {
 
                         // Case 2: No new keywords, but the job has FINISHED (sync_lock is gone)
                         // We skip the first few polls to give the job time to start and acquire the lock
-                        if (!syncRunning && pollCount > 1) { 
-                            this.loading[prop] = false;
+                        if (!syncRunning && pollCount > 1) {
+                            this._finishSyncLoading(prop);
+                            // The background job may have charged credits — refresh
+                            // the chip without forcing a full page reload below.
+                            if (window.VidaCredits) window.VidaCredits.refresh();
                             Swal.fire({
                                 title: 'Insight Update Complete',
                                 text: 'No new market shifts detected in the selected timeframe.',
@@ -404,8 +608,8 @@ function keywordRadar() {
                                 background: '#0f172a',
                                 color: '#fff'
                             });
-                            // Refresh anyway to update the 'synced_at' and relative times
-                            setTimeout(() => window.location.reload(), 3000);
+                            // No new data → no reload; keep the existing list
+                            // and the freshly-animated balance in place.
                             return;
                         }
                     }
@@ -433,7 +637,15 @@ function keywordRadar() {
                     else if (lang === 'ar') { this.targetKeywordsAr = data.keywords; } 
                     else { this.targetKeywordsEn = data.keywords; }
                     delete this.syncStatus[prop];
-                    this.loading[prop] = false;
+                    this._finishSyncLoading(prop);
+                    // Re-apply the active time filter after Alpine has patched
+                    // the DOM with the new rows from the server.
+                    this.$nextTick(() => {
+                        const active = window.__keywordTimeFilterState && window.__keywordTimeFilterState[lang];
+                        if (active && typeof window.applyKeywordTimeFilter === 'function') {
+                            window.applyKeywordTimeFilter(lang, active);
+                        }
+                    });
                     Swal.fire({ 
                         title: 'Updated!', 
                         icon: 'success', 
@@ -446,7 +658,7 @@ function keywordRadar() {
                         color: '#fff'
                     });
                 }
-            } catch (e) { this.loading[prop] = false; console.error(e); }
+            } catch (e) { this._finishSyncLoading(prop); console.error(e); }
         },
 
         toggleSelectAll(boxKey, allKeywords) {
@@ -454,29 +666,57 @@ function keywordRadar() {
                 this.selectedKeywords[boxKey] = [];
             }
             this.selectedKeywords[boxKey] = this.selectedKeywords[boxKey].length === allKeywords.length ? [] : [...allKeywords];
+            this.syncKeywordCheckboxes(boxKey);
+        },
+
+        clearSelection(boxKey) {
+            this.selectedKeywords[boxKey] = [];
+            this.syncKeywordCheckboxes(boxKey);
+        },
+
+        toggleKeyword(boxKey, keyword, checked) {
+            if (!this.selectedKeywords[boxKey]) {
+                this.selectedKeywords[boxKey] = [];
+            }
+            if (checked) {
+                if (!this.selectedKeywords[boxKey].includes(keyword)) {
+                    this.selectedKeywords[boxKey].push(keyword);
+                }
+            } else {
+                this.selectedKeywords[boxKey] = this.selectedKeywords[boxKey].filter(k => k !== keyword);
+            }
+        },
+
+        syncKeywordCheckboxes(boxKey) {
+            const selected = this.selectedKeywords[boxKey] || [];
+            document.querySelectorAll(`.kw-select-${boxKey}`).forEach(cb => {
+                cb.checked = selected.includes(cb.value);
+            });
+        },
+
+        selectedCount(boxKey) {
+            return (this.selectedKeywords[boxKey] || []).length;
         },
 
         copySelectedKeywords(boxKey) {
             const list = this.selectedKeywords[boxKey] || [];
             if (list.length === 0) return;
-            copyToClipboard(list.join('\n'));
+            copyToClipboard(list.join(', '));
         },
 
-        sortKeywords(boxKey, criteria) {
-            const container = document.querySelector(`.keyword-container-${boxKey}`);
+        sortKeywords(lang, criteria) {
+            const container = document.querySelector(`.keyword-container-${lang}`);
             if (!container) return;
-            const rows = Array.from(container.querySelectorAll('.keyword-row'));
-            rows.sort((a, b) => {
+            const cards = Array.from(container.querySelectorAll('.headline-card, .keyword-row:not(.headline-card)'));
+            cards.sort((a, b) => {
                 if (criteria === 'alphabetical') {
-                    return (a.querySelector('.font-bold')?.textContent.trim() || '').localeCompare(b.querySelector('.font-bold')?.textContent.trim() || '', 'ar');
+                    const titleA = a.querySelector('h3')?.textContent.trim() || a.querySelector('.font-bold')?.textContent.trim() || '';
+                    const titleB = b.querySelector('h3')?.textContent.trim() || b.querySelector('.font-bold')?.textContent.trim() || '';
+                    return titleA.localeCompare(titleB, lang);
                 }
                 return (parseFloat(b.dataset[criteria]) || 0) - (parseFloat(a.dataset[criteria]) || 0);
             });
-            rows.forEach((row, i) => {
-                container.appendChild(row);
-                const n = row.querySelector('.keyword-num');
-                if (n) n.textContent = String(i + 1).padStart(2, '0');
-            });
+            cards.forEach((card) => container.appendChild(card));
         },
 
         getRelativeTime(ts, lang = 'ar') {
@@ -484,11 +724,9 @@ function keywordRadar() {
             
             // Normalize timestamp (handle strings, ms, s)
             let date = typeof ts === 'number' ? new Date(ts * (ts < 1e12 ? 1000 : 1)) : new Date(ts);
-            if (isNaN(date.getTime())) return '';
+            if (isNaN(date)) return '';
             
-            let diffSeconds = Math.floor((this.currentTime - date.getTime()) / 1000);
-            if (diffSeconds < 0) diffSeconds = 0; // Prevent negative diffs due to clock skew
-            
+            const diffSeconds = Math.floor((this.currentTime - date.getTime()) / 1000);
             const diffMinutes = Math.floor(diffSeconds / 60);
             const diffHours = Math.floor(diffMinutes / 60);
             const diffDays = Math.floor(diffHours / 24);
@@ -518,66 +756,79 @@ function keywordRadar() {
     }
 }
 
-window.executeKeywordSort = function(boxKey, criteria) {
-    const container = document.querySelector(`.keyword-container-${boxKey}`);
+window.executeKeywordSort = function(lang, criteria) {
+    const container = document.querySelector(`.keyword-container-${lang}`);
     if (!container) return;
-    const rows = Array.from(container.querySelectorAll('.keyword-row'));
-    rows.sort((a, b) => {
+    const cards = Array.from(container.querySelectorAll('.headline-card, .keyword-row:not(.headline-card)'));
+    cards.sort((a, b) => {
         if (criteria === 'alphabetical') {
-            return (a.querySelector('.font-bold')?.textContent.trim() || '').localeCompare(b.querySelector('.font-bold')?.textContent.trim() || '', 'ar');
+            const titleA = a.querySelector('h3')?.textContent.trim() || a.querySelector('.font-bold')?.textContent.trim() || '';
+            const titleB = b.querySelector('h3')?.textContent.trim() || b.querySelector('.font-bold')?.textContent.trim() || '';
+            return titleA.localeCompare(titleB, lang);
         }
         return (parseFloat(b.dataset[criteria]) || 0) - (parseFloat(a.dataset[criteria]) || 0);
     });
-    rows.forEach((row, i) => {
-        container.appendChild(row);
-        const n = row.querySelector('.keyword-num');
-        if (n) n.textContent = String(i + 1).padStart(2, '0');
-    });
+    cards.forEach((card) => container.appendChild(card));
+    if (window.__keywordTimeFilterState && window.__keywordTimeFilterState[lang]) {
+        window.applyKeywordTimeFilter(lang, window.__keywordTimeFilterState[lang]);
+    }
 };
 
-window.filterKeywordsByTime = function(boxKey, timeValue) {
-    const container = document.querySelector(`.keyword-container-${boxKey}`);
+// Keep track of the active time filter per box so other handlers
+// (sort, post-sync refresh) can re-apply it without re-querying the UI.
+window.__keywordTimeFilterState = window.__keywordTimeFilterState || {};
+
+/**
+ * Hide keyword rows whose detection timestamp is older than the selected window.
+ * `value` is one of '60m', '24h', '6h', '1d', 'all', etc. — the same tokens the
+ * sync endpoint accepts. We use the row's data-pulldate (sync time) as the
+ * source of truth, falling back to data-pubdate when sync is missing.
+ */
+window.applyKeywordTimeFilter = function(lang, value) {
+    window.__keywordTimeFilterState[lang] = value;
+    const container = document.querySelector(`.keyword-container-${lang}`);
     if (!container) return;
-    const rows = container.querySelectorAll('.keyword-row');
-    const now = Date.now();
-    
-    let limitMs = 24 * 60 * 60 * 1000; // Default 24h
-    if (timeValue === '60m') {
-        limitMs = 60 * 60 * 1000;
-    } else if (timeValue === 'all') {
-        limitMs = 30 * 24 * 60 * 60 * 1000; // 30 days
-    }
 
-    let visibleCount = 0;
-    rows.forEach(row => {
-        const pubdate = parseInt(row.dataset.pubdate) * 1000;
-        const pulldate = parseInt(row.dataset.pulldate) * 1000;
-        const effectiveTime = pubdate > 0 ? pubdate : pulldate;
-        
-        if ((now - effectiveTime) <= limitMs) {
-            row.style.setProperty('display', 'flex', 'important');
-            visibleCount++;
-        } else {
-            row.style.setProperty('display', 'none', 'important');
+    const minutes = (function tokenToMinutes(token) {
+        if (!token) return 60;
+        const t = String(token).toLowerCase().trim();
+        if (t === '' || t === 'all' || t === 'any' || t === 'unlimited') return null;
+        let m = t.match(/^(\d+)\s*(m|min|mins|minute|minutes)$/);
+        if (m) return Math.max(1, parseInt(m[1], 10));
+        m = t.match(/^(\d+)\s*(h|hr|hrs|hour|hours)$/);
+        if (m) return Math.max(1, parseInt(m[1], 10)) * 60;
+        m = t.match(/^(\d+)\s*(d|day|days)$/);
+        if (m) return Math.max(1, parseInt(m[1], 10)) * 60 * 24;
+        if (/^\d+$/.test(t)) return Math.max(1, parseInt(t, 10));
+        return 60;
+    })(value);
+
+    const cutoffSec = minutes === null
+        ? null
+        : Math.floor(Date.now() / 1000) - minutes * 60;
+
+    const cards = Array.from(container.querySelectorAll('.headline-card, .keyword-row:not(.headline-card)'));
+    const totalKeywords = container.querySelectorAll('.keyword-chip-row').length;
+    let visibleKeywords = 0;
+
+    cards.forEach((card) => {
+        const pull = parseFloat(card.dataset.pulldate) || 0;
+        const pub  = parseFloat(card.dataset.pubdate) || 0;
+        const stamp = pull > 0 ? pull : pub;
+        const shouldShow = cutoffSec === null || stamp === 0 || stamp >= cutoffSec;
+        card.style.display = shouldShow ? '' : 'none';
+        if (shouldShow) {
+            visibleKeywords += card.querySelectorAll('.keyword-chip-row').length;
         }
     });
 
-    // Update count badge
-    const badge = document.querySelector(`.keyword-count-badge-${boxKey}`);
+    const card = container.closest('.glass-card');
+    const badge = card ? card.querySelector('[data-keyword-count]') : null;
     if (badge) {
-        badge.textContent = `${visibleCount} Keywords`;
+        badge.textContent = totalKeywords === visibleKeywords
+            ? `${visibleKeywords} Keywords`
+            : `${visibleKeywords} / ${totalKeywords} Keywords`;
     }
-
-    // Re-index only visible rows
-    let visibleIndex = 1;
-    rows.forEach(row => {
-        if (row.style.display !== 'none') {
-            const numEl = row.querySelector('.keyword-num');
-            if (numEl) {
-                numEl.textContent = String(visibleIndex++).padStart(2, '0');
-            }
-        }
-    });
 };
 
 function copyToClipboard(text) {

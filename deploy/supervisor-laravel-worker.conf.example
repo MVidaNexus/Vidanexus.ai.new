@@ -1,0 +1,33 @@
+; Example Supervisor program for Laravel queue workers (database or redis driver).
+; Copy to /etc/supervisor/conf.d/ and adjust paths, user, and numprocs.
+; After editing: sudo supervisorctl reread && sudo supervisorctl update
+;
+; Production: prefer Redis + Laravel Horizon (see config/horizon.php) for balancing,
+; auto-restart, and the Horizon dashboard. Use separate workers only if not using Horizon.
+
+[supervisord]
+nodaemon=true
+logfile=/var/www/html/storage/logs/supervisord.log
+pidfile=/tmp/supervisord.pid
+
+[program:vidanexus-worker]
+process_name=%(program_name)s_%(process_num)02d
+command=php /var/www/html/artisan queue:work redis --sleep=3 --tries=3 --max-time=3600 --queue=default,mail
+autostart=true
+autorestart=true
+stopasgroup=true
+killasgroup=true
+user=www-data
+numprocs=2
+redirect_stderr=true
+stdout_logfile=/var/www/html/storage/logs/worker.log
+stopwaitsecs=3600
+
+[program:vidanexus-horizon]
+; Alternative when using Horizon (usually one supervisor program per server).
+; command=php /var/www/html/artisan horizon
+; autostart=true
+; autorestart=true
+; user=www-data
+; redirect_stderr=true
+; stdout_logfile=/var/www/html/storage/logs/horizon.log

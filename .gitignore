@@ -23,3 +23,8 @@ yarn-error.log
 /.zed
 .DS_Store
 vidanexus_browser.png
+.agent/skills/*
+!.agent/skills/.keep
+/.claude/
+/docker-compose.override.yml
+/public/sadaqa_meat.png

@@ -8,6 +8,7 @@ use Illuminate\Foundation\Bus\Dispatchable;
 use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Queue\SerializesModels;
 use Modules\AIKeywordRadar\Services\KeywordService;
+use Modules\AIKeywordRadar\Support\KeywordPayload;
 use App\Models\User;
 use App\Models\AiUsage;
 use Illuminate\Support\Facades\Log;
@@ -84,10 +85,16 @@ class SyncKeywordsJob implements ShouldQueue
 
             // Ensure credits are ONLY deducted if actual keywords were generated and saved!
             if (isset($result['saved']) && $result['saved'] > 0) {
-                if ($user->wallet) {
-                    $user->wallet->decrement('balance_credits', $this->syncCredits);
+                // Route through the canonical credit consumption service so
+                // wallet → bonus ordering, ledger, transactions and audit log
+                // all apply, and the admin "Action Cost"
+                // (tool_credit_cost_ai-keyword-radar) is the source of truth.
+                if (! $user->deductToolCredits('ai-keyword-radar')) {
+                    Log::critical('[SyncKeywordsJob] Credits could not be deducted after successful sync', [
+                        'user_id' => $user->id,
+                    ]);
                 }
-                
+
                 AiUsage::create([
                     'user_id'  => $user->id,
                     'tool'     => 'ai-keyword-radar',
@@ -95,7 +102,7 @@ class SyncKeywordsJob implements ShouldQueue
                     'model'    => 'competitor-sync',
                     'status'   => 'success',
                 ]);
-                
+
                 Log::info("[SyncKeywordsJob] Success: Saved {$result['saved']} keywords for user #{$this->userId}. Credits deducted.");
             } else {
                 Log::info("[SyncKeywordsJob] Finished: Scanned headlines but no new keywords were saved for user #{$this->userId}.");
@@ -107,16 +114,12 @@ class SyncKeywordsJob implements ShouldQueue
                 : "target_keywords_{$this->userId}_{$this->lang}";
             Cache::forget($cacheKey);
             
-            // Release sync lock so user can sync again
-            $lockKey = "sync_lock_{$this->userId}_{$this->lang}" . ($this->boxId ? "_{$this->boxId}" : '');
-            Cache::forget($lockKey);
+            KeywordPayload::releaseSyncLock($this->userId, $this->lang, $this->boxId);
             
             Log::info("[SyncKeywordsJob] Complete. Cache cleared: {$cacheKey}. Headlines: " . ($result['headlines'] ?? 0) . ", Saved: " . ($result['saved'] ?? 0));
 
         } catch (\Exception $e) {
-            // Release sync lock on failure too
-            $lockKey = "sync_lock_{$this->userId}_{$this->lang}" . ($this->boxId ? "_{$this->boxId}" : '');
-            Cache::forget($lockKey);
+            KeywordPayload::releaseSyncLock($this->userId, $this->lang, $this->boxId);
             Log::error("[SyncKeywordsJob] Fatal error for user #{$this->userId}: " . $e->getMessage());
             throw $e;
         }

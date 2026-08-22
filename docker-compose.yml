@@ -1,0 +1,173 @@
+services:
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      target: php
+    restart: unless-stopped
+    env_file:
+      - path: .env
+        required: false
+    environment:
+      APP_KEY: ${APP_KEY}
+      APP_ENV: ${APP_ENV:-production}
+      APP_DEBUG: ${APP_DEBUG:-false}
+      APP_URL: ${APP_URL:-https://staging.vidanexus.ai}
+      DB_CONNECTION: sqlite
+      DB_DATABASE: /var/www/html/database/database.sqlite
+      REDIS_HOST: redis
+      REDIS_PORT: ${REDIS_PORT:-6379}
+      CACHE_STORE: ${CACHE_STORE:-database}
+      SESSION_DRIVER: ${SESSION_DRIVER:-file}
+      QUEUE_CONNECTION: ${QUEUE_CONNECTION:-database}
+      # App-specific
+      VIDANEXUS_PRELAUNCH: ${VIDANEXUS_PRELAUNCH:-false}
+      VIDANEXUS_BYPASS_TOKEN: ${VIDANEXUS_BYPASS_TOKEN:-vn_secret_2026}
+      # Mail
+      MAIL_MAILER: ${MAIL_MAILER:-smtp}
+      MAIL_SCHEME: ${MAIL_SCHEME:-tls}
+      MAIL_HOST: ${MAIL_HOST:-smtp.zoho.com}
+      MAIL_PORT: ${MAIL_PORT:-587}
+      MAIL_USERNAME: ${MAIL_USERNAME:-Noreplay@Vidanexus.net}
+      MAIL_PASSWORD: ${MAIL_PASSWORD:-9Z7fYJi8q5S8FwX}
+      MAIL_FROM_ADDRESS: ${MAIL_FROM_ADDRESS:-noreply@vidanexus.ai}
+      MAIL_FROM_NAME: ${MAIL_FROM_NAME:-Noreplay-Vidanexus}
+      MAIL_ENCRYPTION: ${MAIL_ENCRYPTION:-tls}
+      MAIL_VERIFY_PEER: ${MAIL_VERIFY_PEER:-false}
+      # Third-party APIs
+      FAWATERK_API_KEY: ${FAWATERK_API_KEY}
+      FAWATERK_VENDOR_KEY: ${FAWATERK_VENDOR_KEY}
+      GEMINI_API_KEY: ${GEMINI_API_KEY}
+      OPENROUTER_API_KEY: ${OPENROUTER_API_KEY}
+      OPENAI_API_KEY: ${OPENAI_API_KEY}
+    volumes:
+      - storage_data:/var/www/html/storage
+      - ./database:/var/www/html/database
+      - /home/vidanexusai/public_html/database/database.sqlite:/tmp/seed.sqlite:ro
+    depends_on:
+      redis:
+        condition: service_started
+    networks:
+      - internal
+
+  nginx:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      target: nginx
+    restart: unless-stopped
+    ports:
+      - "${APP_PORT:-8080}:80"
+    volumes:
+      - storage_data:/var/www/html/storage
+    depends_on:
+      - app
+    networks:
+      - internal
+
+  # mysql: (temporarily disabled — using SQLite)
+
+  redis:
+    image: redis:7-alpine
+    restart: unless-stopped
+    command: redis-server --appendonly yes
+    volumes:
+      - redis_data:/data
+    networks:
+      - internal
+
+  worker:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      target: php
+    restart: unless-stopped
+    env_file:
+      - path: .env
+        required: false
+    environment:
+      APP_KEY: ${APP_KEY}
+      APP_ENV: ${APP_ENV:-production}
+      APP_DEBUG: ${APP_DEBUG:-false}
+      APP_URL: ${APP_URL:-https://staging.vidanexus.ai}
+      DB_CONNECTION: sqlite
+      DB_DATABASE: /var/www/html/database/database.sqlite
+      REDIS_HOST: redis
+      REDIS_PORT: ${REDIS_PORT:-6379}
+      QUEUE_CONNECTION: ${QUEUE_CONNECTION:-database}
+    volumes:
+      - storage_data:/var/www/html/storage
+      - ./database:/var/www/html/database
+    depends_on:
+      app:
+        condition: service_started
+      redis:
+        condition: service_started
+    entrypoint: ["/usr/local/bin/docker-entrypoint-app.sh"]
+    command: ["supervisord", "-n", "-c", "/etc/supervisor/conf.d/laravel-worker.conf"]
+    networks:
+      - internal
+
+  horizon:
+    profiles:
+      - horizon
+    build:
+      context: .
+      dockerfile: Dockerfile
+      target: php
+    restart: unless-stopped
+    env_file:
+      - path: .env
+        required: false
+    environment:
+      APP_KEY: ${APP_KEY}
+      APP_ENV: ${APP_ENV:-production}
+      APP_DEBUG: ${APP_DEBUG:-false}
+      APP_URL: ${APP_URL:-https://staging.vidanexus.ai}
+      DB_CONNECTION: sqlite
+      DB_DATABASE: /var/www/html/database/database.sqlite
+      REDIS_HOST: redis
+      REDIS_PORT: ${REDIS_PORT:-6379}
+      CACHE_STORE: ${CACHE_STORE:-database}
+      SESSION_DRIVER: ${SESSION_DRIVER:-file}
+      QUEUE_CONNECTION: ${QUEUE_CONNECTION:-database}
+      # App-specific
+      VIDANEXUS_PRELAUNCH: ${VIDANEXUS_PRELAUNCH:-false}
+      VIDANEXUS_BYPASS_TOKEN: ${VIDANEXUS_BYPASS_TOKEN:-vn_secret_2026}
+      # Mail
+      MAIL_MAILER: ${MAIL_MAILER:-smtp}
+      MAIL_SCHEME: ${MAIL_SCHEME:-tls}
+      MAIL_HOST: ${MAIL_HOST:-smtp.zoho.com}
+      MAIL_PORT: ${MAIL_PORT:-587}
+      MAIL_USERNAME: ${MAIL_USERNAME:-Noreplay@Vidanexus.net}
+      MAIL_PASSWORD: ${MAIL_PASSWORD:-9Z7fYJi8q5S8FwX}
+      MAIL_FROM_ADDRESS: ${MAIL_FROM_ADDRESS:-noreply@vidanexus.ai}
+      MAIL_FROM_NAME: ${MAIL_FROM_NAME:-Noreplay-Vidanexus}
+      MAIL_ENCRYPTION: ${MAIL_ENCRYPTION:-tls}
+      MAIL_VERIFY_PEER: ${MAIL_VERIFY_PEER:-false}
+      # Third-party APIs
+      FAWATERK_API_KEY: ${FAWATERK_API_KEY}
+      FAWATERK_VENDOR_KEY: ${FAWATERK_VENDOR_KEY}
+      GEMINI_API_KEY: ${GEMINI_API_KEY}
+      OPENROUTER_API_KEY: ${OPENROUTER_API_KEY}
+      OPENAI_API_KEY: ${OPENAI_API_KEY}
+    volumes:
+      - storage_data:/var/www/html/storage
+      - ./database:/var/www/html/database
+    depends_on:
+      app:
+        condition: service_started
+      redis:
+        condition: service_started
+    entrypoint: ["/usr/local/bin/docker-entrypoint-app.sh"]
+    command: ["php", "artisan", "horizon"]
+    networks:
+      - internal
+
+networks:
+  internal:
+
+volumes:
+  # mysql_data: (temporarily disabled — using SQLite)
+  redis_data:
+  storage_data:
