@@ -29,7 +29,7 @@ class OpenRouterProvider implements AIProvider
         $response = Http::timeout(45)->withHeaders([
             'Authorization' => "Bearer {$apiKey}",
             'HTTP-Referer' => 'https://vidanexus.ai',
-            'X-Title' => 'VidaNexus Headlines',
+            'X-Title' => $options['tool_name'] ?? 'VidaNexus AI',
         ])->post($url, [
             'model' => $model,
             'messages' => [

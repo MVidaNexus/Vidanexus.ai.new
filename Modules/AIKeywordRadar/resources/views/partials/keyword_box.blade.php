@@ -53,19 +53,19 @@
                 <div style="padding:8px 14px;font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:0.08em;color:rgba(255,255,255,0.3);border-bottom:1px solid rgba(255,255,255,0.06);">
                     <i class="fas fa-satellite-dish text-[8px] mr-1 opacity-40"></i> Sort Radar Findings
                 </div>
-                <button type="button" @click="sortOpen = false; currentSort = 'Newest Sync'; window.executeKeywordSort('{{ $lang }}', 'pulldate');"
+                <button type="button" @click="sortOpen = false; currentSort = 'Newest Sync'; window.executeKeywordSort('{{ $boxKey }}', 'pulldate');"
                     style="display:flex;align-items:center;gap:10px;width:100%;text-align:{{ $isAr ? 'right' : 'left' }};padding:10px 14px;background:transparent;color:#fff;border:none;cursor:pointer;font-size:12px;font-weight:600;transition:background 0.15s;"
                     onmouseover="this.style.background='rgba(255,255,255,0.08)'" onmouseout="this.style.background='transparent'">
                     <span style="display:flex;align-items:center;justify-content:center;width:26px;height:26px;border-radius:7px;background:rgba(245,158,11,0.15);color:#f59e0b;flex-shrink:0;font-size:10px;"><i class="fas fa-satellite-dish"></i></span>
                     <span>Radar Detection</span>
                 </button>
-                <button type="button" @click="sortOpen = false; currentSort = 'Newest Publish'; window.executeKeywordSort('{{ $lang }}', 'pubdate');"
+                <button type="button" @click="sortOpen = false; currentSort = 'Newest Publish'; window.executeKeywordSort('{{ $boxKey }}', 'pubdate');"
                     style="display:flex;align-items:center;gap:10px;width:100%;text-align:{{ $isAr ? 'right' : 'left' }};padding:10px 14px;background:transparent;color:#fff;border:none;border-top:1px solid rgba(255,255,255,0.04);cursor:pointer;font-size:12px;font-weight:600;transition:background 0.15s;"
                     onmouseover="this.style.background='rgba(255,255,255,0.08)'" onmouseout="this.style.background='transparent'">
                     <span style="display:flex;align-items:center;justify-content:center;width:26px;height:26px;border-radius:7px;background:rgba(14,165,233,0.15);color:#0ea5e9;flex-shrink:0;font-size:10px;"><i class="fas fa-clock"></i></span>
                     <span>Market Timestamp</span>
                 </button>
-                <button type="button" @click="sortOpen = false; currentSort = 'A → Z'; window.executeKeywordSort('{{ $lang }}', 'alphabetical');"
+                <button type="button" @click="sortOpen = false; currentSort = 'A → Z'; window.executeKeywordSort('{{ $boxKey }}', 'alphabetical');"
                     style="display:flex;align-items:center;gap:10px;width:100%;text-align:{{ $isAr ? 'right' : 'left' }};padding:10px 14px;background:transparent;color:#fff;border:none;border-top:1px solid rgba(255,255,255,0.04);cursor:pointer;font-size:12px;font-weight:600;transition:background 0.15s;"
                     onmouseover="this.style.background='rgba(255,255,255,0.08)'" onmouseout="this.style.background='transparent'">
                     <span style="display:flex;align-items:center;justify-content:center;width:26px;height:26px;border-radius:7px;background:rgba(168,85,247,0.15);color:#a855f7;flex-shrink:0;font-size:10px;"><i class="fas fa-sort-alpha-down"></i></span>
@@ -108,7 +108,7 @@
                 </div>
 
                 {{-- 60 Minutes --}}
-                <button type="button" @click="timeOpen = false; timeLabel = 'Last 60m'; timeValue = '60m'"
+                <button type="button" @click="timeOpen = false; timeLabel = 'Last 60m'; timeValue = '60m'; window.filterKeywordsByTime('{{ $boxKey }}', '60m')"
                     style="display:flex;align-items:center;justify-content:space-between;width:100%;text-align:{{ $isAr ? 'right' : 'left' }};padding:10px 14px;background:transparent;color:#fff;border:none;cursor:pointer;transition:background 0.15s;"
                     :style="timeValue === '60m' ? 'background:rgba(16,185,129,0.08)' : ''"
                     onmouseover="this.style.background='rgba(255,255,255,0.08)'" onmouseout="this.style.background=this.getAttribute(':style')?.includes('60m')?'rgba(16,185,129,0.08)':'transparent'">
@@ -123,7 +123,7 @@
                 </button>
 
                 {{-- 24 Hours --}}
-                <button type="button" @click="timeOpen = false; timeLabel = 'Last 24h'; timeValue = '24h'"
+                <button type="button" @click="timeOpen = false; timeLabel = 'Last 24h'; timeValue = '24h'; window.filterKeywordsByTime('{{ $boxKey }}', '24h')"
                     style="display:flex;align-items:center;justify-content:space-between;width:100%;text-align:{{ $isAr ? 'right' : 'left' }};padding:10px 14px;background:transparent;color:#fff;border:none;border-top:1px solid rgba(255,255,255,0.04);cursor:pointer;transition:background 0.15s;"
                     :style="timeValue === '24h' ? 'background:rgba(245,158,11,0.08)' : ''"
                     onmouseover="this.style.background='rgba(255,255,255,0.08)'" onmouseout="this.style.background=''">
@@ -138,7 +138,7 @@
                 </button>
 
                 {{-- All Time --}}
-                <button type="button" @click="timeOpen = false; timeLabel = 'All Time'; timeValue = 'all'"
+                <button type="button" @click="timeOpen = false; timeLabel = 'All Time'; timeValue = 'all'; window.filterKeywordsByTime('{{ $boxKey }}', 'all')"
                     style="display:flex;align-items:center;justify-content:space-between;width:100%;text-align:{{ $isAr ? 'right' : 'left' }};padding:10px 14px;background:transparent;color:#fff;border:none;border-top:1px solid rgba(255,255,255,0.04);cursor:pointer;transition:background 0.15s;"
                     :style="timeValue === 'all' ? 'background:rgba(59,130,246,0.08)' : ''"
                     onmouseover="this.style.background='rgba(255,255,255,0.08)'" onmouseout="this.style.background=''">
@@ -164,7 +164,7 @@
 </div>
 
 {{-- Main Card - NO overflow-hidden on the wrapper, only on content area --}}
-<div x-init="if(!selectedKeywords['{{ $boxKey }}']) selectedKeywords['{{ $boxKey }}'] = []"
+<div x-init="if(!selectedKeywords['{{ $boxKey }}']) selectedKeywords['{{ $boxKey }}'] = []; $nextTick(() => { window.filterKeywordsByTime('{{ $boxKey }}', '60m'); });"
      class="glass-card flex flex-col h-[75vh] lg:h-[calc(100vh-160px)] relative border border-white/5 glass-border-light" style="border-top-color: {{ $colorVar }}40; overflow: hidden;" dir="{{ $isAr ? 'rtl' : 'ltr' }}">
     {{-- Full-Box Loading Overlay --}}
     <div id="sync-loading-{{ $lang }}" x-show="{{ $loadingModel }}" class="absolute inset-0 z-50 flex items-center justify-center backdrop-blur-md" style="display: none; background: var(--glass-bg);">
@@ -220,7 +220,7 @@
                     </button>
                 </form>
             @endif
-            <span style="font-size:10px;font-weight:700;padding:4px 10px;border-radius:8px;background:rgba(255,255,255,0.05);color:#94a3b8;white-space:nowrap;">{{ count($targetKeywords ?? []) }} Keywords</span>
+            <span class="keyword-count-badge-{{ $boxKey }}" style="font-size:10px;font-weight:700;padding:4px 10px;border-radius:8px;background:rgba(255,255,255,0.05);color:#94a3b8;white-space:nowrap;">{{ count($targetKeywords ?? []) }} Keywords</span>
         </div>
     </div>
 
@@ -230,15 +230,31 @@
         <div id="sync-notification-{{ $lang }}" style="display: none;" class="mb-4"></div>
 
         @if(!empty($targetKeywords))
-            <div class="space-y-2.5 keyword-container-{{ $lang }}">
+            <div class="space-y-2.5 keyword-container-{{ $boxKey }}">
                 @foreach($targetKeywords as $kw)
                     @php
                         $text = is_array($kw) ? ($kw['text'] ?? $kw['keyword'] ?? '') : $kw;
                         $source = is_array($kw) ? ($kw['source'] ?? 'AI') : 'AI';
-                        $createdAt = is_array($kw) && isset($kw['created_at']) ? \Carbon\Carbon::parse($kw['created_at']) : null;
+                        
+                        $createdAt = (is_array($kw) && !empty($kw['created_at'])) ? \Carbon\Carbon::parse($kw['created_at']) : null;
+                        $syncedAt = (is_array($kw) && !empty($kw['synced_at'])) ? \Carbon\Carbon::parse($kw['synced_at']) : $createdAt;
+                        $publishedAt = (is_array($kw) && !empty($kw['published_at'])) ? \Carbon\Carbon::parse($kw['published_at']) : null;
+                        
+                        // Fallback publish date to sync date if explicit feed publish date is unavailable
+                        $effectivePubAt = $publishedAt ?? $syncedAt ?? $createdAt;
+                        
+                        $syncTs = $syncedAt ? $syncedAt->timestamp : ($createdAt ? $createdAt->timestamp : time());
+                        $pubTs = $effectivePubAt ? $effectivePubAt->timestamp : $syncTs;
+                        
+                        $syncIso = $syncedAt ? $syncedAt->toIso8601String() : ($createdAt ? $createdAt->toIso8601String() : '');
+                        $pubIso = $effectivePubAt ? $effectivePubAt->toIso8601String() : $syncIso;
+                        
+                        $syncFormatted = $syncedAt ? $syncedAt->timezone('Africa/Cairo')->format('Y-m-d g:i A') : '';
+                        $pubFormatted = $effectivePubAt ? $effectivePubAt->timezone('Africa/Cairo')->format('Y-m-d g:i A') : '';
+                        $isExactPub = !empty($publishedAt);
                     @endphp
                     @if(!empty($text))
-                    <div data-pulldate="{{ isset($kw['synced_at']) ? \Carbon\Carbon::parse($kw['synced_at'])->timestamp : ($createdAt ? $createdAt->timestamp : 0) }}" data-pubdate="{{ isset($kw['published_at']) ? \Carbon\Carbon::parse($kw['published_at'])->timestamp : 0 }}" class="keyword-row group" style="display:flex;align-items:flex-start;justify-content:space-between;padding:12px 16px;border-radius:16px;border:1px solid var(--glass-border);background:var(--glass-bg);gap:10px;transition:all 0.25s ease;">
+                    <div data-pulldate="{{ $syncTs }}" data-pubdate="{{ $pubTs }}" class="keyword-row group" style="display:flex;align-items:flex-start;justify-content:space-between;padding:12px 16px;border-radius:16px;border:1px solid var(--glass-border);background:var(--glass-bg);gap:10px;transition:all 0.25s ease;">
                         <div class="flex items-start gap-2.5 flex-1 min-w-0">
                             {{-- Selection & Index --}}
                             <div class="flex flex-col items-center gap-2 mt-1">
@@ -257,32 +273,26 @@
                                     <span style="font-size:8px;color:#f87171;background:rgba(248,113,113,0.1);padding:2px 8px;border-radius:8px;font-weight:700;text-transform:uppercase;border:1px solid rgba(248,113,113,0.2);">{{ $source }}</span>
                                 </div>
 
-                                {{-- Metadata / Timestamps — Admin Only --}}
-                                @if(auth()->user()->isAdmin())
-                                <div style="display:grid;grid-template-columns:1fr;gap:6px;border-{{ $isAr ? 'right' : 'left' }}:2px solid {{ $colorVar }}20;padding-{{ $isAr ? 'right' : 'left' }}:0.75rem;">
-                                    @if(isset($kw['published_at']))
-                                        <div class="flex items-center gap-2">
-                                            <i class="fas fa-history text-[9px] opacity-50" style="color: var(--primary-cyan);"></i>
-                                            <span class="text-[9px] font-bold" style="color: var(--text-muted);">
-                                                <span class="opacity-50 font-normal">{{ $isAr ? 'نُشر:' : 'Published:' }}</span>
-                                                <span style="color: var(--primary-cyan);" x-text="getRelativeTime('{{ $kw['published_at'] }}', '{{ $lang }}')"></span>
-                                            </span>
-                                        </div>
+                                {{-- Metadata / Timestamps (Visible for All Users) --}}
+                                <div class="flex flex-wrap items-center gap-3 pt-1 border-t border-white/5" style="border-{{ $isAr ? 'right' : 'left' }}:2px solid {{ $colorVar }}30;padding-{{ $isAr ? 'right' : 'left' }}:0.6rem;">
+                                    {{-- Published Time (Strictly when explicit publication date exists) --}}
+                                    @if($isExactPub && !empty($pubIso))
+                                    <div class="flex items-center gap-1.5 text-[9px]" title="{{ $pubFormatted ? ($isAr ? 'تاريخ النشر في موقع المنافس: ' : 'Published at: ') . $pubFormatted : '' }}">
+                                        <i class="fas fa-history text-[9px] opacity-70" style="color: var(--primary-cyan);"></i>
+                                        <span class="opacity-60 font-semibold" style="color: var(--text-muted);">{{ $isAr ? 'نُشر:' : 'Published:' }}</span>
+                                        <span class="font-bold" style="color: var(--primary-cyan);" x-text="getRelativeTime('{{ $pubIso }}', '{{ $lang }}')"></span>
+                                    </div>
                                     @endif
-                                    @php
-                                        $syncTime = $kw['synced_at'] ?? $kw['created_at'] ?? null;
-                                    @endphp
-                                    @if($syncTime)
-                                        <div class="flex items-center gap-2">
-                                            <i class="fas fa-satellite-dish text-[9px] opacity-50" style="color: #f59e0b;"></i>
-                                            <span class="text-[9px] font-bold" style="color: var(--text-muted);">
-                                                <span class="opacity-50 font-normal">{{ $isAr ? 'سُحب:' : 'Synced:' }}</span>
-                                                <span style="color: #f59e0b;" x-text="getRelativeTime('{{ $syncTime }}', '{{ $lang }}')"></span>
-                                            </span>
-                                        </div>
+
+                                    {{-- Synced Time --}}
+                                    @if(!empty($syncIso))
+                                    <div class="flex items-center gap-1.5 text-[9px]" title="{{ $syncFormatted ? ($isAr ? 'تاريخ السحب بالمنصة: ' : 'Synced to dashboard: ') . $syncFormatted : '' }}">
+                                        <i class="fas fa-satellite-dish text-[9px] opacity-70" style="color: #f59e0b;"></i>
+                                        <span class="opacity-60 font-semibold" style="color: var(--text-muted);">{{ $isAr ? 'سُحب:' : 'Synced:' }}</span>
+                                        <span class="font-bold" style="color: #f59e0b;" x-text="getRelativeTime('{{ $syncIso }}', '{{ $lang }}')"></span>
+                                    </div>
                                     @endif
                                 </div>
-                                @endif
                             </div>
                         </div>
                         

@@ -228,8 +228,14 @@ function keywordRadar() {
                 window.history.replaceState({}, document.title, window.location.pathname);
             }
             setTimeout(() => {
-                this.sortKeywords('ar', 'pubdate');
-                if (document.querySelector('.keyword-container-en')) this.sortKeywords('en', 'pubdate');
+                document.querySelectorAll('[class*="keyword-container-"]').forEach(container => {
+                    const classes = container.className.split(' ');
+                    const targetClass = classes.find(c => c.startsWith('keyword-container-'));
+                    if (targetClass) {
+                        const boxKey = targetClass.replace('keyword-container-', '');
+                        this.sortKeywords(boxKey, 'pubdate');
+                    }
+                });
             }, 100);
         },
 
@@ -285,7 +291,23 @@ function keywordRadar() {
                     return;
                 }
                 
-                // Job dispatched to background — show toast and start polling
+                if (data.status === 'completed') {
+                    this.loading[prop] = false;
+                    Swal.fire({
+                        title: '🎯 Radar Scanning Complete',
+                        text: data.message,
+                        icon: 'success',
+                        timer: 2500,
+                        timerProgressBar: true,
+                        showConfirmButton: false,
+                        background: '#0f172a',
+                        color: '#fff',
+                    });
+                    setTimeout(() => window.location.reload(), 1500);
+                    return;
+                }
+
+                // If job dispatched to background — show toast and start polling
                 Swal.fire({
                     title: '📡 Radar Scanning',
                     text: data.message,
@@ -440,13 +462,13 @@ function keywordRadar() {
             copyToClipboard(list.join('\n'));
         },
 
-        sortKeywords(lang, criteria) {
-            const container = document.querySelector(`.keyword-container-${lang}`);
+        sortKeywords(boxKey, criteria) {
+            const container = document.querySelector(`.keyword-container-${boxKey}`);
             if (!container) return;
             const rows = Array.from(container.querySelectorAll('.keyword-row'));
             rows.sort((a, b) => {
                 if (criteria === 'alphabetical') {
-                    return (a.querySelector('.font-bold')?.textContent.trim() || '').localeCompare(b.querySelector('.font-bold')?.textContent.trim() || '', lang);
+                    return (a.querySelector('.font-bold')?.textContent.trim() || '').localeCompare(b.querySelector('.font-bold')?.textContent.trim() || '', 'ar');
                 }
                 return (parseFloat(b.dataset[criteria]) || 0) - (parseFloat(a.dataset[criteria]) || 0);
             });
@@ -462,9 +484,11 @@ function keywordRadar() {
             
             // Normalize timestamp (handle strings, ms, s)
             let date = typeof ts === 'number' ? new Date(ts * (ts < 1e12 ? 1000 : 1)) : new Date(ts);
-            if (isNaN(date)) return '';
+            if (isNaN(date.getTime())) return '';
             
-            const diffSeconds = Math.floor((this.currentTime - date.getTime()) / 1000);
+            let diffSeconds = Math.floor((this.currentTime - date.getTime()) / 1000);
+            if (diffSeconds < 0) diffSeconds = 0; // Prevent negative diffs due to clock skew
+            
             const diffMinutes = Math.floor(diffSeconds / 60);
             const diffHours = Math.floor(diffMinutes / 60);
             const diffDays = Math.floor(diffHours / 24);
@@ -494,13 +518,13 @@ function keywordRadar() {
     }
 }
 
-window.executeKeywordSort = function(lang, criteria) {
-    const container = document.querySelector(`.keyword-container-${lang}`);
+window.executeKeywordSort = function(boxKey, criteria) {
+    const container = document.querySelector(`.keyword-container-${boxKey}`);
     if (!container) return;
     const rows = Array.from(container.querySelectorAll('.keyword-row'));
     rows.sort((a, b) => {
         if (criteria === 'alphabetical') {
-            return (a.querySelector('.font-bold')?.textContent.trim() || '').localeCompare(b.querySelector('.font-bold')?.textContent.trim() || '', lang);
+            return (a.querySelector('.font-bold')?.textContent.trim() || '').localeCompare(b.querySelector('.font-bold')?.textContent.trim() || '', 'ar');
         }
         return (parseFloat(b.dataset[criteria]) || 0) - (parseFloat(a.dataset[criteria]) || 0);
     });
@@ -508,6 +532,51 @@ window.executeKeywordSort = function(lang, criteria) {
         container.appendChild(row);
         const n = row.querySelector('.keyword-num');
         if (n) n.textContent = String(i + 1).padStart(2, '0');
+    });
+};
+
+window.filterKeywordsByTime = function(boxKey, timeValue) {
+    const container = document.querySelector(`.keyword-container-${boxKey}`);
+    if (!container) return;
+    const rows = container.querySelectorAll('.keyword-row');
+    const now = Date.now();
+    
+    let limitMs = 24 * 60 * 60 * 1000; // Default 24h
+    if (timeValue === '60m') {
+        limitMs = 60 * 60 * 1000;
+    } else if (timeValue === 'all') {
+        limitMs = 30 * 24 * 60 * 60 * 1000; // 30 days
+    }
+
+    let visibleCount = 0;
+    rows.forEach(row => {
+        const pubdate = parseInt(row.dataset.pubdate) * 1000;
+        const pulldate = parseInt(row.dataset.pulldate) * 1000;
+        const effectiveTime = pubdate > 0 ? pubdate : pulldate;
+        
+        if ((now - effectiveTime) <= limitMs) {
+            row.style.setProperty('display', 'flex', 'important');
+            visibleCount++;
+        } else {
+            row.style.setProperty('display', 'none', 'important');
+        }
+    });
+
+    // Update count badge
+    const badge = document.querySelector(`.keyword-count-badge-${boxKey}`);
+    if (badge) {
+        badge.textContent = `${visibleCount} Keywords`;
+    }
+
+    // Re-index only visible rows
+    let visibleIndex = 1;
+    rows.forEach(row => {
+        if (row.style.display !== 'none') {
+            const numEl = row.querySelector('.keyword-num');
+            if (numEl) {
+                numEl.textContent = String(visibleIndex++).padStart(2, '0');
+            }
+        }
     });
 };
 

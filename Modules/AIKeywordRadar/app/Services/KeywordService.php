@@ -132,6 +132,26 @@ class KeywordService
             }));
         }
         
+        $retentionLimit = match($timeFilter) {
+            '60m' => now()->subMinutes(60),
+            '24h' => now()->subHours(24),
+            default => now()->subHours(24),
+        };
+
+        $keywordCategory = $boxId ? "Target:{$boxId}" : 'Target';
+
+        // Purge any stored DB keywords for this category/lang that fall outside retention limit
+        Keyword::where('user_id', $userId)
+            ->where('category', $keywordCategory)
+            ->where('lang', $lang)
+            ->where(function($q) use ($retentionLimit) {
+                $q->where('published_at', '<', $retentionLimit)
+                  ->orWhere(function($q2) use ($retentionLimit) {
+                      $q2->whereNull('published_at')
+                         ->where('created_at', '<', $retentionLimit);
+                  });
+            })->delete();
+
         $existingTexts = [];
         foreach ($existingKeywords as $kw) {
             $text = is_array($kw) ? ($kw['text'] ?? $kw['keyword'] ?? '') : $kw;
@@ -148,6 +168,22 @@ class KeywordService
             
             if (empty($text)) continue;
 
+            // Parse date more reliably
+            $publishedAt = null;
+            if (!empty($kw['published_at'])) {
+                try {
+                    $publishedAt = \Carbon\Carbon::parse($kw['published_at'])->setTimezone('UTC');
+                } catch (\Exception $e) {
+                    Log::warning("[Keyword Sync] Date parse failed for: " . $kw['published_at']);
+                }
+            }
+
+            // Discard keywords published before retention limit
+            if ($publishedAt !== null && $publishedAt->lt($retentionLimit)) {
+                Log::info("[Keyword Sync] Discarded keyword older than retention limit: {$text} ({$publishedAt->toDateTimeString()})");
+                continue;
+            }
+
             $textLower = mb_strtolower($text, 'UTF-8');
             $isDuplicate = false;
             
@@ -158,7 +194,7 @@ class KeywordService
                 // Similarity check (prevents saving almost identical keywords)
                 foreach ($existingTexts as $existing => $val) {
                     similar_text($textLower, mb_strtolower($existing, 'UTF-8'), $percent);
-                    if ($percent >= 96) { // Further increased to allow more subtle variations
+                    if ($percent >= 96) {
                         $isDuplicate = true;
                         break;
                     }
@@ -173,27 +209,33 @@ class KeywordService
                 $publishedAt = null;
                 if (!empty($kw['published_at'])) {
                     try {
-                        $publishedAt = \Carbon\Carbon::parse($kw['published_at']);
+                        $publishedAt = \Carbon\Carbon::parse($kw['published_at'])->setTimezone('UTC');
                     } catch (\Exception $e) {
                         Log::warning("[Keyword Sync] Date parse failed for: " . $kw['published_at']);
                     }
                 }
 
                 $keywordCategory = $boxId ? "Target:{$boxId}" : 'Target';
+                $updateData = [
+                    'source' => $kw['source'] ?? 'AI', 
+                    'synced_at' => now(), 
+                ];
+                if ($publishedAt !== null) {
+                    $updateData['published_at'] = $publishedAt;
+                }
+
                 $keywordObj = Keyword::updateOrCreate(
                     ['keyword' => $text, 'category' => $keywordCategory, 'lang' => $lang, 'user_id' => $userId],
-                    [
-                        'source' => $kw['source'] ?? 'AI', 
-                        'synced_at' => now(), 
-                        'published_at' => $publishedAt
-                    ]
+                    $updateData
                 );
+
+                $effectivePubAt = $keywordObj->published_at ?? $publishedAt;
 
                 $existingKeywords[] = [
                     'text' => $text,
                     'source' => $kw['source'] ?? 'AI',
-                    'published_at' => $publishedAt ? $publishedAt->toDateTimeString() : null,
-                    'created_at' => $keywordObj->created_at->toDateTimeString()
+                    'published_at' => $effectivePubAt ? $effectivePubAt->toIso8601String() : null,
+                    'created_at' => $keywordObj->created_at->toIso8601String()
                 ];
                 $existingTexts[$text] = true;
             } else {
@@ -530,7 +572,7 @@ class KeywordService
                         
                         $items[] = [
                             'title' => $cleanTitle,
-                            'pubDate' => now()->toDateTimeString(),
+                            'pubDate' => null,
                         ];
                     }
                 }
@@ -621,32 +663,58 @@ class KeywordService
 
         $allHeadlines = [];
         $userAgent = $this->getRandomUserAgent();
+        $hl = ($lang === 'en') ? 'en' : 'ar';
+        $ceid = ($lang === 'en') ? 'US:en' : 'EG:ar';
 
         // === PHASE 1: MASSIVE PARALLEL FETCH ===
-        // Fire ALL request variants at once — sitemap, RSS (/rss, /feed, /rss.xml), and homepage HTML.
-        // This eliminates the slow sequential fallback for most competitors.
-        $responses = Http::pool(function ($pool) use ($competitorUrls, $userAgent) {
+        // Fire ALL request variants at once — sitemap, Google News RSS, RSS feeds, and homepage HTML.
+        // Index tracking ensures responses are mapped correctly to string keys.
+        $keys = [];
+        $responses = Http::pool(function ($pool) use ($competitorUrls, $userAgent, $hl, $ceid, $timeFilter, &$keys) {
             $reqs = [];
             foreach ($competitorUrls as $url) {
-                $url = rtrim(trim($url), '/');
+                $url = trim($url);
+                if (!preg_match('/^https?:\/\//i', $url)) {
+                    $url = 'https://' . $url;
+                }
+                $url = rtrim($url, '/');
                 $domain = parse_url($url, PHP_URL_HOST) ?: $url;
+                $cleanDomain = preg_replace('/^www\./i', '', $domain);
                 
                 // Sitemap News
-                $reqs["{$domain}_sitemap"] = $pool->withHeaders(['User-Agent' => $userAgent])
+                $keys[] = "{$domain}_sitemap";
+                $reqs[] = $pool->withHeaders(['User-Agent' => $userAgent])
                     ->timeout(6)->get($url . '/sitemap-news.xml');
+
+                // Google News RSS (High reliability for real article publication dates)
+                $whenTag = ($timeFilter === '24h') ? '+when:1d' : '+when:1h';
+                $keys[] = "{$domain}_gnews";
+                $reqs[] = $pool->withHeaders(['User-Agent' => $userAgent])
+                    ->timeout(6)->get("https://news.google.com/rss/search?q=site:{$cleanDomain}{$whenTag}&hl={$hl}&gl=EG&ceid={$ceid}");
                 
                 // RSS variants — try multiple paths in parallel
-                $reqs["{$domain}_rss"] = $pool->withHeaders(['User-Agent' => $userAgent])
+                $keys[] = "{$domain}_rss";
+                $reqs[] = $pool->withHeaders(['User-Agent' => $userAgent])
                     ->timeout(6)->get($url . '/rss');
-                $reqs["{$domain}_feed"] = $pool->withHeaders(['User-Agent' => $userAgent])
+                $keys[] = "{$domain}_feed";
+                $reqs[] = $pool->withHeaders(['User-Agent' => $userAgent])
                     ->timeout(6)->get($url . '/feed');
                 
                 // Homepage HTML — for scraping fallback
-                $reqs["{$domain}_html"] = $pool->withHeaders(['User-Agent' => $userAgent])
+                $keys[] = "{$domain}_html";
+                $reqs[] = $pool->withHeaders(['User-Agent' => $userAgent])
                     ->timeout(6)->get($url);
             }
             return $reqs;
         });
+
+        // Keyed response mapping
+        $keyedResponses = [];
+        foreach ($responses as $i => $resp) {
+            if (isset($keys[$i])) {
+                $keyedResponses[$keys[$i]] = $resp;
+            }
+        }
 
         Log::info("[Keyword Radar] Parallel pool completed for " . count($competitorUrls) . " competitors. Processing responses...");
 
@@ -660,21 +728,33 @@ class KeywordService
                 break;
             }
 
-            $url = rtrim(trim($url), '/');
+            $url = trim($url);
+            if (!preg_match('/^https?:\/\//i', $url)) {
+                $url = 'https://' . $url;
+            }
+            $url = rtrim($url, '/');
             $domain = parse_url($url, PHP_URL_HOST) ?: $url;
             $siteHeadlines = [];
 
-            // Try Sitemap first (best quality — has dates)
-            $sitemapResp = $responses["{$domain}_sitemap"] ?? null;
-            if ($sitemapResp && $sitemapResp->successful()) {
+            // 1. Try Sitemap first (best quality — has dates)
+            $sitemapResp = $keyedResponses["{$domain}_sitemap"] ?? null;
+            if ($sitemapResp instanceof \Illuminate\Http\Client\Response && $sitemapResp->successful()) {
                 $siteHeadlines = $this->parseSimpleSitemap($sitemapResp->body());
             }
 
-            // Try RSS variants
+            // 2. Try Google News RSS (High reliability — has real publication dates)
+            if (empty($siteHeadlines)) {
+                $gnewsResp = $keyedResponses["{$domain}_gnews"] ?? null;
+                if ($gnewsResp instanceof \Illuminate\Http\Client\Response && $gnewsResp->successful()) {
+                    $siteHeadlines = $this->parseGoogleNewsRss($gnewsResp->body());
+                }
+            }
+
+            // 3. Try RSS variants
             if (empty($siteHeadlines)) {
                 foreach (["{$domain}_rss", "{$domain}_feed"] as $key) {
-                    $rssResp = $responses[$key] ?? null;
-                    if ($rssResp && $rssResp->successful()) {
+                    $rssResp = $keyedResponses[$key] ?? null;
+                    if ($rssResp instanceof \Illuminate\Http\Client\Response && $rssResp->successful()) {
                         $body = $rssResp->body();
                         if (str_contains($body, '<rss') || str_contains($body, '<feed') || str_contains($body, '<channel')) {
                             $siteHeadlines = $this->parseSimpleRss($body);
@@ -684,10 +764,10 @@ class KeywordService
                 }
             }
 
-            // Try HTML scraping from homepage (already fetched in parallel)
+            // 4. Try HTML scraping from homepage (already fetched in parallel)
             if (empty($siteHeadlines)) {
-                $htmlResp = $responses["{$domain}_html"] ?? null;
-                if ($htmlResp && $htmlResp->successful()) {
+                $htmlResp = $keyedResponses["{$domain}_html"] ?? null;
+                if ($htmlResp instanceof \Illuminate\Http\Client\Response && $htmlResp->successful()) {
                     $siteHeadlines = $this->extractHeadlinesFromHtml($htmlResp->body(), $domain);
                 }
             }
@@ -699,12 +779,11 @@ class KeywordService
             }
 
             // === STRICT TIME FILTER ===
-            $freshnessLimit = null;
-            if ($timeFilter === '60m') {
-                $freshnessLimit = now()->subMinutes(60);
-            } elseif ($timeFilter === '24h') {
-                $freshnessLimit = now()->subHours(24);
-            }
+            $freshnessLimit = match($timeFilter) {
+                '60m' => now()->subMinutes(60),
+                '24h' => now()->subHours(24),
+                default => now()->subHours(24),
+            };
             
             $seenLocalTitles = [];
             $totalFoundOnSite = count($siteHeadlines);
@@ -719,18 +798,32 @@ class KeywordService
                 $title = trim($title);
                 if (empty($title) || mb_strlen($title) < 5 || isset($seenLocalTitles[$title])) continue;
 
-                $pubDate = null;
-                if (!empty($item['pubDate'])) {
-                    try { $pubDate = \Carbon\Carbon::parse($item['pubDate']); } catch (\Exception $e) { $pubDate = null; }
+                $rawDate = $item['pubDate'] ?? null;
+
+                // IMMEDIATELY DISCARD any headline containing a past year (2010-2025)
+                if (preg_match('/\b(201[0-9]|202[0-5])\b/', $title . ' ' . ($rawDate ?? ''))) {
+                    $skippedTooOld++;
+                    continue;
                 }
 
-                if ($freshnessLimit) {
-                    if (!$pubDate) {
-                        $hasSourceDate = !empty($item['pubDate']);
-                        if ($hasSourceDate) { $skippedNoDate++; continue; }
-                    } else {
-                        if ($pubDate->lt($freshnessLimit)) { $skippedTooOld++; continue; }
+                $pubDate = null;
+                if (!empty($rawDate)) {
+                    $parsedStr = $this->parseDateString($rawDate);
+                    if ($parsedStr) {
+                        try { $pubDate = \Carbon\Carbon::parse($parsedStr); } catch (\Exception $e) { $pubDate = null; }
                     }
+                }
+
+                // STRICT ENFORCEMENT: Discard if pubDate is older than freshnessLimit
+                if ($pubDate && $pubDate->lt($freshnessLimit)) {
+                    $skippedTooOld++;
+                    continue;
+                }
+
+                // If feed/sitemap item has no parseable date when 60m filter is requested, discard to prevent old leakage
+                if (!$pubDate && $timeFilter === '60m' && !empty($item['is_feed'])) {
+                    $skippedNoDate++;
+                    continue;
                 }
 
                 $allHeadlines[] = ['title' => $title, 'source' => $domain, 'pubDate' => $item['pubDate'] ?? null];
@@ -752,7 +845,11 @@ class KeywordService
                     break;
                 }
 
-                $url = rtrim(trim($url), '/');
+                $url = trim($url);
+                if (!preg_match('/^https?:\/\//i', $url)) {
+                    $url = 'https://' . $url;
+                }
+                $url = rtrim($url, '/');
                 $domain = parse_url($url, PHP_URL_HOST) ?: $url;
                 $testResult = $this->testUrl($url, $lang, $userId);
                 $siteHeadlines = $testResult['headlines'] ?? [];
@@ -776,9 +873,8 @@ class KeywordService
                     if (!empty($item['pubDate'])) {
                         try { $pubDate = \Carbon\Carbon::parse($item['pubDate']); } catch (\Exception $e) { $pubDate = null; }
                     }
-                    if ($freshnessLimit) {
-                        if (!$pubDate && !empty($item['pubDate'])) continue;
-                        if ($pubDate && $pubDate->lt($freshnessLimit)) continue;
+                    if ($freshnessLimit && $pubDate) {
+                        if ($pubDate->lt($freshnessLimit)) continue;
                     }
 
                     $allHeadlines[] = ['title' => $title, 'source' => $domain, 'pubDate' => $item['pubDate'] ?? null];
@@ -798,7 +894,7 @@ class KeywordService
      */
     protected function parseSimpleSitemap($xmlBody): array {
         try {
-            $xml = @simplexml_load_string($xmlBody);
+            $xml = @simplexml_load_string($xmlBody, 'SimpleXMLElement', LIBXML_NOCDATA);
             if (!$xml) return [];
             $items = [];
             
@@ -831,7 +927,7 @@ class KeywordService
 
     protected function parseSimpleRss($xmlBody): array {
         try {
-            $xml = @simplexml_load_string($xmlBody);
+            $xml = @simplexml_load_string($xmlBody, 'SimpleXMLElement', LIBXML_NOCDATA);
             if (!$xml) return [];
             $items = [];
             $channel = $xml->channel ?? $xml;
@@ -905,13 +1001,11 @@ class KeywordService
     protected function parseGoogleNewsRss($xmlBody): array
     {
         if (empty($xmlBody)) return [];
-        $xml = @simplexml_load_string($xmlBody);
-        if (!$xml || !isset($xml->channel->item)) return [];
+        $xml = @simplexml_load_string($xmlBody, 'SimpleXMLElement', LIBXML_NOCDATA);
         if (!$xml || !isset($xml->channel->item)) return [];
 
         $items = [];
         foreach ($xml->channel->item as $item) {
-            // if (count($items) >= 200) break;
             $title = trim((string) $item->title);
             // Only remove source if it's at the end and looks like a typical short source name (< 25 chars)
             if (preg_match('/\s*-\s*([^-]{2,25})$/u', $title, $matches)) {
@@ -992,10 +1086,8 @@ class KeywordService
 
             if (!empty($items)) {
                 Log::info("[Strategy:HTML] Scraped " . count($items) . " headlines from: {$url}");
-                // For HTML scraping, we don't have a specific pubDate per item easily, 
-                // so we use the current time (but at least we return it as an array structure)
                 foreach ($items as &$item) {
-                    $item['pubDate'] = now()->toDateTimeString();
+                    $item['pubDate'] = $this->parseDateString($item['pubDate'] ?? null);
                 }
             }
             return $items;
@@ -1023,7 +1115,12 @@ class KeywordService
                 $title = html_entity_decode($title, ENT_QUOTES, 'UTF-8');
                 $title = preg_replace('/\s+/', ' ', $title);
                 if (!empty($title) && mb_strlen($title) >= 15 && mb_strlen($title) <= 200 && !isset($seen[$title])) {
-                    $items[] = ['title' => $title, 'pubDate' => now()->toDateTimeString()];
+                    // Try to extract an explicit <time> or date tag if present nearby
+                    $pubDate = null;
+                    if (preg_match('/<time[^>]*datetime=["\']([^"\']+)["\']/i', $rawTitle, $tm)) {
+                        $pubDate = $this->parseDateString($tm[1]);
+                    }
+                    $items[] = ['title' => $title, 'pubDate' => $pubDate];
                     $seen[$title] = true;
                     if (count($items) >= $depth) break;
                 }
@@ -1037,7 +1134,7 @@ class KeywordService
                     $title = trim(html_entity_decode($linkText, ENT_QUOTES, 'UTF-8'));
                     if (!empty($title) && mb_strlen($title) >= 20 && !isset($seen[$title])
                         && !str_contains($title, 'http') && !str_contains($title, '@')) {
-                        $items[] = ['title' => $title, 'pubDate' => now()->toDateTimeString()];
+                        $items[] = ['title' => $title, 'pubDate' => null];
                         $seen[$title] = true;
                         if (count($items) >= $depth) break;
                     }
@@ -1135,19 +1232,19 @@ class KeywordService
         if ($dbPrompt) {
             $prompt = str_replace(['[Headlines]', '[headlines]', '[lang]'], [$titlesText, $titlesText, $langInstruction], $dbPrompt);
             if (!str_contains($prompt, 'Return ONLY a JSON array')) {
-                $prompt .= "\n\nCRITICAL: You must process ALL {$count} headlines provided and return exactly {$count} keywords. Return ONLY a valid JSON array: [{\"index\": 1, \"keyword\": \"...\"}]";
+                $prompt .= "\n\nCRITICAL: You must process ALL {$count} headlines provided and return exactly {$count} keywords. Each keyword MUST be a complete, understandable search phrase (2 to 7 words). Return ONLY a valid JSON array: [{\"index\": 1, \"keyword\": \"...\"}]";
             }
         } else {
-            $prompt = "You are an expert SEO specialist. Your task is to transform EVERY SINGLE competitor headline provided below into a highly searched, high-intent 'Target Search Query'. You MUST output exactly ONE search query for EACH headline, meaning you must return exactly {$count} keywords.
+            $prompt = "You are an expert SEO specialist. Your task is to transform EVERY SINGLE competitor headline provided below into a highly searched, high-intent, complete Target Search Query (Keyword). You MUST output exactly ONE search query for EACH headline, meaning you must return exactly {$count} keywords.
             
 Headlines:
 {$titlesText}
 
 Rules:
-1. NO dates or years (like 2025) unless inherently part of the entity.
-2. TRANSFORM each title into a short, popular search query (e.g. 'Gold price drops' -> 'why gold prices are falling today', or 'Gold price analysis').
-3. Keep the keyword specific to the main entities (names, brands, events) in the title.
-4. Output language MUST be: {$langInstruction}.
+1. COMPLETE & UNDERSTANDABLE: Each keyword MUST be a complete, clear search phrase (2 to 7 words). Do NOT output single generic words (e.g. 'مصر' or 'الذهب') or vague incomplete fragments.
+2. HIGH SEARCH INTENT: Focus on key entities, events, prices, steps, or news topics that real users search for on Google (e.g. 'سعر جرام الذهب عيار 21 اليوم', 'موعد مباراة الأهلي والزمالك القادمة والقنوات الناقلة', 'قرارات البنك المركزي بشأن الفائدة').
+3. NO DATES/YEARS: Omit specific dates or years (like 2025 or 2026) unless strictly part of the official entity name.
+4. Output language MUST be strictly: {$langInstruction}.
 5. You MUST process ALL {$count} headlines provided.
 6. Return ONLY a valid JSON array of objects, with each object containing the exact 'index' of the headline and the transformed 'keyword': [{\"index\": 1, \"keyword\": \"...\"}]";
         }
@@ -1219,6 +1316,7 @@ Rules:
                 'temperature' => 0.1,
                 'json_mode'   => false,
                 'max_tokens'  => 4000,
+                'tool_name'   => 'Keyword Radar',
             ]);
             
             Log::info("AI Keyword Radar [{$lang}] Prompt Snippet: " . substr($prompt, 0, 400));
@@ -1297,7 +1395,7 @@ Rules:
         }
 
         if (is_array($decoded)) {
-            foreach ($decoded as $item) {
+            foreach ($decoded as $itemIdx => $item) {
                 $text = '';
                 $source = 'AI';
                 $pubDate = null;
@@ -1305,7 +1403,9 @@ Rules:
 
                 if (is_array($item)) {
                     $text = $item['keyword'] ?? $item['text'] ?? '';
-                    $idx = (isset($item['index']) ? (int)$item['index'] : 0) - 1;
+                    if (isset($item['index'])) {
+                        $idx = (int)$item['index'] - 1;
+                    }
                 } else {
                     $text = (string)$item;
                 }
@@ -1313,16 +1413,35 @@ Rules:
                 $text = trim($text);
                 if (empty($text)) continue;
 
-                // 3. Fallback: If index is missing or wrong, try to find matching headline
+                // 3. Fallback 1: Try fuzzy match and word overlap against headlines
                 if ($idx < 0 || !isset($headlines[$idx])) {
+                    $bestMatchIdx = -1;
+                    $bestScore = 0.0;
+                    $cleanKeyword = $this->normalizeForComparison($text);
+                    $kwWords = $this->extractSignificantWords($cleanKeyword, []);
+
                     foreach ($headlines as $hIdx => $h) {
-                        // Very simple fuzzy match: check if significant words of keyword are in headline
-                        $cleanKeyword = $this->normalizeForComparison($text);
                         $cleanHeadline = $this->normalizeForComparison($h['title']);
                         if (str_contains($cleanHeadline, $cleanKeyword) || str_contains($cleanKeyword, $cleanHeadline)) {
-                            $idx = $hIdx;
+                            $bestMatchIdx = $hIdx;
                             break;
                         }
+                        $hWords = $this->extractSignificantWords($cleanHeadline, []);
+                        $score = $this->calculateWordOverlap($kwWords, $hWords);
+                        if ($score > $bestScore && $score >= 0.3) {
+                            $bestScore = $score;
+                            $bestMatchIdx = $hIdx;
+                        }
+                    }
+                    if ($bestMatchIdx >= 0) {
+                        $idx = $bestMatchIdx;
+                    }
+                }
+
+                // Fallback 2: Direct batch index alignment
+                if ($idx < 0 || !isset($headlines[$idx])) {
+                    if (isset($headlines[$itemIdx])) {
+                        $idx = $itemIdx;
                     }
                 }
 
@@ -1335,7 +1454,7 @@ Rules:
                     'text' => $text,
                     'source' => $source,
                     'published_at' => $pubDate,
-                    'created_at' => now()->toDateTimeString()
+                    'created_at' => now()->toIso8601String()
                 ];
             }
         }
@@ -1528,11 +1647,26 @@ Example Output:
      */
     public function getMergedCompetitorUrls($userId, $lang = 'ar', ?string $boxId = null)
     {
+        $normalizeUrls = function ($text) {
+            $lines = preg_split('/\r\n|\r|\n/', (string)$text);
+            $clean = [];
+            foreach ($lines as $line) {
+                $url = trim($line);
+                if (empty($url)) continue;
+                if (!preg_match('/^https?:\/\//i', $url)) {
+                    $url = 'https://' . $url;
+                }
+                $url = rtrim($url, '/');
+                $clean[] = $url;
+            }
+            return array_values(array_unique($clean));
+        };
+
         $user = \App\Models\User::find($userId);
         if (!$user) {
             // If user is null (system sync), use global only
             $globalCompetitorsText = \App\Models\Setting::get('ai-keyword-radar_competitors', '');
-            return array_values(array_filter(array_map('trim', explode("\n", $globalCompetitorsText))));
+            return $normalizeUrls($globalCompetitorsText);
         }
         
         $settings = $user->settings ?? [];
@@ -1542,8 +1676,7 @@ Example Output:
             $customBoxes = $settings['keywords_custom_boxes'] ?? [];
             foreach ($customBoxes as $box) {
                 if (($box['id'] ?? '') === $boxId) {
-                    $text = $box['competitors'] ?? '';
-                    return array_values(array_filter(array_map('trim', explode("\n", $text))));
+                    return $normalizeUrls($box['competitors'] ?? '');
                 }
             }
             Log::warning("[Keyword Radar] Custom box '{$boxId}' not found for user #{$userId}");
@@ -1552,11 +1685,11 @@ Example Output:
         
         // 1. User Competitors
         $userCompetitorsText = ($lang === 'en') ? ($settings['keywords_competitors_en'] ?? '') : ($settings['keywords_competitors'] ?? '');
-        $userUrls = array_filter(array_map('trim', explode("\n", $userCompetitorsText)));
+        $userUrls = $normalizeUrls($userCompetitorsText);
         
         // 2. Global Admin Competitors
         $globalCompetitorsText = \App\Models\Setting::get('ai-keyword-radar_competitors', '');
-        $globalUrls = array_filter(array_map('trim', explode("\n", $globalCompetitorsText)));
+        $globalUrls = $normalizeUrls($globalCompetitorsText);
         
         // Merge and unique
         $allUrls = array_unique(array_merge($userUrls, $globalUrls));
@@ -1613,9 +1746,10 @@ Example Output:
                 foreach ($results as $res) {
                     $title = $res['title'] ?? '';
                     if (!empty($title) && mb_strlen($title) > 15) {
+                        $pubDateStr = $this->parseDateString($res['date'] ?? $res['snippet'] ?? null);
                         $items[] = [
                             'title' => $title,
-                            'pubDate' => now()->toDateTimeString(),
+                            'pubDate' => $pubDateStr,
                         ];
                     }
                 }
@@ -1630,5 +1764,54 @@ Example Output:
         }
         
         return [];
+    }
+
+    /**
+     * Helper: Robustly parse relative and ISO date strings into standard UTC datetime string
+     */
+    public function parseDateString(?string $str): ?string
+    {
+        if (empty($str)) return null;
+        $str = trim(strip_tags($str));
+        if (empty($str)) return null;
+
+        // Convert Eastern Arabic numerals (٠١٢٣٤٥٦٧٨٩) to Western (0123456789)
+        $normalized = strtr($str, ['٠'=>'0','١'=>'1','٢'=>'2','٣'=>'3','٤'=>'4','٥'=>'5','٦'=>'6','٧'=>'7','٨'=>'8','٩'=>'9']);
+        
+        // Arabic relative time patterns
+        if (preg_match('/قبل\s+(\d+)\s+ساع/u', $normalized, $m)) return now()->subHours((int)$m[1])->toDateTimeString();
+        if (preg_match('/قبل\s+ساعتين/u', $normalized)) return now()->subHours(2)->toDateTimeString();
+        if (preg_match('/قبل\s+ساعة/u', $normalized)) return now()->subHours(1)->toDateTimeString();
+        if (preg_match('/قبل\s+(\d+)\s+دقيق/u', $normalized, $m)) return now()->subMinutes((int)$m[1])->toDateTimeString();
+        if (preg_match('/قبل\s+دقيقتين/u', $normalized)) return now()->subMinutes(2)->toDateTimeString();
+        if (preg_match('/قبل\s+دقيقة/u', $normalized)) return now()->subMinutes(1)->toDateTimeString();
+        if (preg_match('/قبل\s+(\d+)\s+يوم/u', $normalized, $m)) return now()->subDays((int)$m[1])->toDateTimeString();
+        if (preg_match('/قبل\s+يومين/u', $normalized)) return now()->subDays(2)->toDateTimeString();
+        if (preg_match('/قبل\s+يوم/u', $normalized)) return now()->subDays(1)->toDateTimeString();
+
+        // English relative time patterns
+        if (preg_match('/(\d+)\s*h(?:ours?)?\s*ago/i', $normalized, $m)) return now()->subHours((int)$m[1])->toDateTimeString();
+        if (preg_match('/(\d+)\s*m(?:ins?|inutes?)?\s*ago/i', $normalized, $m)) return now()->subMinutes((int)$m[1])->toDateTimeString();
+        if (preg_match('/(\d+)\s*d(?:ays?)?\s*ago/i', $normalized, $m)) return now()->subDays((int)$m[1])->toDateTimeString();
+
+        try {
+            $dt = \Carbon\Carbon::parse($normalized);
+            if ($dt->year >= 2020) {
+                // If parsed date is in the future relative to UTC now (likely local time parsed without timezone offset),
+                // adjust for local UTC+3 offset
+                if ($dt->gt(now())) {
+                    $diffMinutes = $dt->diffInMinutes(now());
+                    if ($diffMinutes <= 240) { // Up to 4 hours offset skew
+                        $dt->subHours(3);
+                    }
+                    if ($dt->gt(now())) {
+                        $dt = now();
+                    }
+                }
+                return $dt->setTimezone('UTC')->toDateTimeString();
+            }
+        } catch (\Exception $e) {}
+
+        return null;
     }
 }

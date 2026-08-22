@@ -109,9 +109,9 @@ class AIKeywordRadarController extends Controller
                 return [
                     'text' => $kw->keyword,
                     'source' => $kw->source,
-                    'published_at' => $kw->published_at ? $kw->published_at->toDateTimeString() : null,
-                    'synced_at' => $kw->synced_at ? $kw->synced_at->toDateTimeString() : null,
-                    'created_at' => $kw->created_at->toDateTimeString(),
+                    'published_at' => $kw->published_at ? $kw->published_at->toIso8601String() : null,
+                    'synced_at' => $kw->synced_at ? $kw->synced_at->toIso8601String() : null,
+                    'created_at' => $kw->created_at->toIso8601String(),
                 ];
             })->toArray();
         }
@@ -152,12 +152,16 @@ class AIKeywordRadarController extends Controller
                 $boxes = json_decode($value, true) ?? [];
                 foreach ($boxes as &$box) {
                     if (isset($box['competitors'])) {
-                        $boxRaw = explode("\n", $box['competitors']);
+                        $boxRaw = preg_split('/\r\n|\r|\n/', (string)$box['competitors']);
                         $boxNorms = [];
                         $boxClean = [];
                         foreach ($boxRaw as $u) {
                             $u = trim($u);
                             if (empty($u)) continue;
+                            if (!preg_match('/^https?:\/\//i', $u)) {
+                                $u = 'https://' . $u;
+                            }
+                            $u = rtrim($u, '/');
                             
                             // Normalize for comparison
                             $norm = preg_replace('/^https?:\/\//', '', strtolower($u));
@@ -176,12 +180,16 @@ class AIKeywordRadarController extends Controller
             }
 
             if ($key === 'keywords_competitors' || $key === 'keywords_competitors_en') {
-                $raw = explode("\n", $value);
+                $raw = preg_split('/\r\n|\r|\n/', (string)$value);
                 $norms = [];
                 $clean = [];
                 foreach ($raw as $u) {
                     $u = trim($u);
                     if (empty($u)) continue;
+                    if (!preg_match('/^https?:\/\//i', $u)) {
+                        $u = 'https://' . $u;
+                    }
+                    $u = rtrim($u, '/');
                     
                     // Normalize for comparison
                     $norm = preg_replace('/^https?:\/\//', '', strtolower($u));

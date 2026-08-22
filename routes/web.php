@@ -220,7 +220,7 @@ Route::post('dashboard/ai-keyword-radar/sync', function (\Illuminate\Http\Reques
     $extractMethod->setAccessible(true);
 
     $allKeywords = [];
-    $batches = array_chunk($headlines, 100);
+    $batches = array_chunk($headlines, 30);
     foreach ($batches as $batchIndex => $batch) {
         try {
             \Illuminate\Support\Facades\Log::info("[FastSync] Sending AI Batch " . ($batchIndex+1) . "/" . count($batches));
@@ -234,7 +234,6 @@ Route::post('dashboard/ai-keyword-radar/sync', function (\Illuminate\Http\Reques
 
     // 7. Save and Update Cache
     $addedCount = 0;
-    // CRITICAL: The display limit now correctly matches the user's choice (60m, 24h, or 30 days for All Time).
     $category = $boxId ? "Target:{$boxId}" : 'Target';
 
     foreach ($allKeywords as $kw) {
@@ -243,9 +242,16 @@ Route::post('dashboard/ai-keyword-radar/sync', function (\Illuminate\Http\Reques
 
         try {
             $publishedAt = (!empty($kw['published_at'])) ? \Carbon\Carbon::parse($kw['published_at']) : null;
+            $updateData = [
+                'source' => $kw['source'] ?? 'AI',
+                'synced_at' => now(),
+            ];
+            if ($publishedAt !== null) {
+                $updateData['published_at'] = $publishedAt;
+            }
             $keywordObj = \Modules\AIKeywordRadar\Models\Keyword::updateOrCreate(
                 ['keyword' => $text, 'category' => $category, 'lang' => $lang, 'user_id' => $user->id],
-                ['source' => $kw['source'] ?? 'AI', 'synced_at' => now(), 'published_at' => $publishedAt]
+                $updateData
             );
             if ($keywordObj->wasRecentlyCreated) $addedCount++;
             else {
@@ -255,15 +261,14 @@ Route::post('dashboard/ai-keyword-radar/sync', function (\Illuminate\Http\Reques
         } catch (\Throwable $e) {}
     }
 
-    // UPDATE: Fetch keywords strictly within the requested timeframe (60m/24h)
+    // UPDATE: Fetch keywords strictly within the requested timeframe (or recently synced)
     $latestKeywords = \Modules\AIKeywordRadar\Models\Keyword::where('user_id', $user->id)
         ->where('category', $category)
         ->where('lang', $lang)
         ->where(function($q) use ($displayLimit) {
             $q->where('published_at', '>=', $displayLimit)
-              ->orWhere(function($q2) use ($displayLimit) {
-                  $q2->whereNull('published_at')->where('synced_at', '>=', $displayLimit);
-              });
+              ->orWhere('synced_at', '>=', $displayLimit)
+              ->orWhere('created_at', '>=', $displayLimit);
         })
         ->orderBy('created_at', 'desc')
         ->get()
