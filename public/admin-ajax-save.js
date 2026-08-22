@@ -111,11 +111,41 @@
             btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Saving…';
         }
 
-        var formData = new FormData(form);
+        var activePanel = form.querySelector('.tab-panel.active');
+        var formData = new FormData();
+        var token = form.querySelector('input[name="_token"]');
+        if (token) formData.append('_token', token.value);
+        var methodInput = form.querySelector('input[name="_method"]');
+        if (methodInput) formData.append('_method', methodInput.value);
+
+        var scope = activePanel || form;
+        scope.querySelectorAll('input, select, textarea').forEach(function (el) {
+            if (!el.name || el.disabled || el.name === '_token' || el.name === '_method') return;
+            if ((el.type === 'checkbox' || el.type === 'radio') && !el.checked) return;
+            if (el.type === 'file') {
+                if (el.files) {
+                    for (var i = 0; i < el.files.length; i++) {
+                        formData.append(el.name, el.files[i]);
+                    }
+                }
+            } else {
+                formData.append(el.name, el.value);
+            }
+        });
+
+        var targetUrl = form.action;
+        if (activePanel && activePanel.id && activePanel.id.indexOf('content-') === 0) {
+            var tabName = activePanel.id.replace('content-', '');
+            // Update URL to match active tab if updating settings
+            if (targetUrl.indexOf('/horizon-admin/settings') !== -1) {
+                targetUrl = targetUrl.replace(/\/settings(\/[^\/\?]*)?/, '/settings/' + tabName);
+            }
+        }
+
         var creditsTouched = touchesCredits(form);
         var method = (form.getAttribute('method') || 'POST').toUpperCase();
 
-        fetch(form.action, {
+        fetch(targetUrl, {
             method: method,
             headers: {
                 'X-Requested-With': 'XMLHttpRequest',

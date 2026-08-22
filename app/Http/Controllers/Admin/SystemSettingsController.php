@@ -224,9 +224,9 @@ class SystemSettingsController extends Controller
                 }
             }
 
-            // Handle Checkboxes (ensure false is saved if missing)
-            if (! $request->has('markdown_ai_enabled')) {
-                Setting::set('markdown_ai_enabled', false, 'boolean', 'markdown_ai');
+            // Handle Checkboxes per tab (ensure unchecked boxes are saved as false without affecting other tabs)
+            if ($activeTab === 'markdown') {
+                Setting::set('markdown_ai_enabled', $request->has('markdown_ai_enabled'), 'boolean', 'markdown_ai');
             }
 
             foreach ($tools as $tool) {
@@ -235,12 +235,17 @@ class SystemSettingsController extends Controller
                     continue;
                 }
 
-                $availKey = "tool_available_{$tool['slug']}";
-                if (! $request->has($availKey)) {
-                    Setting::set($availKey, false, 'boolean', 'tool_availability');
+                if ($activeTab === 'availability') {
+                    $availKey = "tool_available_{$slug}";
+                    Setting::set($availKey, $request->has($availKey), 'boolean', 'tool_availability');
                 }
 
-                // Guarantee marketplace keys exist for every tool.
+                if ($activeTab === 'trial') {
+                    $trialKey = "trial_tool_{$slug}";
+                    Setting::set($trialKey, $request->has($trialKey), 'boolean', 'trial_package');
+                }
+
+                // Guarantee marketplace keys exist for every tool if not already present
                 $unlockKey = "tool_unlock_price_{$slug}";
                 $creditKey = "tool_credit_cost_{$slug}";
                 $bonusKey = "tool_bonus_credits_{$slug}";
@@ -253,12 +258,6 @@ class SystemSettingsController extends Controller
                 }
                 if (Setting::get($bonusKey, null) === null) {
                     Setting::set($bonusKey, max(0, (int) ($tool['initial_bonus_credits'] ?? 10)), 'integer', 'marketplace_bonuses');
-                }
-
-                // Guarantee trial_tool_ key exists and is false if not submitted (unchecked checkbox)
-                $trialKey = "trial_tool_{$slug}";
-                if (! $request->has($trialKey)) {
-                    Setting::set($trialKey, false, 'boolean', 'trial_package');
                 }
             }
 
