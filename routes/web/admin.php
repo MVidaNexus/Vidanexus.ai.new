@@ -7,7 +7,7 @@ use App\Http\Controllers\Admin\SystemSettingsController;
 use App\Http\Controllers\Admin\UserController;
 use Illuminate\Support\Facades\Route;
 
-Route::middleware(['auth', 'admin', 'permission:view_system_health'])->prefix('horizon-admin')->group(function () {
+Route::middleware(['auth', 'admin'])->prefix('horizon-admin')->group(function () {
     Route::get('/dashboard', [HorizonController::class, 'index'])->name('admin.horizon.index');
     Route::get('/settings', [SystemSettingsController::class, 'index'])->name('admin.horizon.settings.index');
     Route::get('/settings/{tab}', [SystemSettingsController::class, 'index'])->name('admin.horizon.settings.tab');
