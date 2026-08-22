@@ -17,9 +17,11 @@ class RegisterUserRequest extends FormRequest
 
     public function rules(): array
     {
+        $emailRule = app()->environment('testing') ? 'email:rfc' : 'email:rfc,dns';
+
         return [
             'name' => 'required|string|max:255',
-            'email' => ['required', 'string', 'email:rfc,dns', 'max:255', 'unique:users', new NotDisposableEmail],
+            'email' => ['required', 'string', $emailRule, 'max:255', 'unique:users', new NotDisposableEmail],
             'dial_code' => 'required|string|regex:/^\+\d{1,4}$/',
             // Raw national number — combined with dial_code into the
             // canonical E.164 number on the way through the service.

@@ -4,11 +4,18 @@ namespace Tests\Feature\Auth;
 
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Spatie\Honeypot\ProtectAgainstSpam;
 use Tests\TestCase;
 
 class PhoneValidationTest extends TestCase
 {
     use RefreshDatabase;
+
+    protected function setUp(): void
+    {
+        parent::setUp();
+        $this->withoutMiddleware(ProtectAgainstSpam::class);
+    }
 
     public function test_registration_rejects_invalid_phone(): void
     {

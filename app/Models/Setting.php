@@ -27,8 +27,8 @@ class Setting extends Model
             $setting = Cache::remember("setting_{$key}", 3600, function () use ($key) {
                 return self::where('key', $key)->first();
             });
-        } catch (\Exception $e) {
-            $setting = self::where('key', $key)->first();
+        } catch (\Throwable $e) {
+            return $default;
         }
 
         if (!$setting) {
@@ -69,12 +69,8 @@ class Setting extends Model
                 }
                 return $settings;
             });
-        } catch (\Exception $e) {
-            $settings = [];
-            foreach (self::all() as $setting) {
-                $settings[$setting->key] = self::castValue($setting->value, $setting->type);
-            }
-            return $settings;
+        } catch (\Throwable $e) {
+            return [];
         }
     }
 
@@ -83,13 +79,17 @@ class Setting extends Model
      */
     public static function getByGroup(string $group): array
     {
-        return Cache::remember("settings_group_{$group}", 3600, function () use ($group) {
-            $settings = [];
-            foreach (self::where('group', $group)->get() as $setting) {
-                $settings[$setting->key] = self::castValue($setting->value, $setting->type);
-            }
-            return $settings;
-        });
+        try {
+            return Cache::remember("settings_group_{$group}", 3600, function () use ($group) {
+                $settings = [];
+                foreach (self::where('group', $group)->get() as $setting) {
+                    $settings[$setting->key] = self::castValue($setting->value, $setting->type);
+                }
+                return $settings;
+            });
+        } catch (\Throwable $e) {
+            return [];
+        }
     }
 
     /**

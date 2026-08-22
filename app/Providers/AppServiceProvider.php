@@ -43,6 +43,11 @@ class AppServiceProvider extends ServiceProvider
         Gate::policy(Coupon::class, CouponPolicy::class);
         Gate::policy(Invoice::class, InvoicePolicy::class);
 
+        // Implicitly grant all permissions to admins / super_admins
+        Gate::before(function ($user, $ability) {
+            return $user->isAdmin() ? true : null;
+        });
+
         // ─── HTTPS ENFORCEMENT ───
         // Force HTTPS scheme for all generated URLs when behind a reverse proxy in production.
         // trustProxies (bootstrap/app.php) handles X-Forwarded-Proto; this is the safety net
