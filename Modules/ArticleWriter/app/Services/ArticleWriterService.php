@@ -140,16 +140,17 @@ class ArticleWriterService
         }
 
         // 1. Title Section (Mandatory)
-        $titlePrompt = Setting::get("{$slug}_prompt_title", "Generate a Google Discover-optimized headline for [keyword] in [language]. Title should be 8-14 words, use power words, and trigger curiosity.");
+        $titlePrompt = Setting::get("{$slug}_prompt_title", "Generate a magnetic, high-CTR, Google Discover-optimized headline for [keyword] in [language]. Title should be 8-14 words, use power words, and trigger curiosity while matching user search intent.");
         $prompt .= "# TITLE ENGINEERING PROTOCOL\n" . $this->replaceVars($titlePrompt, $vars) . "\n\n";
 
-        // 2. Body Section (Mandatory)
-        $bodyPrompt = Setting::get("{$slug}_prompt_body", "Write a [word_count]-word comprehensive SEO article about [keyword] in [language]. Use expert tone, cover all angles, and ensure E-E-A-T compliance.");
+        // 2. Content Intent & Dynamic Archetype Protocol
+        $prompt .= $this->contentArchetypeProtocol($langName);
+
+        // 3. Body Section (Mandatory Base)
+        $bodyPrompt = Setting::get("{$slug}_prompt_body", "Write an intent-driven, comprehensive, [word_count]-word article about [keyword] in [language]. Strictly apply the archetype structure that fits the topic. Deliver immediate value without generic filler.");
         $prompt .= "# CONTENT CORE PROTOCOL\n" . $this->replaceVars($bodyPrompt, $vars) . "\n\n";
 
-        // 2b. HUMANIZATION PROTOCOL (always appended — non-negotiable rules
-        //     that fight robotic phrasing, AI clichés, and bullet leakage
-        //     inside paragraph text).
+        // 4. HUMANIZATION & ANTI-FILLER PROTOCOL (always enforced)
         $prompt .= $this->humanWritingRules($langName);
 
         // 3. Components (Dynamic — strictly respect user selection)
@@ -210,6 +211,54 @@ class ArticleWriterService
     }
 
     /**
+     * Adaptive Content Archetype & Intent Routing.
+     * Prevents monolithic generic essays by dynamically adapting article structure
+     * to the user's specific content type and query intent.
+     */
+    protected function contentArchetypeProtocol(string $langName): string
+    {
+        $isArabic = stripos($langName, 'arab') !== false;
+
+        $protocol = "# ADAPTIVE CONTENT ARCHETYPE & SEARCH INTENT ROUTING (CRITICAL)\n";
+        $protocol .= "Analyze the primary keyword, topic, and user instructions, then identify the matching CONTENT ARCHETYPE and strictly follow its structure:\n\n";
+
+        $protocol .= "### ARCHETYPE 1: SPORTS EVENT / MATCH / FIXTURE (مباريات وبطولات رياضية)\n";
+        $protocol .= "- PRIMARY INTENT: The reader wants immediate, concrete match data: DATE, KICKOFF TIME (with local time zones: Cairo, KSA, UAE, GMT), STADIUM, BROADCASTER & COMMENTATOR, TOURNAMENT STAGE.\n";
+        $protocol .= "- STRICT RULE: DO NOT write generic introductory filler about football history. The VERY FIRST PARAGRAPH or summary card must state the exact match date, time, venue, and broadcast channel.\n";
+        $protocol .= "- Structure: (1) Match Vital Info Card (Time/Date/Channel/Venue), (2) Channel & Commentator details, (3) Expected Lineups for both teams, (4) Key absences / injuries, (5) Head-to-head & tournament standings context.\n\n";
+
+        $protocol .= "### ARCHETYPE 2: BREAKING NEWS / DEVELOPING EVENT (أخبار عاجلة وأحداث جارية)\n";
+        $protocol .= "- PRIMARY INTENT: What happened, who is involved, where, and what are the immediate consequences?\n";
+        $protocol .= "- Inverted Pyramid rule: Lead with the single most important development in the opening 2 sentences.\n";
+        $protocol .= "- Follow with official statements, verified timeline, background context, and what happens next.\n\n";
+
+        $protocol .= "### ARCHETYPE 3: PRODUCT COMPARISON / TECH REVIEW (مقارنات ومراجعات منتجات وأجهزة)\n";
+        $protocol .= "- PRIMARY INTENT: Which option is better for the user's budget and specific needs?\n";
+        $protocol .= "- Structure: (1) Quick Verdict / TL;DR, (2) Specifications comparison table, (3) Real-world performance / Key differences, (4) Pros & Cons for each side, (5) Final Buying Recommendation (Who should buy A vs Who should buy B).\n\n";
+
+        $protocol .= "### ARCHETYPE 4: HOW-TO & PROCEDURAL GUIDE (شروحات وإرشادات وخطوات تنفيذية)\n";
+        $protocol .= "- PRIMARY INTENT: Fast, step-by-step resolution without fluff.\n";
+        $protocol .= "- Structure: (1) Prerequisites / Required documents, (2) Clear numbered steps (<ol><li>Step 1...</li></ol>), (3) Common pitfalls / mistakes to avoid, (4) Important fees, timeline, or FAQs.\n\n";
+
+        $protocol .= "### ARCHETYPE 5: DATA, SCHEDULES, PRICES & TIMETABLES (أسعار، مواعيد، جداول، إحصائيات)\n";
+        $protocol .= "- PRIMARY INTENT: Direct numbers, figures, and schedules.\n";
+        $protocol .= "- Structure: Put the tables, numbers, and core figures in the FIRST SECTION. Explain the factors influencing the data in subsequent sections.\n\n";
+
+        $protocol .= "### ARCHETYPE 6: HEALTH, MEDICAL, OR SCIENTIFIC TOPIC (صحة وطب وتغذية)\n";
+        $protocol .= "- PRIMARY INTENT: Reliable, evidence-based, medically sound answers with high E-E-A-T.\n";
+        $protocol .= "- Structure: Clear direct explanation, causes/mechanisms, verified symptoms, evidence-based solutions/treatments, when to see a specialist, and medical disclaimer.\n\n";
+
+        $protocol .= "### ARCHETYPE 7: EVERGREEN IN-DEPTH ANALYSIS / ESSAY (تحليلات ومقالات سيو شاملة)\n";
+        $protocol .= "- Cover all logical angles with deep domain authority, case studies, actionable frameworks, and E-E-A-T thought leadership.\n\n";
+
+        $protocol .= "### DATA-FIRST & ZERO-HALLUCINATION RULES:\n";
+        $protocol .= "- If an exact date, score, or official price is unconfirmed or not available in the context, explicitly state: 'لم يُعلن رسمياً حتى الآن' (Not officially announced yet) rather than inventing data.\n";
+        $protocol .= "- Do NOT pad word count with repetitive fluff. Use relevant sub-topics, historical statistics, expert context, and practical nuances to reach the desired word count naturally.\n\n";
+
+        return $protocol;
+    }
+
+    /**
      * Human-writing protocol injected into every prompt. Lives outside the
      * admin-editable body prompt so an admin tweak to [body] never silently
      * removes the anti-AI-cliché rules. Rules cover four pillars:
@@ -224,10 +273,10 @@ class ArticleWriterService
         $isArabic = stripos($langName, 'arab') !== false;
 
         $banned = $isArabic
-            ? "في الختام، في النهاية، باختصار، خلاصة القول، تجدر الإشارة إلى أن، لا يخفى على أحد، في هذا المقال سنتناول، دعونا نتعمق في، في عالم اليوم سريع التطور، في عصر التحول الرقمي"
-            : "in conclusion, in summary, in today's fast-paced world, in the digital age, delve into, dive deep, dive into, navigate the landscape, unlock the potential, unleash, embark on a journey, harness the power of, when it comes to, it is worth noting that, it goes without saying, the world of, in this article we will explore, let's delve, foster, leverage, robust, paramount, plethora, myriad, tapestry, ever-evolving, game-changer, revolutionize, cutting-edge, in essence";
+            ? "في الختام، في النهاية، باختصار، خلاصة القول، تجدر الإشارة إلى أن، لا يخفى على أحد، في هذا المقال سنتناول، دعونا نتعمق في، في عالم اليوم سريع التطور، في عصر التحول الرقمي، يشهد العالم تطوراً كبيراً، في خطوة تاريخية، مستقبل واعد، أهمية بالغة، دعم وتمكين، اهتمام متزايد، علامة فارقة، تلعب دوراً محورياً، لا شك أن، مما لا شك فيه"
+            : "in conclusion, in summary, in today's fast-paced world, in the digital age, delve into, dive deep, dive into, navigate the landscape, unlock the potential, unleash, embark on a journey, harness the power of, when it comes to, it is worth noting that, it goes without saying, the world of, in this article we will explore, let's delve, foster, leverage, robust, paramount, plethora, myriad, tapestry, ever-evolving, game-changer, revolutionize, cutting-edge, in essence, needless to say, it is well known that";
 
-        $rules = "# HUMANIZATION PROTOCOL — NON-NEGOTIABLE\n";
+        $rules = "# HUMANIZATION & ANTI-FILLER PROTOCOL — NON-NEGOTIABLE\n";
         $rules .= "Write like a senior editorial journalist, not an AI. Every sentence must read as if a thoughtful human wrote it for a real reader.\n\n";
 
         $rules .= "## Tone & cadence\n";
@@ -242,7 +291,7 @@ class ArticleWriterService
         $rules .= "If you are tempted to start a sentence with one of these, rewrite the thought from scratch.\n\n";
 
         $rules .= "## Editorial structure\n";
-        $rules .= "- Open with a hook tied to a real-world tension, statistic, or question — not a definition of the keyword.\n";
+        $rules .= "- Open with an immediate answer or hook tied to a real-world tension, statistic, or question — not a generic definition of the keyword.\n";
         $rules .= "- Each H2 section must transition into the next with one human-feeling sentence (no \"Now let's discuss…\" type fillers).\n";
         $rules .= "- Avoid repeating the same phrase across sections. If you used \"key benefit\" once, don't reuse it.\n";
         $rules .= "- Cite real, verifiable details when the grounding context provides them; otherwise, qualify with \"reportedly\", \"according to industry data\", etc.\n\n";
