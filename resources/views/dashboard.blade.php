@@ -14,7 +14,7 @@
 
     <!-- Core Styles -->
     <link rel="stylesheet" href="{{ asset('style.v2.css') }}?v={{ config('vidanexus.style_css_version') }}">
-    <link rel="icon" type="image/png" href="{{ asset('assets/logo.png') }}">
+    @include('partials.favicons')
 
     @include('dashboard.partials.styles')
 </head>
