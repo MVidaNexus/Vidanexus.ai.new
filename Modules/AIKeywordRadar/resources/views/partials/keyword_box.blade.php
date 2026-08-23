@@ -407,7 +407,6 @@
                                     <h4 class="font-bold text-xs sm:text-sm break-words leading-relaxed mb-2" style="color:{{ $colorVar }};opacity:0.95;">{{ $headlineTitle }}</h4>
                                     <div class="flex flex-wrap items-center gap-2.5">
                                         <span style="font-size:8.5px;color:#f87171;background:rgba(248,113,113,0.1);padding:2px 8px;border-radius:8px;font-weight:700;text-transform:uppercase;border:1px solid rgba(248,113,113,0.2);">{{ $source }}</span>
-                                        <span style="font-size:9px;color:var(--text-muted);font-weight:600;">{{ count($groupKeywords) }} {{ count($groupKeywords) === 1 ? 'keyword' : 'keywords' }}</span>
                                         @if($pubTime)
                                             @php 
                                                 $pubCarbon = \Carbon\Carbon::parse($pubTime); 
