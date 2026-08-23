@@ -158,7 +158,7 @@ class ArticleWriterService
         }
 
         // 1. Title Section (Mandatory)
-        $titlePrompt = Setting::get("{$slug}_prompt_title", "Generate an engaging, high-CTR, Google Discover-compliant headline for [keyword] in [language]. Title should be 8-14 words, trigger intelligent curiosity while maintaining high credibility, and strictly avoid sensational clickbait words (like صادم, كارثة, لن تصدق).");
+        $titlePrompt = Setting::get("{$slug}_prompt_title", "Generate an engaging, high-CTR, Google Discover-compliant headline for [keyword] in [language]. Title should be 8-14 words, trigger intelligent curiosity while maintaining high credibility, use a colon ':' or natural connector for sub-clauses (NEVER put periods '.' in titles), and strictly avoid sensational clickbait words (like صادم, كارثة, لن تصدق).");
         $prompt .= "# TITLE ENGINEERING PROTOCOL\n" . $this->replaceVars($titlePrompt, $vars) . "\n\n";
 
         // 2. Content Intent & Dynamic Archetype Protocol
@@ -252,10 +252,22 @@ class ArticleWriterService
         $protocol .= "  • Natural, polished, readable Arabic prose — NO heavy academic jargon, NO robotic AI transitions.\n";
         $protocol .= "  • Use clean HTML tables (<table>) for prices.\n\n";
 
-        $protocol .= "### ARCHETYPE 2: SPORTS EVENT / MATCH / FIXTURE (مباريات وبطولات رياضية)\n";
-        $protocol .= "- PRIMARY INTENT: The reader wants immediate, concrete match data: DATE, KICKOFF TIME (with local time zones: Cairo, KSA, UAE, GMT), STADIUM, BROADCASTER & COMMENTATOR, TOURNAMENT STAGE.\n";
-        $protocol .= "- STRICT RULE: DO NOT write generic introductory filler about football history. The VERY FIRST PARAGRAPH or summary card must state the exact match date, time, venue, and broadcast channel.\n";
-        $protocol .= "- Structure: (1) Match Vital Info Card (Time/Date/Channel/Venue), (2) Channel & Commentator details, (3) Expected Lineups for both teams, (4) Key absences / injuries, (5) Head-to-head & tournament standings context.\n\n";
+        $protocol .= "### ARCHETYPE 2: SPORTS EVENT, MATCH FIXTURE & FOOTBALL PREVIEWS (تغطيات ومواعيد المباريات وتشكيل الفرق والرياضة)\n";
+        $protocol .= "- PRIMARY INTENT: Football fans and readers search for immediate, comprehensive, and accurate match data. NEVER output vague phrases like 'لم يُعلن رسمياً' for well-known leagues.\n";
+        $protocol .= "- REQUIRED COMPREHENSIVE MATCH STRUCTURE:\n";
+        $protocol .= "  1. Match Overview & Quick Card: Direct kickoff time across all Arab time zones (مصر والقاهرة، السعودية ومكة المكرمة، الإمارات، المغرب العربي، توقيت غرينتش GMT)، اسم البطولة والجولة، والملعب المستضيف الفعلي للنادي صاحب الأرض (مثلاً: لويس كومبانيس الأولمبي/مونتجويك أو كامب نو لبرشلونة، سانتياغو برنابيو لريال مدريد، أنفيلد لليفربول، ستاد القاهرة للأهلي والزمالك، الأول بارك للنصر، المملكة أرينا للهلال).\n";
+        $protocol .= "  2. Broadcaster & Channel Frequency Table (القنوات الناقلة وتردداتها التفصيلية): Name the official broadcasting network for the tournament (مثال: beIN Sports 1 HD / beIN Sports 3 للدوري الإسباني والإنجليزي ودوري أبطال أوروبا، SSC للدوري السعودي، أون تايم سبورتس للدوري المصري، أبوظبي الرياضية/StarzPlay للدوري الإيطالي) مع جدول تردد القناة (القمر الصناعي نايل سات/سهيل سات، التردد، الاستقطاب، معدل الترميز 27500، معامل تصحيح الخطأ).\n";
+        $protocol .= "  3. Commentator (معلق اللقاء): Name the assigned or expected top commentators (مثل: عصام الشوالي، حفيظ دراجي، خليل البلوشي، حسن العيدروس، فارس عوض، فهد العتيبي).\n";
+        $protocol .= "  4. Expected Lineups for Both Teams (التشكيل المتوقع للفريقين): MUST provide the tactical formation (e.g. 4-3-3 أو 4-2-3-1) with real actual star players for each position:\n";
+        $protocol .= "     • حراسة المرمى (Goalkeeper)\n";
+        $protocol .= "     • خط الدفاع (Defense)\n";
+        $protocol .= "     • خط الوسط (Midfield)\n";
+        $protocol .= "     • خط الهجوم (Attack)\n";
+        $protocol .= "  5. Absences & Injuries (غيابات وإصابات الفريقين المؤكدة والجاهزية الفنية).\n";
+        $protocol .= "  6. Head-to-Head & Tournament Standings Context (موقف الفريقين في جدول الترتيب وتاريخ المواجهات المباشرة).\n";
+        $protocol .= "- STRICT SPORTS INTEGRITY RULES:\n";
+        $protocol .= "  • ZERO FAKE SQUAD NAMES: NEVER invent fictional names (e.g. حمزة عبد الكريم في برشلونة). Only mention real, verified squad members and coaches.\n";
+        $protocol .= "  • NO VAGUE HAND-WAVING: Do NOT say 'لم تعلن القنوات' when the league broadcaster is globally known (beIN Sports, SSC, etc.). Provide the primary broadcast channel and frequency.\n\n";
 
         $protocol .= "### ARCHETYPE 3: BREAKING NEWS / DEVELOPING EVENT (أخبار عاجلة وأحداث جارية)\n";
         $protocol .= "- PRIMARY INTENT: What happened, who is involved, where, and what are the immediate consequences?\n";
