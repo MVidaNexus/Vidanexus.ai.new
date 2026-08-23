@@ -114,9 +114,9 @@ class User extends Authenticatable implements MustVerifyEmail
     /**
      * Check if user can use a specific tool (owns it + has enough credits).
      */
-    public function canUseTool(string $slug): bool
+    public function canUseTool(string $slug, ?int $explicitCost = null): bool
     {
-        return app(ToolCreditConsumptionService::class)->canUse($this, $slug);
+        return app(ToolCreditConsumptionService::class)->canUse($this, $slug, $explicitCost);
     }
 
     /**
@@ -131,9 +131,9 @@ class User extends Authenticatable implements MustVerifyEmail
     /**
      * Deduct credits for a tool action (wallet first, then per-tool bonus when allowed).
      */
-    public function deductToolCredits(string $slug): bool
+    public function deductToolCredits(string $slug, ?int $explicitCost = null): bool
     {
-        return app(ToolCreditConsumptionService::class)->deduct($this, $slug);
+        return app(ToolCreditConsumptionService::class)->deduct($this, $slug, $explicitCost);
     }
 
     public function sendEmailVerificationNotification(): void

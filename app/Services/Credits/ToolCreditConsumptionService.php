@@ -21,7 +21,7 @@ class ToolCreditConsumptionService
         protected AuditLogService $auditLogService
     ) {}
 
-    public function canUse(User $user, string $slug): bool
+    public function canUse(User $user, string $slug, ?int $explicitCost = null): bool
     {
         if ($user->isAdmin()) {
             return true;
@@ -31,7 +31,7 @@ class ToolCreditConsumptionService
             return false;
         }
 
-        $cost = $user->getToolCreditCost($slug);
+        $cost = $explicitCost !== null ? $explicitCost : $user->getToolCreditCost($slug);
         if ($cost <= 0) {
             return true;
         }
@@ -55,9 +55,9 @@ class ToolCreditConsumptionService
     /**
      * Deduct credits for one tool action. Creates wallet transactions (withdrawal) and ledger rows.
      */
-    public function deduct(User $user, string $slug): bool
+    public function deduct(User $user, string $slug, ?int $explicitCost = null): bool
     {
-        $cost = $user->getToolCreditCost($slug);
+        $cost = $explicitCost !== null ? $explicitCost : $user->getToolCreditCost($slug);
         if ($cost <= 0) {
             return true;
         }

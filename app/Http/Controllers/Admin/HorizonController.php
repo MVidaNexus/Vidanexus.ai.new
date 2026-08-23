@@ -157,6 +157,11 @@ class HorizonController extends Controller
             $settings['default_word_count'] = Setting::get("{$slug}_default_word_count", 1500);
             $settings['available_components'] = Setting::get("{$slug}_available_components", "faq:FAQ Section\nsummary:Quick Summary\ntakeaways:Key Takeaways\nmeta:SEO Meta Tags");
             $settings['credit_cost'] = Setting::get("tool_credit_cost_{$slug}", 5);
+            $settings['credit_cost_300'] = (int) Setting::get("{$slug}_credit_cost_300", 1);
+            $settings['credit_cost_500'] = (int) Setting::get("{$slug}_credit_cost_500", 2);
+            $settings['credit_cost_800'] = (int) Setting::get("{$slug}_credit_cost_800", 3);
+            $settings['credit_cost_1500'] = (int) Setting::get("{$slug}_credit_cost_1500", 5);
+            $settings['credit_cost_2500'] = (int) Setting::get("{$slug}_credit_cost_2500", 8);
 
             // Dedicated Prompt Fields
             $settings['prompt_title'] = Setting::get("{$slug}_prompt_title", "Generate a Google Discover-optimized headline for [keyword] in [language].\n\nRESEARCH CONTEXT:\n[news_context]\n\nRequirements:\n- 8-14 words for optimal Discover CTR\n- MUST use a power word (Breaking, Exclusive, Detailed, Revealed)\n- Focus on the LATEST angle from the research context\n- Include [year] and magnetic hooks.");
@@ -527,6 +532,22 @@ class HorizonController extends Controller
             }
             if ($request->has('live_search_limit')) {
                 Setting::set("{$slug}_live_search_limit", (int)$request->live_search_limit, 'number', 'tool_settings');
+            }
+
+            if ($request->has('credit_cost_300')) {
+                Setting::set("{$slug}_credit_cost_300", max(0, (int) $request->credit_cost_300), 'number', 'tool_settings');
+            }
+            if ($request->has('credit_cost_500')) {
+                Setting::set("{$slug}_credit_cost_500", max(0, (int) $request->credit_cost_500), 'number', 'tool_settings');
+            }
+            if ($request->has('credit_cost_800')) {
+                Setting::set("{$slug}_credit_cost_800", max(0, (int) $request->credit_cost_800), 'number', 'tool_settings');
+            }
+            if ($request->has('credit_cost_1500')) {
+                Setting::set("{$slug}_credit_cost_1500", max(0, (int) $request->credit_cost_1500), 'number', 'tool_settings');
+            }
+            if ($request->has('credit_cost_2500')) {
+                Setting::set("{$slug}_credit_cost_2500", max(0, (int) $request->credit_cost_2500), 'number', 'tool_settings');
             }
 
             // Save Dedicated Prompt Protocols

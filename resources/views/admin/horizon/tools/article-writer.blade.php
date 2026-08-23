@@ -367,36 +367,107 @@
                 </button>
             </div>
 
-            <!-- TAB 3: Credit System -->
-            <div id="pane-pricing" class="horizon-tab-pane">
+            <!-- TAB 4: Credit System -->
+            <div id="pane-credits" class="horizon-tab-pane">
                 @php
-                    $creditCost = (int) \App\Models\Setting::get("tool_credit_cost_{$tool['slug']}", $tool['credit_cost_per_action'] ?? 5);
+                    $creditCost = (int) ($settings['credit_cost'] ?? \App\Models\Setting::get("tool_credit_cost_{$tool['slug']}", 5));
+                    $cost300 = (int) ($settings['credit_cost_300'] ?? \App\Models\Setting::get("{$tool['slug']}_credit_cost_300", 1));
+                    $cost500 = (int) ($settings['credit_cost_500'] ?? \App\Models\Setting::get("{$tool['slug']}_credit_cost_500", 2));
+                    $cost800 = (int) ($settings['credit_cost_800'] ?? \App\Models\Setting::get("{$tool['slug']}_credit_cost_800", 3));
+                    $cost1500 = (int) ($settings['credit_cost_1500'] ?? \App\Models\Setting::get("{$tool['slug']}_credit_cost_1500", 5));
+                    $cost2500 = (int) ($settings['credit_cost_2500'] ?? \App\Models\Setting::get("{$tool['slug']}_credit_cost_2500", 8));
                 @endphp
                 
-                <div style="text-align: center; padding: 2rem 0;">
-                    <div style="width: 80px; height: 80px; background: linear-gradient(135deg, rgba(245, 158, 11, 0.2), rgba(245, 158, 11, 0.05)); border-radius: 20px; display: flex; align-items: center; justify-content: center; margin: 0 auto 1.5rem; color: #f59e0b; font-size: 2rem; border: 1px solid rgba(245, 158, 11, 0.3);">
-                        <i class="fas fa-coins"></i>
-                    </div>
-                    
-                    <h2 style="margin: 0 0 0.5rem; font-family: 'Poppins', sans-serif; font-size: 1.5rem; font-weight: 800;">Financial Unit Calibration</h2>
-                    <p style="margin: 0 auto 3rem; color: var(--text-muted); font-size: 0.9rem; max-width: 500px;">Set the operational cost for each article generation request.</p>
-                    
-                    <div style="max-width: 450px; margin: 0 auto; background: rgba(255,255,255,0.02); border: 1px solid var(--horizon-border); border-radius: 24px; padding: 2.5rem; position: relative;">
-                        <div style="font-size: 0.7rem; color: var(--text-muted); text-transform: uppercase; letter-spacing: 2px; font-weight: 800; margin-bottom: 1.5rem; opacity: 0.6;">Cost Per Article</div>
+                <div style="max-width: 900px; margin: 0 auto; padding: 1.5rem 0;">
+                    <div style="text-align: center; margin-bottom: 2.5rem;">
+                        <div style="width: 80px; height: 80px; background: linear-gradient(135deg, rgba(245, 158, 11, 0.2), rgba(245, 158, 11, 0.05)); border-radius: 24px; display: flex; align-items: center; justify-content: center; margin: 0 auto 1.25rem; color: #f59e0b; font-size: 2.2rem; border: 1px solid rgba(245, 158, 11, 0.3); transform: rotate(-5deg);">
+                            <i class="fas fa-coins"></i>
+                        </div>
                         
-                        <div style="display: flex; align-items: center; justify-content: center; gap: 1rem;">
-                            <input type="number" name="credit_cost" value="{{ $creditCost }}" min="0" class="ai-input-base" style="width: 90px; height: 80px; font-size: 2.5rem; font-weight: 800; text-align: center; border-radius: 16px; border: 2px solid var(--primary-admin); background: rgba(0, 168, 230, 0.05) !important; color: var(--primary-admin);">
-                            <span style="font-size: 1.25rem; font-weight: 700; color: var(--text-muted); letter-spacing: 1px;">CREDITS</span>
-                        </div>
+                        <h3 style="margin: 0 0 0.5rem; font-family: 'Space Grotesk', sans-serif; font-size: 1.6rem; font-weight: 800; color: var(--text-main);">Financial Unit Calibration</h3>
+                        <p style="margin: 0 auto; color: var(--text-muted); font-size: 0.85rem; max-width: 600px;">Configure credit costs per article word count tier. Credits are deducted from user wallet upon successful generation.</p>
+                    </div>
 
-                        <div style="margin-top: 2.5rem; background: rgba(0, 168, 230, 0.05); border: 1px solid rgba(0, 168, 230, 0.1); border-radius: 12px; padding: 1rem; display: flex; gap: 0.75rem; text-align: left;">
-                            <div style="color: var(--primary-admin); font-size: 1rem; margin-top: 2px;"><i class="fas fa-info-circle"></i></div>
-                            <p style="margin: 0; font-size: 0.75rem; color: var(--text-muted); line-height: 1.5;">This value is deducted from the user's wallet upon successful article generation. Failed generations are cost-neutral.</p>
+                    <!-- Base / Fallback Action Cost Card -->
+                    <div style="background: linear-gradient(180deg, rgba(255,255,255,0.03) 0%, rgba(255,255,255,0.01) 100%); border: 1px solid var(--horizon-border); border-radius: 20px; padding: 1.75rem 2rem; margin-bottom: 2rem; display: flex; align-items: center; justify-content: space-between; gap: 2rem;">
+                        <div>
+                            <div style="display: flex; align-items: center; gap: 0.5rem; margin-bottom: 0.35rem;">
+                                <span style="background: var(--primary-admin); color: #000; font-size: 0.65rem; font-weight: 900; padding: 3px 10px; border-radius: 6px; text-transform: uppercase;">DEFAULT</span>
+                                <h4 style="margin: 0; font-size: 1rem; color: var(--text-main); font-weight: 800;">Standard Article Generation Cost</h4>
+                            </div>
+                            <p style="margin: 0; font-size: 0.78rem; color: var(--text-muted);">Fallback credit deduction if no word count tier is matched.</p>
+                        </div>
+                        <div style="display: flex; align-items: center; gap: 0.75rem; flex-shrink: 0;">
+                            <input type="number" name="credit_cost" value="{{ $creditCost }}" min="0" class="ai-input-base" style="width: 90px; height: 56px; font-size: 1.8rem; font-weight: 800; text-align: center; border-radius: 14px; border: 2px solid var(--primary-admin); background: rgba(0, 168, 230, 0.08) !important; color: var(--primary-admin);">
+                            <span style="font-size: 0.85rem; font-weight: 800; color: var(--text-muted); letter-spacing: 1px;">CREDITS</span>
                         </div>
                     </div>
 
-                    <button type="submit" class="vn-btn vn-btn-primary" style="margin-top: 2rem; padding: 1rem 3rem; font-size: 1rem; border-radius: 12px; font-weight: 700; display: inline-flex; align-items: center; gap: 0.75rem; background: var(--primary-admin); color: #000; border: none; cursor: pointer;">
-                        <i class="fas fa-check-circle"></i> Confirm Credit Settings
+                    <!-- Word Count Pricing Tiers Grid -->
+                    <h4 style="color: var(--text-main); font-size: 0.95rem; font-weight: 800; margin-bottom: 1rem; display: flex; align-items: center; gap: 0.5rem;">
+                        <i class="fas fa-layer-group" style="color: #00A58B;"></i> Word Count Tiered Pricing (تسعير الكريديت حسب طول المقال)
+                    </h4>
+
+                    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 1rem; margin-bottom: 2.5rem;">
+                        <!-- Tier 1: 300 Words -->
+                        <div style="background: rgba(255,255,255,0.02); border: 1px solid var(--horizon-border); border-radius: 16px; padding: 1.25rem 1rem; text-align: center; transition: all 0.2s;">
+                            <div style="font-size: 0.7rem; font-weight: 800; color: #00A58B; text-transform: uppercase; margin-bottom: 0.25rem;">MINI</div>
+                            <div style="font-size: 1rem; font-weight: 800; color: var(--text-main); margin-bottom: 0.75rem;">~300 Words</div>
+                            <div style="display: flex; align-items: center; justify-content: center; gap: 0.4rem; margin-bottom: 0.5rem;">
+                                <input type="number" name="credit_cost_300" value="{{ $cost300 }}" min="0" class="ai-input-base" style="width: 70px; height: 48px; font-size: 1.4rem; font-weight: 800; text-align: center; border-radius: 10px; border: 1px solid var(--horizon-border); color: #fff;">
+                                <span style="font-size: 0.65rem; font-weight: 700; color: var(--text-muted);">CRS</span>
+                            </div>
+                            <div style="font-size: 0.65rem; color: var(--text-muted);">موجز سريع</div>
+                        </div>
+
+                        <!-- Tier 2: 500 Words -->
+                        <div style="background: rgba(255,255,255,0.02); border: 1px solid var(--horizon-border); border-radius: 16px; padding: 1.25rem 1rem; text-align: center; transition: all 0.2s;">
+                            <div style="font-size: 0.7rem; font-weight: 800; color: #00A58B; text-transform: uppercase; margin-bottom: 0.25rem;">MICRO</div>
+                            <div style="font-size: 1rem; font-weight: 800; color: var(--text-main); margin-bottom: 0.75rem;">~500 Words</div>
+                            <div style="display: flex; align-items: center; justify-content: center; gap: 0.4rem; margin-bottom: 0.5rem;">
+                                <input type="number" name="credit_cost_500" value="{{ $cost500 }}" min="0" class="ai-input-base" style="width: 70px; height: 48px; font-size: 1.4rem; font-weight: 800; text-align: center; border-radius: 10px; border: 1px solid var(--horizon-border); color: #fff;">
+                                <span style="font-size: 0.65rem; font-weight: 700; color: var(--text-muted);">CRS</span>
+                            </div>
+                            <div style="font-size: 0.65rem; color: var(--text-muted);">قصير جداً</div>
+                        </div>
+
+                        <!-- Tier 3: 800 Words -->
+                        <div style="background: rgba(255,255,255,0.02); border: 1px solid var(--horizon-border); border-radius: 16px; padding: 1.25rem 1rem; text-align: center; transition: all 0.2s;">
+                            <div style="font-size: 0.7rem; font-weight: 800; color: #00A58B; text-transform: uppercase; margin-bottom: 0.25rem;">SHORT</div>
+                            <div style="font-size: 1rem; font-weight: 800; color: var(--text-main); margin-bottom: 0.75rem;">~800 Words</div>
+                            <div style="display: flex; align-items: center; justify-content: center; gap: 0.4rem; margin-bottom: 0.5rem;">
+                                <input type="number" name="credit_cost_800" value="{{ $cost800 }}" min="0" class="ai-input-base" style="width: 70px; height: 48px; font-size: 1.4rem; font-weight: 800; text-align: center; border-radius: 10px; border: 1px solid var(--horizon-border); color: #fff;">
+                                <span style="font-size: 0.65rem; font-weight: 700; color: var(--text-muted);">CRS</span>
+                            </div>
+                            <div style="font-size: 0.65rem; color: var(--text-muted);">قصير</div>
+                        </div>
+
+                        <!-- Tier 4: 1500 Words -->
+                        <div style="background: rgba(0, 168, 230, 0.05); border: 1px solid rgba(0, 168, 230, 0.3); border-radius: 16px; padding: 1.25rem 1rem; text-align: center; transition: all 0.2s; position: relative;">
+                            <span style="position: absolute; top: -10px; left: 50%; transform: translateX(-50%); background: var(--primary-admin); color: #000; font-size: 0.58rem; font-weight: 900; padding: 2px 8px; border-radius: 4px; text-transform: uppercase;">POPULAR</span>
+                            <div style="font-size: 0.7rem; font-weight: 800; color: var(--primary-admin); text-transform: uppercase; margin-bottom: 0.25rem;">MEDIUM</div>
+                            <div style="font-size: 1rem; font-weight: 800; color: var(--text-main); margin-bottom: 0.75rem;">~1500 Words</div>
+                            <div style="display: flex; align-items: center; justify-content: center; gap: 0.4rem; margin-bottom: 0.5rem;">
+                                <input type="number" name="credit_cost_1500" value="{{ $cost1500 }}" min="0" class="ai-input-base" style="width: 70px; height: 48px; font-size: 1.4rem; font-weight: 800; text-align: center; border-radius: 10px; border: 1px solid var(--primary-admin); color: var(--primary-admin);">
+                                <span style="font-size: 0.65rem; font-weight: 700; color: var(--text-muted);">CRS</span>
+                            </div>
+                            <div style="font-size: 0.65rem; color: var(--text-muted);">متوسط قياسي</div>
+                        </div>
+
+                        <!-- Tier 5: 2500 Words -->
+                        <div style="background: rgba(255,255,255,0.02); border: 1px solid var(--horizon-border); border-radius: 16px; padding: 1.25rem 1rem; text-align: center; transition: all 0.2s;">
+                            <div style="font-size: 0.7rem; font-weight: 800; color: #f59e0b; text-transform: uppercase; margin-bottom: 0.25rem;">LONG</div>
+                            <div style="font-size: 1rem; font-weight: 800; color: var(--text-main); margin-bottom: 0.75rem;">~2500 Words</div>
+                            <div style="display: flex; align-items: center; justify-content: center; gap: 0.4rem; margin-bottom: 0.5rem;">
+                                <input type="number" name="credit_cost_2500" value="{{ $cost2500 }}" min="0" class="ai-input-base" style="width: 70px; height: 48px; font-size: 1.4rem; font-weight: 800; text-align: center; border-radius: 10px; border: 1px solid var(--horizon-border); color: #fff;">
+                                <span style="font-size: 0.65rem; font-weight: 700; color: var(--text-muted);">CRS</span>
+                            </div>
+                            <div style="font-size: 0.65rem; color: var(--text-muted);">شامل ومفصل</div>
+                        </div>
+                    </div>
+
+                    <button type="submit" class="btn-save" style="width: 100%; height: 56px; font-size: 1rem;">
+                        <i class="fas fa-check-circle"></i> Confirm Credit Settings (حفظ إعدادات الكريديت)
                     </button>
                 </div>
             </div>

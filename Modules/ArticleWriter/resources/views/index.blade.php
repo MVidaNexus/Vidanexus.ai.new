@@ -303,30 +303,35 @@
                                     :class="form.word_count === 300 ? 'length-card-active' : ''">
                                 <div class="length-card-title" x-text="t('length_mini')">MINI</div>
                                 <div class="length-card-words" x-text="t('words_300')">~300</div>
+                                <div style="font-size: 0.65rem; color: #00A58B; font-weight: 800; margin-top: 3px;" x-text="getTierCreditCost(300) + (form.language === 'ar' ? ' كريديت' : ' CRS')"></div>
                             </button>
                             <button @click="form.word_count = 500" type="button"
                                     class="length-card"
                                     :class="form.word_count === 500 ? 'length-card-active' : ''">
                                 <div class="length-card-title" x-text="t('length_micro')">MICRO</div>
                                 <div class="length-card-words" x-text="t('words_500')">~500</div>
+                                <div style="font-size: 0.65rem; color: #00A58B; font-weight: 800; margin-top: 3px;" x-text="getTierCreditCost(500) + (form.language === 'ar' ? ' كريديت' : ' CRS')"></div>
                             </button>
                             <button @click="form.word_count = 800" type="button"
                                     class="length-card"
                                     :class="form.word_count === 800 ? 'length-card-active' : ''">
                                 <div class="length-card-title" x-text="t('length_short')">SHORT</div>
                                 <div class="length-card-words" x-text="t('words_800')">~800</div>
+                                <div style="font-size: 0.65rem; color: #00A58B; font-weight: 800; margin-top: 3px;" x-text="getTierCreditCost(800) + (form.language === 'ar' ? ' كريديت' : ' CRS')"></div>
                             </button>
                             <button @click="form.word_count = 1500" type="button"
                                     class="length-card"
                                     :class="form.word_count === 1500 ? 'length-card-active' : ''">
                                 <div class="length-card-title" x-text="t('length_medium')">MEDIUM</div>
                                 <div class="length-card-words" x-text="t('words_1500')">~1.5k</div>
+                                <div style="font-size: 0.65rem; color: var(--aw-cyan); font-weight: 800; margin-top: 3px;" x-text="getTierCreditCost(1500) + (form.language === 'ar' ? ' كريديت' : ' CRS')"></div>
                             </button>
                             <button @click="form.word_count = 2500" type="button"
                                     class="length-card"
                                     :class="form.word_count === 2500 ? 'length-card-active' : ''">
                                 <div class="length-card-title" x-text="t('length_long')">LONG</div>
                                 <div class="length-card-words" x-text="t('words_2500')">~2.5k</div>
+                                <div style="font-size: 0.65rem; color: #f59e0b; font-weight: 800; margin-top: 3px;" x-text="getTierCreditCost(2500) + (form.language === 'ar' ? ' كريديت' : ' CRS')"></div>
                             </button>
                         </div>
                     </div>
@@ -358,7 +363,7 @@
                                 class="aw-generate-btn">
                             <span x-show="!isProcessing">
                                 <i class="fas fa-wand-magic-sparkles"></i> <span x-text="t('btn_generate')"></span>
-                                <span class="aw-generate-cost" x-text="settings.credit_cost + (form.language === 'ar' ? ' كريديت' : ' CRS')"></span>
+                                <span class="aw-generate-cost" x-text="getCurrentCreditCost() + (form.language === 'ar' ? ' كريديت' : ' CRS')"></span>
                             </span>
                             <span x-show="isProcessing">
                                 <i class="fas fa-circle-notch fa-spin"></i> <span x-text="t('btn_generating')"></span>
@@ -1366,6 +1371,21 @@ function articleWriter() {
             } else if (this.settings.languages && this.settings.languages.length > 0) {
                 this.form.language = this.settings.languages[0].value;
             }
+        },
+
+        getCurrentCreditCost() {
+            const wc = this.form.word_count || 1500;
+            if (this.settings.credit_costs && this.settings.credit_costs[wc] !== undefined) {
+                return this.settings.credit_costs[wc];
+            }
+            return this.settings.credit_cost || 5;
+        },
+
+        getTierCreditCost(words) {
+            if (this.settings.credit_costs && this.settings.credit_costs[words] !== undefined) {
+                return this.settings.credit_costs[words];
+            }
+            return this.settings.credit_cost || 5;
         },
 
         toggleComponent(value) {

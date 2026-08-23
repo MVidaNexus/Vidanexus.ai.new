@@ -39,6 +39,13 @@ class ArticleWriterController extends Controller
             'audiences' => $this->parseSettings('article-writer_available_audiences', "general:General Audience\nprofessionals:Industry Professionals\nbeginners:Beginners & Learners\nshoppers:Online Shoppers"),
             'components' => $this->parseSettings('article-writer_available_components', "faq:FAQ Section\nsummary:Quick Summary\ntakeaways:Key Takeaways\nmeta:SEO Meta Tags\ninternal_links:Internal Link Suggestions"),
             'credit_cost' => (int) Setting::get('tool_credit_cost_article-writer', 5),
+            'credit_costs' => [
+                300 => (int) Setting::get('article-writer_credit_cost_300', 1),
+                500 => (int) Setting::get('article-writer_credit_cost_500', 2),
+                800 => (int) Setting::get('article-writer_credit_cost_800', 3),
+                1500 => (int) Setting::get('article-writer_credit_cost_1500', 5),
+                2500 => (int) Setting::get('article-writer_credit_cost_2500', 8),
+            ],
             'default_word_count' => (int) Setting::get('article-writer_default_word_count', 1500),
         ];
 
@@ -65,10 +72,11 @@ class ArticleWriterController extends Controller
 
         $user = auth()->user();
         $slug = 'article-writer';
+        $wordCount = (int) ($request->word_count ?? 1500);
+        $cost = (int) Setting::get("article-writer_credit_cost_{$wordCount}", (int) Setting::get("tool_credit_cost_{$slug}", 5));
 
-        // 1. Credit Check — canonical (wallet + bonus when allowed).
-        if (! $user->canUseTool($slug)) {
-            $cost = $user->getToolCreditCost($slug);
+        // 1. Credit Check — canonical with dynamic tiered cost (wallet + bonus when allowed).
+        if (! $user->canUseTool($slug, $cost)) {
             return AIResponse::error(
                 'INSUFFICIENT_CREDITS',
                 'Insufficient credits. You need ' . $cost . ' credits to generate this article.',
@@ -143,9 +151,10 @@ class ArticleWriterController extends Controller
 
             // 5. Deduct Credits via the canonical service (wallet → bonus,
             // ledger entry + transaction + audit log).
-            if (! $user->deductToolCredits($slug)) {
+            if (! $user->deductToolCredits($slug, $cost)) {
                 \Illuminate\Support\Facades\Log::critical('[Article Writer] Credits could not be deducted after successful generation', [
                     'user_id' => $user->id,
+                    'cost' => $cost,
                 ]);
             }
 
