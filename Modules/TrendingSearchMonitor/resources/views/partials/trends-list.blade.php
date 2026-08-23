@@ -43,10 +43,10 @@
 
                             @php $oppScore = app(\Modules\TrendingSearchMonitor\Services\TrendIntelligenceService::class)->getEstimatedScore($trend['title']); @endphp
                             <div class="flex items-center gap-2">
-                                <div class="w-16 h-1.5 bg-white/5 rounded-full overflow-hidden border border-white/5">
+                                <div class="w-16 h-1.5 bg-white/10 rounded-full overflow-hidden border border-white/10">
                                     <div class="h-full bg-gradient-to-r from-primary-cyan to-primary-purple" style="width: {{ $oppScore }}%"></div>
                                 </div>
-                                <span class="text-[9px] font-black {{ $oppScore > 60 ? 'text-primary-cyan' : 'text-gray-500' }} uppercase tracking-tighter">{{ $oppScore }}% ROI</span>
+                                <span class="text-[10px] font-black text-primary-cyan uppercase tracking-tighter">{{ $oppScore }}% ROI</span>
                             </div>
                         </div>
 

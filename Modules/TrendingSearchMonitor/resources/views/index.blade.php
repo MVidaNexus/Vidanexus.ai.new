@@ -315,29 +315,29 @@ function updateUI(data) {
 function renderTrendNewsHtml(trend) {
     const news = (trend.news || []).slice(0, 3);
     if (!news.length) {
-        return `<p class="text-xs text-gray-500 font-medium break-words mt-1">${escapeHtml(trend.subtitle || '')}</p>`;
+        return `<p class="text-xs text-slate-300 font-medium break-words mt-1">${escapeHtml(trend.subtitle || '')}</p>`;
     }
 
     const featured = news[0];
     const rest = news.slice(1);
     const featuredImg = featured.image || trend.image || '';
 
-    const imgFallback = `<div class="trend-img-fallback absolute inset-0 items-center justify-center" style="display:flex;"><i class="fas fa-newspaper text-2xl text-gray-600"></i></div>`;
+    const imgFallback = `<div class="trend-img-fallback absolute inset-0 items-center justify-center" style="display:flex;"><i class="fas fa-newspaper text-2xl text-slate-400"></i></div>`;
     const featuredImgHtml = featuredImg
         ? `<img src="${escapeAttr(featuredImg)}" alt="" class="trend-news-img w-full h-full object-cover min-h-[7rem]" loading="lazy" onerror="this.style.display='none';this.nextElementSibling.style.display='flex';">${imgFallback}`
         : imgFallback;
 
     const featuredBlock = `
         <a href="${escapeAttr(featured.url)}" target="_blank" rel="noopener"
-           class="news-featured block mb-3 rounded-xl overflow-hidden border border-white/5 bg-white/[0.02] hover:border-primary-cyan/30 transition-all group/feat no-underline">
+           class="news-featured block mb-3 rounded-xl overflow-hidden border border-white/10 bg-white/[0.04] hover:border-primary-cyan/40 transition-all group/feat no-underline">
             <div class="flex flex-col sm:flex-row">
-                <div class="sm:w-36 h-28 sm:h-auto flex-shrink-0 relative bg-white/5">${featuredImgHtml}</div>
-                <div class="p-3 flex-1 min-w-0">
-                    <span class="news-title-text text-sm font-bold text-white group-hover/feat:text-primary-cyan transition-colors line-clamp-2 block">${escapeHtml(featured.title)}</span>
-                    ${featured.snippet ? `<p class="text-[11px] text-gray-500 mt-1 line-clamp-2">${escapeHtml(featured.snippet)}</p>` : ''}
-                    <div class="text-[10px] text-gray-600 mt-2 flex flex-wrap items-center gap-2">
-                        ${featured.source ? `<span class="font-black uppercase">${escapeHtml(featured.source)}</span>` : ''}
-                        ${featured.date ? `<span>${escapeHtml(featured.date)}</span>` : ''}
+                <div class="sm:w-36 h-28 sm:h-auto flex-shrink-0 relative bg-white/10">${featuredImgHtml}</div>
+                <div class="p-3.5 flex-1 min-w-0">
+                    <span class="news-title-text text-sm font-bold text-white group-hover/feat:text-primary-cyan transition-colors line-clamp-2 block leading-snug">${escapeHtml(featured.title)}</span>
+                    ${featured.snippet ? `<p class="text-[12px] text-slate-300 mt-1.5 line-clamp-2 leading-relaxed">${escapeHtml(featured.snippet)}</p>` : ''}
+                    <div class="text-[11px] text-primary-cyan font-bold mt-2 flex flex-wrap items-center gap-2">
+                        ${featured.source ? `<span class="uppercase px-2 py-0.5 rounded bg-primary-cyan/10 border border-primary-cyan/20">${escapeHtml(featured.source)}</span>` : ''}
+                        ${featured.date ? `<span class="text-slate-400 font-normal">${escapeHtml(featured.date)}</span>` : ''}
                     </div>
                 </div>
             </div>
@@ -345,30 +345,30 @@ function renderTrendNewsHtml(trend) {
 
     const restHtml = rest.map(n => {
         const thumbImg = n.image
-            ? `<img src="${escapeAttr(n.image)}" alt="" class="trend-news-img w-full h-full object-cover" loading="lazy" onerror="this.style.display='none';this.nextElementSibling.style.display='flex';"><div class="trend-img-fallback absolute inset-0 items-center justify-center" style="display:none;"><i class="fas fa-file-alt text-[10px] text-gray-600"></i></div>`
-            : `<div class="trend-img-fallback absolute inset-0 items-center justify-center" style="display:flex;"><i class="fas fa-file-alt text-[10px] text-gray-600"></i></div>`;
+            ? `<img src="${escapeAttr(n.image)}" alt="" class="trend-news-img w-full h-full object-cover" loading="lazy" onerror="this.style.display='none';this.nextElementSibling.style.display='flex';"><div class="trend-img-fallback absolute inset-0 items-center justify-center" style="display:none;"><i class="fas fa-file-alt text-xs text-slate-400"></i></div>`
+            : `<div class="trend-img-fallback absolute inset-0 items-center justify-center" style="display:flex;"><i class="fas fa-file-alt text-xs text-slate-400"></i></div>`;
         return `
             <li>
-                <a href="${escapeAttr(n.url)}" target="_blank" rel="noopener" class="news-link-item flex items-start gap-3 group/news no-underline">
-                    <div class="w-10 h-10 rounded-lg overflow-hidden flex-shrink-0 bg-white/5 relative">${thumbImg}</div>
+                <a href="${escapeAttr(n.url)}" target="_blank" rel="noopener" class="news-link-item flex items-start gap-3 p-2 rounded-xl bg-white/[0.02] hover:bg-white/[0.06] border border-white/5 hover:border-white/15 transition-all group/news no-underline">
+                    <div class="w-11 h-11 rounded-lg overflow-hidden flex-shrink-0 bg-white/10 relative">${thumbImg}</div>
                     <div class="flex-1 min-w-0">
-                        <span class="news-title-text text-[11px] text-gray-400 font-medium group-hover/news:text-primary-cyan transition-colors line-clamp-2 block">${escapeHtml(n.title)}</span>
-                        <div class="text-[10px] text-gray-600 flex flex-wrap items-center gap-2 mt-0.5">
-                            ${n.source ? `<span class="font-black uppercase">${escapeHtml(n.source)}</span>` : ''}
+                        <span class="news-title-text text-[13px] text-slate-100 font-medium group-hover/news:text-primary-cyan transition-colors line-clamp-2 block leading-snug">${escapeHtml(n.title)}</span>
+                        <div class="text-[11px] text-primary-cyan font-bold flex flex-wrap items-center gap-2 mt-1">
+                            ${n.source ? `<span class="uppercase text-[10px] px-1.5 py-0.5 rounded bg-primary-cyan/10 border border-primary-cyan/20">${escapeHtml(n.source)}</span>` : ''}
                         </div>
                     </div>
-                    <i class="fas fa-external-link-alt text-[9px] text-gray-700 group-hover/news:text-primary-cyan opacity-0 group-hover/news:opacity-100 transition-all mt-1"></i>
+                    <i class="fas fa-external-link-alt text-[10px] text-slate-400 group-hover/news:text-primary-cyan opacity-0 group-hover/news:opacity-100 transition-all mt-1"></i>
                 </a>
             </li>`;
     }).join('');
 
     return `
-        <div class="trend-news-section mt-4 pt-4 border-t border-white/5" data-news-articles='${escapeAttr(JSON.stringify(news))}'>
-            <div class="text-[9px] font-black text-gray-600 uppercase tracking-widest mb-3 flex items-center gap-2">
+        <div class="trend-news-section mt-4 pt-4 border-t border-white/10" data-news-articles='${escapeAttr(JSON.stringify(news))}'>
+            <div class="text-[11px] font-black text-primary-cyan uppercase tracking-widest mb-3 flex items-center gap-2">
                 <i class="fas fa-newspaper"></i> Related News (${news.length})
             </div>
             ${featuredBlock}
-            ${rest.length ? `<ul class="space-y-2">${restHtml}</ul>` : ''}
+            ${rest.length ? `<ul class="space-y-2.5">${restHtml}</ul>` : ''}
         </div>`;
 }
 
@@ -428,69 +428,72 @@ function renderTrends(trends, country) {
         const newsHtml = renderTrendNewsHtml(trend);
 
         const thumbImgHtml = featuredImg
-            ? `<img src="${escapeAttr(featuredImg)}" alt="" class="trend-thumb-img w-full h-full object-cover" loading="lazy" onerror="this.style.display='none';this.nextElementSibling.style.display='flex';"><div class="trend-img-fallback absolute inset-0 items-center justify-center" style="display:none;"><i class="${brandIcon}" style="color: ${brandColor}"></i></div>`
-            : `<div class="trend-img-fallback absolute inset-0 items-center justify-center" style="display:flex;"><i class="${brandIcon}" style="color: ${brandColor}"></i></div>`;
+            ? `<img src="${escapeAttr(featuredImg)}" alt="${escapeAttr(trend.title)}" class="trend-thumb-img w-full h-full object-cover" loading="lazy" onerror="this.style.display='none';this.nextElementSibling.style.display='flex';"><div class="trend-img-fallback absolute inset-0 items-center justify-center" style="display:none;"><i class="fas fa-trending-up text-gray-600"></i></div>`
+            : `<div class="trend-img-fallback absolute inset-0 items-center justify-center" style="display:flex;"><i class="fas fa-trending-up text-gray-600"></i></div>`;
 
         return `
-        <div class="trend-card glass-card p-5 group/card" style="background: ${cardBg}" data-trend-title="${escapeAttr(trend.title)}">
-            <div class="flex flex-col lg:flex-row lg:items-start gap-4">
-                <div class="flex items-start gap-4 flex-1 min-w-0">
-                    <label class="trend-select-label flex-shrink-0" style="display:flex;align-items:center;justify-content:center;width:24px;height:24px;border-radius:8px;background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.08);cursor:pointer;margin-top:4px;">
-                        <input type="checkbox" class="trend-select-checkbox" value="${escapeAttr(trend.title)}" style="accent-color:#0ea5e9;cursor:pointer;">
-                    </label>
-                    <div class="rank-badge ${rankClass} flex-shrink-0">${index + 1}</div>
-
-                    <div class="w-14 h-14 rounded-2xl overflow-hidden flex-shrink-0 border border-white/5 shadow-2xl relative bg-white/5">
-                        ${thumbImgHtml}
-                    </div>
-
-                    <div class="flex-1 min-w-0">
-                        <div class="flex items-center gap-3 flex-wrap">
-                            <a href="https://www.google.com/search?q=${encodeURIComponent(trend.title)}&gl=${country.code}"
-                               target="_blank"
-                               class="text-lg font-black text-white hover:text-primary-cyan transition-colors block break-words no-underline">
-                                ${escapeHtml(trend.title)}
-                            </a>
-                            ${trend.traffic ? `
-                                <span class="px-2 py-0.5 bg-primary-cyan/10 text-primary-cyan text-[10px] border border-primary-cyan/20 rounded-lg font-bold">
-                                    ${escapeHtml(trend.traffic)}
-                                </span>
-                            ` : ''}
-                            <div class="flex items-center gap-2">
-                                <div class="w-16 h-1.5 bg-white/5 rounded-full overflow-hidden border border-white/5">
-                                    <div class="h-full bg-gradient-to-r from-primary-cyan to-primary-purple" style="width: ${oppScore}%"></div>
-                                </div>
-                                <span class="text-[9px] font-black ${oppScore > 60 ? 'text-primary-cyan' : 'text-gray-500'} uppercase tracking-tighter">${oppScore}% ROI</span>
-                            </div>
+            <div class="trend-card glass-card p-5 group/card" data-trend-title="${escapeAttr(trend.title)}" style="background: ${cardBg}; border-color: rgba(255,255,255,0.08);">
+                <div class="flex flex-col lg:flex-row lg:items-start gap-4">
+                    <div class="flex items-start gap-4 flex-1 min-w-0">
+                        <label class="trend-select-label flex-shrink-0" style="display:flex;align-items:center;justify-content:center;width:24px;height:24px;border-radius:8px;background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.15);cursor:pointer;margin-top:4px;">
+                            <input type="checkbox" class="trend-select-checkbox" value="${escapeAttr(trend.title)}" style="accent-color:#0ea5e9;cursor:pointer;">
+                        </label>
+                        <div class="rank-badge ${rankClass} flex-shrink-0">
+                            ${index + 1}
                         </div>
-                        ${newsHtml}
-                    </div>
-                </div>
 
-                <div class="flex items-center gap-2 flex-shrink-0 self-start lg:self-center pl-9 lg:pl-0">
-                    <button onclick="analyzeTrend('${trend.title.replace(/'/g, "\\'")}', '${country.code}', '${country.lang || 'ar'}', this)"
+                        <div class="w-14 h-14 rounded-2xl overflow-hidden flex-shrink-0 border border-white/10 shadow-2xl relative bg-white/10">
+                            ${thumbImgHtml}
+                        </div>
+
+                        <div class="flex-1 min-w-0">
+                            <div class="flex items-center gap-3 flex-wrap">
+                                <a href="https://www.google.com/search?q=${encodeURIComponent(trend.title)}&gl=${country.code || 'US'}"
+                                   target="_blank"
+                                   class="text-lg font-black text-white hover:text-primary-cyan transition-colors block break-words no-underline">
+                                    ${escapeHtml(trend.title)}
+                                </a>
+                                ${trend.traffic ? `
+                                    <span class="px-2 py-0.5 bg-primary-cyan/10 text-primary-cyan text-[10px] border border-primary-cyan/20 rounded-lg font-bold">
+                                        ${escapeHtml(trend.traffic)} search
+                                    </span>
+                                ` : ''}
+                                <div class="flex items-center gap-2">
+                                    <div class="w-16 h-1.5 bg-white/10 rounded-full overflow-hidden border border-white/10">
+                                        <div class="h-full bg-gradient-to-r from-primary-cyan to-primary-purple" style="width: ${oppScore}%"></div>
+                                    </div>
+                                    <span class="text-[10px] font-black text-primary-cyan uppercase tracking-tighter">${oppScore}% ROI</span>
+                                </div>
+                            </div>
+
+                            ${newsHtml}
+                        </div>
+                    </div>
+
+                    <div class="flex items-center gap-2 flex-shrink-0 self-start lg:self-center pl-9 lg:pl-0">
+                        <button onclick="analyzeTrend('${trend.title.replace(/'/g, "\\'")}', '${country.code}', '${country.lang || 'ar'}', this)"
                             class="w-10 h-10 rounded-xl bg-primary-cyan/10 border border-primary-cyan/20 hover:bg-primary-cyan hover:text-black flex items-center justify-center transition-all text-primary-cyan"
                             title="AI Deep Intelligence">
-                        <i class="fas fa-brain text-sm"></i>
-                    </button>
-                    <button onclick="copyTrend('${trend.title.replace(/'/g, "\\'")}', this)"
+                            <i class="fas fa-brain text-sm"></i>
+                        </button>
+                        <button onclick="copyTrend('${trend.title.replace(/'/g, "\\'")}', this)"
                             class="w-10 h-10 rounded-xl bg-white/5 hover:bg-white/10 flex items-center justify-center transition-all text-gray-400"
                             title="Copy Keyword">
-                        <i class="fas fa-copy text-sm"></i>
-                    </button>
-                    <a href="{{ route('headlines.index') }}?keyword=${encodeURIComponent(trend.title)}"
-                       class="w-10 h-10 rounded-xl bg-white/5 hover:bg-primary-cyan hover:text-black flex items-center justify-center transition-all text-gray-400"
-                       title="Generate Discover Headlines">
-                        <i class="fas fa-bolt text-sm"></i>
-                    </a>
-                    <a href="{{ route('dashboard.article-writer.index') }}?keyword=${encodeURIComponent(trend.title)}" target="_blank"
-                       class="w-10 h-10 rounded-xl bg-gradient-to-br from-[#a855f7] to-[#6366f1] hover:scale-110 flex items-center justify-center transition-all text-white shadow-lg"
-                       title="Write with AI">
-                        <i class="fas fa-pen-fancy text-sm"></i>
-                    </a>
+                            <i class="fas fa-copy text-sm"></i>
+                        </button>
+                        <a href="{{ route('headlines.index') }}?keyword=${encodeURIComponent(trend.title)}"
+                           class="w-10 h-10 rounded-xl bg-white/5 hover:bg-primary-cyan hover:text-black flex items-center justify-center transition-all text-gray-400"
+                           title="Generate Discover Headlines">
+                            <i class="fas fa-bolt text-sm"></i>
+                        </a>
+                        <a href="{{ route('dashboard.article-writer.index') }}?keyword=${encodeURIComponent(trend.title)}" target="_blank"
+                           class="w-10 h-10 rounded-xl bg-gradient-to-br from-[#a855f7] to-[#6366f1] hover:scale-110 flex items-center justify-center transition-all text-white shadow-lg"
+                           title="Write with AI">
+                            <i class="fas fa-pen-fancy text-sm"></i>
+                        </a>
+                    </div>
                 </div>
             </div>
-        </div>
         `;
     }).join('');
 }
