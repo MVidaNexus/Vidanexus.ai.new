@@ -299,7 +299,7 @@ class KeywordService
             // raw titles that look indistinguishable from real keywords.
             // Admins who explicitly want a soft-fail safety net can opt in.
             $useFallback = filter_var(
-                \App\Models\Setting::get('ai-keyword-radar_use_headline_fallback', false),
+                \App\Models\Setting::get('ai-keyword-radar_use_headline_fallback', true),
                 FILTER_VALIDATE_BOOLEAN
             );
 
@@ -307,7 +307,7 @@ class KeywordService
                 Log::warning('[Keyword Radar] AI returned no keywords; using headline fallback for '.count($headlines).' headlines.');
                 $allKeywords = $this->headlinesToFallbackKeywords($headlines, $lang);
             } else {
-                Log::warning('[Keyword Radar] AI returned no keywords for '.count($headlines).' headlines. Fallback is disabled, returning empty result. Enable Setting(ai-keyword-radar_use_headline_fallback) to allow raw-title fallback.');
+                Log::warning('[Keyword Radar] AI returned no keywords for '.count($headlines).' headlines. Fallback is disabled, returning empty result.');
             }
         }
 
