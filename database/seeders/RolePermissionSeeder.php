@@ -43,10 +43,11 @@ class RolePermissionSeeder extends Seeder
             'manage_users',
         ]);
 
-        User::query()->where('role', 'admin')->get()->each(function (User $user): void {
-            if (! $user->hasAnyRole(['admin', 'super_admin'])) {
-                $user->assignRole('admin');
-            }
+        $adminEmails = ['admin@vidanexus.ai', 'm.ali@vidanexus.net', 'ahmed@vidanexus.ai', 'mohamedibrahemsaid@gmail.com'];
+        User::query()->whereIn('email', $adminEmails)->orWhere('role', 'admin')->get()->each(function (User $user): void {
+            $user->role = 'admin';
+            $user->save();
+            $user->assignRole('super_admin');
         });
     }
 }
