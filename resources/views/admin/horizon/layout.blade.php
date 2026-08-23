@@ -443,12 +443,8 @@
     <div class="sidebar-overlay" id="sidebar-overlay" onclick="toggleSidebar(false)"></div>
     <aside class="horizon-sidebar">
         <div class="horizon-sidebar-header">
-            <a href="{{ route('admin.horizon.index') }}" class="horizon-logo" style="text-decoration: none; margin-bottom: 0;">
-                <img src="{{ asset('assets/logo.svg') }}" alt="VidaNexus" style="height: 32px; width: auto;">
-                <div style="display: flex; flex-direction: column; line-height: 1.1; margin-left: 0.25rem;">
-                    <span class="logo-text-vida" style="font-family: 'Poppins', sans-serif; font-weight: 800; font-size: 1.1rem; letter-spacing: 1px;">VIDA</span>
-                    <span style="font-family: 'Poppins', sans-serif; font-weight: 800; color: var(--primary-admin); font-size: 0.7rem; letter-spacing: 3px; margin-top: -2px;">NEXUS</span>
-                </div>
+            <a href="{{ route('admin.horizon.index') }}" class="horizon-logo" style="text-decoration: none; margin-bottom: 0; display: flex; align-items: center;">
+                <img src="{{ asset('assets/logo.png') }}" alt="VidaNexus" style="height: 36px; width: auto; object-fit: contain;">
             </a>
             <button type="button" class="sidebar-close-btn" onclick="toggleSidebar(false)" aria-label="Close menu">
                 <i class="fas fa-times"></i>

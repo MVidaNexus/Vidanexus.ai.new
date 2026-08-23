@@ -11,11 +11,7 @@
             <div class="footer-col brand-col">
                 <a href="/" style="text-decoration: none;">
                     <div class="logo-container" style="margin-bottom: 1.5rem;">
-                        <img src="{{ asset('assets/logo.svg') }}" alt="VidaNexus" class="logo-img" style="height: 32px;">
-                        <div class="logo-text" style="font-size: 1.5rem;">
-                            <span class="logo-vida">VIDA</span>
-                            <span class="logo-nexus">NEXUS</span>
-                        </div>
+                        <img src="{{ asset('assets/logo.png') }}" alt="VidaNexus" class="logo-img" style="height: 42px; width: auto; object-fit: contain;">
                     </div>
                 </a>
                 <p class="footer-bio">

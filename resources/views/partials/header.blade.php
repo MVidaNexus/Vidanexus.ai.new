@@ -16,13 +16,9 @@
             .logo-img { height: 28px !important; }
         }
     </style>
-    <a href="/" style="text-decoration: none;">
+    <a href="/" style="text-decoration: none;" class="flex items-center">
         <div class="logo-container">
-            <img src="{{ asset('assets/logo.svg') }}" alt="VidaNexus" class="logo-img">
-            <div class="logo-text">
-                <span class="logo-vida">VIDA</span>
-                <span class="logo-nexus">NEXUS</span>
-            </div>
+            <img src="{{ asset('assets/logo.png') }}" alt="VidaNexus" class="logo-img" style="height: 38px; width: auto; object-fit: contain;">
         </div>
     </a>
 
@@ -125,12 +121,8 @@
 <div class="mobile-overlay" id="mobileOverlay"></div>
 <div class="mobile-sidebar" id="mobileSidebar" dir="ltr">
     <a href="/">
-        <div class="logo-container" style="padding-bottom: 2rem; border-bottom: 1px solid var(--header-border);">
-            <img src="{{ asset('assets/logo.svg') }}" alt="VidaNexus" class="logo-img">
-            <div class="logo-text">
-                <span class="logo-vida">VIDA</span>
-                <span class="logo-nexus">NEXUS</span>
-            </div>
+        <div class="logo-container" style="padding-bottom: 1.5rem; border-bottom: 1px solid var(--header-border);">
+            <img src="{{ asset('assets/logo.png') }}" alt="VidaNexus" class="logo-img" style="height: 36px; width: auto; object-fit: contain;">
         </div>
     </a>
     <a href="/"><i class="fas fa-home" style="width: 25px;"></i> Home</a>

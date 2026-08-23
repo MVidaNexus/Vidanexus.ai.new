@@ -71,11 +71,7 @@
     <div class="main-container">
         <header class="header">
             <div class="logo-container">
-                <img src="{{ asset('assets/logo.svg') }}" alt="Vida Nexus - Next-Generation AI Solutions & Innovation" class="logo-img" id="logoImg" fetchpriority="high">
-                <div class="logo-text">
-                    <span class="logo-vida">VIDA</span>
-                    <span class="logo-nexus">NEXUS</span>
-                </div>
+                <img src="{{ asset('assets/logo.png') }}" alt="Vida Nexus - Next-Generation AI Solutions & Innovation" class="logo-img" id="logoImg" fetchpriority="high" style="height: 48px; width: auto; object-fit: contain;">
             </div>
         </header>
 
