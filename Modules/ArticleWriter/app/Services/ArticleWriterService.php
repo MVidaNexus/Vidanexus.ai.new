@@ -133,10 +133,12 @@ class ArticleWriterService
 
         // 0. Grounding Analysis (High Priority)
         if (!empty($newsContext)) {
-            $prompt .= "# REAL-TIME RESEARCH & GROUNDING DATA\n";
-            $prompt .= "You have been provided with the LATEST search results and news data for [keyword].\n";
-            $prompt .= "STRICT REQUIREMENT: You MUST prioritize these facts over your internal training data. Use specific dates, names, and events from this context to ensure the article is 100% up-to-date for [year].\n\n";
-            $prompt .= "LATEST NEWS CONTEXT:\n{$newsContext}\n\n";
+            $prompt .= "# REAL-TIME RESEARCH & MARKET GROUNDING (FACTUAL INTELLIGENCE)\n";
+            $prompt .= "You have been provided with real-time market facts and latest updates for [keyword]:\n";
+            $prompt .= "MARKET DATA:\n{$newsContext}\n\n";
+            $prompt .= "COMPETITOR CITATION BAN (CRITICAL):\n";
+            $prompt .= "- NEVER mention, cite, or promote third-party news websites or competing portals (e.g. اليوم السابع، مصراوي، العربية، الأهرام، صدى البلد، الجزيرة، سكاي نيوز، آي صاغة، إلخ).\n";
+            $prompt .= "- State all facts, figures, and prices directly and natively as factual market reporting, or attribute to official primary authorities (e.g. شعبة الذهب بالغرف التجارية، البنك المركزي، بيانات البورصات الرسمية).\n\n";
         }
 
         // 1. Title Section (Mandatory)
@@ -147,7 +149,7 @@ class ArticleWriterService
         $prompt .= $this->contentArchetypeProtocol($langName);
 
         // 3. Body Section (Mandatory Base)
-        $bodyPrompt = Setting::get("{$slug}_prompt_body", "Write an intent-driven, comprehensive, [word_count]-word article about [keyword] in [language]. Strictly apply the archetype structure that fits the topic. Deliver immediate value without generic filler.");
+        $bodyPrompt = Setting::get("{$slug}_prompt_body", "Write an intent-driven, highly engaging, [word_count]-word article about [keyword] in [language]. Strictly apply the archetype structure that fits the topic. Deliver immediate value without generic filler.");
         $prompt .= "# CONTENT CORE PROTOCOL\n" . $this->replaceVars($bodyPrompt, $vars) . "\n\n";
 
         // 4. HUMANIZATION & ANTI-FILLER PROTOCOL (always enforced)
@@ -222,33 +224,45 @@ class ArticleWriterService
         $protocol = "# ADAPTIVE CONTENT ARCHETYPE & SEARCH INTENT ROUTING (CRITICAL)\n";
         $protocol .= "Analyze the primary keyword, topic, and user instructions, then identify the matching CONTENT ARCHETYPE and strictly follow its structure:\n\n";
 
-        $protocol .= "### ARCHETYPE 1: SPORTS EVENT / MATCH / FIXTURE (مباريات وبطولات رياضية)\n";
+        $protocol .= "### ARCHETYPE 1: GOLD & COMMODITY PRICES (أسعار الذهب والعملات والسلع في مصر والعالم العربي)\n";
+        $protocol .= "- PRIMARY INTENT: The reader wants clear, accurate, structured price data right now without fluff or robotic filler.\n";
+        $protocol .= "- REQUIRED STRUCTURE:\n";
+        $protocol .= "  1. Live Prices Table: Clean HTML table (<table>) displaying: عيار 24، عيار 21 (الأكثر انتشاراً)، عيار 18، الجنيه الذهب، وسعر الأوقية عالمياً.\n";
+        $protocol .= "  2. Gold Prices with Workmanship (أسعار الذهب بالمصنعية والدمغة): Explain average workmanship differences (المصنعية والضريبة) بين المشغولات الذهبية والسبائك والجنيهات.\n";
+        $protocol .= "  3. Market Drivers: Concise, professional analysis of global ounce movements, exchange rates, and local supply/demand in the market.\n";
+        $protocol .= "  4. Practical Buying & Investment Advice: Realistic tips for savers and investors (buying bullion vs jewelry).\n";
+        $protocol .= "- STRICT RULES:\n";
+        $protocol .= "  • ZERO mentions of competitor news sites (اليوم السابع، مصراوي، إلخ).\n";
+        $protocol .= "  • Natural, polished, readable Arabic prose — NO heavy academic jargon, NO robotic AI transitions.\n";
+        $protocol .= "  • Use clean HTML tables (<table>) for prices.\n\n";
+
+        $protocol .= "### ARCHETYPE 2: SPORTS EVENT / MATCH / FIXTURE (مباريات وبطولات رياضية)\n";
         $protocol .= "- PRIMARY INTENT: The reader wants immediate, concrete match data: DATE, KICKOFF TIME (with local time zones: Cairo, KSA, UAE, GMT), STADIUM, BROADCASTER & COMMENTATOR, TOURNAMENT STAGE.\n";
         $protocol .= "- STRICT RULE: DO NOT write generic introductory filler about football history. The VERY FIRST PARAGRAPH or summary card must state the exact match date, time, venue, and broadcast channel.\n";
         $protocol .= "- Structure: (1) Match Vital Info Card (Time/Date/Channel/Venue), (2) Channel & Commentator details, (3) Expected Lineups for both teams, (4) Key absences / injuries, (5) Head-to-head & tournament standings context.\n\n";
 
-        $protocol .= "### ARCHETYPE 2: BREAKING NEWS / DEVELOPING EVENT (أخبار عاجلة وأحداث جارية)\n";
+        $protocol .= "### ARCHETYPE 3: BREAKING NEWS / DEVELOPING EVENT (أخبار عاجلة وأحداث جارية)\n";
         $protocol .= "- PRIMARY INTENT: What happened, who is involved, where, and what are the immediate consequences?\n";
         $protocol .= "- Inverted Pyramid rule: Lead with the single most important development in the opening 2 sentences.\n";
         $protocol .= "- Follow with official statements, verified timeline, background context, and what happens next.\n\n";
 
-        $protocol .= "### ARCHETYPE 3: PRODUCT COMPARISON / TECH REVIEW (مقارنات ومراجعات منتجات وأجهزة)\n";
+        $protocol .= "### ARCHETYPE 4: PRODUCT COMPARISON / TECH REVIEW (مقارنات ومراجعات منتجات وأجهزة)\n";
         $protocol .= "- PRIMARY INTENT: Which option is better for the user's budget and specific needs?\n";
         $protocol .= "- Structure: (1) Quick Verdict / TL;DR, (2) Specifications comparison table, (3) Real-world performance / Key differences, (4) Pros & Cons for each side, (5) Final Buying Recommendation (Who should buy A vs Who should buy B).\n\n";
 
-        $protocol .= "### ARCHETYPE 4: HOW-TO & PROCEDURAL GUIDE (شروحات وإرشادات وخطوات تنفيذية)\n";
+        $protocol .= "### ARCHETYPE 5: HOW-TO & PROCEDURAL GUIDE (شروحات وإرشادات وخطوات تنفيذية)\n";
         $protocol .= "- PRIMARY INTENT: Fast, step-by-step resolution without fluff.\n";
         $protocol .= "- Structure: (1) Prerequisites / Required documents, (2) Clear numbered steps (<ol><li>Step 1...</li></ol>), (3) Common pitfalls / mistakes to avoid, (4) Important fees, timeline, or FAQs.\n\n";
 
-        $protocol .= "### ARCHETYPE 5: DATA, SCHEDULES, PRICES & TIMETABLES (أسعار، مواعيد، جداول، إحصائيات)\n";
+        $protocol .= "### ARCHETYPE 6: DATA, SCHEDULES, PRICES & TIMETABLES (أسعار، مواعيد، جداول، إحصائيات)\n";
         $protocol .= "- PRIMARY INTENT: Direct numbers, figures, and schedules.\n";
         $protocol .= "- Structure: Put the tables, numbers, and core figures in the FIRST SECTION. Explain the factors influencing the data in subsequent sections.\n\n";
 
-        $protocol .= "### ARCHETYPE 6: HEALTH, MEDICAL, OR SCIENTIFIC TOPIC (صحة وطب وتغذية)\n";
+        $protocol .= "### ARCHETYPE 7: HEALTH, MEDICAL, OR SCIENTIFIC TOPIC (صحة وطب وتغذية)\n";
         $protocol .= "- PRIMARY INTENT: Reliable, evidence-based, medically sound answers with high E-E-A-T.\n";
         $protocol .= "- Structure: Clear direct explanation, causes/mechanisms, verified symptoms, evidence-based solutions/treatments, when to see a specialist, and medical disclaimer.\n\n";
 
-        $protocol .= "### ARCHETYPE 7: EVERGREEN IN-DEPTH ANALYSIS / ESSAY (تحليلات ومقالات سيو شاملة)\n";
+        $protocol .= "### ARCHETYPE 8: EVERGREEN IN-DEPTH ANALYSIS / ESSAY (تحليلات ومقالات سيو شاملة)\n";
         $protocol .= "- Cover all logical angles with deep domain authority, case studies, actionable frameworks, and E-E-A-T thought leadership.\n\n";
 
         $protocol .= "### DATA-FIRST & ZERO-HALLUCINATION RULES:\n";
@@ -324,7 +338,7 @@ class ArticleWriterService
             'professional' => 'Write in a polished, authoritative, business-professional voice. Use precise language, avoid slang, and maintain a confident yet approachable demeanor. Think: Harvard Business Review meets industry expert blog.',
             'informative' => 'Write in a clear, educational, and well-structured voice. Prioritize clarity and comprehensiveness. Explain complex concepts simply without dumbing down the content. Think: authoritative encyclopedia with personality.',
             'casual' => 'Write in a warm, conversational, and relatable voice. Use contractions, rhetorical questions, and occasional humor. Make the reader feel like they\'re learning from a knowledgeable friend. Think: popular blog with expert insights.',
-            'authoritative' => 'Write with commanding expertise and thought leadership. Use industry jargon confidently, reference frameworks by name, cite studies and data points. Position every statement with unshakable authority. Think: leading industry analyst delivering insights.',
+            'authoritative' => 'Write with commanding expertise, clear market intelligence, and journalistic precision. State facts and prices directly without hedging. Position every statement with authority while keeping language natural and accessible.',
             'creative' => 'Write with vivid storytelling, compelling analogies, and engaging narrative hooks. Make dry topics fascinating. Use metaphors, paint pictures with words, and create emotional resonance. Think: award-winning feature journalism.',
         ];
 
@@ -389,7 +403,12 @@ class ArticleWriterService
                     $xml = @simplexml_load_string($response->body());
                     if ($xml && isset($xml->channel->item)) {
                         foreach ($xml->channel->item as $item) {
-                            $tempContext .= "- " . (string)$item->title . " (Source: " . (string)$item->source . ")\n";
+                            $rawTitle = trim((string)$item->title);
+                            // Strip competitor publisher suffixes like "- اليوم السابع" or "- Al Arabiya"
+                            $cleanTitle = preg_replace('/\s*[-–—|]\s*[^-–—|]+$/u', '', $rawTitle);
+                            if (!empty($cleanTitle)) {
+                                $tempContext .= "- " . $cleanTitle . "\n";
+                            }
                             if (substr_count($tempContext, "\n") >= $limit) break;
                         }
                     }
