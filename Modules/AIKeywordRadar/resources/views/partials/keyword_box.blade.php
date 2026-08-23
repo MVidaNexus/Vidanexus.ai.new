@@ -345,20 +345,69 @@
                         $actionQuery = $primaryKeyword !== '' ? $primaryKeyword : $headlineTitle;
                     @endphp
                     <div data-pulldate="{{ $pullTs }}" data-pubdate="{{ $pubTs }}" class="headline-card keyword-row group" style="border-radius:18px;border:1px solid var(--glass-border);background:var(--card-bg);overflow:hidden;transition:all 0.25s ease;">
-                        {{-- Scraped headline header --}}
-                        <div style="padding:14px 16px 10px;border-bottom:1px solid var(--glass-border);background:var(--glass-bg);">
+                        {{-- Top Header: Target Keyword(s) + Action Buttons --}}
+                        <div style="padding:14px 16px 12px;border-bottom:1px solid var(--glass-border);background:var(--glass-bg);">
+                            <div class="flex items-center justify-between gap-3 {{ $isAr ? '' : 'flex-row-reverse' }}">
+                                {{-- Keyword chips with checkboxes --}}
+                                <div class="flex-1 min-w-0 flex flex-wrap items-center gap-2">
+                                @foreach($groupKeywords as $kw)
+                                    @php
+                                        $text = is_array($kw) ? ($kw['text'] ?? $kw['keyword'] ?? '') : $kw;
+                                    @endphp
+                                    @if(!empty($text))
+                                    <div class="keyword-tag keyword-chip-row" style="display:inline-flex;align-items:center;gap:8px;max-width:100%;">
+                                        <input type="checkbox"
+                                               class="kw-select-{{ $boxKey }}"
+                                               value="{{ $text }}"
+                                               style="accent-color:{{ $colorVar }};width:16px;height:16px;cursor:pointer;flex-shrink:0;"
+                                               @change="toggleKeyword('{{ $boxKey }}', @js($text), $event.target.checked)">
+                                        <span class="keyword-text font-black text-sm sm:text-base" style="display:inline-flex;align-items:center;gap:6px;padding:6px 14px;border-radius:12px;line-height:1.3;border:1px solid {{ $colorVar }}40;background:{{ $colorVar }}18;color:{{ $colorVar }};max-width:100%;text-align:{{ $isAr ? 'right' : 'left' }};">
+                                            <i class="fas fa-hashtag text-[10px] opacity-70 flex-shrink-0"></i>
+                                            <span class="break-words font-black">{{ $text }}</span>
+                                        </span>
+                                    </div>
+                                    @endif
+                                @endforeach
+                                </div>
+
+                                {{-- Action buttons --}}
+                                <div class="flex items-center gap-1.5 flex-shrink-0">
+                                    @if(!empty($groupKeywordTexts))
+                                    <a href="https://www.google.com/search?q={{ urlencode($actionQuery) }}&gl={{ \App\Support\CountryRegistry::defaultRegion($lang) }}" target="_blank"
+                                        style="width:32px;height:32px;display:flex;align-items:center;justify-content:center;border-radius:10px;background:var(--card-bg);border:1px solid var(--glass-border);color:var(--text-muted);text-decoration:none;transition:all 0.2s;"
+                                        title="Google"
+                                        onmouseover="this.style.color='{{ $colorVar }}';this.style.borderColor='{{ $colorVar }}'"
+                                        onmouseout="this.style.color='var(--text-muted)';this.style.borderColor='var(--glass-border)'">
+                                        <i class="fab fa-google text-xs"></i>
+                                    </a>
+                                    <a href="{{ route('headlines.index', ['keyword' => $actionQuery]) }}" target="_blank"
+                                        style="width:32px;height:32px;display:flex;align-items:center;justify-content:center;border-radius:10px;color:#fff;background:linear-gradient(135deg,var(--primary-cyan,#0ea5e9),#6366f1);border:1px solid rgba(255,255,255,0.15);text-decoration:none;transition:all 0.2s;"
+                                        title="{{ $isAr ? 'اكتشاف' : 'Discover' }}"
+                                        onmouseover="this.style.transform='scale(1.08)'" onmouseout="this.style.transform='scale(1)'">
+                                        <i class="fas fa-magic text-xs"></i>
+                                    </a>
+                                    <a href="{{ route('dashboard.article-writer.index', ['keyword' => $actionQuery]) }}" target="_blank"
+                                        style="width:32px;height:32px;display:flex;align-items:center;justify-content:center;border-radius:10px;color:#fff;background:linear-gradient(135deg,#a855f7,#6366f1);border:1px solid rgba(255,255,255,0.15);text-decoration:none;transition:all 0.2s;"
+                                        title="{{ $isAr ? 'كتابة' : 'Write' }}"
+                                        onmouseover="this.style.transform='scale(1.08)'" onmouseout="this.style.transform='scale(1)'">
+                                        <i class="fas fa-pen-fancy text-xs"></i>
+                                    </a>
+                                    @endif
+                                </div>
+                            </div>
+                        </div>
+
+                        {{-- Bottom Body: Scraped Headline & Metadata --}}
+                        <div class="p-3 sm:p-4" style="background:var(--card-bg);">
                             <div class="flex items-start gap-2.5 {{ $isAr ? '' : 'flex-row-reverse' }}">
-                                <span style="flex-shrink:0;width:28px;height:28px;display:flex;align-items:center;justify-content:center;border-radius:8px;font-weight:900;font-size:10px;background:{{ $colorVar }}15;border:1px solid {{ $colorVar }}30;color:{{ $colorVar }};">
+                                <span style="flex-shrink:0;width:26px;height:26px;display:flex;align-items:center;justify-content:center;border-radius:8px;font-size:10px;background:rgba(255,255,255,0.05);border:1px solid var(--glass-border);color:var(--text-muted);">
                                     <i class="fas fa-newspaper text-[10px]"></i>
                                 </span>
                                 <div class="flex-1 min-w-0">
-                                    <h3 class="font-black text-sm sm:text-base break-words leading-snug mb-1.5" style="color:var(--text-main);">{{ $headlineTitle }}</h3>
-                                    <div class="flex flex-wrap items-center gap-2">
-                                        <span style="font-size:8px;color:#f87171;background:rgba(248,113,113,0.1);padding:2px 8px;border-radius:8px;font-weight:700;text-transform:uppercase;border:1px solid rgba(248,113,113,0.2);">{{ $source }}</span>
+                                    <h4 class="font-medium text-xs sm:text-sm break-words leading-relaxed mb-2" style="color:var(--text-main);opacity:0.9;">{{ $headlineTitle }}</h4>
+                                    <div class="flex flex-wrap items-center gap-2.5">
+                                        <span style="font-size:8.5px;color:#f87171;background:rgba(248,113,113,0.1);padding:2px 8px;border-radius:8px;font-weight:700;text-transform:uppercase;border:1px solid rgba(248,113,113,0.2);">{{ $source }}</span>
                                         <span style="font-size:9px;color:var(--text-muted);font-weight:600;">{{ count($groupKeywords) }} {{ count($groupKeywords) === 1 ? 'keyword' : 'keywords' }}</span>
-                                    </div>
-                                    @if($pubTime || $syncTime)
-                                    <div style="display:flex;flex-wrap:wrap;gap:10px;margin-top:8px;">
                                         @if($pubTime)
                                             @php 
                                                 $pubCarbon = \Carbon\Carbon::parse($pubTime); 
@@ -384,57 +433,7 @@
                                             </span>
                                         @endif
                                     </div>
-                                    @endif
                                 </div>
-
-                                {{-- Card actions (single copy removed — use keyword checkboxes + Copy Selected) --}}
-                                <div class="flex items-center gap-1.5 flex-shrink-0 pt-0.5">
-                                    @if(!empty($groupKeywordTexts))
-                                    <a href="https://www.google.com/search?q={{ urlencode($actionQuery) }}&gl={{ \App\Support\CountryRegistry::defaultRegion($lang) }}" target="_blank"
-                                        style="width:30px;height:30px;display:flex;align-items:center;justify-content:center;border-radius:9px;background:var(--card-bg);border:1px solid var(--glass-border);color:var(--text-muted);text-decoration:none;transition:all 0.2s;"
-                                        title="Google"
-                                        onmouseover="this.style.color='{{ $colorVar }}';this.style.borderColor='{{ $colorVar }}'"
-                                        onmouseout="this.style.color='var(--text-muted)';this.style.borderColor='var(--glass-border)'">
-                                        <i class="fab fa-google text-[10px]"></i>
-                                    </a>
-                                    <a href="{{ route('headlines.index', ['keyword' => $actionQuery]) }}" target="_blank"
-                                        style="width:30px;height:30px;display:flex;align-items:center;justify-content:center;border-radius:9px;color:#fff;background:linear-gradient(135deg,var(--primary-cyan,#0ea5e9),#6366f1);border:1px solid rgba(255,255,255,0.15);text-decoration:none;transition:all 0.2s;"
-                                        title="{{ $isAr ? 'اكتشاف' : 'Discover' }}"
-                                        onmouseover="this.style.transform='scale(1.08)'" onmouseout="this.style.transform='scale(1)'">
-                                        <i class="fas fa-magic text-[10px]"></i>
-                                    </a>
-                                    <a href="{{ route('dashboard.article-writer.index', ['keyword' => $actionQuery]) }}" target="_blank"
-                                        style="width:30px;height:30px;display:flex;align-items:center;justify-content:center;border-radius:9px;color:#fff;background:linear-gradient(135deg,#a855f7,#6366f1);border:1px solid rgba(255,255,255,0.15);text-decoration:none;transition:all 0.2s;"
-                                        title="{{ $isAr ? 'كتابة' : 'Write' }}"
-                                        onmouseover="this.style.transform='scale(1.08)'" onmouseout="this.style.transform='scale(1)'">
-                                        <i class="fas fa-pen-fancy text-[10px]"></i>
-                                    </a>
-                                    @endif
-                                </div>
-                            </div>
-                        </div>
-
-                        {{-- AI keywords as tags --}}
-                        <div class="p-3 sm:p-4">
-                            <div class="flex flex-wrap gap-2">
-                            @foreach($groupKeywords as $kw)
-                                @php
-                                    $text = is_array($kw) ? ($kw['text'] ?? $kw['keyword'] ?? '') : $kw;
-                                @endphp
-                                @if(!empty($text))
-                                <div class="keyword-tag keyword-chip-row" style="display:inline-flex;align-items:center;gap:6px;max-width:100%;">
-                                    <input type="checkbox"
-                                           class="kw-select-{{ $boxKey }}"
-                                           value="{{ $text }}"
-                                           style="accent-color:{{ $colorVar }};width:15px;height:15px;cursor:pointer;flex-shrink:0;"
-                                           @change="toggleKeyword('{{ $boxKey }}', @js($text), $event.target.checked)">
-                                    <span style="display:inline-flex;align-items:center;gap:5px;padding:7px 14px;border-radius:999px;font-size:12px;font-weight:700;line-height:1.3;border:1px solid {{ $colorVar }}35;background:{{ $colorVar }}12;color:{{ $colorVar }};max-width:100%;text-align:{{ $isAr ? 'right' : 'left' }};">
-                                        <i class="fas fa-hashtag text-[9px] opacity-60 flex-shrink-0"></i>
-                                        <span class="break-words">{{ $text }}</span>
-                                    </span>
-                                </div>
-                                @endif
-                            @endforeach
                             </div>
                         </div>
                     </div>
