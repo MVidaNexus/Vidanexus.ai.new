@@ -13,8 +13,8 @@
                 <i class="fas {{ $tool['icon'] }}"></i>
             </div>
             <div>
-                <h1 class="display-5 fw-bold mb-2" style="color: var(--text-main); letter-spacing: -1px;">{{ $tool['name'] }}</h1>
-                <p class="fs-5 mb-0" style="color: var(--text-muted);">{{ $tool['tagline'] }}</p>
+                <h1 class="display-5 fw-bold mb-2 text-white" style="letter-spacing: -1px;">{{ $tool['name'] }}</h1>
+                <p class="fs-5 mb-0" style="color: #94a3b8;">{{ $tool['tagline'] }}</p>
             </div>
         </div>
         <div class="p-3 rounded-3 d-inline-flex align-items-center gap-3 shadow-sm" style="background: var(--glass-bg); border: 1px solid var(--glass-border);">
@@ -22,7 +22,7 @@
                 <i class="fas fa-shopping-bag me-1"></i> Marketplace Module
             </span>
             <div style="width: 1px; height: 16px; background: var(--glass-border);"></div>
-            <span class="d-flex align-items-center gap-2" style="color: var(--text-muted); font-size: 0.85rem; font-weight: bold;">
+            <span class="d-flex align-items-center gap-2" style="color: #cbd5e1; font-size: 0.85rem; font-weight: bold;">
                 <i class="fas fa-coins" style="color: var(--primary-cyan);"></i>
                 Pay-per-Action ({{ auth()->user()->getToolCreditCost($tool['slug']) }} CR)
             </span>
@@ -33,13 +33,13 @@
         <!-- Input Panel -->
         <div class="col-12">
             <div class="card p-4 p-md-5 shadow-sm">
-                <h3 class="fs-4 fw-bold mb-4 d-flex align-items-center gap-3" style="color: var(--text-main);">
+                <h3 class="fs-4 fw-bold mb-4 d-flex align-items-center gap-3 text-white">
                     <i class="fas fa-terminal" style="color: var(--primary-cyan);"></i>
                     Intelligence Parameters
                 </h3>
                 
                 <div class="mb-4">
-                    <label class="d-block text-uppercase fw-bold mb-2" style="font-size: 0.8rem; letter-spacing: 2px; color: var(--text-muted);">Your Requirement / Input</label>
+                    <label class="d-block text-uppercase fw-bold mb-2" style="font-size: 0.85rem; letter-spacing: 2px; color: #94a3b8;">Your Requirement / Input</label>
                     <textarea x-model="userInput" rows="6" 
                         placeholder="Describe what you need the AI to generate for {{ $tool['name'] }}..."
                         class="premium-generic-input"></textarea>
@@ -63,11 +63,11 @@
             <div class="col-12" x-transition>
                 <div class="card p-4 p-md-5 border-start border-4 shadow" style="border-left-color: {{ $tool['color'] }} !important;">
                     <div class="d-flex justify-content-between align-items-center mb-4">
-                        <h3 class="fs-3 fw-bold d-flex align-items-center gap-3 m-0" style="color: var(--text-main);">
+                        <h3 class="fs-3 fw-bold d-flex align-items-center gap-3 m-0 text-white">
                             <i class="fas fa-microchip" style="color: {{ $tool['color'] }};"></i>
                             Generated Intelligence Output
                         </h3>
-                        <button @click="copyToClipboard()" class="btn btn-sm" style="background: var(--glass-bg); border: 1px solid var(--glass-border); color: var(--text-muted);" title="Copy">
+                        <button @click="copyToClipboard()" class="btn btn-sm" style="background: var(--glass-bg); border: 1px solid var(--glass-border); color: #cbd5e1;" title="Copy">
                             <i class="fas fa-copy"></i> Copy
                         </button>
                     </div>
@@ -76,7 +76,7 @@
 
                     <div class="mt-4 p-3 rounded-3 d-flex gap-3 align-items-start" style="background: rgba(0, 168, 230, 0.05); border: 1px solid rgba(0, 168, 230, 0.1);">
                         <i class="fas fa-info-circle mt-1" style="color: var(--primary-cyan);"></i>
-                        <span style="color: var(--text-muted); font-size: 0.9rem; font-style: italic;">
+                        <span style="color: #94a3b8; font-size: 0.9rem; font-style: italic;">
                             This output was generated using the VidaNexus AI Absolute Mode for high-fidelity technical precision.
                         </span>
                     </div>
@@ -86,7 +86,7 @@
 
         <!-- Features Matrix -->
         <div class="col-12 mt-5">
-            <h3 class="text-center text-uppercase fw-bold mb-4" style="font-size: 0.85rem; letter-spacing: 3px; color: var(--text-muted);">Module Capabilities Matrix</h3>
+            <h3 class="text-center text-uppercase fw-bold mb-4" style="font-size: 0.85rem; letter-spacing: 3px; color: #94a3b8;">Module Capabilities Matrix</h3>
             <div class="row g-4">
                 @foreach($tool['features'] as $feature)
                     <div class="col-12 col-md-4">
@@ -95,8 +95,8 @@
                                 <i class="fas {{ $feature['icon'] }}"></i>
                             </div>
                             <div>
-                                <h4 class="fw-bold mb-2" style="font-size: 1.1rem; color: var(--text-main);">{{ $feature['title'] }}</h4>
-                                <p class="mb-0" style="font-size: 0.85rem; line-height: 1.6; color: var(--text-muted);">{{ $feature['desc'] }}</p>
+                                <h4 class="fw-bold mb-2 text-white" style="font-size: 1.1rem;">{{ $feature['title'] }}</h4>
+                                <p class="mb-0" style="font-size: 0.85rem; line-height: 1.6; color: #cbd5e1;">{{ $feature['desc'] }}</p>
                             </div>
                         </div>
                     </div>

@@ -23,8 +23,8 @@
     
     <style>
         body {
-            background-color: var(--bg-color, #0d0e12);
-            color: var(--text-main, #ffffff);
+            background-color: var(--bg-color, #0d0e12) !important;
+            color: var(--text-main, #ffffff) !important;
             font-family: 'Tajawal', sans-serif;
             overflow-x: hidden;
             transition: var(--theme-transition);
@@ -38,15 +38,89 @@
         }
         [x-cloak] { display: none !important; }
         
-        /* Fix Bootstrap colors for dark mode */
-        .card { 
-            background: var(--glass-bg); 
-            border: 1px solid var(--glass-border); 
-            color: var(--text-main);
-            backdrop-filter: var(--glass-blur);
-            border-radius: 16px;
+        /* High Contrast Dark Mode Typography */
+        h1, h2, h3, h4, h5, h6 {
+            color: var(--text-main, #ffffff) !important;
         }
-        .text-muted { color: var(--text-muted) !important; }
+
+        p, span, label, div {
+            color: inherit;
+        }
+
+        .text-muted { color: var(--text-muted, #94a3b8) !important; }
+
+        /* Bootstrap Card & Components Overrides */
+        .card { 
+            background: var(--glass-bg, rgba(17, 24, 39, 0.75)) !important; 
+            border: 1px solid var(--glass-border, rgba(255, 255, 255, 0.1)) !important; 
+            color: var(--text-main, #ffffff) !important;
+            backdrop-filter: var(--glass-blur, blur(20px)) !important;
+            border-radius: 20px !important;
+        }
+
+        /* Generic Tool Inputs & Textareas */
+        .premium-generic-input,
+        .form-control,
+        .form-select,
+        textarea,
+        input[type="text"],
+        input[type="search"],
+        input[type="number"],
+        input[type="email"] {
+            width: 100% !important;
+            background-color: rgba(255, 255, 255, 0.05) !important;
+            border: 1px solid rgba(255, 255, 255, 0.15) !important;
+            border-radius: 1rem !important;
+            padding: 1rem 1.5rem !important;
+            color: #ffffff !important;
+            transition: all 0.3s ease !important;
+            font-size: 1rem !important;
+        }
+
+        .premium-generic-input::placeholder,
+        .form-control::placeholder,
+        textarea::placeholder,
+        input::placeholder {
+            color: rgba(255, 255, 255, 0.45) !important;
+        }
+
+        .premium-generic-input:focus,
+        .form-control:focus,
+        .form-select:focus,
+        textarea:focus,
+        input:focus {
+            outline: none !important;
+            background-color: rgba(255, 255, 255, 0.08) !important;
+            border-color: rgba(0, 168, 230, 0.7) !important;
+            box-shadow: 0 0 25px rgba(0, 168, 230, 0.25) !important;
+            color: #ffffff !important;
+        }
+
+        .premium-generic-output {
+            background: rgba(0, 0, 0, 0.5) !important;
+            border: 1px solid rgba(255, 255, 255, 0.12) !important;
+            border-radius: 1rem !important;
+            padding: 1.75rem !important;
+            color: #f8fafc !important;
+            font-weight: 500 !important;
+            white-space: pre-wrap !important;
+            line-height: 1.7 !important;
+            font-size: 1.05rem !important;
+        }
+
+        .premium-generic-feature {
+            background: rgba(255, 255, 255, 0.04) !important;
+            border: 1px solid rgba(255, 255, 255, 0.08) !important;
+            border-radius: 1rem !important;
+            transition: all 0.3s ease !important;
+        }
+
+        .premium-generic-feature:hover {
+            border-color: rgba(0, 168, 230, 0.4) !important;
+            background: rgba(255, 255, 255, 0.07) !important;
+            transform: translateY(-3px) !important;
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.3) !important;
+        }
 
         .btn-back-tools {
             display: inline-flex;

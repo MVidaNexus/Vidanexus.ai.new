@@ -2,6 +2,7 @@
 <html lang="en" dir="ltr">
 <head>
     <meta charset="UTF-8">
+    @include('partials.theme-init')
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>@yield('title') | VidaNexus AI</title>
     <link rel="icon" type="image/png" href="{{ asset('assets/logo.png') }}">
