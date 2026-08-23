@@ -67,7 +67,9 @@ class ArticleWriterService
 
         // 2. Wrap with User Instruction if needed, or check for legacy wrapper
         $customWrapper = Setting::get('article-writer_prompt', ''); // Legacy/Global wrapper
-        $maxTokens = (int) Setting::get('article-writer_max_tokens', 8000);
+        $calculatedTokens = max(6000, (int) ($wordCount * 3.5) + 2000);
+        $maxTokens = (int) Setting::get('article-writer_max_tokens', 0);
+        $maxTokens = ($maxTokens > 0) ? max($maxTokens, $calculatedTokens) : $calculatedTokens;
         $langName = $this->getLanguageName($lang);
 
         if (!empty($customWrapper)) {
@@ -216,11 +218,11 @@ class ArticleWriterService
 
         // 5. Final Synthesis Rules
         $prompt .= "# OUTPUT FINALIZATION\n";
-        $prompt .= "CRITICAL LANGUAGE RULE: The ENTIRE output — [TITLE], all headings, and every paragraph — MUST be written 100% in {$langName} ONLY. No mixed languages except proper nouns.\n\n";
+        $prompt .= "CRITICAL LANGUAGE RULE: The ENTIRE output — [TITLE], all headings, every component header, and every paragraph — MUST be written 100% in {$langName} ONLY. NEVER output English headers like 'Key Takeaways' or 'Frequently Asked Questions' in an Arabic article. Translate every single heading and label to {$langName}.\n\n";
+        $prompt .= "- STRICT HTML DOCUMENT STRUCTURE: The very FIRST tag in your output MUST be <h1>[Article Title]</h1>. DO NOT place any summary or takeaways above the <h1>. Correct order: (1) <h1>, (2) <div class=\"quick-summary\"> if requested, (3) <div class=\"key-takeaways\"> if requested, (4) Main content body with <h2>/<h3>/<table>, (5) <div class=\"faq-section\"> if requested, (6) <div class=\"internal-links-suggestions\"> if requested, (7) Metadata tags ([TITLE], [META_DESCRIPTION], [FOCUS_KEYWORD], [SLUG_EN], [SLUG_AR]) on separate lines at the very end.\n";
         $prompt .= "- Return CLEAN HTML only. No markdown fences.\n";
-        $prompt .= "- Language: All article body output must be in native {$langName}; the metadata tags above ([TITLE], [META_DESCRIPTION], [FOCUS_KEYWORD], [SLUG_EN], [SLUG_AR]) are emitted in their respective scripts.\n";
-        $prompt .= "- Ensure headings (H1, H2, H3) are logical and hierarchy is perfect.\n";
-        $prompt .= "- Body paragraphs are clean prose <p>…</p> blocks. Do NOT prefix paragraphs with bullets, dots, dashes, hyphens, asterisks, or numbers. Lists ONLY appear inside <ul>/<ol> when the requested component genuinely calls for one (Key Takeaways, FAQ headers, Quick Summary bullets).\n";
+        $prompt .= "- NATURAL TEMPORAL CITATION (NO ROBOTIC DATE REPETITIONS): State the full date (e.g. '{$todayAnchor}') once in the opening lead paragraph. In subsequent H2 headings, tables, and FAQ questions, use natural flowing terms like 'في تعاملات اليوم', 'خلال الساعات الأخيرة', 'حركة الأسعار الراهنة', 'السوق المحلي'. DO NOT robotically repeat the 6-word date in every single heading.\n";
+        $prompt .= "- Body paragraphs are clean prose <p>…</p> blocks. Do NOT prefix paragraphs with bullets, dots, dashes, hyphens, asterisks, or numbers. Lists ONLY appear inside <ul>/<ol> when the requested component genuinely calls for one.\n";
 
         return $prompt;
     }
