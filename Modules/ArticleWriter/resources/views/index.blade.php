@@ -13,18 +13,18 @@
                     <i class="fas fa-pen-nib"></i>
                 </div>
                 <div>
-                    <h1 class="mb-0" style="font-size: 1.5rem; font-weight: 900; letter-spacing: -0.03em; color: #fff;">Pro AI Article Writer</h1>
-                    <p class="mb-0" style="font-size: 0.8rem; color: var(--text-muted); margin-top: 2px;">SEO-optimized content engine with E-E-A-T compliance</p>
+                    <h1 class="mb-0" style="font-size: 1.5rem; font-weight: 900; letter-spacing: -0.03em; color: #fff;" x-text="t('title')">Pro AI Article Writer</h1>
+                    <p class="mb-0" style="font-size: 0.8rem; color: var(--text-muted); margin-top: 2px;" x-text="t('subtitle')">SEO-optimized content engine with E-E-A-T compliance</p>
                 </div>
             </div>
             <div class="d-flex align-items-center gap-3">
                 <div class="header-stat">
-                    <div class="header-stat-label">ENGINE</div>
-                    <div class="header-stat-value" style="color: #10b981;">AI POWERED</div>
+                    <div class="header-stat-label" x-text="t('engine_label')">ENGINE</div>
+                    <div class="header-stat-value" style="color: #10b981;" x-text="t('engine_val')">AI POWERED</div>
                 </div>
                 <div class="header-stat">
-                    <div class="header-stat-label">OUTPUT</div>
-                    <div class="header-stat-value">HTML + SEO</div>
+                    <div class="header-stat-label" x-text="t('output_label')">OUTPUT</div>
+                    <div class="header-stat-value" x-text="t('output_val')">HTML + SEO</div>
                 </div>
             </div>
         </div>
@@ -37,7 +37,7 @@
         <div class="col-lg-3">
             <div class="aw-sidebar h-100">
                 <div class="aw-sidebar-header">
-                    <span class="aw-sidebar-title">Saved Content</span>
+                    <span class="aw-sidebar-title" x-text="t('saved_content')">Saved Content</span>
                     <i class="fas fa-history" style="color: var(--aw-text-dim); font-size: 0.85rem;"></i>
                 </div>
                 <div class="custom-scrollbar" style="max-height: 700px; overflow-y: auto;">
@@ -45,15 +45,14 @@
                         <div class="history-item-container" style="position: relative; group;">
                             <div @click="loadArticle(item.id)" 
                                  class="history-item"
-                                 :class="currentArticle && currentArticle.id == item.id ? 'history-item-active' : ''"
-                                 style="padding-right: 3rem;">
+                                 :class="currentArticle && currentArticle.id == item.id ? 'history-item-active' : ''">
                                 <div style="font-size: 0.7rem; color: var(--aw-text-dim); margin-bottom: 4px; display: flex; justify-content: space-between;">
                                     <span x-text="formatDate(item.created_at)"></span>
                                     <span style="font-size: 0.6rem; font-weight: 800; color: var(--aw-cyan); text-transform: uppercase;" x-text="item.language"></span>
                                 </div>
                                 <div style="font-weight: 800; font-size: 0.85rem; color: #fff; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;" x-text="item.title || item.topic"></div>
                                 <div style="font-size: 0.65rem; color: var(--aw-text-dim); margin-top: 4px; display: flex; gap: 0.5rem;">
-                                    <span x-text="item.word_count + ' words'"></span>
+                                    <span x-text="item.word_count + ' ' + t('words')"></span>
                                     <span>•</span>
                                     <span x-text="item.language?.toUpperCase() || 'EN'"></span>
                                 </div>
@@ -61,13 +60,13 @@
                             <!-- Delete Button -->
                             <button @click.stop="deleteArticle(item.id)" 
                                     class="delete-btn"
-                                    title="Delete Article"
-                                    style="position: absolute; right: 1rem; top: 50%; transform: translateY(-50%); background: rgba(255,75,75,0.1); border: 1px solid rgba(255,75,75,0.2); color: #ff4b4b; width: 28px; height: 28px; border-radius: 8px; display: flex; align-items: center; justify-content: center; cursor: pointer; transition: all 0.2s; opacity: 0.4;">
+                                    :title="t('alert_del_btn')"
+                                    style="position: absolute; top: 50%; transform: translateY(-50%); background: rgba(255,75,75,0.1); border: 1px solid rgba(255,75,75,0.2); color: #ff4b4b; width: 28px; height: 28px; border-radius: 8px; display: flex; align-items: center; justify-content: center; cursor: pointer; transition: all 0.2s; opacity: 0.4;">
                                 <i class="fas fa-trash-alt" style="font-size: 0.75rem;"></i>
                             </button>
                         </div>
                     </template>
-                    <div x-show="history.length === 0" style="padding: 3rem 1.5rem; text-align: center; color: var(--aw-text-dim); font-size: 0.85rem; font-style: italic;">
+                    <div x-show="history.length === 0" style="padding: 3rem 1.5rem; text-align: center; color: var(--aw-text-dim); font-size: 0.85rem; font-style: italic;" x-text="t('no_saved')">
                         No articles generated yet. Create your first masterpiece!
                     </div>
                 </div>
@@ -83,21 +82,20 @@
                     <!-- Primary Keyword -->
                     <div style="margin-bottom: 1.5rem;">
                         <div class="aw-label">
-                            <i class="fas fa-search"></i> Primary Keyword or Topic
+                            <i class="fas fa-search"></i> <span x-text="t('primary_keyword')"></span>
                         </div>
                         <div class="aw-search-wrap">
                             <i class="fas fa-search"></i>
                             <input type="text" x-model="form.keyword" 
                                    class="form-control"
-                                   placeholder="e.g., Best AI Tools for Digital Marketing in 2026..."
-                                   style="padding-left: 3rem;">
+                                   :placeholder="t('keyword_placeholder')">
                         </div>
                     </div>
 
                     <!-- Language Selection (Full Width) -->
                     <div style="margin-bottom: 1.5rem;">
                         <div class="aw-label">
-                            <i class="fas fa-globe"></i> Article Language
+                            <i class="fas fa-globe"></i> <span x-text="t('language')"></span>
                         </div>
                         <div class="lang-grid">
                             <template x-for="lang in settings.languages" :key="lang.value">
@@ -114,21 +112,21 @@
                     <div class="row g-3" style="margin-bottom: 1rem;">
                         <div class="col-md-6">
                             <div class="aw-label">
-                                <i class="fas fa-palette"></i> Editorial Tone
+                                <i class="fas fa-palette"></i> <span x-text="t('editorial_tone')"></span>
                             </div>
                             <select x-model="form.tone" class="aw-select">
                                 <template x-for="tone in settings.tones">
-                                    <option :value="tone.value" x-text="tone.label"></option>
+                                    <option :value="tone.value" x-text="getToneLabel(tone)"></option>
                                 </template>
                             </select>
                         </div>
                         <div class="col-md-6">
                             <div class="aw-label">
-                                <i class="fas fa-users"></i> Target Audience
+                                <i class="fas fa-users"></i> <span x-text="t('target_audience')"></span>
                             </div>
                             <select x-model="form.audience" class="aw-select">
                                 <template x-for="audience in settings.audiences">
-                                    <option :value="audience.value" x-text="audience.label"></option>
+                                    <option :value="audience.value" x-text="getAudienceLabel(audience)"></option>
                                 </template>
                             </select>
                         </div>
@@ -141,32 +139,32 @@
                         </div>
                         <div style="display: flex; align-items: center; gap: 0.75rem; margin-bottom: 0.75rem;">
                             <i class="fas fa-magic" style="color: var(--aw-cyan);"></i>
-                            <h4 style="margin: 0; font-size: 0.85rem; font-weight: 800; color: #fff; text-transform: uppercase; letter-spacing: 1px;">Persona Mastery Guide</h4>
+                            <h4 style="margin: 0; font-size: 0.85rem; font-weight: 800; color: #fff; text-transform: uppercase; letter-spacing: 1px;" x-text="t('persona_guide')">Persona Mastery Guide</h4>
                         </div>
                         <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1rem;">
                             <div style="background: rgba(0,0,0,0.2); padding: 0.75rem; border-radius: 10px; border: 1px solid rgba(255,255,255,0.05);">
                                 <div style="font-size: 0.7rem; font-weight: 900; color: var(--aw-cyan); margin-bottom: 4px; display: flex; align-items: center; gap: 0.5rem;">
-                                    <i class="fas fa-newspaper"></i> NEWS & TRENDS
+                                    <i class="fas fa-newspaper"></i> <span x-text="t('news_trends')">NEWS & TRENDS</span>
                                 </div>
-                                <div style="font-size: 0.75rem; color: var(--aw-text-dim);">Use <strong style="color: #fff;">Authoritative</strong> + <strong style="color: #fff;">General</strong></div>
+                                <div style="font-size: 0.75rem; color: var(--aw-text-dim);" x-text="t('news_trends_desc')"></div>
                             </div>
                             <div style="background: rgba(0,0,0,0.2); padding: 0.75rem; border-radius: 10px; border: 1px solid rgba(255,255,255,0.05);">
                                 <div style="font-size: 0.7rem; font-weight: 900; color: #a855f7; margin-bottom: 4px; display: flex; align-items: center; gap: 0.5rem;">
-                                    <i class="fas fa-building"></i> REAL ESTATE
+                                    <i class="fas fa-building"></i> <span x-text="t('real_estate')">REAL ESTATE</span>
                                 </div>
-                                <div style="font-size: 0.75rem; color: var(--aw-text-dim);">Use <strong style="color: #fff;">Creative</strong> + <strong style="color: #fff;">Shoppers</strong></div>
+                                <div style="font-size: 0.75rem; color: var(--aw-text-dim);" x-text="t('real_estate_desc')"></div>
                             </div>
                             <div style="background: rgba(0,0,0,0.2); padding: 0.75rem; border-radius: 10px; border: 1px solid rgba(255,255,255,0.05);">
                                 <div style="font-size: 0.7rem; font-weight: 900; color: #10b981; margin-bottom: 4px; display: flex; align-items: center; gap: 0.5rem;">
-                                    <i class="fas fa-briefcase"></i> BUSINESS B2B
+                                    <i class="fas fa-briefcase"></i> <span x-text="t('business_b2b')">BUSINESS B2B</span>
                                 </div>
-                                <div style="font-size: 0.75rem; color: var(--aw-text-dim);">Use <strong style="color: #fff;">Professional</strong> + <strong style="color: #fff;">Professionals</strong></div>
+                                <div style="font-size: 0.75rem; color: var(--aw-text-dim);" x-text="t('business_b2b_desc')"></div>
                             </div>
                             <div style="background: rgba(0,0,0,0.2); padding: 0.75rem; border-radius: 10px; border: 1px solid rgba(255,255,255,0.05);">
                                 <div style="font-size: 0.7rem; font-weight: 900; color: #f59e0b; margin-bottom: 4px; display: flex; align-items: center; gap: 0.5rem;">
-                                    <i class="fas fa-lightbulb"></i> EDUCATIONAL/BLOG
+                                    <i class="fas fa-lightbulb"></i> <span x-text="t('edu_blog')">EDUCATIONAL/BLOG</span>
                                 </div>
-                                <div style="font-size: 0.75rem; color: var(--aw-text-dim);">Use <strong style="color: #fff;">Informative</strong> + <strong style="color: #fff;">Beginners</strong></div>
+                                <div style="font-size: 0.75rem; color: var(--aw-text-dim);" x-text="t('edu_blog_desc')"></div>
                             </div>
                         </div>
                     </div>
@@ -174,37 +172,37 @@
                     <!-- Article Length -->
                     <div style="margin-bottom: 1.5rem;">
                         <div class="aw-label">
-                            <i class="fas fa-ruler-horizontal"></i> Article Length
+                            <i class="fas fa-ruler-horizontal"></i> <span x-text="t('article_length')"></span>
                         </div>
                         <div class="length-container">
                             <button @click="form.word_count = 300" type="button"
                                     class="length-card"
                                     :class="form.word_count === 300 ? 'length-card-active' : ''">
-                                <div class="length-card-title">MINI</div>
+                                <div class="length-card-title" x-text="t('length_mini')">MINI</div>
                                 <div class="length-card-words">~300</div>
                             </button>
                             <button @click="form.word_count = 500" type="button"
                                     class="length-card"
                                     :class="form.word_count === 500 ? 'length-card-active' : ''">
-                                <div class="length-card-title">MICRO</div>
+                                <div class="length-card-title" x-text="t('length_micro')">MICRO</div>
                                 <div class="length-card-words">~500</div>
                             </button>
                             <button @click="form.word_count = 800" type="button"
                                     class="length-card"
                                     :class="form.word_count === 800 ? 'length-card-active' : ''">
-                                <div class="length-card-title">SHORT</div>
+                                <div class="length-card-title" x-text="t('length_short')">SHORT</div>
                                 <div class="length-card-words">~800</div>
                             </button>
                             <button @click="form.word_count = 1500" type="button"
                                     class="length-card"
                                     :class="form.word_count === 1500 ? 'length-card-active' : ''">
-                                <div class="length-card-title">MEDIUM</div>
+                                <div class="length-card-title" x-text="t('length_medium')">MEDIUM</div>
                                 <div class="length-card-words">~1.5k</div>
                             </button>
                             <button @click="form.word_count = 2500" type="button"
                                     class="length-card"
                                     :class="form.word_count === 2500 ? 'length-card-active' : ''">
-                                <div class="length-card-title">LONG</div>
+                                <div class="length-card-title" x-text="t('length_long')">LONG</div>
                                 <div class="length-card-words">~2.5k</div>
                             </button>
                         </div>
@@ -213,7 +211,7 @@
                     <!-- Output Components (Checkboxes) -->
                     <div style="margin-bottom: 2rem;">
                         <div class="aw-label">
-                            <i class="fas fa-puzzle-piece"></i> Include in Article
+                            <i class="fas fa-puzzle-piece"></i> <span x-text="t('include_in_article')"></span>
                         </div>
                         <div style="display: flex; flex-wrap: wrap; gap: 0.5rem;">
                             <template x-for="comp in settings.components" :key="comp.value">
@@ -227,7 +225,7 @@
                                     <div class="comp-check">
                                         <i class="fas fa-check"></i>
                                     </div>
-                                    <span class="comp-label" x-text="comp.label"></span>
+                                    <span class="comp-label" x-text="getComponentLabel(comp)"></span>
                                 </label>
                             </template>
                         </div>
@@ -239,11 +237,11 @@
                                 :disabled="isProcessing || !form.keyword"
                                 class="aw-generate-btn">
                             <span x-show="!isProcessing">
-                                <i class="fas fa-wand-magic-sparkles"></i> GENERATE ARTICLE
-                                <span class="aw-generate-cost" x-text="settings.credit_cost + ' CRS'"></span>
+                                <i class="fas fa-wand-magic-sparkles"></i> <span x-text="t('btn_generate')"></span>
+                                <span class="aw-generate-cost" x-text="settings.credit_cost + (form.language === 'ar' ? ' كريديت' : ' CRS')"></span>
                             </span>
                             <span x-show="isProcessing">
-                                <i class="fas fa-circle-notch fa-spin"></i> CRAFTING CONTENT...
+                                <i class="fas fa-circle-notch fa-spin"></i> <span x-text="t('btn_generating')"></span>
                             </span>
                         </button>
                     </div>
@@ -256,9 +254,9 @@
                     <div class="loader-ring"></div>
                     <i class="fas fa-pen-fancy" style="color: var(--aw-cyan); font-size: 2rem;"></i>
                 </div>
-                <h2 style="font-size: 1.5rem; font-weight: 900; color: #fff; margin-bottom: 0.5rem;">Content Engine Active</h2>
-                <p style="color: var(--aw-text-dim); font-style: italic; margin-bottom: 0.25rem; font-size: 0.9rem;">Simulating SERP analysis, applying E-E-A-T signals, building heading hierarchy...</p>
-                <p style="color: var(--aw-text-label); font-size: 0.75rem;">This may take 30-60 seconds for comprehensive articles.</p>
+                <h2 style="font-size: 1.5rem; font-weight: 900; color: #fff; margin-bottom: 0.5rem;" x-text="t('engine_active')">Content Engine Active</h2>
+                <p style="color: var(--aw-text-dim); font-style: italic; margin-bottom: 0.25rem; font-size: 0.9rem;" x-text="t('engine_simulating')">Simulating SERP analysis, applying E-E-A-T signals, building heading hierarchy...</p>
+                <p style="color: var(--aw-text-label); font-size: 0.75rem;" x-text="t('engine_time')">This may take 30-60 seconds for comprehensive articles.</p>
                 <div style="max-width: 300px; margin: 2rem auto 0;">
                     <div style="height: 4px; background: var(--aw-surface); border-radius: 10px; overflow: hidden;">
                         <div class="animate-shimmer" style="height: 100%; width: 100%; background: linear-gradient(90deg, transparent, var(--aw-cyan), transparent);"></div>
@@ -278,7 +276,7 @@
                             <div style="min-width: 0; flex: 1;">
                                 <h3 style="font-size: 1.05rem; font-weight: 800; color: #fff; margin: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; max-width: 550px;" x-text="currentArticle.title"></h3>
                                 <div style="font-size: 0.65rem; font-weight: 800; color: var(--aw-text-label); text-transform: uppercase; letter-spacing: 1px; margin-top: 2px; display: flex; gap: 0.75rem;">
-                                    <span x-text="currentArticle.word_count + ' words'"></span>
+                                    <span x-text="currentArticle.word_count + ' ' + t('words')"></span>
                                     <span>•</span>
                                     <span x-text="currentArticle.language.toUpperCase()"></span>
                                 </div>
@@ -286,13 +284,13 @@
                         </div>
                         <div style="display: flex; gap: 0.5rem; flex-shrink: 0;">
                             <button @click="view = 'form'" style="background: var(--aw-surface); border: 1px solid var(--aw-border); color: #fff; padding: 0.5rem 1rem; border-radius: 10px; font-size: 0.78rem; font-weight: 700; cursor: pointer; transition: all 0.2s;">
-                                <i class="fas fa-plus" style="margin-right: 4px;"></i> New
+                                <i class="fas fa-plus" style="margin-right: 4px;"></i> <span x-text="t('btn_new')"></span>
                             </button>
                             <button @click="copyContent()" style="background: var(--aw-cyan); border: none; color: #000; padding: 0.5rem 1rem; border-radius: 10px; font-size: 0.78rem; font-weight: 800; cursor: pointer; transition: all 0.2s;">
-                                <i class="fas fa-copy" style="margin-right: 4px;"></i> Copy HTML
+                                <i class="fas fa-copy" style="margin-right: 4px;"></i> <span x-text="t('btn_copy_html')"></span>
                             </button>
                             <button @click="copyPlainText()" style="background: var(--aw-surface); border: 1px solid var(--aw-border); color: #fff; padding: 0.5rem 1rem; border-radius: 10px; font-size: 0.78rem; font-weight: 700; cursor: pointer; transition: all 0.2s;">
-                                <i class="fas fa-align-left" style="margin-right: 4px;"></i> Copy Text
+                                <i class="fas fa-align-left" style="margin-right: 4px;"></i> <span x-text="t('btn_copy_text')"></span>
                             </button>
                         </div>
                     </div>
@@ -300,13 +298,13 @@
                     <!-- Tabs -->
                     <div style="padding: 0 2rem; border-bottom: 1px solid var(--aw-border); display: flex; gap: 0.25rem; background: rgba(0,0,0,0.15);">
                         <button @click="articleTab = 'read'" class="result-tab" :class="articleTab === 'read' ? 'result-tab-active' : ''">
-                            <i class="fas fa-book-reader" style="margin-right: 4px;"></i> Article View
+                            <i class="fas fa-book-reader" style="margin-right: 4px;"></i> <span x-text="t('tab_article')"></span>
                         </button>
                         <button @click="articleTab = 'seo'" class="result-tab" :class="articleTab === 'seo' ? 'result-tab-active' : ''">
-                            <i class="fas fa-search" style="margin-right: 4px;"></i> SEO & Meta
+                            <i class="fas fa-search" style="margin-right: 4px;"></i> <span x-text="t('tab_seo')"></span>
                         </button>
                         <button @click="articleTab = 'raw'" class="result-tab" :class="articleTab === 'raw' ? 'result-tab-active' : ''">
-                            <i class="fas fa-code" style="margin-right: 4px;"></i> Raw Code
+                            <i class="fas fa-code" style="margin-right: 4px;"></i> <span x-text="t('tab_raw')"></span>
                         </button>
                     </div>
 
@@ -323,7 +321,7 @@
                             <!-- Title Tag -->
                             <div style="margin-bottom: 1.5rem; padding: 1.5rem; background: var(--aw-surface); border: 1px solid var(--aw-border); border-radius: 16px;">
                                 <div class="aw-label" style="margin-bottom: 0.75rem;">
-                                    <i class="fas fa-heading"></i> SEO Title Tag
+                                    <i class="fas fa-heading"></i> <span x-text="t('seo_title_tag')"></span>
                                 </div>
                                 <div style="font-size: 1.15rem; font-weight: 700; color: #fff; padding: 1rem; background: rgba(0,0,0,0.25); border-radius: 12px; border: 1px solid var(--aw-border);" x-text="currentArticle.title"></div>
                                 <div style="text-align: right; font-size: 0.65rem; font-weight: 700; margin-top: 0.5rem;"
@@ -334,9 +332,9 @@
                             <!-- Meta Description -->
                             <div style="margin-bottom: 1.5rem; padding: 1.5rem; background: var(--aw-surface); border: 1px solid var(--aw-border); border-radius: 16px;">
                                 <div class="aw-label" style="margin-bottom: 0.75rem;">
-                                    <i class="fas fa-align-left"></i> Meta Description
+                                    <i class="fas fa-align-left"></i> <span x-text="t('meta_desc')"></span>
                                 </div>
-                                <div style="font-size: 1rem; line-height: 1.6; color: var(--aw-text); padding: 1rem; background: rgba(0,0,0,0.25); border-radius: 12px; border: 1px solid var(--aw-border);" x-text="currentArticle.meta_description || 'Not generated — check Raw Code tab'"></div>
+                                <div style="font-size: 1rem; line-height: 1.6; color: var(--aw-text); padding: 1rem; background: rgba(0,0,0,0.25); border-radius: 12px; border: 1px solid var(--aw-border);" x-text="currentArticle.meta_description || t('meta_desc_missing')"></div>
                                 <div style="text-align: right; font-size: 0.65rem; font-weight: 700; margin-top: 0.5rem;"
                                      :style="(currentArticle.meta_description || '').length <= 155 ? 'color: #10b981;' : 'color: #f59e0b;'"
                                      x-text="(currentArticle.meta_description || '').length + '/155 chars'"></div>
@@ -345,14 +343,14 @@
                             <!-- Suggested URL / Slug (English + Arabic) -->
                             <div style="margin-bottom: 1.5rem; padding: 1.5rem; background: var(--aw-surface); border: 1px solid var(--aw-border); border-radius: 16px;">
                                 <div class="aw-label" style="margin-bottom: 0.75rem;">
-                                    <i class="fas fa-link"></i> Suggested URL / Slug
+                                    <i class="fas fa-link"></i> <span x-text="t('suggested_url')"></span>
                                 </div>
 
                                 <!-- English slug -->
                                 <div style="margin-bottom: 0.85rem;">
                                     <div style="font-size: 0.6rem; font-weight: 800; color: var(--aw-text-label); text-transform: uppercase; letter-spacing: 1.5px; margin-bottom: 0.4rem; display: flex; align-items: center; gap: 0.4rem;">
                                         <span style="background: var(--aw-cyan-10); color: var(--aw-cyan); padding: 0.15rem 0.5rem; border-radius: 6px; font-size: 0.6rem;">EN</span>
-                                        English URL
+                                        <span x-text="t('en_url')"></span>
                                     </div>
                                     <div style="display: flex; gap: 0.5rem; align-items: stretch;">
                                         <div style="flex: 1; padding: 0.85rem 1rem; background: rgba(0,0,0,0.25); border: 1px solid var(--aw-border); border-radius: 10px; font-family: 'JetBrains Mono', monospace; font-size: 0.85rem; color: #fff; direction: ltr; word-break: break-all; line-height: 1.5;">
@@ -371,7 +369,7 @@
                                 <div>
                                     <div style="font-size: 0.6rem; font-weight: 800; color: var(--aw-text-label); text-transform: uppercase; letter-spacing: 1.5px; margin-bottom: 0.4rem; display: flex; align-items: center; gap: 0.4rem;">
                                         <span style="background: rgba(168,85,247,0.1); color: #a855f7; padding: 0.15rem 0.5rem; border-radius: 6px; font-size: 0.6rem;">AR</span>
-                                        Arabic URL
+                                        <span x-text="t('ar_url')"></span>
                                     </div>
                                     <div style="display: flex; gap: 0.5rem; align-items: stretch;">
                                         <div style="flex: 1; padding: 0.85rem 1rem; background: rgba(0,0,0,0.25); border: 1px solid var(--aw-border); border-radius: 10px; font-family: 'JetBrains Mono', monospace; font-size: 0.85rem; color: #fff; word-break: break-all; line-height: 1.5;">
@@ -386,7 +384,7 @@
                                     </div>
                                 </div>
 
-                                <p style="font-size: 0.7rem; color: var(--aw-text-dim); margin-top: 0.85rem; margin-bottom: 0; line-height: 1.5;">
+                                <p style="font-size: 0.7rem; color: var(--aw-text-dim); margin-top: 0.85rem; margin-bottom: 0; line-height: 1.5;" x-text="t('url_note')">
                                     Auto-generated from the article title. Both slugs are sanitized for SEO — English is lowercase ASCII, Arabic preserves native letters with hyphens.
                                 </p>
                             </div>
@@ -394,7 +392,7 @@
                             <!-- Google Preview -->
                             <div style="margin-bottom: 1.5rem; padding: 1.5rem; background: #fff; border-radius: 16px; color: #000;">
                                 <div class="aw-label" style="margin-bottom: 0.75rem; color: rgba(0,0,0,0.4);">
-                                    <i class="fab fa-google" style="color: #4285f4;"></i> Google SERP Preview
+                                    <i class="fab fa-google" style="color: #4285f4;"></i> <span x-text="t('serp_preview')"></span>
                                 </div>
                                 <div style="font-size: 1.15rem; color: #1a0dab; font-weight: 400; margin-bottom: 2px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;" x-text="currentArticle.title || 'Untitled'"></div>
                                 <div style="font-size: 0.8rem; color: #006621; margin-bottom: 4px;" x-text="'https://' + suggestedDomain() + '/' + (currentArticle.language === 'ar' ? (slugAr() || slugEn() || '...') : (slugEn() || slugAr() || '...'))"></div>
@@ -404,19 +402,19 @@
                             <!-- SEO Stats Grid -->
                             <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 0.75rem;">
                                 <div style="padding: 1rem; background: var(--aw-surface); border: 1px solid var(--aw-border); border-radius: 12px; text-align: center;">
-                                    <div style="font-size: 0.6rem; font-weight: 800; color: var(--aw-text-label); text-transform: uppercase; letter-spacing: 1px; margin-bottom: 4px;">Status</div>
-                                    <div style="font-size: 0.85rem; font-weight: 800; color: #10b981;">INDEX READY</div>
+                                    <div style="font-size: 0.6rem; font-weight: 800; color: var(--aw-text-label); text-transform: uppercase; letter-spacing: 1px; margin-bottom: 4px;" x-text="t('stat_status')">Status</div>
+                                    <div style="font-size: 0.85rem; font-weight: 800; color: #10b981;" x-text="t('stat_status_val')">INDEX READY</div>
                                 </div>
                                 <div style="padding: 1rem; background: var(--aw-surface); border: 1px solid var(--aw-border); border-radius: 12px; text-align: center;">
-                                    <div style="font-size: 0.6rem; font-weight: 800; color: var(--aw-text-label); text-transform: uppercase; letter-spacing: 1px; margin-bottom: 4px;">Hierarchy</div>
-                                    <div style="font-size: 0.85rem; font-weight: 800; color: #fff;">STRICT H1-H3</div>
+                                    <div style="font-size: 0.6rem; font-weight: 800; color: var(--aw-text-label); text-transform: uppercase; letter-spacing: 1px; margin-bottom: 4px;" x-text="t('stat_hierarchy')">Hierarchy</div>
+                                    <div style="font-size: 0.85rem; font-weight: 800; color: #fff;" x-text="t('stat_hierarchy_val')">STRICT H1-H3</div>
                                 </div>
                                 <div style="padding: 1rem; background: var(--aw-surface); border: 1px solid var(--aw-border); border-radius: 12px; text-align: center;">
-                                    <div style="font-size: 0.6rem; font-weight: 800; color: var(--aw-text-label); text-transform: uppercase; letter-spacing: 1px; margin-bottom: 4px;">E-E-A-T</div>
-                                    <div style="font-size: 0.85rem; font-weight: 800; color: #10b981;">VERIFIED</div>
+                                    <div style="font-size: 0.6rem; font-weight: 800; color: var(--aw-text-label); text-transform: uppercase; letter-spacing: 1px; margin-bottom: 4px;" x-text="t('stat_eeat')">E-E-A-T</div>
+                                    <div style="font-size: 0.85rem; font-weight: 800; color: #10b981;" x-text="t('stat_eeat_val')">VERIFIED</div>
                                 </div>
                                 <div style="padding: 1rem; background: var(--aw-surface); border: 1px solid var(--aw-border); border-radius: 12px; text-align: center;">
-                                    <div style="font-size: 0.6rem; font-weight: 800; color: var(--aw-text-label); text-transform: uppercase; letter-spacing: 1px; margin-bottom: 4px;">Word Count</div>
+                                    <div style="font-size: 0.6rem; font-weight: 800; color: var(--aw-text-label); text-transform: uppercase; letter-spacing: 1px; margin-bottom: 4px;" x-text="t('stat_words')">Word Count</div>
                                     <div style="font-size: 0.85rem; font-weight: 800; color: var(--aw-cyan);" x-text="currentArticle.word_count"></div>
                                 </div>
                             </div>
@@ -812,6 +810,7 @@
     /* ===== HISTORY ITEMS ===== */
     .history-item {
         padding: 1rem 1.25rem;
+        padding-right: 3rem;
         border-bottom: 1px solid var(--aw-border);
         cursor: pointer;
         transition: all 0.2s ease;
@@ -820,6 +819,42 @@
     .history-item-active {
         background: var(--aw-cyan-10) !important;
         border-right: 3px solid var(--aw-cyan);
+    }
+
+    /* ===== RTL ADAPTATIONS ===== */
+    [dir="rtl"] .aw-card .form-control,
+    [dir="rtl"] .aw-card input[type="text"] {
+        padding: 1rem 3rem 1rem 1rem !important;
+    }
+    [dir="rtl"] .aw-search-wrap i {
+        left: auto !important;
+        right: 1.25rem !important;
+    }
+    [dir="rtl"] .aw-select {
+        background-position: left 1.25rem center !important;
+        padding-left: 2.5rem !important;
+        padding-right: 1.25rem !important;
+    }
+    [dir="rtl"] .history-item {
+        padding-right: 1.25rem !important;
+        padding-left: 3rem !important;
+    }
+    [dir="rtl"] .delete-btn {
+        right: auto !important;
+        left: 1rem !important;
+    }
+    [dir="rtl"] .history-item-active {
+        border-right: none !important;
+        border-left: 3px solid var(--aw-cyan) !important;
+    }
+    [dir="rtl"] .article-render-container blockquote {
+        border-left: none !important;
+        border-right: 4px solid var(--aw-cyan) !important;
+        border-radius: 12px 0 0 12px !important;
+    }
+    [dir="rtl"] .article-render-container .quick-summary {
+        border-left: none !important;
+        border-right: 4px solid var(--aw-cyan) !important;
     }
 
     /* ===== RESULT TABS ===== */
@@ -872,6 +907,203 @@ function articleWriter() {
             components: ['faq', 'summary', 'takeaways', 'meta']
         },
 
+        i18n: {
+            en: {
+                title: 'Pro AI Article Writer',
+                subtitle: 'SEO-optimized content engine with E-E-A-T compliance',
+                engine_label: 'ENGINE',
+                engine_val: 'AI POWERED',
+                output_label: 'OUTPUT',
+                output_val: 'HTML + SEO',
+                saved_content: 'Saved Content',
+                no_saved: 'No articles generated yet. Create your first masterpiece!',
+                words: 'words',
+                primary_keyword: 'Primary Keyword or Topic',
+                keyword_placeholder: 'e.g., Best AI Tools for Digital Marketing in 2026...',
+                language: 'Article Language',
+                editorial_tone: 'Editorial Tone',
+                target_audience: 'Target Audience',
+                persona_guide: 'Persona Mastery Guide',
+                news_trends: 'NEWS & TRENDS',
+                news_trends_desc: 'Use Authoritative + General',
+                real_estate: 'REAL ESTATE',
+                real_estate_desc: 'Use Creative + Shoppers',
+                business_b2b: 'BUSINESS B2B',
+                business_b2b_desc: 'Use Professional + Professionals',
+                edu_blog: 'EDUCATIONAL/BLOG',
+                edu_blog_desc: 'Use Informative + Beginners',
+                article_length: 'Article Length',
+                length_mini: 'MINI',
+                length_micro: 'MICRO',
+                length_short: 'SHORT',
+                length_medium: 'MEDIUM',
+                length_long: 'LONG',
+                include_in_article: 'Include in Article',
+                btn_generate: 'GENERATE ARTICLE',
+                btn_generating: 'CRAFTING CONTENT...',
+                engine_active: 'Content Engine Active',
+                engine_simulating: 'Simulating SERP analysis, applying E-E-A-T signals, building heading hierarchy...',
+                engine_time: 'This may take 30-60 seconds for comprehensive articles.',
+                btn_new: 'New Article',
+                btn_copy_html: 'Copy HTML',
+                btn_copy_text: 'Copy Text',
+                tab_article: 'Article View',
+                tab_seo: 'SEO & Meta',
+                tab_raw: 'Raw Code',
+                seo_title_tag: 'SEO Title Tag',
+                meta_desc: 'Meta Description',
+                meta_desc_missing: 'Not generated — check Raw Code tab',
+                suggested_url: 'Suggested URL / Slug',
+                en_url: 'English URL',
+                ar_url: 'Arabic URL',
+                url_note: 'Auto-generated from the article title. Both slugs are sanitized for SEO — English is lowercase ASCII, Arabic preserves native letters with hyphens.',
+                serp_preview: 'Google SERP Preview',
+                stat_status: 'Status',
+                stat_status_val: 'INDEX READY',
+                stat_hierarchy: 'Hierarchy',
+                stat_hierarchy_val: 'STRICT H1-H3',
+                stat_eeat: 'E-E-A-T',
+                stat_eeat_val: 'VERIFIED',
+                stat_words: 'Word Count',
+                alert_generated: 'Article Generated Successfully!',
+                alert_html_copied: 'HTML Copied to Clipboard!',
+                alert_text_copied: 'Plain Text Copied!',
+                alert_val_copied: 'Value copied',
+                alert_confirm_del: 'Are you sure?',
+                alert_del_text: 'This article will be permanently removed from your history.',
+                alert_del_btn: 'Yes, Delete',
+                alert_cancel: 'Cancel',
+                alert_deleted: 'Article Deleted',
+                tones: {
+                    professional: 'Professional',
+                    informative: 'Informative',
+                    casual: 'Casual & Friendly',
+                    authoritative: 'Authoritative Expert',
+                    creative: 'Creative & Engaging'
+                },
+                audiences: {
+                    general: 'General Audience',
+                    professionals: 'Industry Professionals',
+                    beginners: 'Beginners & Learners',
+                    shoppers: 'Online Shoppers'
+                },
+                components: {
+                    faq: 'FAQ Section',
+                    summary: 'Quick Summary',
+                    takeaways: 'Key Takeaways',
+                    meta: 'SEO Meta Tags',
+                    internal_links: 'Internal Link Suggestions'
+                }
+            },
+            ar: {
+                title: 'كاتب المقالات الاحترافي بالذكاء الاصطناعي',
+                subtitle: 'محرك محتوى متوافق مع معايير SEO و E-E-A-T وخلاصات Google Discover',
+                engine_label: 'المحرك',
+                engine_val: 'ذكاء اصطناعي',
+                output_label: 'المخرجات',
+                output_val: 'HTML + SEO جاهز',
+                saved_content: 'المقالات المحفوظة',
+                no_saved: 'لم يتم إنشاء أي مقالات بعد. ابدأ بصناعة مقالك الأول الآن!',
+                words: 'كلمة',
+                primary_keyword: 'الكلمة المفتاحية أو موضوع المقال',
+                keyword_placeholder: 'مثال: أفضل أدوات الذكاء الاصطناعي لكتابة المقالات في 2026...',
+                language: 'لغة المقال',
+                editorial_tone: 'أسلوب ونبرة الصياغة',
+                target_audience: 'الجمهور المستهدف',
+                persona_guide: 'دليل اختيار نبرة وأسلوب المقال',
+                news_trends: 'الأخبار والترندات',
+                news_trends_desc: 'استخدم (خبير متخصص) + (الجمهور العام)',
+                real_estate: 'العقارات والمشاريع',
+                real_estate_desc: 'استخدم (إبداعي وشيق) + (المتسوقين)',
+                business_b2b: 'الأعمال والشركات',
+                business_b2b_desc: 'استخدم (احترافي وموثوق) + (المتخصصين)',
+                edu_blog: 'المدونات والشروحات',
+                edu_blog_desc: 'استخدم (إخباري وتثقيفي) + (المبتدئين)',
+                article_length: 'طول المقال المطلوب',
+                length_mini: 'موجز',
+                length_micro: 'قصير جداً',
+                length_short: 'قصير',
+                length_medium: 'متوسط',
+                length_long: 'شامل ومفصل',
+                include_in_article: 'عناصر وتنسيقات المقال الإضافية',
+                btn_generate: 'توليد المقال بالذكاء الاصطناعي',
+                btn_generating: 'جاري صياغة المقال وتوليد السيو...',
+                engine_active: 'محرك الذكاء الاصطناعي يعمل الآن',
+                engine_simulating: 'تحليل نتائج البحث، تطبيق إشارات E-E-A-T، وهيكلة العناوين H1-H3...',
+                engine_time: 'قد يستغرق توليد المقال الشامل بين 30 إلى 60 ثانية.',
+                btn_new: 'مقال جديد',
+                btn_copy_html: 'نسخ كود HTML',
+                btn_copy_text: 'نسخ النص',
+                tab_article: 'معاينة المقال',
+                tab_seo: 'بيانات السيو والميتا',
+                tab_raw: 'الكود المصدري الخام',
+                seo_title_tag: 'عنوان السيو المخصص (Title Tag)',
+                meta_desc: 'الوصف التعريفي (Meta Description)',
+                meta_desc_missing: 'لم يتم التوليد — تحقق من تبويب الكود الخام',
+                suggested_url: 'الرابط الموصى به للمقال (Slug)',
+                en_url: 'رابط إنجليزي',
+                ar_url: 'رابط عربي',
+                url_note: 'تم التوليد تلقائياً من عنوان المقال ومطابقته لمعايير السيو (SEO-Friendly). الرابط الإنجليزي بأحرف ASCII والرابط العربي يحتفظ بالأحرف الأصلية مفصولة بشرطات.',
+                serp_preview: 'معاينة النتيجة في بحث جوجل (SERP Preview)',
+                stat_status: 'الحالة',
+                stat_status_val: 'جاهز للأرشفة',
+                stat_hierarchy: 'التسلسل',
+                stat_hierarchy_val: 'منظم H1-H3',
+                stat_eeat: 'معايير E-E-A-T',
+                stat_eeat_val: 'موثوق ومعتمد',
+                stat_words: 'عدد الكلمات',
+                alert_generated: 'تم إنشاء المقال بنجاح!',
+                alert_html_copied: 'تم نسخ كود HTML إلى الحافظة!',
+                alert_text_copied: 'تم نسخ النص إلى الحافظة!',
+                alert_val_copied: 'تم النسخ بنجاح',
+                alert_confirm_del: 'هل أنت متأكد؟',
+                alert_del_text: 'سيتم حذف هذا المقال نهائياً من سجل المقالات لديك.',
+                alert_del_btn: 'نعم، احذف',
+                alert_cancel: 'إلغاء',
+                alert_deleted: 'تم حذف المقال',
+                tones: {
+                    professional: 'احترافي وموثوق (Professional)',
+                    informative: 'إخباري وتثقيفي (Informative)',
+                    casual: 'ودي وجذاب (Casual & Friendly)',
+                    authoritative: 'خبير متخصص ومعتمد (Authoritative)',
+                    creative: 'إبداعي وشيق (Creative)'
+                },
+                audiences: {
+                    general: 'الجمهور العام (General)',
+                    professionals: 'المتخصصين والخبراء (Professionals)',
+                    beginners: 'المبتدئين والباحثين عن تعلم (Beginners)',
+                    shoppers: 'المتسوقين والمهتمين بالشراء (Shoppers)'
+                },
+                components: {
+                    faq: 'قسم الأسئلة الشائعة (FAQ)',
+                    summary: 'الموجز التنفيذي السريع (Summary)',
+                    takeaways: 'أهم النقاط المستخلصة (Takeaways)',
+                    meta: 'بيانات السيو والعنوان الميتا (Meta)',
+                    internal_links: 'اقتراحات الروابط الداخلية (Links)'
+                }
+            }
+        },
+
+        t(key) {
+            const lang = this.form.language === 'ar' ? 'ar' : 'en';
+            return this.i18n[lang]?.[key] || this.i18n['en']?.[key] || key;
+        },
+
+        getToneLabel(tone) {
+            const lang = this.form.language === 'ar' ? 'ar' : 'en';
+            return this.i18n[lang]?.tones?.[tone.value] || tone.label;
+        },
+
+        getAudienceLabel(audience) {
+            const lang = this.form.language === 'ar' ? 'ar' : 'en';
+            return this.i18n[lang]?.audiences?.[audience.value] || audience.label;
+        },
+
+        getComponentLabel(comp) {
+            const lang = this.form.language === 'ar' ? 'ar' : 'en';
+            return this.i18n[lang]?.components?.[comp.value] || comp.label;
+        },
+
         init() {
             const urlParams = new URLSearchParams(window.location.search);
             if (urlParams.has('keyword')) {
@@ -880,8 +1112,10 @@ function articleWriter() {
                 this.form.keyword = urlParams.get('topic');
             }
             
-            // Default language to first available
-            if (this.settings.languages && this.settings.languages.length > 0) {
+            // Auto-detect language from prefilled keyword if Arabic characters are present
+            if (this.form.keyword && /[\u0600-\u06FF]/.test(this.form.keyword)) {
+                this.form.language = 'ar';
+            } else if (this.settings.languages && this.settings.languages.length > 0) {
                 this.form.language = this.settings.languages[0].value;
             }
         },
@@ -932,17 +1166,17 @@ function articleWriter() {
                         toast: true,
                         position: 'top-end',
                         icon: 'success',
-                        title: 'Article Generated Successfully!',
+                        title: this.t('alert_generated'),
                         showConfirmButton: false,
                         timer: 3000,
                         background: '#17181c',
                         color: '#fff'
                     });
                 } else {
-                    this.showError(data.message || 'Generation failed. Please try again.');
+                    this.showError(data.message || (this.form.language === 'ar' ? 'فشل التوليد. يرجى المحاولة مرة أخرى.' : 'Generation failed. Please try again.'));
                 }
             } catch (err) {
-                this.showError('Connection error. Please check your network and try again.');
+                this.showError(this.form.language === 'ar' ? 'خطأ في الاتصال. يرجى التحقق من الشبكة والمحاولة مجدداً.' : 'Connection error. Please check your network and try again.');
             } finally {
                 this.isProcessing = false;
             }
@@ -954,25 +1188,29 @@ function articleWriter() {
                 const res = await fetch(`{{ url('dashboard/article-writer') }}/${id}`);
                 const data = await res.json();
                 this.currentArticle = data;
+                if (data.language) {
+                    this.form.language = data.language;
+                }
                 this.view = 'result';
                 this.articleTab = 'read';
             } catch (err) {
-                this.showError('Failed to load article');
+                this.showError(this.form.language === 'ar' ? 'فشل تحميل المقال' : 'Failed to load article');
             } finally {
                 this.isProcessing = false;
             }
         },
 
         async deleteArticle(id) {
+            const isAr = this.form.language === 'ar';
             const result = await Swal.fire({
-                title: 'Are you sure?',
-                text: "This article will be permanently removed from your history.",
+                title: this.t('alert_confirm_del'),
+                text: this.t('alert_del_text'),
                 icon: 'warning',
                 showCancelButton: true,
                 confirmButtonColor: '#ff4b4b',
                 cancelButtonColor: 'var(--aw-surface)',
-                confirmButtonText: 'Yes, Delete',
-                cancelButtonText: 'Cancel',
+                confirmButtonText: this.t('alert_del_btn'),
+                cancelButtonText: this.t('alert_cancel'),
                 background: '#17181c',
                 color: '#fff'
             });
@@ -999,7 +1237,7 @@ function articleWriter() {
                             toast: true,
                             position: 'top-end',
                             icon: 'success',
-                            title: 'Article Deleted',
+                            title: this.t('alert_deleted'),
                             showConfirmButton: false,
                             timer: 1500,
                             background: '#17181c',
@@ -1007,7 +1245,7 @@ function articleWriter() {
                         });
                     }
                 } catch (err) {
-                    this.showError('Finalizing delete failed');
+                    this.showError(isAr ? 'فشل حذف المقال' : 'Finalizing delete failed');
                 }
             }
         },
@@ -1019,7 +1257,7 @@ function articleWriter() {
                 toast: true,
                 position: 'top-end',
                 icon: 'success',
-                title: 'HTML Copied to Clipboard!',
+                title: this.t('alert_html_copied'),
                 showConfirmButton: false,
                 timer: 1500,
                 background: '#17181c',
@@ -1037,7 +1275,7 @@ function articleWriter() {
                 toast: true,
                 position: 'top-end',
                 icon: 'success',
-                title: 'Plain Text Copied!',
+                title: this.t('alert_text_copied'),
                 showConfirmButton: false,
                 timer: 1500,
                 background: '#17181c',
@@ -1045,11 +1283,6 @@ function articleWriter() {
             });
         },
 
-        // ─── Slug / suggested-URL helpers ────────────────────────────
-        // Read slugs from seo_data (the controller persists them there).
-        // The values may arrive as a parsed object (Eloquent cast) or as
-        // a raw JSON string depending on the response shape, so we
-        // normalize both cases.
         seoData() {
             if (!this.currentArticle) return {};
             const raw = this.currentArticle.seo_data;
@@ -1075,7 +1308,7 @@ function articleWriter() {
                     toast: true,
                     position: 'top-end',
                     icon: 'success',
-                    title: (label || 'Value') + ' copied',
+                    title: (label || this.t('alert_val_copied')) + (this.form.language === 'ar' ? ' (تم النسخ)' : ' copied'),
                     showConfirmButton: false,
                     timer: 1500,
                     background: '#17181c',
@@ -1087,7 +1320,7 @@ function articleWriter() {
         showError(msg) {
             Swal.fire({
                 icon: 'error',
-                title: 'Error',
+                title: this.form.language === 'ar' ? 'تنبيه' : 'Error',
                 text: msg,
                 background: '#17181c',
                 color: '#fff',
@@ -1097,7 +1330,8 @@ function articleWriter() {
 
         formatDate(dateStr) {
             const date = new Date(dateStr);
-            return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' });
+            const locale = this.form.language === 'ar' ? 'ar-EG' : 'en-US';
+            return date.toLocaleDateString(locale, { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' });
         }
     }
 }
