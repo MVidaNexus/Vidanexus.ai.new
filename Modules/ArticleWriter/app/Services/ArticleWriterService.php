@@ -314,11 +314,12 @@ class ArticleWriterService
         $rules .= "Write like a senior editorial human journalist, not an AI. Every sentence must read as if a thoughtful, authentic human wrote it for a real reader.\n\n";
 
         $rules .= "## Zero AI Fingerprints & Punctuation Hygiene (STRICT)\n";
-        $rules .= "- ZERO SEMICOLONS: DO NOT use semicolons ('؛' in Arabic or ';' in English) anywhere in the text. Replace them with standard commas ('،') or separate sentences with periods ('.').\n";
+        $rules .= "- ZERO SEMICOLONS: DO NOT use semicolons ('؛' in Arabic or ';' in English) anywhere in the text. Replace them with standard commas ('،').\n";
         $rules .= "- ZERO IN-PROSE EM-DASHES: DO NOT use em-dashes ('—' or '–') in the middle of sentences or paragraphs as artificial parentheticals.\n";
         $rules .= "- ZERO ELLIPSES: DO NOT use trailing dots or ellipses ('...' or '…') in headings or body text.\n";
-        $rules .= "- ZERO RANDOM QUOTATION MARKS: DO NOT put quotation marks around ordinary words (e.g. NEVER write: بشكل \"رئيسي\" or تحركات \"مفاجئة\"). Quotation marks are strictly reserved for verbatim direct quotes from named authorities.\n";
-        $rules .= "- ZERO FORMULAIC CONNECTORS: Eliminate cliché connectors like 'حيث أن', 'مما يؤكد', 'يأتي هذا مدفوعاً بـ', 'تجدر الإشارة'. Write in clean, direct, active voice.\n\n";
+        $rules .= "- ZERO RANDOM QUOTATION MARKS: DO NOT put quotation marks around ordinary words. Quotation marks are strictly reserved for verbatim direct quotes from named authorities.\n";
+        $rules .= "- ZERO FORMULAIC CONNECTORS: Eliminate cliché connectors like 'حيث أن', 'مما يؤكد', 'يأتي هذا مدفوعاً بـ', 'تجدر الإشارة'. Write in clean, direct, active voice.\n";
+        $rules .= "- ARABIC PARAGRAPH COHESION (قاعدة ترابط الجمل في العربية): In Arabic prose, paragraphs should flow as connected, cohesive thoughts using Arabic commas ('،') and natural conjunctions ('و', 'كما', 'في حين', 'بينما'). Do NOT chop an Arabic paragraph into multiple tiny 6-word fragments separated by mid-paragraph periods. Use a single period ('.') only at the end of the completed paragraph or full major thought.\n\n";
 
         $rules .= "## Tone & cadence\n";
         $rules .= "- Vary sentence length aggressively. Mix 4-word punchy sentences with 25-word flowing ones in the same paragraph.\n";
