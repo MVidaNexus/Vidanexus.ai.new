@@ -28,11 +28,11 @@
                                 {{ $trend['traffic'] }}
                             </span>
                             <span class="text-[8px] font-bold flex items-center gap-1" style="color: var(--text-muted);">
-                                <i class="far fa-clock"></i>
                                 @php
                                     $trendDate = \Carbon\Carbon::parse($trend['pubDate']);
+                                    if ($isAr ?? true) $trendDate->locale('ar');
                                 @endphp
-                                {{ $trendDate->isFuture() ? 'Now' : $trendDate->diffForHumans(null, true, false, 2) . ' ago' }}
+                                {{ $trendDate->isFuture() ? (($isAr ?? true) ? 'الآن' : 'Now') : $trendDate->diffForHumans() }}
                             </span>
                         </div>
                     </div>

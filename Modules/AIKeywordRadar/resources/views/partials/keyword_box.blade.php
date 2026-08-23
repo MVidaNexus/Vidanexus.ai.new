@@ -360,7 +360,10 @@
                                     @if($pubTime || $syncTime)
                                     <div style="display:flex;flex-wrap:wrap;gap:10px;margin-top:8px;">
                                         @if($pubTime)
-                                            @php $pubCarbon = \Carbon\Carbon::parse($pubTime); @endphp
+                                            @php 
+                                                $pubCarbon = \Carbon\Carbon::parse($pubTime); 
+                                                if ($isAr) $pubCarbon->locale('ar');
+                                            @endphp
                                             <span class="text-[9px] font-bold" style="color:var(--text-muted);"
                                                   title="{{ $pubCarbon->timezone(config('app.timezone'))->format('Y-m-d H:i:s T') }}">
                                                 <i class="fas fa-clock text-[8px] opacity-50" style="color:var(--primary-cyan);"></i>
@@ -369,7 +372,10 @@
                                             </span>
                                         @endif
                                         @if($syncTime)
-                                            @php $syncCarbon = \Carbon\Carbon::parse($syncTime); @endphp
+                                            @php 
+                                                $syncCarbon = \Carbon\Carbon::parse($syncTime); 
+                                                if ($isAr) $syncCarbon->locale('ar');
+                                            @endphp
                                             <span class="text-[9px] font-bold" style="color:var(--text-muted);"
                                                   title="{{ $syncCarbon->timezone(config('app.timezone'))->format('Y-m-d H:i:s T') }}">
                                                 <i class="fas fa-sync text-[8px] opacity-50" style="color:#f59e0b;"></i>
