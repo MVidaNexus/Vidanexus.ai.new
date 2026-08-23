@@ -169,28 +169,28 @@ class ArticleWriterService
 
         // 3. Components (Dynamic — strictly respect user selection)
         if (in_array('summary', $components)) {
-            $compPrompt = Setting::get("{$slug}_prompt_summary", "Generate a Quick Summary box immediately after H1.");
+            $compPrompt = Setting::get("{$slug}_prompt_summary", "Immediately after the <h1> title, generate a Quick Summary in this format:\n<div class=\"quick-summary\">\n<p>[Write a concise, 2-4 sentence executive briefing in [language]. Deliver the core answer, vital facts, or key takeaway immediately without fluff.]</p>\n</div>");
             $prompt .= "## COMPONENT: QUICK SUMMARY\n" . $this->replaceVars($compPrompt, $vars) . "\n\n";
         } else {
             $prompt .= "## COMPONENT: QUICK SUMMARY (OMITTED BY USER)\nSTRICT RULE: Do NOT include any Quick Summary box or executive summary block. Omit it completely.\n\n";
         }
 
         if (in_array('takeaways', $components)) {
-            $compPrompt = Setting::get("{$slug}_prompt_takeaways", "Generate a Key Takeaways section with 6-8 bullets.");
+            $compPrompt = Setting::get("{$slug}_prompt_takeaways", "Generate a Key Takeaways section in [language]:\n<div class=\"key-takeaways\">\n<h2>" . ($isArabic ? 'أهم النقاط المستخلصة' : 'Key Takeaways') . "</h2>\n<ul>\n<li><strong>[Point Title]</strong>: [Concrete, specific fact, action step, or takeaway containing numbers, dates, or actionable advice]</li>\n</ul>\n</div>\nGenerate 4-6 concise, highly specific points.");
             $prompt .= "## COMPONENT: KEY TAKEAWAYS\n" . $this->replaceVars($compPrompt, $vars) . "\n\n";
         } else {
             $prompt .= "## COMPONENT: KEY TAKEAWAYS (OMITTED BY USER)\nSTRICT RULE: Do NOT include any Key Takeaways section or bullet point summary list. Omit it completely.\n\n";
         }
 
         if (in_array('faq', $components)) {
-            $compPrompt = Setting::get("{$slug}_prompt_faq", "Generate a schema-ready FAQ section with 5-7 questions.");
+            $compPrompt = Setting::get("{$slug}_prompt_faq", "Generate a schema-ready FAQ section with 4-6 high-intent questions in [language]. Lead EVERY answer with the direct answer in the FIRST sentence, then elaborate in 1-2 more sentences.\nFormat:\n<div class=\"faq-section\">\n<h2>" . ($isArabic ? 'الأسئلة الشائعة حول [keyword]' : 'Frequently Asked Questions about [keyword]') . "</h2>\n<h3>[Specific, natural-language question matching real search behavior]?</h3>\n<p>[Direct answer first, then supporting context. 2-3 sentences total.]</p>\n</div>");
             $prompt .= "## COMPONENT: FAQ SECTION\n" . $this->replaceVars($compPrompt, $vars) . "\n\n";
         } else {
             $prompt .= "## COMPONENT: FAQ SECTION (OMITTED BY USER)\nSTRICT RULE: Do NOT include any FAQ (Frequently Asked Questions) section. Omit it completely.\n\n";
         }
 
         if (in_array('internal_links', $components)) {
-            $compPrompt = Setting::get("{$slug}_prompt_internal_links", "Suggest 3-5 relevant internal linking anchor opportunities within the article.");
+            $compPrompt = Setting::get("{$slug}_prompt_internal_links", "Generate 3-5 high-relevance internal linking opportunities in [language]:\n<div class=\"internal-links-suggestions\">\n<h2>" . ($isArabic ? 'مقالات وروابط مقترحة ذات صلة' : 'Recommended Internal Links & Topics') . "</h2>\n<ul>\n<li><strong>[Anchor Text / نص الرابط المقترح]</strong>: [Target Topic & Context — explain where and why this connects in the website structure]</li>\n</ul>\n</div>");
             $prompt .= "## COMPONENT: INTERNAL LINKS\n" . $this->replaceVars($compPrompt, $vars) . "\n\n";
         } else {
             $prompt .= "## COMPONENT: INTERNAL LINKS (OMITTED BY USER)\nSTRICT RULE: Do NOT include internal link suggestions.\n\n";
@@ -198,7 +198,7 @@ class ArticleWriterService
 
         // 4. Meta Tags Protocol (Dynamic — respect user selection)
         if (in_array('meta', $components)) {
-            $metaPrompt = Setting::get("{$slug}_prompt_meta", "Output [TITLE], [META_DESCRIPTION], and [FOCUS_KEYWORD] at the end.");
+            $metaPrompt = Setting::get("{$slug}_prompt_meta", "After ALL article content, output these metadata tags on separate lines:\n\n[TITLE]: [Google Discover & Search optimized title — MAX 60 characters — high CTR, credible, includes focus keyword]\n[META_DESCRIPTION]: [Compelling SEO description — MAX 155 characters — includes focus keyword and a clear value hook]\n[FOCUS_KEYWORD]: [The exact primary keyword/phrase]");
             $prompt .= "# METADATA PROTOCOL\n" . $this->replaceVars($metaPrompt, $vars) . "\n";
         } else {
             $prompt .= "# METADATA PROTOCOL\nOutput [TITLE] at the end.\n";
