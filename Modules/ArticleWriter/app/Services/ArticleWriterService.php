@@ -113,9 +113,10 @@ class ArticleWriterService
      */
     protected function buildNuclearPrompt($keyword, $topic, $lang, array $components, int $wordCount, string $tone, string $audience, $newsContext = "")
     {
-        $year = $this->getCurrentYear();
-        $langName = $this->getLanguageName($lang);
-        $slug = 'article-writer';
+        $now = now();
+        $currentDateEn = $now->format('l, F j, Y');
+        $currentDateAr = $now->locale('ar')->translatedFormat('l d F Y');
+        $todayAnchor = ($lang === 'ar') ? $currentDateAr : $currentDateEn;
 
         // Replacements Map
         $vars = [
@@ -126,10 +127,13 @@ class ArticleWriterService
             '[audience]' => $this->getAudienceDirective($audience),
             '[word_count]' => $wordCount,
             '[year]' => $year,
+            '[today_date]' => $todayAnchor,
             '[news_context]' => $newsContext,
         ];
 
-        $prompt = "";
+        $prompt = "# TEMPORAL ANCHOR (CRITICAL)\n";
+        $prompt .= "The exact current date is: {$todayAnchor} ({$currentDateEn}).\n";
+        $prompt .= "Whenever you reference 'today' (اليوم) or the current date, you MUST use {$todayAnchor}. Do not lag behind.\n\n";
 
         // 0. Grounding Analysis (High Priority)
         if (!empty($newsContext)) {
