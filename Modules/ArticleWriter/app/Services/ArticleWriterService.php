@@ -105,6 +105,10 @@ class ArticleWriterService
             'system_prompt' => $systemPrompt,
         ]);
 
+        if (isset($result['text']) && is_string($result['text'])) {
+            $result['text'] = $this->cleanAIFingerprints($result['text']);
+        }
+
         return $result;
     }
 
@@ -303,15 +307,22 @@ class ArticleWriterService
         $isArabic = stripos($langName, 'arab') !== false;
 
         $banned = $isArabic
-            ? "في الختام، في النهاية، باختصار، خلاصة القول، تجدر الإشارة إلى أن، لا يخفى على أحد، في هذا المقال سنتناول، دعونا نتعمق في، في عالم اليوم سريع التطور، في عصر التحول الرقمي، يشهد العالم تطوراً كبيراً، في خطوة تاريخية، مستقبل واعد، أهمية بالغة، دعم وتمكين، اهتمام متزايد، علامة فارقة، تلعب دوراً محورياً، لا شك أن، مما لا شك فيه"
-            : "in conclusion, in summary, in today's fast-paced world, in the digital age, delve into, dive deep, dive into, navigate the landscape, unlock the potential, unleash, embark on a journey, harness the power of, when it comes to, it is worth noting that, it goes without saying, the world of, in this article we will explore, let's delve, foster, leverage, robust, paramount, plethora, myriad, tapestry, ever-evolving, game-changer, revolutionize, cutting-edge, in essence, needless to say, it is well known that";
+            ? "في الختام، في النهاية، باختصار، خلاصة القول، تجدر الإشارة إلى أن، من الجدير بالذكر أن، الجدير بالذكر، لا يخفى على أحد، في هذا المقال سنتناول، دعونا نتعمق في، في عالم اليوم سريع التطور، في عصر التحول الرقمي، يشهد العالم تطوراً كبيراً، في خطوة تاريخية، مستقبل واعد، أهمية بالغة، دعم وتمكين، اهتمام متزايد، علامة فارقة، تلعب دوراً محورياً، لا شك أن، مما لا شك فيه، مما يؤكد، مما يشير إلى، مما يثير، مما يجعل، يأتي هذا مدفوعاً بـ، في سياق متصل، على صعيد آخر، لا سيما وأن، في إطار"
+            : "in conclusion, in summary, in today's fast-paced world, in the digital age, delve into, dive deep, dive into, navigate the landscape, unlock the potential, unleash, embark on a journey, harness the power of, when it comes to, it is worth noting that, it goes without saying, the world of, in this article we will explore, let's delve, foster, leverage, robust, paramount, plethora, myriad, tapestry, ever-evolving, game-changer, revolutionize, cutting-edge, in essence, needless to say, it is well known that, it is crucial to remember, underscores the fact that, serves as a testament to";
 
-        $rules = "# HUMANIZATION & ANTI-FILLER PROTOCOL — NON-NEGOTIABLE\n";
-        $rules .= "Write like a senior editorial journalist, not an AI. Every sentence must read as if a thoughtful human wrote it for a real reader.\n\n";
+        $rules = "# HUMANIZATION & ZERO AI FINGERPRINTS PROTOCOL — NON-NEGOTIABLE\n";
+        $rules .= "Write like a senior editorial human journalist, not an AI. Every sentence must read as if a thoughtful, authentic human wrote it for a real reader.\n\n";
+
+        $rules .= "## Zero AI Fingerprints & Punctuation Hygiene (STRICT)\n";
+        $rules .= "- ZERO SEMICOLONS: DO NOT use semicolons ('؛' in Arabic or ';' in English) anywhere in the text. Replace them with standard commas ('،') or separate sentences with periods ('.').\n";
+        $rules .= "- ZERO IN-PROSE EM-DASHES: DO NOT use em-dashes ('—' or '–') in the middle of sentences or paragraphs as artificial parentheticals.\n";
+        $rules .= "- ZERO ELLIPSES: DO NOT use trailing dots or ellipses ('...' or '…') in headings or body text.\n";
+        $rules .= "- ZERO RANDOM QUOTATION MARKS: DO NOT put quotation marks around ordinary words (e.g. NEVER write: بشكل \"رئيسي\" or تحركات \"مفاجئة\"). Quotation marks are strictly reserved for verbatim direct quotes from named authorities.\n";
+        $rules .= "- ZERO FORMULAIC CONNECTORS: Eliminate cliché connectors like 'حيث أن', 'مما يؤكد', 'يأتي هذا مدفوعاً بـ', 'تجدر الإشارة'. Write in clean, direct, active voice.\n\n";
 
         $rules .= "## Tone & cadence\n";
         $rules .= "- Vary sentence length aggressively. Mix 4-word punchy sentences with 25-word flowing ones in the same paragraph.\n";
-        $rules .= "- Use natural connective tissue: subordinate clauses, em-dashes, parentheticals — but sparingly.\n";
+        $rules .= "- Use natural connective tissue: subordinate clauses, parentheticals — but sparingly.\n";
         $rules .= "- Use contractions where natural (it's, that's, you'll) in casual / conversational tones.\n";
         $rules .= "- Show, don't summarize. Concrete examples beat generic claims every time.\n";
         $rules .= "- Avoid keyword stuffing. The focus keyword should appear naturally, not shoehorned.\n\n";
@@ -479,5 +490,27 @@ class ArticleWriterService
     protected function getMaxWords(int $target): int
     {
         return (int) ($target * 1.1);
+    }
+
+    /**
+     * Clean subtle AI fingerprints and punctuation artifacts from generated output.
+     */
+    protected function cleanAIFingerprints(string $text): string
+    {
+        // 1. Replace semicolons (؛ in Arabic, ; in Latin) with standard commas
+        $text = str_replace('؛', '،', $text);
+        
+        // 2. Remove in-prose em-dashes (— or –) surrounded by spaces
+        $text = preg_replace('/\s+[—–]\s+/u', '، ', $text);
+        
+        // 3. Remove multiple dots/ellipses inside text (e.g. "..." -> ".")
+        $text = preg_replace('/\.{2,}/u', '.', $text);
+        $text = str_replace('…', '.', $text);
+        
+        // 4. Remove unnecessary quotes around single ordinary Arabic words e.g. "رئيسي" or "مفاجئة"
+        $text = preg_replace('/"([\x{0600}-\x{06FF}]{3,15})"/u', '$1', $text);
+        $text = preg_replace('/“([\x{0600}-\x{06FF}]{3,15})”/u', '$1', $text);
+        
+        return $text;
     }
 }
