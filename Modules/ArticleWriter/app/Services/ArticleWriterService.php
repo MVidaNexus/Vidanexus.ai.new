@@ -113,6 +113,10 @@ class ArticleWriterService
      */
     protected function buildNuclearPrompt($keyword, $topic, $lang, array $components, int $wordCount, string $tone, string $audience, $newsContext = "")
     {
+        $year = $this->getCurrentYear();
+        $langName = $this->getLanguageName($lang);
+        $slug = 'article-writer';
+
         $now = now();
         $currentDateEn = $now->format('l, F j, Y');
         $currentDateAr = $now->locale('ar')->translatedFormat('l d F Y');
