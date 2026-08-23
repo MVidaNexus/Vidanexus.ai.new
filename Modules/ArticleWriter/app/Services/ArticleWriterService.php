@@ -124,7 +124,8 @@ class ArticleWriterService
         $slug = 'article-writer';
         $isArabic = ($lang === 'ar') || (stripos($langName, 'arab') !== false);
 
-        $now = now();
+        $tz = ($lang === 'ar') ? 'Africa/Cairo' : 'UTC';
+        $now = now($tz);
         $currentDateEn = $now->format('l, F j, Y');
         $currentDateAr = $now->locale('ar')->translatedFormat('l d F Y');
         $todayAnchor = ($lang === 'ar') ? $currentDateAr : $currentDateEn;
@@ -142,9 +143,9 @@ class ArticleWriterService
             '[news_context]' => $newsContext,
         ];
 
-        $prompt = "# TEMPORAL ANCHOR (CRITICAL)\n";
-        $prompt .= "The exact current date is: {$todayAnchor} ({$currentDateEn}).\n";
-        $prompt .= "Whenever you reference 'today' (اليوم) or the current date, you MUST use {$todayAnchor}. Do not lag behind.\n\n";
+        $prompt = "# TEMPORAL ANCHOR & PUBLICATION DATE (CRITICAL)\n";
+        $prompt .= "Today's EXACT local publication date is: {$todayAnchor} ({$currentDateEn}).\n";
+        $prompt .= "CRITICAL: Any market data or news headlines from previous hours must be reported under TODAY's date ({$todayAnchor}). NEVER label this live article with yesterday's date. The current day and date is strictly: {$todayAnchor}.\n\n";
 
         // 0. Grounding Analysis (High Priority)
         if (!empty($newsContext)) {
@@ -414,7 +415,7 @@ class ArticleWriterService
         $region = CountryRegistry::normalizeCode($region) ?: 'US';
         $hl = CountryRegistry::langFor($region);
 
-        $cacheKey = 'aw_grounding_' . md5(mb_strtolower(trim($keyword)) . $lang);
+        $cacheKey = 'aw_grounding_v2_' . md5(mb_strtolower(trim($keyword)) . $lang . date('YmdH'));
         $cached = Cache::get($cacheKey);
         if ($cached) return $cached;
 
