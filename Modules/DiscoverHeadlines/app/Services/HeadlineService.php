@@ -118,7 +118,8 @@ class HeadlineService
             $aiConfig = [
                 'provider' => $dbProvider,
                 'model' => $dbModel,
-                'temperature' => 0.8,
+                'temperature' => 0.7,
+                'max_tokens' => 4000,
                 'json_mode' => true,
                 'system_prompt' => 'You are a strict JSON generator. Your entire response MUST be a single valid JSON object matching the schema described in the user message. Do not include markdown, prose, comments, or trailing text — emit JSON only.',
             ];
@@ -214,25 +215,26 @@ class HeadlineService
 
     /**
      * Parse the AI response into a normalized list of headline objects.
-     *
-     * Models occasionally return JSON in messy ways (markdown fences, leading
-     * prose, double-escaped quotes from over-eager structured-output coercion,
-     * or even a JSON string containing JSON). We walk a small set of recovery
-     * strategies before falling back to a plain-text line-split — and the
-     * plain-text branch explicitly REJECTS lines that still look like JSON so
-     * a single un-parseable blob never renders as a fake "headline" in the UI
-     * (which was the bug behind the raw-JSON card users were seeing).
      */
     protected function extractHeadlines($text)
     {
         $decoded = $this->decodeJsonFlexible($text);
 
         if (is_array($decoded)) {
-            return $this->normalizeHeadlineList($decoded);
+            $normalized = $this->normalizeHeadlineList($decoded);
+            if (!empty($normalized)) {
+                return $normalized;
+            }
+        }
+
+        // Regex fallback for recovering headlines from broken/truncated JSON
+        $regexExtracted = $this->extractHeadlinesRegex($text);
+        if (!empty($regexExtracted)) {
+            return $regexExtracted;
         }
 
         // JSON parsing failed entirely. Log enough to diagnose without dumping
-        // the full response (could be many KB).
+        // the full response.
         Log::warning('[Discover Headlines] AI response is not valid JSON', [
             'json_error' => json_last_error_msg(),
             'snippet' => mb_substr((string) $text, 0, 240),
@@ -243,6 +245,30 @@ class HeadlineService
     }
 
     /**
+     * Regex fallback to safely extract ONLY actual headlines when JSON is malformed or cut off.
+     */
+    protected function extractHeadlinesRegex(string $text): array
+    {
+        $extracted = [];
+        if (preg_match_all('/"headline"\s*:\s*"([^"\\]*(?:\\.[^"\\]*)*)"/u', $text, $matches)) {
+            foreach ($matches[1] as $hl) {
+                $hl = stripslashes(trim($hl));
+                if ($hl !== '' && mb_strlen($hl) >= 10 && !$this->looksLikeJsonFragment($hl)) {
+                    $extracted[] = [
+                        'headline' => $hl,
+                        'sentiment' => 'Factual',
+                        'entities' => [],
+                        'lsi_keywords' => [],
+                        'thumbnail_suggestion' => '',
+                        'visual_concepts' => [],
+                    ];
+                }
+            }
+        }
+        return $extracted;
+    }
+
+    /**
      * Try several decode strategies in order. Return the first array we get.
      * Strings that themselves contain JSON (double-encoded) are re-decoded.
      */
@@ -250,31 +276,28 @@ class HeadlineService
     {
         $trimmed = trim($text);
 
-        // Drop any markdown fence the upstream caller might have missed (we
-        // also strip in HeadlineService::generate, but doing it here keeps the
-        // parser usable from other call sites in the future).
         if (preg_match('/```(?:json|markdown|text)?\s*(.*?)\s*```/s', $trimmed, $m)) {
             $trimmed = trim($m[1]);
         }
 
         $candidates = [$trimmed];
 
-        // Substring from the first { to the last } — handles "prose then JSON
-        // then prose" output from chatty models. We deliberately don't use a
-        // recursive brace regex because JSON string values can legally contain
-        // unbalanced braces inside quoted strings, which broke the previous
-        // implementation.
         $first = strpos($trimmed, '{');
         $last  = strrpos($trimmed, '}');
         if ($first !== false && $last !== false && $last > $first) {
             $candidates[] = substr($trimmed, $first, $last - $first + 1);
         }
 
-        // Some models (especially when forced into structured-output mode but
-        // then asked to "wrap in quotes for safety") emit \"foo\" instead of
-        // "foo". stripslashes on the candidates recovers those.
         foreach (array_values($candidates) as $candidate) {
             $candidates[] = stripslashes($candidate);
+        }
+
+        // Try repairing truncated JSON
+        foreach (array_values($candidates) as $candidate) {
+            $repaired = $this->repairTruncatedJsonString($candidate);
+            if ($repaired !== null) {
+                $candidates[] = $repaired;
+            }
         }
 
         foreach ($candidates as $candidate) {
@@ -284,8 +307,7 @@ class HeadlineService
 
             $tryDecoded = json_decode($candidate, true);
 
-            // Double-encoded: the decode returned a string whose contents are
-            // still JSON. Decode one more level.
+            // Double-encoded check
             if (is_string($tryDecoded)
                 && (str_contains($tryDecoded, '"headlines"') || str_contains($tryDecoded, '"headline"'))
             ) {
@@ -300,11 +322,27 @@ class HeadlineService
         return null;
     }
 
+    protected function repairTruncatedJsonString(string $json): ?string
+    {
+        $lastObj = strrpos($json, '}');
+        if ($lastObj === false) return null;
+
+        $sub = substr($json, 0, $lastObj + 1);
+        $opens = substr_count($sub, '[');
+        $closes = substr_count($sub, ']');
+        if ($opens > $closes) {
+            $sub .= str_repeat(']', $opens - $closes);
+        }
+        $openBraces = substr_count($sub, '{');
+        $closeBraces = substr_count($sub, '}');
+        if ($openBraces > $closeBraces) {
+            $sub .= str_repeat('}', $openBraces - $closeBraces);
+        }
+        return $sub;
+    }
+
     /**
-     * Map a decoded JSON structure into our canonical headline shape. Accepts
-     * either {headlines: [...]} or a bare top-level list.
-     *
-     * @return array<int, array<string, mixed>>
+     * Map a decoded JSON structure into our canonical headline shape.
      */
     protected function normalizeHeadlineList(array $decoded): array
     {
@@ -326,9 +364,6 @@ class HeadlineService
             $headline = (string) ($item['headline'] ?? $item['title'] ?? $item['text'] ?? $item['keyword'] ?? '');
             $headline = trim($headline);
 
-            // Defense in depth — don't let an item whose `headline` field is
-            // itself raw JSON sneak through (some models put the JSON inside
-            // the headline field when confused).
             if ($headline === '' || $this->looksLikeJsonFragment($headline)) {
                 continue;
             }
@@ -361,11 +396,7 @@ class HeadlineService
     }
 
     /**
-     * Plain-text fallback for models that refused to emit JSON. Filters out
-     * lines that look like JSON fragments so a partial response never renders
-     * as a card.
-     *
-     * @return array<int, array<string, mixed>>
+     * Plain-text fallback for models that refused to emit JSON.
      */
     protected function extractHeadlinesPlainText(string $text): array
     {
@@ -383,6 +414,9 @@ class HeadlineService
                 continue;
             }
             $cleanLine = preg_replace('/^\d+[\.\)]\s*/', '', $line);
+            if ($this->looksLikeJsonFragment($cleanLine)) {
+                continue;
+            }
             $extracted[] = [
                 'headline' => $cleanLine,
                 'sentiment' => 'Factual',
@@ -396,16 +430,24 @@ class HeadlineService
     }
 
     /**
-     * Heuristic check — does this string look like it's part of a JSON
-     * payload rather than a real human-readable headline?
+     * Strict check — does this string look like a JSON property/fragment?
      */
     protected function looksLikeJsonFragment(string $line): bool
     {
-        if (preg_match('/[{}\[\]]/', $line) === 1) {
+        $trimmed = trim($line);
+        if ($trimmed === '' || preg_match('/[{\[\]}]/', $trimmed) === 1) {
             return true;
         }
-        if (preg_match('/"\s*(headline|headlines|sentiment|entities|lsi_keywords|thumbnail_suggestion|visual_concepts)"\s*:/i', $line) === 1) {
+        if (preg_match('/^"(?:headline|headlines|sentiment|entities|lsi_keywords|thumbnail_suggestion|visual_concepts|description|color_palette|style|ctr_reason|index|title|text|name|reason|concept|colors)"\s*:/i', $trimmed) === 1) {
             return true;
+        }
+        if (preg_match('/^"[a-zA-Z0-9_\-]+"\s*:\s*/', $trimmed) === 1) {
+            return true;
+        }
+        if (str_starts_with($trimmed, '"') && (str_ends_with($trimmed, '",') || str_ends_with($trimmed, '"'))) {
+            if (str_contains($trimmed, '":')) {
+                return true;
+            }
         }
         return false;
     }
