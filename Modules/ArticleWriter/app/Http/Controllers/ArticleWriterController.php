@@ -81,7 +81,10 @@ class ArticleWriterController extends Controller
             $result = $this->service->generateArticle($request->all());
             $parsed = $this->parseGeneratedArticle($result, $request);
 
-            if (! $this->articleMatchesLanguage($parsed['title'], $parsed['content'], $request->language)) {
+            $parsedTitle = $parsed['title'] ?? $request->keyword ?? '';
+            $parsedContent = $parsed['content'] ?? '';
+
+            if (! $this->articleMatchesLanguage($parsedTitle, $parsedContent, $request->language)) {
                 $retryPayload = $request->all();
                 $retryPayload['additional_instructions'] = trim(($retryPayload['additional_instructions'] ?? '') . "\n\nSTRICT: Write the ENTIRE article including title in {$request->language} ONLY. No mixed languages.");
                 $result = $this->service->generateArticle($retryPayload);
@@ -92,12 +95,12 @@ class ArticleWriterController extends Controller
                 throw new AIProviderFailureException('AI generated empty content.');
             }
 
-            $title = $parsed['title'];
-            $metaDesc = $parsed['metaDesc'];
-            $focusKeyword = $parsed['focusKeyword'];
-            $rawSlugEn = $parsed['rawSlugEn'];
-            $rawSlugAr = $parsed['rawSlugAr'];
-            $cleanContent = $parsed['content'];
+            $title = $parsed['title'] ?? $request->keyword ?? '';
+            $metaDesc = $parsed['metaDesc'] ?? '';
+            $focusKeyword = $parsed['focusKeyword'] ?? $request->keyword ?? '';
+            $rawSlugEn = $parsed['rawSlugEn'] ?? null;
+            $rawSlugAr = $parsed['rawSlugAr'] ?? null;
+            $cleanContent = $parsed['content'] ?? '';
 
             // Build the suggested slugs. The AI normally provides them, but
             // we always re-sanitize and fall back to a deterministic local
@@ -134,7 +137,7 @@ class ArticleWriterController extends Controller
                     'slug_en' => $slugEn,
                     'slug_ar' => $slugAr,
                     'site_domain' => $this->siteDomain(),
-                    'full_raw' => $text,
+                    'full_raw' => $result['text'] ?? '',
                 ],
             ]);
 
@@ -197,8 +200,21 @@ class ArticleWriterController extends Controller
     {
         $text = $result['text'] ?? '';
         $title = $this->parseTag($text, 'TITLE');
+        if (empty($title)) {
+            if (preg_match('/<h1[^>]*>(.*?)<\/h1>/is', $text, $h1Matches)) {
+                $title = trim(strip_tags($h1Matches[1]));
+            }
+        }
+        $title = $title ?: ($request->keyword ?? '');
+
         $metaDesc = $this->parseTag($text, 'META_DESCRIPTION') ?: $this->parseTag($text, 'META');
-        $focusKeyword = $this->parseTag($text, 'FOCUS_KEYWORD');
+        if (empty($metaDesc)) {
+            if (preg_match('/<p[^>]*>(.*?)<\/p>/is', $text, $pMatches)) {
+                $metaDesc = mb_substr(trim(strip_tags($pMatches[1])), 0, 160);
+            }
+        }
+
+        $focusKeyword = $this->parseTag($text, 'FOCUS_KEYWORD') ?: ($request->keyword ?? '');
         $rawSlugEn = $this->parseTag($text, 'SLUG_EN');
         $rawSlugAr = $this->parseTag($text, 'SLUG_AR');
 
@@ -222,11 +238,11 @@ class ArticleWriterController extends Controller
         ];
     }
 
-    protected function articleMatchesLanguage(string $title, string $content, string $lang): bool
+    protected function articleMatchesLanguage(?string $title, ?string $content, ?string $lang): bool
     {
-        $sample = strip_tags($title.' '.$content);
-        if ($sample === '') {
-            return false;
+        $sample = strip_tags(($title ?? '') . ' ' . ($content ?? ''));
+        if (trim($sample) === '') {
+            return true;
         }
 
         $arabicChars = preg_match_all('/\p{Arabic}/u', $sample) ?: 0;
@@ -234,7 +250,7 @@ class ArticleWriterController extends Controller
         $total = max(1, $arabicChars + $latinChars);
 
         return match ($lang) {
-            'ar' => ($arabicChars / $total) >= 0.55,
+            'ar' => ($arabicChars / $total) >= 0.40,
             'fr' => ($latinChars / $total) >= 0.5,
             default => ($latinChars / $total) >= 0.5 && ($arabicChars / $total) < 0.15,
         };
