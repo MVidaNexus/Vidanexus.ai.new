@@ -14,10 +14,7 @@ return Application::configure(basePath: dirname(__DIR__))
     )
     ->withMiddleware(function (Middleware $middleware) {
         // Trust all proxies so Laravel detects HTTPS when behind a reverse proxy / load balancer.
-        $middleware->trustProxies(at: '*');
-        $middleware->use([
-            \App\Http\Middleware\ServeMarkdownToAI::class,
-        ]);
+        $middleware->append(\App\Http\Middleware\ServeMarkdownToAI::class);
         $middleware->web(append: [
             \App\Http\Middleware\PreLaunchMiddleware::class,
         ]);

@@ -36,8 +36,12 @@ class CouponController extends Controller
         ]);
 
         $data['code'] = strtoupper($data['code']);
+        $data['assigned_user_id'] = !empty($data['assigned_user_id']) ? (int) $data['assigned_user_id'] : null;
+        $data['max_uses'] = !empty($data['max_uses']) ? (int) $data['max_uses'] : null;
+        $data['description'] = !empty($data['description']) ? $data['description'] : null;
+        $data['expires_at'] = !empty($data['expires_at']) ? $data['expires_at'] : null;
 
-        if (($data['scope'] ?? '') === 'all_tools') {
+        if (($data['scope'] ?? '') === 'all_tools' || empty($data['tool_slug'])) {
             $data['tool_slug'] = null;
         }
 
