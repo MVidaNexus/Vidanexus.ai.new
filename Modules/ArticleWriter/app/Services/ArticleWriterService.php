@@ -120,6 +120,7 @@ class ArticleWriterService
         $year = $this->getCurrentYear();
         $langName = $this->getLanguageName($lang);
         $slug = 'article-writer';
+        $isArabic = ($lang === 'ar') || (stripos($langName, 'arab') !== false);
 
         $now = now();
         $currentDateEn = $now->format('l, F j, Y');
