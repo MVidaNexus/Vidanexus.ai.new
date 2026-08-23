@@ -237,12 +237,19 @@ class AIKeywordRadarController extends Controller
                 foreach ($customBoxes as $box) {
                     if (($box['id'] ?? '') === $boxId) {
                         $boxFound = true;
+                        $lang = $box['lang'] ?? 'ar';
                         if (empty(trim($box['competitors'] ?? ''))) {
-                            $msg = 'No competitors found in this box. Please add competitor URLs first.';
-                            if ($request->ajax()) return response()->json(['success' => false, 'message' => $msg], 422);
+                            $msg = ($lang === 'ar')
+                                ? 'لم يتم العثور على روابط منافسين لهذا الصندوق المخصص. يُرجى إضافة روابط مواقع المنافسين من "إعدادات الرادار" أولاً.'
+                                : 'No competitors found in this custom box. Please add competitor URLs in Radar Settings first.';
+                            if ($request->ajax()) return response()->json([
+                                'success' => false,
+                                'error_code' => 'NO_COMPETITORS',
+                                'message' => $msg,
+                                'settings_url' => route('dashboard.ai-keyword-radar.settings')
+                            ], 422);
                             return back()->with('error', $msg);
                         }
-                        $lang = $box['lang'] ?? 'ar';
                         break;
                     }
                 }
@@ -259,8 +266,15 @@ class AIKeywordRadarController extends Controller
                 $globalCompetitors = \App\Models\Setting::get('ai-keyword-radar_competitors', '');
 
                 if (empty(trim($userCompetitors)) && empty(trim($globalCompetitors))) {
-                    $msg = 'No competitors found. Please add competitor website links in "Radar Settings" (or contact admin to set global ones) before syncing.';
-                    if ($request->ajax()) return response()->json(['success' => false, 'message' => $msg], 422);
+                    $msg = ($lang === 'ar')
+                        ? 'لم يتم العثور على روابط منافسين. يُرجى إضافة روابط مواقع المنافسين أولاً من "إعدادات الرادار" لسحب وتحليل الكلمات والعناوين الرائجة.'
+                        : 'No competitors found. Please add competitor website links in "Radar Settings" before syncing trends.';
+                    if ($request->ajax()) return response()->json([
+                        'success' => false,
+                        'error_code' => 'NO_COMPETITORS',
+                        'message' => $msg,
+                        'settings_url' => route('dashboard.ai-keyword-radar.settings')
+                    ], 422);
                     return back()->with('error', $msg);
                 }
             }

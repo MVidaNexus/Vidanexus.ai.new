@@ -447,6 +447,25 @@ function keywordRadar() {
                         return;
                     }
                     this._finishSyncLoading(prop);
+                    if (data.error_code === 'NO_COMPETITORS') {
+                        Swal.fire({
+                            title: lang === 'ar' ? '🎯 أضف روابط المنافسين للبدء' : '🎯 Add Competitors to Start',
+                            text: data.message,
+                            icon: 'info',
+                            showCancelButton: true,
+                            confirmButtonText: lang === 'ar' ? '<i class="fas fa-cog"></i> فتح إعدادات الرادار' : '<i class="fas fa-cog"></i> Go to Radar Settings',
+                            cancelButtonText: lang === 'ar' ? 'إغلاق' : 'Close',
+                            confirmButtonColor: '#0ea5e9',
+                            background: '#0f172a',
+                            color: '#fff',
+                        }).then((result) => {
+                            if (result.isConfirmed) {
+                                window.location.href = "{{ route('dashboard.ai-keyword-radar.settings') }}";
+                            }
+                        });
+                        this.showSyncNotification(lang, data.message, 'warning');
+                        return;
+                    }
                     const msg = this.resolveSyncError(data, status);
                     if (data.error_code === 'INSUFFICIENT_CREDITS' || status === 402) {
                         showInsufficientBalanceAlert(msg);
@@ -519,19 +538,20 @@ function keywordRadar() {
         },
 
         resolveSyncError(data, status) {
+            if (data?.message && String(data.message).trim() !== '') return data.message;
             const code = data?.error_code || '';
             const messages = {
+                NO_COMPETITORS: 'No competitors found. Please add competitor website links in Radar Settings.',
                 INSUFFICIENT_CREDITS: 'Insufficient credits. Please purchase more.',
                 FETCH_FAILED: 'Unable to fetch fresh data. Service may be down.',
                 ALREADY_PROCESSING: 'Refresh in progress. Please wait.',
                 NETWORK_ERROR: 'Sync took too long and was cancelled. Try Last 24h or fewer competitors.',
-                VALIDATION_ERROR: 'Invalid request data.',
+                VALIDATION_ERROR: 'Please check your inputs and try again.',
                 AUTH_REQUIRED: 'Please log in to continue.',
                 TOOL_LOCKED: 'You need to unlock this tool first.',
                 SERVER_ERROR: 'Something went wrong on our side. Please try again.',
             };
             if (messages[code]) return messages[code];
-            if (data?.message && String(data.message).trim() !== '') return data.message;
             if (status === 422) return messages.VALIDATION_ERROR;
             if (status === 408 || status === 504) return messages.NETWORK_ERROR;
             if (status >= 500) return messages.FETCH_FAILED;
