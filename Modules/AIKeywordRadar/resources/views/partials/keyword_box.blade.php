@@ -379,7 +379,7 @@
                                             <span class="text-[9px] font-bold" style="color:var(--text-muted);"
                                                   title="{{ $syncCarbon->timezone(config('app.timezone'))->format('Y-m-d H:i:s T') }}">
                                                 <i class="fas fa-sync text-[8px] opacity-50" style="color:#f59e0b;"></i>
-                                                {{ $isAr ? 'جُلب:' : 'Fetched:' }}
+                                                {{ $isAr ? 'تم السحب:' : 'Fetched:' }}
                                                 <span style="color:#f59e0b;">{{ $syncCarbon->diffForHumans() }}</span>
                                             </span>
                                         @endif
