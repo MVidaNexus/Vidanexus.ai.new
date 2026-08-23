@@ -444,7 +444,7 @@
     <aside class="horizon-sidebar">
         <div class="horizon-sidebar-header">
             <a href="{{ route('admin.horizon.index') }}" class="horizon-logo" style="text-decoration: none; margin-bottom: 0; display: flex; align-items: center;">
-                <img src="{{ asset('assets/brand-logo.png?v=2026') }}" alt="VidaNexus" style="height: 36px; width: auto; object-fit: contain;">
+                <img src="{{ asset('assets/brand-logo.png?v=2026_2') }}" alt="VidaNexus" style="height: 46px; width: auto; object-fit: contain;">
             </a>
             <button type="button" class="sidebar-close-btn" onclick="toggleSidebar(false)" aria-label="Close menu">
                 <i class="fas fa-times"></i>

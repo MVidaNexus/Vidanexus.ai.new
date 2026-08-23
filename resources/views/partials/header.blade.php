@@ -13,12 +13,12 @@
         @media (max-width: 768px) {
             #site-header { padding: 1rem 1rem !important; min-height: 65px; }
             .logo-text { font-size: 1.1rem !important; }
-            .logo-img { height: 28px !important; }
+            .logo-img { height: 38px !important; }
         }
     </style>
     <a href="/" style="text-decoration: none;" class="flex items-center">
         <div class="logo-container">
-            <img src="{{ asset('assets/brand-logo.png?v=2026') }}" alt="VidaNexus" class="logo-img" style="height: 38px; width: auto; object-fit: contain;">
+            <img src="{{ asset('assets/brand-logo.png?v=2026_2') }}" alt="VidaNexus" class="logo-img" style="height: 52px; width: auto; object-fit: contain;">
         </div>
     </a>
 
@@ -122,7 +122,7 @@
 <div class="mobile-sidebar" id="mobileSidebar" dir="ltr">
     <a href="/">
         <div class="logo-container" style="padding-bottom: 1.5rem; border-bottom: 1px solid var(--header-border);">
-            <img src="{{ asset('assets/brand-logo.png?v=2026') }}" alt="VidaNexus" class="logo-img" style="height: 36px; width: auto; object-fit: contain;">
+            <img src="{{ asset('assets/brand-logo.png?v=2026_2') }}" alt="VidaNexus" class="logo-img" style="height: 44px; width: auto; object-fit: contain;">
         </div>
     </a>
     <a href="/"><i class="fas fa-home" style="width: 25px;"></i> Home</a>
