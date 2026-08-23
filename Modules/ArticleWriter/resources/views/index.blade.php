@@ -400,10 +400,19 @@
                             </div>
                             <div style="min-width: 0; flex: 1;">
                                 <h3 style="font-size: 1.05rem; font-weight: 800; color: #fff; margin: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; max-width: 550px;" x-text="currentArticle.title"></h3>
-                                <div style="font-size: 0.65rem; font-weight: 800; color: var(--aw-text-label); text-transform: uppercase; letter-spacing: 1px; margin-top: 2px; display: flex; gap: 0.75rem;">
-                                    <span x-text="currentArticle.word_count + ' ' + t('words')"></span>
-                                    <span>•</span>
-                                    <span x-text="currentArticle.language.toUpperCase()"></span>
+                                <div style="font-size: 0.72rem; font-weight: 800; margin-top: 6px; display: flex; align-items: center; gap: 0.6rem; flex-wrap: wrap;">
+                                    <span style="background: rgba(0, 210, 255, 0.12); color: var(--aw-cyan); padding: 0.15rem 0.55rem; border-radius: 6px; border: 1px solid var(--aw-cyan-20); display: inline-flex; align-items: center; gap: 4px;">
+                                        <i class="fas fa-file-word"></i>
+                                        <span x-text="getLiveWordCount().toLocaleString() + ' ' + (form.language === 'ar' ? 'كلمة' : 'words')"></span>
+                                    </span>
+                                    <span style="background: rgba(16, 185, 129, 0.12); color: #10b981; padding: 0.15rem 0.55rem; border-radius: 6px; border: 1px solid rgba(16, 185, 129, 0.2); display: inline-flex; align-items: center; gap: 4px;">
+                                        <i class="fas fa-clock"></i>
+                                        <span x-text="'~' + getLiveReadingTime() + ' ' + (form.language === 'ar' ? 'دقيقة قراءة' : 'min read')"></span>
+                                    </span>
+                                    <span style="background: rgba(255, 255, 255, 0.06); color: #e5e7eb; padding: 0.15rem 0.55rem; border-radius: 6px; border: 1px solid var(--aw-border); display: inline-flex; align-items: center; gap: 4px;">
+                                        <i class="fas fa-font"></i>
+                                        <span x-text="getLiveCharCount().toLocaleString() + ' ' + (form.language === 'ar' ? 'حرف' : 'chars')"></span>
+                                    </span>
                                 </div>
                             </div>
                         </div>
@@ -438,6 +447,45 @@
                         
                         <!-- Read View -->
                         <div x-show="articleTab === 'read'" class="article-render-container">
+                            <!-- Article Stats Quick Bar -->
+                            <div style="margin-bottom: 2rem; padding: 0.85rem 1.25rem; background: rgba(0, 0, 0, 0.35); border: 1px solid var(--aw-border); border-radius: 14px; display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 1rem;">
+                                <div style="display: flex; align-items: center; gap: 1.5rem; flex-wrap: wrap;">
+                                    <div style="display: flex; align-items: center; gap: 0.6rem;">
+                                        <div style="width: 32px; height: 32px; border-radius: 9px; background: rgba(0, 210, 255, 0.15); display: flex; align-items: center; justify-content: center; color: var(--aw-cyan); font-size: 0.9rem;">
+                                            <i class="fas fa-file-word"></i>
+                                        </div>
+                                        <div>
+                                            <div style="font-size: 0.62rem; color: var(--aw-text-label); font-weight: 800; text-transform: uppercase;" x-text="form.language === 'ar' ? 'إجمالي الكلمات' : 'Total Words'"></div>
+                                            <div style="font-size: 0.95rem; color: #fff; font-weight: 800;" x-text="getLiveWordCount().toLocaleString() + (form.language === 'ar' ? ' كلمة' : ' words')"></div>
+                                        </div>
+                                    </div>
+                                    
+                                    <div style="display: flex; align-items: center; gap: 0.6rem;">
+                                        <div style="width: 32px; height: 32px; border-radius: 9px; background: rgba(16, 185, 129, 0.15); display: flex; align-items: center; justify-content: center; color: #10b981; font-size: 0.9rem;">
+                                            <i class="fas fa-clock"></i>
+                                        </div>
+                                        <div>
+                                            <div style="font-size: 0.62rem; color: var(--aw-text-label); font-weight: 800; text-transform: uppercase;" x-text="form.language === 'ar' ? 'وقت القراءة' : 'Reading Time'"></div>
+                                            <div style="font-size: 0.95rem; color: #fff; font-weight: 800;" x-text="'~' + getLiveReadingTime() + (form.language === 'ar' ? ' دقيقة' : ' min')"></div>
+                                        </div>
+                                    </div>
+
+                                    <div style="display: flex; align-items: center; gap: 0.6rem;">
+                                        <div style="width: 32px; height: 32px; border-radius: 9px; background: rgba(168, 85, 247, 0.15); display: flex; align-items: center; justify-content: center; color: #a855f7; font-size: 0.9rem;">
+                                            <i class="fas fa-font"></i>
+                                        </div>
+                                        <div>
+                                            <div style="font-size: 0.62rem; color: var(--aw-text-label); font-weight: 800; text-transform: uppercase;" x-text="form.language === 'ar' ? 'عدد الحروف' : 'Characters'"></div>
+                                            <div style="font-size: 0.95rem; color: #fff; font-weight: 800;" x-text="getLiveCharCount().toLocaleString()"></div>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div style="display: flex; align-items: center; gap: 0.5rem;">
+                                    <span style="font-size: 0.72rem; font-weight: 800; color: var(--aw-cyan); background: var(--aw-cyan-10); border: 1px solid var(--aw-cyan-20); padding: 0.3rem 0.75rem; border-radius: 8px;" x-text="(currentArticle.language || 'AR').toUpperCase()"></span>
+                                </div>
+                            </div>
+
                             <div x-html="currentArticle.content"></div>
                         </div>
 
@@ -1509,6 +1557,25 @@ function articleWriter() {
                 return this.settings.credit_costs[words];
             }
             return this.settings.credit_cost || 5;
+        },
+
+        getLiveWordCount() {
+            if (!this.currentArticle || !this.currentArticle.content) return 0;
+            const clean = this.currentArticle.content.replace(/<[^>]*>/g, ' ').replace(/&[a-z0-9#]+;/gi, ' ').trim();
+            if (!clean) return 0;
+            const matches = clean.match(/[\p{L}\p{N}]+/gu);
+            return matches ? matches.length : 0;
+        },
+
+        getLiveCharCount() {
+            if (!this.currentArticle || !this.currentArticle.content) return 0;
+            const clean = this.currentArticle.content.replace(/<[^>]*>/g, ' ').replace(/&[a-z0-9#]+;/gi, ' ').trim();
+            return clean.length;
+        },
+
+        getLiveReadingTime() {
+            const words = this.getLiveWordCount();
+            return Math.max(1, Math.ceil(words / 200));
         },
 
         toggleComponent(value) {

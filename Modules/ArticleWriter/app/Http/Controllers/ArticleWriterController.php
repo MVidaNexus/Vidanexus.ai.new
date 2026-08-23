@@ -134,7 +134,7 @@ class ArticleWriterController extends Controller
                 'provider' => $result['provider_used'] ?? ($result['provider'] ?? 'unknown'),
                 'model' => $result['model_used'] ?? ($result['model'] ?? 'unknown'),
                 'language' => $request->language,
-                'word_count' => str_word_count(strip_tags($cleanContent)),
+                'word_count' => count(preg_split('/\s+/u', trim(strip_tags($cleanContent)), -1, PREG_SPLIT_NO_EMPTY)),
                 'seo_data' => [
                     'input_tokens' => $result['input_tokens'] ?? 0,
                     'output_tokens' => $result['output_tokens'] ?? 0,
