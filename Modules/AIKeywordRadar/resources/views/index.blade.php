@@ -685,13 +685,23 @@ function keywordRadar() {
             if (!this.selectedKeywords[boxKey]) {
                 this.selectedKeywords[boxKey] = [];
             }
-            this.selectedKeywords[boxKey] = this.selectedKeywords[boxKey].length === allKeywords.length ? [] : [...allKeywords];
+            if (this.selectedKeywords[boxKey].length === allKeywords.length) {
+                this.selectedKeywords[boxKey] = [];
+            } else {
+                this.selectedKeywords[boxKey] = [...allKeywords];
+            }
             this.syncKeywordCheckboxes(boxKey);
+            const selectAllCb = document.querySelector(`.kw-select-all-${boxKey}`);
+            if (selectAllCb) {
+                selectAllCb.checked = this.selectedKeywords[boxKey].length > 0 && this.selectedKeywords[boxKey].length === allKeywords.length;
+            }
         },
 
         clearSelection(boxKey) {
             this.selectedKeywords[boxKey] = [];
             this.syncKeywordCheckboxes(boxKey);
+            const selectAllCb = document.querySelector(`.kw-select-all-${boxKey}`);
+            if (selectAllCb) selectAllCb.checked = false;
         },
 
         toggleKeyword(boxKey, keyword, checked) {
@@ -704,6 +714,11 @@ function keywordRadar() {
                 }
             } else {
                 this.selectedKeywords[boxKey] = this.selectedKeywords[boxKey].filter(k => k !== keyword);
+            }
+            const allCheckboxes = document.querySelectorAll(`.kw-select-${boxKey}`);
+            const selectAllCb = document.querySelector(`.kw-select-all-${boxKey}`);
+            if (selectAllCb && allCheckboxes.length > 0) {
+                selectAllCb.checked = this.selectedKeywords[boxKey].length === allCheckboxes.length;
             }
         },
 
@@ -721,7 +736,50 @@ function keywordRadar() {
         copySelectedKeywords(boxKey) {
             const list = this.selectedKeywords[boxKey] || [];
             if (list.length === 0) return;
-            copyToClipboard(list.join(', '));
+            const text = list.join(', ');
+            if (navigator.clipboard && window.isSecureContext) {
+                navigator.clipboard.writeText(text);
+            } else {
+                const ta = document.createElement('textarea');
+                ta.value = text;
+                document.body.appendChild(ta);
+                ta.select();
+                document.execCommand('copy');
+                document.body.removeChild(ta);
+            }
+            const isAr = boxKey === 'ar';
+            Swal.fire({
+                toast: true,
+                position: 'top-end',
+                icon: 'success',
+                title: isAr ? `تم نسخ ${list.length} كلمة بنجاح!` : `Copied ${list.length} keywords!`,
+                showConfirmButton: false,
+                timer: 2500,
+                timerProgressBar: true,
+                background: '#0f172a',
+                color: '#fff',
+            });
+        },
+
+        confirmDeleteAll(boxKey, lang, boxId = '') {
+            const isAr = lang === 'ar';
+            Swal.fire({
+                title: isAr ? 'هل أنت متأكد من حذف الكلمات؟' : 'Delete All Keywords?',
+                text: isAr ? 'سيتم مسح جميع الكلمات والعناوين المستخرجة لهذا الصندوق نهائياً.' : 'This will permanently remove all extracted keywords for this box.',
+                icon: 'warning',
+                showCancelButton: true,
+                confirmButtonColor: '#ef4444',
+                cancelButtonColor: '#334155',
+                confirmButtonText: isAr ? 'نعم، احذف الكل' : 'Yes, Delete All',
+                cancelButtonText: isAr ? 'إلغاء' : 'Cancel',
+                background: '#0f172a',
+                color: '#fff',
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    const form = document.getElementById(`delete-all-form-${boxKey}`);
+                    if (form) form.submit();
+                }
+            });
         },
 
         sortKeywords(lang, criteria) {

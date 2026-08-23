@@ -223,15 +223,15 @@
     <div class="absolute top-0 {{ $isAr ? 'right-0' : 'left-0' }} w-40 h-40 blur-3xl rounded-full opacity-[0.07] pointer-events-none" style="background: {{ $colorVar }}; margin-{{ $isAr ? 'right' : 'left' }}: -5rem; margin-top: -5rem;"></div>
 
     {{-- Box Header: Title + Actions --}}
-    <div style="display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:10px;padding:12px 16px;border-bottom:1px solid rgba(255,255,255,0.05);background:rgba(255,255,255,0.02);flex-shrink:0;" class="{{ $isAr ? '' : 'flex-row-reverse' }}">
-        <h2 class="text-lg sm:text-xl font-black flex items-center gap-2 sm:gap-3 whitespace-nowrap" style="color: var(--text-main);">
-            <div style="width:32px;height:32px;border-radius:10px;display:flex;align-items:center;justify-content:center;flex-shrink:0;border:1px solid {{ $colorVar }}25;background:{{ $colorVar }}12;color:{{ $colorVar }};" class="hidden sm:flex">
-                <i class="{{ $icon }} text-xs sm:text-sm"></i>
+    <div style="display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:12px;padding:14px 18px;border-bottom:1px solid rgba(255,255,255,0.08);background:rgba(255,255,255,0.02);flex-shrink:0;">
+        <h2 class="text-lg sm:text-xl font-black flex items-center gap-2.5 whitespace-nowrap text-white">
+            <div style="width:34px;height:34px;border-radius:10px;display:flex;align-items:center;justify-content:center;flex-shrink:0;border:1px solid {{ $colorVar }}35;background:{{ $colorVar }}18;color:{{ $colorVar }};" class="hidden sm:flex shadow-sm">
+                <i class="{{ $icon }} text-sm"></i>
             </div>
             <span>{{ $title }}</span>
         </h2>
         
-        <div class="flex items-center gap-2 sm:gap-2.5 flex-wrap {{ $isAr ? '' : 'flex-row-reverse' }}">
+        <div class="flex items-center gap-2 sm:gap-2.5 flex-wrap">
             @if(!empty($targetKeywords))
                 @php
                     $allKeywordTexts = array_values(array_filter(array_map(
@@ -239,43 +239,58 @@
                         $targetKeywords
                     )));
                 @endphp
-                <div class="flex items-center gap-1.5 flex-wrap {{ $isAr ? '' : 'flex-row-reverse' }}">
-                    <label class="flex items-center gap-1.5 px-2 py-1 rounded-lg text-[9px] font-bold cursor-pointer"
-                           style="background:var(--card-bg);border:1px solid var(--glass-border);color:var(--text-muted);">
+                <div class="flex items-center gap-2 flex-wrap">
+                    {{-- Select All Button --}}
+                    <label class="flex items-center gap-2 px-3 py-1.5 rounded-xl text-xs font-bold cursor-pointer transition-all border border-white/10 bg-white/[0.04] hover:bg-white/[0.08] hover:border-white/20 text-slate-200 select-none shadow-sm">
                         <input type="checkbox"
                                class="kw-select-all-{{ $boxKey }}"
-                               style="accent-color:{{ $colorVar }};width:14px;height:14px;cursor:pointer;"
+                               style="accent-color:{{ $colorVar }};width:15px;height:15px;cursor:pointer;border-radius:4px;"
                                @change="toggleSelectAll('{{ $boxKey }}', @js($allKeywordTexts))">
                         <span>{{ $isAr ? 'تحديد الكل' : 'Select All' }}</span>
                     </label>
+
+                    {{-- Copy Selected Button --}}
                     <button type="button"
                             @click="copySelectedKeywords('{{ $boxKey }}')"
                             :disabled="selectedCount('{{ $boxKey }}') === 0"
-                            style="display:inline-flex;align-items:center;gap:5px;padding:4px 10px;border-radius:8px;font-size:9px;font-weight:900;white-space:nowrap;background:{{ $colorVar }};color:#000;cursor:pointer;border:none;opacity:1;"
-                            :style="selectedCount('{{ $boxKey }}') === 0 ? 'opacity:0.35;cursor:not-allowed;' : ''">
-                        <i class="far fa-copy"></i>
+                            class="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-xl text-xs font-black whitespace-nowrap transition-all shadow-md select-none border"
+                            :class="selectedCount('{{ $boxKey }}') > 0 ? 'bg-gradient-to-r from-cyan-500 to-blue-600 hover:from-cyan-400 hover:to-blue-500 text-white border-white/20 hover:scale-105 cursor-pointer shadow-cyan-500/20' : 'bg-white/5 text-slate-500 border-white/5 cursor-not-allowed opacity-50'">
+                        <i class="far fa-copy text-xs"></i>
                         <span>{{ $isAr ? 'نسخ المحدد' : 'Copy Selected' }}</span>
-                        (<span x-text="selectedCount('{{ $boxKey }}')">0</span>)
+                        <span class="px-1.5 py-0.2 rounded-full text-[10px] font-black bg-black/30 text-cyan-200 border border-white/10" x-text="selectedCount('{{ $boxKey }}')">0</span>
                     </button>
+
+                    {{-- Clear Selection Button --}}
                     <button type="button"
                             @click="clearSelection('{{ $boxKey }}')"
-                            style="display:inline-flex;align-items:center;gap:5px;padding:4px 10px;border-radius:8px;font-size:9px;font-weight:700;white-space:nowrap;background:var(--card-bg);border:1px solid var(--glass-border);color:var(--text-muted);cursor:pointer;">
-                        {{ $isAr ? 'مسح' : 'Clear' }}
+                            x-show="selectedCount('{{ $boxKey }}') > 0"
+                            x-cloak
+                            class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold whitespace-nowrap transition-all border border-white/10 bg-white/[0.04] hover:bg-white/[0.08] text-slate-400 hover:text-white cursor-pointer shadow-sm">
+                        <i class="fas fa-times text-[10px]"></i>
+                        <span>{{ $isAr ? 'إلغاء التحديد' : 'Clear' }}</span>
                     </button>
-                </div>
 
-                <form action="{{ route('dashboard.ai-keyword-radar.delete-all', ['lang' => $lang]) }}" method="POST" onsubmit="return confirm('Are you sure you want to delete all keywords?')" class="flex-shrink-0">
-                    @csrf
-                    @if($customBoxId)
-                        <input type="hidden" name="box_id" value="{{ $customBoxId }}">
-                    @endif
-                    <button type="submit" style="padding:4px 10px;background:rgba(239,68,68,0.1);color:#ef4444;border-radius:8px;font-size:10px;font-weight:700;border:1px solid rgba(239,68,68,0.2);white-space:nowrap;cursor:pointer;" 
-                        onmouseover="this.style.background='#ef4444';this.style.color='#fff'" onmouseout="this.style.background='rgba(239,68,68,0.1)';this.style.color='#ef4444'">
-                        <i class="fas fa-trash-alt mr-1"></i> Delete 
-                    </button>
-                </form>
+                    {{-- Delete All Button --}}
+                    <form id="delete-all-form-{{ $boxKey }}" action="{{ route('dashboard.ai-keyword-radar.delete-all', ['lang' => $lang]) }}" method="POST" class="inline-block">
+                        @csrf
+                        @if($customBoxId)
+                            <input type="hidden" name="box_id" value="{{ $customBoxId }}">
+                        @endif
+                        <button type="button" 
+                                @click="confirmDeleteAll('{{ $boxKey }}', '{{ $lang }}', '{{ $customBoxId ?? '' }}')"
+                                class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold whitespace-nowrap transition-all border border-red-500/30 bg-red-500/10 hover:bg-red-500 hover:text-white text-red-400 cursor-pointer shadow-sm">
+                            <i class="fas fa-trash-alt text-[11px]"></i> 
+                            <span>{{ $isAr ? 'حذف الكل' : 'Delete All' }}</span>
+                        </button>
+                    </form>
+                </div>
             @endif
-            <span data-keyword-count style="font-size:10px;font-weight:700;padding:4px 10px;border-radius:8px;background:rgba(255,255,255,0.05);color:#94a3b8;white-space:nowrap;">{{ count($targetKeywords ?? []) }} Keywords</span>
+
+            {{-- Total Count Badge --}}
+            <span data-keyword-count class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold bg-white/[0.04] border border-white/10 text-slate-300 shadow-sm whitespace-nowrap">
+                <span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
+                <span>{{ count($targetKeywords ?? []) }} {{ $isAr ? 'كلمة' : 'Keywords' }}</span>
+            </span>
         </div>
     </div>
 
