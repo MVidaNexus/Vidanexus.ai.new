@@ -23,7 +23,7 @@
                 return;
             }
             btn.disabled = true;
-            btn.innerHTML = '<i class="fas fa-spinner fa-spin" style="margin-right: 0.75rem;"></i> Processing...';
+            btn.innerHTML = '<div style="margin: 0 auto; display: flex; align-items: center; justify-content: center; gap: 0.75rem;"><i class="fas fa-spinner fa-spin" style="font-size: 1.25rem;"></i> <span>Redirecting to Fawaterk Secure Gateway...</span></div>';
         });
     </script>
 @endpush

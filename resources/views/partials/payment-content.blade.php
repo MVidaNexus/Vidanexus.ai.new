@@ -65,9 +65,15 @@
                         </div>
                     </div>
 
-                    <button type="submit" class="btn-pay" id="payBtn" style="min-height: 65px; font-size: 1.2rem;">
-                        <i class="fas fa-lock" style="margin-right: 0.75rem;"></i>
-                        Pay Securely — {{ number_format($item['price']) }} EGP
+                    <button type="submit" class="btn-pay" id="payBtn">
+                        <div class="btn-pay-content">
+                            <i class="fas fa-lock" style="font-size: 1.25rem;"></i>
+                            <span>Pay & Complete Order</span>
+                        </div>
+                        <div style="display: flex; align-items: center; gap: 0.75rem;">
+                            <span class="btn-pay-price">{{ number_format($item['price']) }} EGP</span>
+                            <i class="fas fa-arrow-right btn-pay-arrow"></i>
+                        </div>
                     </button>
                     
                     <div class="trust-badges">

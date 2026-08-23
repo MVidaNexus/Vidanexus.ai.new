@@ -1,4 +1,4 @@
-﻿<style>
+<style>
         .checkout-container {
             max-width: 1100px;
             margin: 2rem auto 4rem;
@@ -111,32 +111,83 @@
         }
 
         .btn-pay {
-            display: block;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
             width: 100%;
-            padding: 1.2rem;
-            background: linear-gradient(135deg, var(--accent), var(--primary-cyan));
-            color: #fff;
-            border: none;
-            border-radius: 12px;
-            font-size: 1.1rem;
+            padding: 1.25rem 1.75rem;
+            background: linear-gradient(135deg, #10b981 0%, #059669 60%, #047857 100%);
+            color: #ffffff;
+            border: 1px solid rgba(255, 255, 255, 0.25);
+            border-radius: 16px;
+            font-size: 1.15rem;
             font-weight: 700;
             font-family: var(--font-heading);
-            letter-spacing: 1px;
+            letter-spacing: 0.5px;
             cursor: pointer;
-            transition: all 0.3s ease;
-            margin-top: 1.5rem;
-            box-shadow: 0 10px 20px rgba(191, 0, 255, 0.3);
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            margin-top: 1.75rem;
+            box-shadow: 0 10px 25px rgba(16, 185, 129, 0.4), 0 0 0 1px rgba(16, 185, 129, 0.2);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .btn-pay::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.25), transparent);
+            transition: left 0.6s ease;
+        }
+
+        .btn-pay:hover::before {
+            left: 100%;
         }
 
         .btn-pay:hover {
-            transform: translateY(-3px);
-            box-shadow: 0 15px 30px rgba(191, 0, 255, 0.5);
+            transform: translateY(-3px) scale(1.01);
+            box-shadow: 0 16px 35px rgba(16, 185, 129, 0.55), 0 0 25px rgba(16, 185, 129, 0.4);
+            background: linear-gradient(135deg, #34d399 0%, #10b981 60%, #059669 100%);
+        }
+
+        .btn-pay:active {
+            transform: translateY(-1px) scale(0.99);
         }
 
         .btn-pay:disabled {
-            opacity: 0.6;
+            opacity: 0.7;
             cursor: not-allowed;
             transform: none;
+            box-shadow: none;
+        }
+
+        .btn-pay-content {
+            display: flex;
+            align-items: center;
+            gap: 0.85rem;
+        }
+
+        .btn-pay-price {
+            background: rgba(0, 0, 0, 0.25);
+            padding: 0.4rem 0.9rem;
+            border-radius: 10px;
+            font-size: 1.1rem;
+            font-weight: 800;
+            border: 1px solid rgba(255, 255, 255, 0.25);
+            backdrop-filter: blur(4px);
+            letter-spacing: 0.5px;
+        }
+
+        .btn-pay-arrow {
+            font-size: 1.15rem;
+            transition: transform 0.3s ease;
+        }
+
+        .btn-pay:hover .btn-pay-arrow {
+            transform: translateX(5px);
         }
 
         .total-row {
