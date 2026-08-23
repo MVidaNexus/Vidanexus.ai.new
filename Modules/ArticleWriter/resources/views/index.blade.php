@@ -132,39 +132,82 @@
                         </div>
                     </div>
 
-                    <!-- Persona Mastery Guide (New) -->
+                    <!-- Persona Mastery Guide (Interactive Presets) -->
                     <div style="margin-bottom: 2rem; padding: 1.25rem; background: var(--aw-cyan-10); border: 1px solid var(--aw-cyan-20); border-radius: 16px; position: relative; overflow: hidden;">
                         <div style="position: absolute; right: -10px; top: -10px; font-size: 4rem; color: var(--aw-cyan-10); opacity: 0.3; transform: rotate(-15deg);">
                             <i class="fas fa-lightbulb"></i>
                         </div>
-                        <div style="display: flex; align-items: center; gap: 0.75rem; margin-bottom: 0.75rem;">
-                            <i class="fas fa-magic" style="color: var(--aw-cyan);"></i>
-                            <h4 style="margin: 0; font-size: 0.85rem; font-weight: 800; color: #fff; text-transform: uppercase; letter-spacing: 1px;" x-text="t('persona_guide')">Persona Mastery Guide</h4>
+                        <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 0.75rem; flex-wrap: wrap; gap: 0.5rem;">
+                            <div style="display: flex; align-items: center; gap: 0.75rem;">
+                                <i class="fas fa-magic" style="color: var(--aw-cyan);"></i>
+                                <h4 style="margin: 0; font-size: 0.85rem; font-weight: 800; color: #fff; text-transform: uppercase; letter-spacing: 1px;" x-text="t('persona_guide')">Persona Mastery Guide</h4>
+                            </div>
+                            <span style="font-size: 0.7rem; color: var(--aw-cyan); font-weight: 700;" x-text="t('persona_guide_hint')">Click any preset to auto-apply tone & audience</span>
                         </div>
-                        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1rem;">
-                            <div style="background: rgba(0,0,0,0.2); padding: 0.75rem; border-radius: 10px; border: 1px solid rgba(255,255,255,0.05);">
-                                <div style="font-size: 0.7rem; font-weight: 900; color: var(--aw-cyan); margin-bottom: 4px; display: flex; align-items: center; gap: 0.5rem;">
-                                    <i class="fas fa-newspaper"></i> <span x-text="t('news_trends')">NEWS & TRENDS</span>
+                        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 0.75rem;">
+                            <!-- Preset 1: News & Trends -->
+                            <div @click="applyPersonaPreset('informative', 'general')"
+                                 role="button"
+                                 tabindex="0"
+                                 style="cursor: pointer; padding: 0.75rem; border-radius: 12px; transition: all 0.2s ease;"
+                                 :style="form.tone === 'informative' && form.audience === 'general' ? 'background: rgba(6,182,212,0.2); border: 1px solid var(--aw-cyan);' : 'background: rgba(0,0,0,0.25); border: 1px solid rgba(255,255,255,0.06);'">
+                                <div style="font-size: 0.7rem; font-weight: 900; color: var(--aw-cyan); margin-bottom: 4px; display: flex; align-items: center; justify-content: space-between;">
+                                    <span><i class="fas fa-newspaper"></i> <span x-text="t('news_trends')">NEWS & TRENDS</span></span>
+                                    <i x-show="form.tone === 'informative' && form.audience === 'general'" class="fas fa-check-circle" style="color: var(--aw-cyan);"></i>
                                 </div>
-                                <div style="font-size: 0.75rem; color: var(--aw-text-dim);" x-text="t('news_trends_desc')"></div>
+                                <div style="font-size: 0.73rem; color: var(--aw-text-dim);" x-text="t('news_trends_desc')"></div>
                             </div>
-                            <div style="background: rgba(0,0,0,0.2); padding: 0.75rem; border-radius: 10px; border: 1px solid rgba(255,255,255,0.05);">
-                                <div style="font-size: 0.7rem; font-weight: 900; color: #a855f7; margin-bottom: 4px; display: flex; align-items: center; gap: 0.5rem;">
-                                    <i class="fas fa-building"></i> <span x-text="t('real_estate')">REAL ESTATE</span>
+
+                            <!-- Preset 2: Markets & Gold & Economy -->
+                            <div @click="applyPersonaPreset('professional', 'general')"
+                                 role="button"
+                                 tabindex="0"
+                                 style="cursor: pointer; padding: 0.75rem; border-radius: 12px; transition: all 0.2s ease;"
+                                 :style="form.tone === 'professional' && form.audience === 'general' ? 'background: rgba(245,158,11,0.2); border: 1px solid #f59e0b;' : 'background: rgba(0,0,0,0.25); border: 1px solid rgba(255,255,255,0.06);'">
+                                <div style="font-size: 0.7rem; font-weight: 900; color: #f59e0b; margin-bottom: 4px; display: flex; align-items: center; justify-content: space-between;">
+                                    <span><i class="fas fa-coins"></i> <span x-text="t('gold_markets')">GOLD & MARKETS</span></span>
+                                    <i x-show="form.tone === 'professional' && form.audience === 'general'" class="fas fa-check-circle" style="color: #f59e0b;"></i>
                                 </div>
-                                <div style="font-size: 0.75rem; color: var(--aw-text-dim);" x-text="t('real_estate_desc')"></div>
+                                <div style="font-size: 0.73rem; color: var(--aw-text-dim);" x-text="t('gold_markets_desc')"></div>
                             </div>
-                            <div style="background: rgba(0,0,0,0.2); padding: 0.75rem; border-radius: 10px; border: 1px solid rgba(255,255,255,0.05);">
-                                <div style="font-size: 0.7rem; font-weight: 900; color: #10b981; margin-bottom: 4px; display: flex; align-items: center; gap: 0.5rem;">
-                                    <i class="fas fa-briefcase"></i> <span x-text="t('business_b2b')">BUSINESS B2B</span>
+
+                            <!-- Preset 3: Shopping & Products & Real Estate -->
+                            <div @click="applyPersonaPreset('creative', 'shoppers')"
+                                 role="button"
+                                 tabindex="0"
+                                 style="cursor: pointer; padding: 0.75rem; border-radius: 12px; transition: all 0.2s ease;"
+                                 :style="form.tone === 'creative' && form.audience === 'shoppers' ? 'background: rgba(168,85,247,0.2); border: 1px solid #a855f7;' : 'background: rgba(0,0,0,0.25); border: 1px solid rgba(255,255,255,0.06);'">
+                                <div style="font-size: 0.7rem; font-weight: 900; color: #a855f7; margin-bottom: 4px; display: flex; align-items: center; justify-content: space-between;">
+                                    <span><i class="fas fa-shopping-cart"></i> <span x-text="t('real_estate')">REVIEWS & SHOPPING</span></span>
+                                    <i x-show="form.tone === 'creative' && form.audience === 'shoppers'" class="fas fa-check-circle" style="color: #a855f7;"></i>
                                 </div>
-                                <div style="font-size: 0.75rem; color: var(--aw-text-dim);" x-text="t('business_b2b_desc')"></div>
+                                <div style="font-size: 0.73rem; color: var(--aw-text-dim);" x-text="t('real_estate_desc')"></div>
                             </div>
-                            <div style="background: rgba(0,0,0,0.2); padding: 0.75rem; border-radius: 10px; border: 1px solid rgba(255,255,255,0.05);">
-                                <div style="font-size: 0.7rem; font-weight: 900; color: #f59e0b; margin-bottom: 4px; display: flex; align-items: center; gap: 0.5rem;">
-                                    <i class="fas fa-lightbulb"></i> <span x-text="t('edu_blog')">EDUCATIONAL/BLOG</span>
+
+                            <!-- Preset 4: Business B2B -->
+                            <div @click="applyPersonaPreset('professional', 'professionals')"
+                                 role="button"
+                                 tabindex="0"
+                                 style="cursor: pointer; padding: 0.75rem; border-radius: 12px; transition: all 0.2s ease;"
+                                 :style="form.tone === 'professional' && form.audience === 'professionals' ? 'background: rgba(16,185,129,0.2); border: 1px solid #10b981;' : 'background: rgba(0,0,0,0.25); border: 1px solid rgba(255,255,255,0.06);'">
+                                <div style="font-size: 0.7rem; font-weight: 900; color: #10b981; margin-bottom: 4px; display: flex; align-items: center; justify-content: space-between;">
+                                    <span><i class="fas fa-briefcase"></i> <span x-text="t('business_b2b')">BUSINESS B2B</span></span>
+                                    <i x-show="form.tone === 'professional' && form.audience === 'professionals'" class="fas fa-check-circle" style="color: #10b981;"></i>
                                 </div>
-                                <div style="font-size: 0.75rem; color: var(--aw-text-dim);" x-text="t('edu_blog_desc')"></div>
+                                <div style="font-size: 0.73rem; color: var(--aw-text-dim);" x-text="t('business_b2b_desc')"></div>
+                            </div>
+
+                            <!-- Preset 5: Educational / Blog -->
+                            <div @click="applyPersonaPreset('informative', 'beginners')"
+                                 role="button"
+                                 tabindex="0"
+                                 style="cursor: pointer; padding: 0.75rem; border-radius: 12px; transition: all 0.2s ease;"
+                                 :style="form.tone === 'informative' && form.audience === 'beginners' ? 'background: rgba(59,130,246,0.2); border: 1px solid #3b82f6;' : 'background: rgba(0,0,0,0.25); border: 1px solid rgba(255,255,255,0.06);'">
+                                <div style="font-size: 0.7rem; font-weight: 900; color: #3b82f6; margin-bottom: 4px; display: flex; align-items: center; justify-content: space-between;">
+                                    <span><i class="fas fa-graduation-cap"></i> <span x-text="t('edu_blog')">HOW-TO & GUIDES</span></span>
+                                    <i x-show="form.tone === 'informative' && form.audience === 'beginners'" class="fas fa-check-circle" style="color: #3b82f6;"></i>
+                                </div>
+                                <div style="font-size: 0.73rem; color: var(--aw-text-dim);" x-text="t('edu_blog_desc')"></div>
                             </div>
                         </div>
                     </div>
@@ -921,14 +964,17 @@ function articleWriter() {
                 editorial_tone: 'Editorial Tone',
                 target_audience: 'Target Audience',
                 persona_guide: 'Persona Mastery Guide',
+                persona_guide_hint: 'Click any preset to auto-apply tone & audience',
                 news_trends: 'NEWS & TRENDS',
-                news_trends_desc: 'Use Authoritative + General',
-                real_estate: 'REAL ESTATE',
-                real_estate_desc: 'Use Creative + Shoppers',
-                business_b2b: 'BUSINESS B2B',
-                business_b2b_desc: 'Use Professional + Professionals',
-                edu_blog: 'EDUCATIONAL/BLOG',
-                edu_blog_desc: 'Use Informative + Beginners',
+                news_trends_desc: 'Informative + General Audience',
+                gold_markets: 'MARKETS & GOLD',
+                gold_markets_desc: 'Professional + General Audience',
+                real_estate: 'SHOPPING & REVIEWS',
+                real_estate_desc: 'Creative & Engaging + Shoppers',
+                business_b2b: 'BUSINESS & TECH',
+                business_b2b_desc: 'Professional + Industry Experts',
+                edu_blog: 'HOW-TO & GUIDES',
+                edu_blog_desc: 'Informative + Beginners',
                 article_length: 'Article Length',
                 length_mini: 'MINI',
                 length_micro: 'MICRO',
@@ -1019,14 +1065,17 @@ function articleWriter() {
                 editorial_tone: 'أسلوب ونبرة الصياغة',
                 target_audience: 'الجمهور المستهدف',
                 persona_guide: 'دليل اختيار نبرة وأسلوب المقال',
+                persona_guide_hint: 'اضغط على أي نمط لتطبيقه تلقائياً بنقرة واحدة',
                 news_trends: 'الأخبار والترندات',
-                news_trends_desc: 'استخدم (خبير متخصص) + (الجمهور العام)',
-                real_estate: 'العقارات والمشاريع',
-                real_estate_desc: 'استخدم (إبداعي وشيق) + (المتسوقين)',
-                business_b2b: 'الأعمال والشركات',
-                business_b2b_desc: 'استخدم (احترافي وموثوق) + (المتخصصين)',
-                edu_blog: 'المدونات والشروحات',
-                edu_blog_desc: 'استخدم (إخباري وتثقيفي) + (المبتدئين)',
+                news_trends_desc: 'إخباري وتثقيفي + الجمهور العام',
+                gold_markets: 'الذهب والأسواق والأسعار',
+                gold_markets_desc: 'احترافي وموثوق + الجمهور العام',
+                real_estate: 'المراجعات والمشتريات',
+                real_estate_desc: 'إبداعي وشيق + المتسوقين والمهتمين بالشراء',
+                business_b2b: 'الأعمال والتقنية',
+                business_b2b_desc: 'احترافي وموثوق + المتخصصين والخبراء',
+                edu_blog: 'الشروحات والأدلة',
+                edu_blog_desc: 'إخباري وتثقيفي + المبتدئين والباحثين عن تعلم',
                 article_length: 'طول المقال المطلوب',
                 length_mini: 'موجز',
                 length_micro: 'قصير جداً',
@@ -1101,6 +1150,11 @@ function articleWriter() {
                     internal_links: 'اقتراحات الروابط الداخلية (Links)'
                 }
             }
+        },
+
+        applyPersonaPreset(tone, audience) {
+            this.form.tone = tone;
+            this.form.audience = audience;
         },
 
         t(key) {
