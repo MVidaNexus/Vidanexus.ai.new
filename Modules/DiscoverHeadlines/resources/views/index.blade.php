@@ -172,7 +172,7 @@
                                         <div class="flex items-center gap-1.5 px-3 py-1.5 rounded-full border border-white/5 text-[10px] font-black uppercase tracking-widest shadow-lg"
                                              :class="getSentimentClass(headline.sentiment)">
                                             <i class="fas" :class="getSentimentIcon(headline.sentiment)"></i>
-                                            <span x-text="headline.sentiment"></span>
+                                            <span x-text="getSentimentLabel(headline.sentiment, isArabicHeadline(headline))"></span>
                                         </div>
                                     </div>
                                 </div>
@@ -180,11 +180,13 @@
                             </div>
 
                             {{-- Result Headline --}}
-                            <h4 class="text-xl sm:text-2xl font-black text-white group-hover:text-primary-cyan transition-colors duration-300 leading-tight tracking-tight" x-text="headline.text"></h4>
+                            <h4 class="text-xl sm:text-2xl font-black text-white group-hover:text-primary-cyan transition-colors duration-300 leading-tight tracking-tight" 
+                                :dir="isArabicHeadline(headline) ? 'rtl' : 'ltr'"
+                                x-text="headline.text"></h4>
 
                             {{-- SEO Semantic Cloud --}}
                             <div class="space-y-2 pt-2" x-show="headline.entities?.length || headline.lsi_keywords?.length">
-                                <p class="text-[9px] font-black text-gray-600 uppercase tracking-widest pl-1">Semantic Intelligence</p>
+                                <p class="text-[9px] font-black text-gray-400 uppercase tracking-widest pl-1" x-text="isArabicHeadline(headline) ? 'الكيانات والكلمات الدلالية (Semantic Intelligence)' : 'Semantic Intelligence'"></p>
                                 <div class="flex flex-wrap gap-2">
                                     <template x-for="entity in headline.entities">
                                         <span class="px-2.5 py-1 rounded bg-primary-cyan/5 border border-primary-cyan/20 text-primary-cyan text-[9px] font-black uppercase tracking-tighter hover:bg-primary-cyan/20 cursor-default transition-colors">
@@ -206,7 +208,7 @@
                                         <i class="fas fa-check-circle text-green-500 text-[10px]" x-show="fb.type === 'success'"></i>
                                         <i class="fas fa-info-circle text-blue-500 text-[10px]" x-show="fb.type === 'info'"></i>
                                         <i class="fas fa-exclamation-circle text-yellow-500 text-[10px]" x-show="fb.type === 'warning' || fb.type === 'danger'"></i>
-                                        <span class="text-[10px] font-bold text-gray-400" x-text="fb.text"></span>
+                                        <span class="text-[10px] font-bold text-gray-300" x-text="fb.text"></span>
                                     </div>
                                 </template>
                             </div>
@@ -218,19 +220,19 @@
                                 <button @click="copyToClipboard(headline.text)" 
                                         class="flex-1 p-4 rounded-2xl bg-white/5 border border-white/10 hover:bg-primary-cyan hover:text-black hover:border-primary-cyan transition-all duration-300 group/btn flex flex-col items-center justify-center gap-1.5 shadow-xl">
                                     <i class="fas fa-copy text-lg"></i>
-                                    <span class="text-[9px] font-black uppercase tracking-widest text-center">Copy Title</span>
+                                    <span class="text-[9px] font-black uppercase tracking-widest text-center" x-text="isArabicHeadline(headline) ? 'نسخ العنوان' : 'Copy Title'"></span>
                                 </button>
                                 
                                 <button @click="showVisualAngle(headline)" 
                                         class="flex-1 p-4 rounded-2xl bg-white/5 border border-white/10 hover:bg-primary-purple hover:text-white hover:border-primary-purple transition-all duration-300 flex flex-col items-center justify-center gap-1.5 shadow-xl">
                                     <i class="fas fa-image text-lg"></i>
-                                    <span class="text-[9px] font-black uppercase tracking-widest text-center">Visual Angle</span>
+                                    <span class="text-[9px] font-black uppercase tracking-widest text-center" x-text="isArabicHeadline(headline) ? 'زوايا الصورة' : 'Visual Angle'"></span>
                                 </button>
 
                                 <a :href="'{{ route('dashboard.article-writer.index') }}?keyword=' + encodeURIComponent(headline.text)" target="_blank"
                                         class="flex-1 p-4 rounded-2xl bg-gradient-to-br from-[#a855f7] to-[#6366f1] border border-white/10 hover:scale-[1.05] transition-all duration-300 flex flex-col items-center justify-center gap-1.5 shadow-xl text-white no-underline">
                                     <i class="fas fa-pen-fancy text-lg"></i>
-                                    <span class="text-[9px] font-black uppercase tracking-widest text-center">Write with AI</span>
+                                    <span class="text-[9px] font-black uppercase tracking-widest text-center" x-text="isArabicHeadline(headline) ? 'كتابة المقال' : 'Write with AI'"></span>
                                 </a>
 
 
@@ -328,19 +330,43 @@
                 return 'bg-red-500 shadow-[0_0_10px_rgba(239,68,68,0.3)]';
             },
 
+            isArabicHeadline(headline) {
+                if (headline && headline.is_arabic !== undefined) return Boolean(headline.is_arabic);
+                const text = ((headline?.text || headline?.headline || '') + ' ' + (this.keyword || '')).trim();
+                return /[\u0600-\u06FF]/.test(text);
+            },
+
+            getSentimentLabel(sentiment, isAr) {
+                const s = (sentiment || '').toLowerCase();
+                if (isAr) {
+                    if (s.includes('positive') || s.includes('إيجابي')) return 'إيجابي';
+                    if (s.includes('surprise') || s.includes('shock') || s.includes('مفاجئ') || s.includes('صادم')) return 'مفاجئ / صادم';
+                    if (s.includes('urgent') || s.includes('breaking') || s.includes('عاجل')) return 'عاجل';
+                    if (s.includes('negative') || s.includes('سلبي')) return 'سلبي';
+                    return 'إخباري';
+                }
+                if (s.includes('positive')) return 'Positive';
+                if (s.includes('surprise') || s.includes('shock')) return 'Surprise';
+                if (s.includes('urgent') || s.includes('breaking')) return 'Breaking';
+                if (s.includes('negative')) return 'Negative';
+                return 'Factual';
+            },
+
             getSentimentClass(sentiment) {
                 const s = (sentiment || '').toLowerCase();
-                if (s.includes('positive')) return 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20';
-                if (s.includes('surprise') || s.includes('shock')) return 'bg-primary-purple/10 text-primary-purple border-primary-purple/20';
-                if (s.includes('negative')) return 'bg-red-500/10 text-red-400 border-red-500/20';
+                if (s.includes('positive') || s.includes('إيجابي')) return 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20';
+                if (s.includes('surprise') || s.includes('shock') || s.includes('مفاجئ') || s.includes('صادم')) return 'bg-primary-purple/10 text-primary-purple border-primary-purple/20';
+                if (s.includes('urgent') || s.includes('breaking') || s.includes('عاجل')) return 'bg-amber-500/10 text-amber-400 border-amber-500/20';
+                if (s.includes('negative') || s.includes('سلبي')) return 'bg-red-500/10 text-red-400 border-red-500/20';
                 return 'bg-blue-500/10 text-blue-400 border-blue-500/20';
             },
 
             getSentimentIcon(sentiment) {
                 const s = (sentiment || '').toLowerCase();
-                if (s.includes('positive')) return 'fa-smile-beam';
-                if (s.includes('surprise')) return 'fa-bolt-lightning';
-                if (s.includes('negative')) return 'fa-face-frown';
+                if (s.includes('positive') || s.includes('إيجابي')) return 'fa-smile-beam';
+                if (s.includes('surprise') || s.includes('shock') || s.includes('مفاجئ') || s.includes('صادم')) return 'fa-bolt-lightning';
+                if (s.includes('urgent') || s.includes('breaking') || s.includes('عاجل')) return 'fa-fire';
+                if (s.includes('negative') || s.includes('سلبي')) return 'fa-face-frown';
                 return 'fa-newspaper';
             },
 
@@ -353,41 +379,69 @@
             },
 
             showVisualAngle(headline) {
+                const isAr = this.isArabicHeadline(headline);
                 const concepts = (headline.visual_concepts && headline.visual_concepts.length)
                     ? headline.visual_concepts
-                    : this.buildVisualConcepts(headline);
+                    : this.buildVisualConcepts(headline, isAr);
 
                 const cards = concepts.map((c, i) => `
-                    <div class="p-4 rounded-2xl border border-white/10 bg-white/[0.03] text-left">
-                        <div class="text-[10px] font-black uppercase tracking-widest text-primary-cyan mb-2">Concept ${i + 1}</div>
-                        <p class="text-slate-200 text-sm leading-relaxed mb-3">${this.escapeHtml(c.description || '')}</p>
-                        <div class="grid grid-cols-2 gap-2 text-[10px]">
-                            <div><span class="text-slate-500">Palette:</span> <span class="text-slate-300">${this.escapeHtml(c.color_palette || 'High contrast')}</span></div>
-                            <div><span class="text-slate-500">Style:</span> <span class="text-slate-300">${this.escapeHtml(c.style || 'Editorial photo')}</span></div>
+                    <div class="p-4 rounded-2xl border border-white/10 bg-white/[0.03] ${isAr ? 'text-right' : 'text-left'}" dir="${isAr ? 'rtl' : 'ltr'}">
+                        <div class="text-[11px] font-black uppercase tracking-widest text-primary-cyan mb-2">
+                            ${isAr ? `🪐 فكرة وزاوية الصورة ${i + 1}` : `🪐 Concept ${i + 1}`}
                         </div>
-                        <p class="text-[10px] text-emerald-400 mt-2"><i class="fas fa-chart-line mr-1"></i>${this.escapeHtml(c.ctr_reason || 'Boosts Discover CTR with emotional hook')}</p>
+                        <p class="text-slate-100 font-medium text-sm leading-relaxed mb-3">${this.escapeHtml(c.description || '')}</p>
+                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-2 text-[11px] bg-white/[0.02] p-2.5 rounded-xl border border-white/5">
+                            <div><span class="text-slate-400 font-bold">${isAr ? 'لوحة الألوان والإضاءة:' : 'Palette:'}</span> <span class="text-slate-200">${this.escapeHtml(c.color_palette || (isAr ? 'تباين وإضاءة عالية' : 'High contrast'))}</span></div>
+                            <div><span class="text-slate-400 font-bold">${isAr ? 'أسلوب اللقطة:' : 'Style:'}</span> <span class="text-slate-200">${this.escapeHtml(c.style || (isAr ? 'لقطة صحفية مقربة' : 'Editorial photo'))}</span></div>
+                        </div>
+                        <p class="text-[11px] text-emerald-400 font-semibold mt-2.5 flex items-center gap-1.5 ${isAr ? 'justify-start' : ''}">
+                            <i class="fas fa-chart-line"></i>
+                            <span>${this.escapeHtml(c.ctr_reason || (isAr ? 'يعزز النقر وتفاعل القارئ في Google Discover' : 'Boosts Discover CTR with emotional hook'))}</span>
+                        </p>
                     </div>
                 `).join('');
 
                 Swal.fire({
-                    title: '<span class="text-white font-black uppercase tracking-widest text-sm">Visual Angle Discovery</span>',
+                    title: `<span class="text-white font-black uppercase tracking-widest text-sm">${isAr ? 'زوايا الصورة واقتراحات الغلاف (Visual Angle Discovery)' : 'Visual Angle Discovery'}</span>`,
                     html: `<div class="space-y-3 max-h-[60vh] overflow-y-auto p-1">${cards}</div>`,
                     background: '#0d0e12',
-                    width: '560px',
-                    confirmButtonText: 'Understood',
+                    width: '580px',
+                    confirmButtonText: isAr ? 'فهمت ذلك' : 'Understood',
                     confirmButtonColor: '#0ea5e9',
                     customClass: { popup: 'rounded-2xl' }
                 });
             },
 
-            buildVisualConcepts(headline) {
-                const base = (headline.thumbnail_suggestion || headline.headline || '').trim();
-                const safe = base.replace(/https?:\/\/example\.com[^\s]*/gi, '').trim()
-                    || 'Dynamic editorial image highlighting the main subject with bold contrast and clear focal point.';
+            buildVisualConcepts(headline, isAr = true) {
+                const base = (headline.thumbnail_suggestion || headline.headline || headline.text || '').trim();
+                const safe = base.replace(/https?:\/\/example\.com[^\s]*/gi, '').trim();
+
+                if (isAr) {
+                    return [
+                        {
+                            description: safe || 'لقطة مقربة صحفية واضحة تركز على الحدث والشخصيات الأساسية بتعبير مباشر.',
+                            color_palette: 'ألوان متباينة عالية الوضوح مع إضاءة درامية مباشرة',
+                            style: 'لقطة صحفية مقربة (Editorial Close-up)',
+                            ctr_reason: 'التركيز على تعبيرات الوجه والحدث يولد تفاعلاً فورياً وفضولاً قوياً للنقر في Discover',
+                        },
+                        {
+                            description: `مشهد سياقي سينمائي واسع يوضح أبعاد الحدث: ${safe ? safe.slice(0, 100) : ''}`,
+                            color_palette: 'إضاءة دافئة مع إبراز عمق وتفاصيل المكان',
+                            style: 'لقطة سينمائية عريضة (Cinematic Wide Shot)',
+                            ctr_reason: 'توضيح سياق الخبر يبني مصداقية عالية ويجذب اهتمام المتابعين',
+                        },
+                        {
+                            description: `تصميم جرافيكي تحريري مبسط يبرز البيانات أو الأرقام الرئيسية المتعلقة بالخبر.`,
+                            color_palette: 'خلفية داكنة مع إبراز العناصر بلون السيان المضيء',
+                            style: 'جرافيك إخباري احترافي (Editorial Graphic)',
+                            ctr_reason: 'الوضوح البصري المباشر يبرز بقوة وسط خلاصات الأخبار المزدحمة',
+                        },
+                    ];
+                }
 
                 return [
                     {
-                        description: safe,
+                        description: safe || 'Dynamic editorial image highlighting the main subject with bold contrast and clear focal point.',
                         color_palette: 'Cyan + deep navy + white accents',
                         style: 'Photojournalistic close-up',
                         ctr_reason: 'Human face + action creates immediate emotional pull',
@@ -590,7 +644,7 @@
             handleResults(data) {
                 this.results = data.headlines;
                 this.resultKeyword = data.keyword;
-                this.parsedHeadlines = data.scored.map(s => ({
+                this.parsedHeadlines = (data.scored || []).map(s => ({
                     text: s.headline,
                     grade: s.grade,
                     score: s.score,
@@ -599,6 +653,8 @@
                     entities: s.entities || [],
                     lsi_keywords: s.lsi_keywords || [],
                     thumbnail_suggestion: s.thumbnail_suggestion || '',
+                    visual_concepts: s.visual_concepts || [],
+                    is_arabic: s.is_arabic !== undefined ? s.is_arabic : /[\u0600-\u06FF]/.test(s.headline),
                     generating: false,
                     categoryId: ''
                 }));

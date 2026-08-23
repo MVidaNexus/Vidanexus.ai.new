@@ -333,12 +333,27 @@ class HeadlineService
                 continue;
             }
 
+            $visualConcepts = [];
+            if (!empty($item['visual_concepts']) && is_array($item['visual_concepts'])) {
+                foreach ($item['visual_concepts'] as $vc) {
+                    if (is_array($vc)) {
+                        $visualConcepts[] = [
+                            'description' => (string) ($vc['description'] ?? $vc['concept'] ?? ''),
+                            'color_palette' => (string) ($vc['color_palette'] ?? $vc['colors'] ?? ''),
+                            'style' => (string) ($vc['style'] ?? ''),
+                            'ctr_reason' => (string) ($vc['ctr_reason'] ?? $vc['reason'] ?? ''),
+                        ];
+                    }
+                }
+            }
+
             $out[] = [
                 'headline' => $headline,
                 'sentiment' => (string) ($item['sentiment'] ?? 'Neutral'),
                 'entities' => $this->asStringList($item['entities'] ?? $item['keywords'] ?? []),
                 'lsi_keywords' => $this->asStringList($item['lsi_keywords'] ?? $item['lsi'] ?? []),
                 'thumbnail_suggestion' => (string) ($item['thumbnail_suggestion'] ?? $item['thumbnail'] ?? $item['visual_angle'] ?? ''),
+                'visual_concepts' => $visualConcepts,
             ];
         }
 
@@ -367,12 +382,14 @@ class HeadlineService
             if ($this->looksLikeJsonFragment($line)) {
                 continue;
             }
+            $cleanLine = preg_replace('/^\d+[\.\)]\s*/', '', $line);
             $extracted[] = [
-                'headline' => preg_replace('/^\d+[\.\)]\s*/', '', $line),
+                'headline' => $cleanLine,
                 'sentiment' => 'Factual',
                 'entities' => [],
                 'lsi_keywords' => [],
                 'thumbnail_suggestion' => '',
+                'visual_concepts' => [],
             ];
         }
         return $extracted;
@@ -387,7 +404,7 @@ class HeadlineService
         if (preg_match('/[{}\[\]]/', $line) === 1) {
             return true;
         }
-        if (preg_match('/"\s*(headline|headlines|sentiment|entities|lsi_keywords|thumbnail_suggestion)"\s*:/i', $line) === 1) {
+        if (preg_match('/"\s*(headline|headlines|sentiment|entities|lsi_keywords|thumbnail_suggestion|visual_concepts)"\s*:/i', $line) === 1) {
             return true;
         }
         return false;
@@ -474,82 +491,188 @@ class HeadlineService
     protected function scoreHeadlines($headlinesData, $keyword = '')
     {
         $scored = [];
+        $isArabicGlobal = preg_match('/[\x{0600}-\x{06FF}]/u', (string) $keyword);
+
         foreach ($headlinesData as $data) {
-            $headline = $data['headline'] ?? '';
+            $headline = (string) ($data['headline'] ?? '');
             if (empty($headline) || mb_strlen($headline) < 8) continue;
             
-            $score = 40; 
+            $isAr = preg_match('/[\x{0600}-\x{06FF}]/u', $headline) || $isArabicGlobal;
+            $score = 60; // Base score for valid AI-crafted headline
             $feedback = [];
             $len = mb_strlen($headline);
-            $minChars = (int) Setting::get("discover-headlines_min_chars", 55);
-            $maxChars = (int) Setting::get("discover-headlines_max_chars", 85);
 
-            if ($len >= $minChars && $len <= $maxChars) {
+            // 1. Length scoring (Google Discover ideal: 45-100 chars)
+            if ($len >= 45 && $len <= 95) {
                 $score += 20;
-                $feedback[] = ['type' => 'success', 'text' => 'Ideal Discover Length (' . $len . ' chars)'];
+                $feedback[] = [
+                    'type' => 'success',
+                    'text' => $isAr ? "طول مثالي لـ Google Discover ({$len} حرف)" : "Ideal Discover Length ({$len} chars)"
+                ];
+            } elseif ($len >= 35 && $len <= 115) {
+                $score += 10;
+                $feedback[] = [
+                    'type' => 'info',
+                    'text' => $isAr ? "طول جيد للعنوان ({$len} حرف)" : "Good Headline Length ({$len} chars)"
+                ];
             } else {
-                $score -= 15;
-                $feedback[] = ['type' => 'danger', 'text' => 'Sub-optimal Length'];
+                $score -= 5;
+                $feedback[] = [
+                    'type' => 'warning',
+                    'text' => $isAr ? "طول غير مثالي ({$len} حرف)" : "Sub-optimal Length ({$len} chars)"
+                ];
             }
 
+            // 2. Target Keyword & Context match
             if (!empty($keyword)) {
-                $keywordLower = mb_strtolower(trim($keyword));
-                if (mb_stripos($headline, $keywordLower) !== false) {
-                    $score += 30;
-                    $feedback[] = ['type' => 'success', 'text' => 'Target Keyword Included (+30)'];
+                $keywordClean = trim(mb_strtolower($keyword));
+                $headlineLower = mb_strtolower($headline);
+
+                // Check exact match
+                if (mb_stripos($headlineLower, $keywordClean) !== false) {
+                    $score += 20;
+                    $feedback[] = [
+                        'type' => 'success',
+                        'text' => $isAr ? 'الكلمة المستهدفة متضمنة بالكامل' : 'Target Keyword Included'
+                    ];
                 } else {
-                    $score -= 30;
-                    $feedback[] = ['type' => 'danger', 'text' => 'Missing Keyword Context (-30)'];
+                    // Check individual keyword tokens
+                    $tokens = array_filter(preg_split('/[\s\-_،,]+/u', $keywordClean), fn($t) => mb_strlen($t) >= 3);
+                    $matchedCount = 0;
+                    foreach ($tokens as $token) {
+                        $tokenBare = preg_replace('/^(ال|و|ب|ل)/u', '', $token);
+                        if (mb_stripos($headlineLower, $token) !== false || (mb_strlen($tokenBare) >= 3 && mb_stripos($headlineLower, $tokenBare) !== false)) {
+                            $matchedCount++;
+                        }
+                    }
+
+                    if (!empty($tokens) && ($matchedCount / count($tokens)) >= 0.5) {
+                        $score += 15;
+                        $feedback[] = [
+                            'type' => 'success',
+                            'text' => $isAr ? 'سياق الكلمة المستهدفة متضمن بذكاء' : 'Keyword Context Included'
+                        ];
+                    }
                 }
             }
             
-            if (!empty($data['entities'])) {
+            // 3. Entity & LSI Semantic Mapping
+            if (!empty($data['entities']) || !empty($data['lsi_keywords'])) {
                 $score += 10;
-                $feedback[] = ['type' => 'success', 'text' => 'Entity Mapping (+10)'];
+                $feedback[] = [
+                    'type' => 'success',
+                    'text' => $isAr ? 'ربط الكيانات والكلمات الدلالية (Entities)' : 'Entity & Semantic Mapping'
+                ];
             }
 
-            $powerWordsRaw = Setting::get("discover-headlines_power_words", "يكشف, يفاجئ, يُعلن, يحسم, يتراجع, يصدر, عاجل, حصري, حقيقة, سر, رسمياً");
-            $powerWords = array_map('trim', explode(',', $powerWordsRaw));
-            foreach ($powerWords as $word) {
-                if (!empty($word) && mb_stripos($headline, $word) !== false) {
-                    $score += 5;
+            // 4. Power words & High-CTR curiosity triggers
+            $powerWordsAr = ['يكشف', 'يفاجئ', 'يُعلن', 'يعلن', 'يحسم', 'يتراجع', 'يصدر', 'عاجل', 'حصري', 'حقيقة', 'سر', 'رسمياً', 'رسمي', 'تفاصيل', 'كواليس', 'صدمة', 'موعد', 'شروط', 'لماذا', 'كيف', 'خطوة', 'قرار', 'رد', 'تطورات', 'أول تعليق', 'بيان', 'مفاجأة', 'توقعات', 'زلزال', 'تحذير', 'فرصة'];
+            $powerWordsEn = ['reveals', 'shocks', 'announces', 'decides', 'urgent', 'exclusive', 'secret', 'official', 'details', 'why', 'how', 'inside', 'first look', 'key', 'breaking', 'unveils', 'warning', 'rules'];
+            $checkWords = $isAr ? $powerWordsAr : $powerWordsEn;
+
+            $hasPowerWord = false;
+            foreach ($checkWords as $word) {
+                if (mb_stripos($headline, $word) !== false) {
+                    $hasPowerWord = true;
                     break;
                 }
             }
 
-            $finalScore = max(0, min(100, $score));
+            if ($hasPowerWord) {
+                $score += 10;
+                $feedback[] = [
+                    'type' => 'success',
+                    'text' => $isAr ? 'محفز نقر وفضول ذكي (High CTR Hook)' : 'High CTR Curiosity Hook'
+                ];
+            }
+
+            // 5. Visual concept readiness
+            if (!empty($data['thumbnail_suggestion']) || !empty($data['visual_concepts'])) {
+                $score += 5;
+                $feedback[] = [
+                    'type' => 'info',
+                    'text' => $isAr ? 'زاوية بصرية مقترحة للصورة (Visual Ready)' : 'Visual Concept Ready'
+                ];
+            }
+
+            $finalScore = max(55, min(99, $score));
             $scored[] = array_merge($data, [
                 'score' => $finalScore,
-                'grade' => $this->gradeHeadline($finalScore),
+                'grade' => $this->gradeHeadline($finalScore, $isAr),
                 'feedback' => $feedback,
+                'is_arabic' => $isAr,
             ]);
         }
         usort($scored, fn($a, $b) => $b['score'] <=> $a['score']);
         return $scored;
     }
 
-    protected function gradeHeadline($score)
+    protected function gradeHeadline($score, $isArabic = true)
     {
-        if ($score >= 85) return ['label' => 'EXCELLENT', 'color' => 'green', 'emoji' => '🔥'];
-        if ($score >= 70) return ['label' => 'VERY GOOD', 'color' => 'green', 'emoji' => '✅'];
-        if ($score >= 55) return ['label' => 'GOOD', 'color' => 'blue', 'emoji' => '👍'];
-        return ['label' => 'POOR', 'color' => 'red', 'emoji' => '⚠️'];
+        if ($score >= 85) {
+            return [
+                'label' => $isArabic ? 'ممتاز' : 'EXCELLENT',
+                'color' => 'green',
+                'emoji' => '🔥'
+            ];
+        }
+        if ($score >= 70) {
+            return [
+                'label' => $isArabic ? 'جيد جداً' : 'VERY GOOD',
+                'color' => 'green',
+                'emoji' => '✅'
+            ];
+        }
+        if ($score >= 55) {
+            return [
+                'label' => $isArabic ? 'جيد' : 'GOOD',
+                'color' => 'blue',
+                'emoji' => '👍'
+            ];
+        }
+        return [
+            'label' => $isArabic ? 'يحتاج تحسين' : 'NEEDS WORK',
+            'color' => 'yellow',
+            'emoji' => '⚠️'
+        ];
     }
 
     protected function getDiscoverRules($isArabic = true)
     {
-        return $isArabic ? "🔹 قواعد امتثال Google Discover..." : "🔹 Google Discover Rules...";
+        if ($isArabic) {
+            return "🔹 قواعد صياغة عناوين Google Discover عالية النقر (High CTR):\n"
+                . "1. ابدأ بالكيان الرئيسي مباشرة (اسم الشخص، الفريق، الحدث، الجهة، المنتج).\n"
+                . "2. استخدم فجوة الفضول الذكية (Curiosity Gap): أجب عن 'ماذا حدث' واجعل القارئ ينقر ليعرف 'التفاصيل والسبب والكواليس' دون تضليل.\n"
+                . "3. أفعال قوية وديناميكية (يكشف، يحسم، يفاجئ، يعلن، يصدر، يوضح).\n"
+                . "4. ممنوع العناوين التافهة أو المضللة أو المبهمة.\n"
+                . "5. لكل عنوان، اقترح زاويتين بصريتين للصورة الرئيسية للمقال (visual_concepts) بنفس لغة العنوان لتعزيز النقر.";
+        }
+
+        return "🔹 Google Discover High-CTR Headline Rules:\n"
+            . "1. Entity-Led: Start with the primary entity (Person, Team, Event, Company).\n"
+            . "2. Intelligent Curiosity Gap: Share the hook while making the full story irresistible to click without clickbait.\n"
+            . "3. Strong Active Verbs (Reveals, Decides, Shocks, Unveils, Explains).\n"
+            . "4. For every headline, suggest 2 tailored visual angles for the featured image (visual_concepts) in English.";
     }
 
     protected function getDefaultHeadlinesStyle($isArabic = true)
     {
-        return $isArabic ? "أنت محرر أول..." : "You are a Senior Editor...";
+        return $isArabic
+            ? "أنت محرر أول وخبير استراتيجيات Google Discover وSEO في كبرى المؤسسات الصحفية."
+            : "You are a Senior Editor and Google Discover / SEO Strategist for leading digital publishers.";
     }
 
     protected function getHeadlinesTechnicalWrapper($count, $region, $isArabic = true)
     {
-        $jsonStr = '{"headlines":[{"headline":"...","sentiment":"...","entities":[],"lsi_keywords":[],"thumbnail_suggestion":"..."}]}';
-        return "🔹 FINAL OUTPUT REQUIREMENTS (STRICT JSON ONLY):\n- Generate {$count} headlines.\n- JSON STRUCTURE:\n" . $jsonStr;
+        if ($isArabic) {
+            $jsonStr = '{"headlines":[{"headline":"العنوان المصاغ لـ Google Discover باللغة العربية","sentiment":"Positive / Surprise / Neutral / Urgent","entities":["كيان 1","كيان 2"],"lsi_keywords":["كلمة دلالية 1","كلمة دلالية 2"],"thumbnail_suggestion":"فكرة الصورة الرئيسية المقترحة للمقال باللغة العربية","visual_concepts":[{"description":"وصف الزاوية البصرية الأولى للصورة باللغة العربية بدقة","color_palette":"ألوان متباينة وإضاءة واضحة","style":"لقطة صحفية مقربة","ctr_reason":"التركيز على تعبيرات الوجه والحدث المباشر يرفع معدل النقر بنسبة كبيرة"},{"description":"وصف الزاوية البصرية الثانية للصورة باللغة العربية","color_palette":"ألوان سينمائية دافئة","style":"لقطة سينمائية عريضة","ctr_reason":"إظهار عمق المشهد وسياق الخبر يولد فضولاً بصرياً فورياً"}]}]}';
+
+            return "🔹 متطلبات الإخراج النهائي (STRICT JSON ONLY):\n- توليد {$count} عناوين إخبارية قوية وجذابة لـ Google Discover.\n- كل النصوص بما فيها زوايا الصور (visual_concepts و thumbnail_suggestion) والكيانات يجب أن تكون باللغة العربية بالكامل.\n- هيكل الـ JSON الإلزامي:\n" . $jsonStr;
+        }
+
+        $jsonStr = '{"headlines":[{"headline":"Google Discover Optimized Headline","sentiment":"Positive / Surprise / Neutral / Urgent","entities":["Entity 1","Entity 2"],"lsi_keywords":["keyword 1","keyword 2"],"thumbnail_suggestion":"Suggested featured image concept in English","visual_concepts":[{"description":"Detailed description of the 1st visual angle in English","color_palette":"High contrast with clean lighting","style":"Photojournalistic close-up","ctr_reason":"Emotional expression creates immediate curiosity"},{"description":"Detailed description of the 2nd visual angle in English","color_palette":"Cinematic warm tones","style":"Cinematic wide scene","ctr_reason":"Context framing builds trust and high Discover CTR"}]}]}';
+
+        return "🔹 FINAL OUTPUT REQUIREMENTS (STRICT JSON ONLY):\n- Generate {$count} high-CTR headlines for Google Discover.\n- All texts including visual_concepts, thumbnail_suggestion and entities MUST be in English.\n- Mandatory JSON STRUCTURE:\n" . $jsonStr;
     }
 
     protected function updateProgress($id, $stage, $message)
