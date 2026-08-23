@@ -250,19 +250,27 @@ class ArticleWriterService
         $protocol .= "- PRIMARY INTENT: Which option is better for the user's budget and specific needs?\n";
         $protocol .= "- Structure: (1) Quick Verdict / TL;DR, (2) Specifications comparison table, (3) Real-world performance / Key differences, (4) Pros & Cons for each side, (5) Final Buying Recommendation (Who should buy A vs Who should buy B).\n\n";
 
-        $protocol .= "### ARCHETYPE 5: HOW-TO & PROCEDURAL GUIDE (شروحات وإرشادات وخطوات تنفيذية)\n";
+        $protocol .= "### ARCHETYPE 5: E-COMMERCE & WOOCOMMERCE PRODUCT CONTENT (متاجر ووكمرس ووصف المنتجات)\n";
+        $protocol .= "- PRIMARY INTENT: Conversion-focused copy that convinces the shopper, highlights product value, and drives sales.\n";
+        $protocol .= "- Structure: (1) Magnetic Product Overview & Core Solution, (2) Features vs Real-World Benefits table (المواصفات مقابل الفوائد الحقيقية), (3) Who should buy this product (مثالي لمن؟), (4) Comparison with alternatives / Pricing & Value, (5) Honest pros & buying considerations, (6) Compelling CTA & Guarantee.\n\n";
+
+        $protocol .= "### ARCHETYPE 6: TECH, SOFTWARE & CODE TUTORIAL (شروحات تقنية، برمجة، وأدوات SaaS)\n";
+        $protocol .= "- PRIMARY INTENT: Developer/technical clarity with concrete, actionable steps and zero hand-waving.\n";
+        $protocol .= "- Structure: (1) Technical Problem & Architecture Overview, (2) Prerequisites & Stack Requirements, (3) Step-by-step implementation guide (with clean code snippets inside <pre><code> if requested), (4) Best practices, performance & security tips, (5) Troubleshooting common errors & edge cases.\n\n";
+
+        $protocol .= "### ARCHETYPE 7: HOW-TO & PROCEDURAL GUIDE (شروحات وإرشادات وخطوات تنفيذية عامة)\n";
         $protocol .= "- PRIMARY INTENT: Fast, step-by-step resolution without fluff.\n";
         $protocol .= "- Structure: (1) Prerequisites / Required documents, (2) Clear numbered steps (<ol><li>Step 1...</li></ol>), (3) Common pitfalls / mistakes to avoid, (4) Important fees, timeline, or FAQs.\n\n";
 
-        $protocol .= "### ARCHETYPE 6: DATA, SCHEDULES, PRICES & TIMETABLES (أسعار، مواعيد، جداول، إحصائيات)\n";
+        $protocol .= "### ARCHETYPE 8: DATA, SCHEDULES, PRICES & TIMETABLES (أسعار، مواعيد، جداول، إحصائيات)\n";
         $protocol .= "- PRIMARY INTENT: Direct numbers, figures, and schedules.\n";
         $protocol .= "- Structure: Put the tables, numbers, and core figures in the FIRST SECTION. Explain the factors influencing the data in subsequent sections.\n\n";
 
-        $protocol .= "### ARCHETYPE 7: HEALTH, MEDICAL, OR SCIENTIFIC TOPIC (صحة وطب وتغذية)\n";
+        $protocol .= "### ARCHETYPE 9: HEALTH, MEDICAL, OR SCIENTIFIC TOPIC (صحة وطب وتغذية)\n";
         $protocol .= "- PRIMARY INTENT: Reliable, evidence-based, medically sound answers with high E-E-A-T.\n";
         $protocol .= "- Structure: Clear direct explanation, causes/mechanisms, verified symptoms, evidence-based solutions/treatments, when to see a specialist, and medical disclaimer.\n\n";
 
-        $protocol .= "### ARCHETYPE 8: EVERGREEN IN-DEPTH ANALYSIS / ESSAY (تحليلات ومقالات سيو شاملة)\n";
+        $protocol .= "### ARCHETYPE 10: EVERGREEN IN-DEPTH ANALYSIS / ESSAY (تحليلات ومقالات سيو شاملة)\n";
         $protocol .= "- Cover all logical angles with deep domain authority, case studies, actionable frameworks, and E-E-A-T thought leadership.\n\n";
 
         $protocol .= "### DATA-FIRST & ZERO-HALLUCINATION RULES:\n";

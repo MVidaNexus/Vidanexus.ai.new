@@ -134,80 +134,160 @@
 
                     <!-- Persona Mastery Guide (Interactive Presets) -->
                     <div style="margin-bottom: 2rem; padding: 1.25rem; background: var(--aw-cyan-10); border: 1px solid var(--aw-cyan-20); border-radius: 16px; position: relative; overflow: hidden;">
-                        <div style="position: absolute; right: -10px; top: -10px; font-size: 4rem; color: var(--aw-cyan-10); opacity: 0.3; transform: rotate(-15deg);">
+                        <div style="position: absolute; right: -10px; top: -10px; font-size: 4.5rem; color: var(--aw-cyan-10); opacity: 0.2; transform: rotate(-15deg); pointer-events: none;">
                             <i class="fas fa-lightbulb"></i>
                         </div>
-                        <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 0.75rem; flex-wrap: wrap; gap: 0.5rem;">
+                        <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 1rem; flex-wrap: wrap; gap: 0.5rem;">
                             <div style="display: flex; align-items: center; gap: 0.75rem;">
                                 <i class="fas fa-magic" style="color: var(--aw-cyan);"></i>
-                                <h4 style="margin: 0; font-size: 0.85rem; font-weight: 800; color: #fff; text-transform: uppercase; letter-spacing: 1px;" x-text="t('persona_guide')">Persona Mastery Guide</h4>
+                                <h4 style="margin: 0; font-size: 0.88rem; font-weight: 800; color: #fff; text-transform: uppercase; letter-spacing: 1px;" x-text="t('persona_guide')">Persona Mastery Guide</h4>
                             </div>
-                            <span style="font-size: 0.7rem; color: var(--aw-cyan); font-weight: 700;" x-text="t('persona_guide_hint')">Click any preset to auto-apply tone & audience</span>
+                            <span style="font-size: 0.72rem; color: var(--aw-cyan); font-weight: 700; background: rgba(6,182,212,0.12); padding: 0.25rem 0.75rem; border-radius: 20px; border: 1px solid var(--aw-cyan-20);" x-text="t('persona_guide_hint')">Click any preset to auto-apply tone & audience</span>
                         </div>
-                        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 0.75rem;">
+                        
+                        <div class="persona-grid">
                             <!-- Preset 1: News & Trends -->
                             <div @click="applyPersonaPreset('informative', 'general')"
+                                 class="persona-card"
                                  role="button"
                                  tabindex="0"
-                                 style="cursor: pointer; padding: 0.75rem; border-radius: 12px; transition: all 0.2s ease;"
-                                 :style="form.tone === 'informative' && form.audience === 'general' ? 'background: rgba(6,182,212,0.2); border: 1px solid var(--aw-cyan);' : 'background: rgba(0,0,0,0.25); border: 1px solid rgba(255,255,255,0.06);'">
-                                <div style="font-size: 0.7rem; font-weight: 900; color: var(--aw-cyan); margin-bottom: 4px; display: flex; align-items: center; justify-content: space-between;">
-                                    <span><i class="fas fa-newspaper"></i> <span x-text="t('news_trends')">NEWS & TRENDS</span></span>
-                                    <i x-show="form.tone === 'informative' && form.audience === 'general'" class="fas fa-check-circle" style="color: var(--aw-cyan);"></i>
+                                 :style="form.tone === 'informative' && form.audience === 'general' ? 'background: rgba(6,182,212,0.2); border-color: var(--aw-cyan); box-shadow: 0 0 16px -2px rgba(6,182,212,0.5);' : ''">
+                                <div>
+                                    <div class="persona-card-header">
+                                        <span class="persona-card-title" style="color: var(--aw-cyan);">
+                                            <i class="fas fa-newspaper"></i> <span x-text="t('news_trends')"></span>
+                                        </span>
+                                        <i x-show="form.tone === 'informative' && form.audience === 'general'" class="fas fa-check-circle" style="color: var(--aw-cyan); font-size: 0.85rem;"></i>
+                                    </div>
+                                    <div class="persona-card-desc" x-text="t('news_trends_desc')"></div>
                                 </div>
-                                <div style="font-size: 0.73rem; color: var(--aw-text-dim);" x-text="t('news_trends_desc')"></div>
+                                <div class="persona-card-hint" x-text="t('news_trends_hint')"></div>
                             </div>
 
                             <!-- Preset 2: Markets & Gold & Economy -->
                             <div @click="applyPersonaPreset('professional', 'general')"
+                                 class="persona-card"
                                  role="button"
                                  tabindex="0"
-                                 style="cursor: pointer; padding: 0.75rem; border-radius: 12px; transition: all 0.2s ease;"
-                                 :style="form.tone === 'professional' && form.audience === 'general' ? 'background: rgba(245,158,11,0.2); border: 1px solid #f59e0b;' : 'background: rgba(0,0,0,0.25); border: 1px solid rgba(255,255,255,0.06);'">
-                                <div style="font-size: 0.7rem; font-weight: 900; color: #f59e0b; margin-bottom: 4px; display: flex; align-items: center; justify-content: space-between;">
-                                    <span><i class="fas fa-coins"></i> <span x-text="t('gold_markets')">GOLD & MARKETS</span></span>
-                                    <i x-show="form.tone === 'professional' && form.audience === 'general'" class="fas fa-check-circle" style="color: #f59e0b;"></i>
+                                 :style="form.tone === 'professional' && form.audience === 'general' ? 'background: rgba(245,158,11,0.2); border-color: #f59e0b; box-shadow: 0 0 16px -2px rgba(245,158,11,0.5);' : ''">
+                                <div>
+                                    <div class="persona-card-header">
+                                        <span class="persona-card-title" style="color: #f59e0b;">
+                                            <i class="fas fa-coins"></i> <span x-text="t('gold_markets')"></span>
+                                        </span>
+                                        <i x-show="form.tone === 'professional' && form.audience === 'general'" class="fas fa-check-circle" style="color: #f59e0b; font-size: 0.85rem;"></i>
+                                    </div>
+                                    <div class="persona-card-desc" x-text="t('gold_markets_desc')"></div>
                                 </div>
-                                <div style="font-size: 0.73rem; color: var(--aw-text-dim);" x-text="t('gold_markets_desc')"></div>
+                                <div class="persona-card-hint" x-text="t('gold_markets_hint')"></div>
                             </div>
 
-                            <!-- Preset 3: Shopping & Products & Real Estate -->
+                            <!-- Preset 3: E-Commerce & WooCommerce Stores -->
+                            <div @click="applyPersonaPreset('marketers', 'shoppers')"
+                                 class="persona-card"
+                                 role="button"
+                                 tabindex="0"
+                                 :style="form.tone === 'marketers' && form.audience === 'shoppers' ? 'background: rgba(16,185,129,0.2); border-color: #10b981; box-shadow: 0 0 16px -2px rgba(16,185,129,0.5);' : ''">
+                                <div>
+                                    <div class="persona-card-header">
+                                        <span class="persona-card-title" style="color: #10b981;">
+                                            <i class="fas fa-store"></i> <span x-text="t('ecommerce_store')"></span>
+                                        </span>
+                                        <i x-show="form.tone === 'marketers' && form.audience === 'shoppers'" class="fas fa-check-circle" style="color: #10b981; font-size: 0.85rem;"></i>
+                                    </div>
+                                    <div class="persona-card-desc" x-text="t('ecommerce_store_desc')"></div>
+                                </div>
+                                <div class="persona-card-hint" x-text="t('ecommerce_store_hint')"></div>
+                            </div>
+
+                            <!-- Preset 4: Reviews & Product Comparisons -->
                             <div @click="applyPersonaPreset('creative', 'shoppers')"
+                                 class="persona-card"
                                  role="button"
                                  tabindex="0"
-                                 style="cursor: pointer; padding: 0.75rem; border-radius: 12px; transition: all 0.2s ease;"
-                                 :style="form.tone === 'creative' && form.audience === 'shoppers' ? 'background: rgba(168,85,247,0.2); border: 1px solid #a855f7;' : 'background: rgba(0,0,0,0.25); border: 1px solid rgba(255,255,255,0.06);'">
-                                <div style="font-size: 0.7rem; font-weight: 900; color: #a855f7; margin-bottom: 4px; display: flex; align-items: center; justify-content: space-between;">
-                                    <span><i class="fas fa-shopping-cart"></i> <span x-text="t('real_estate')">REVIEWS & SHOPPING</span></span>
-                                    <i x-show="form.tone === 'creative' && form.audience === 'shoppers'" class="fas fa-check-circle" style="color: #a855f7;"></i>
+                                 :style="form.tone === 'creative' && form.audience === 'shoppers' ? 'background: rgba(168,85,247,0.2); border-color: #a855f7; box-shadow: 0 0 16px -2px rgba(168,85,247,0.5);' : ''">
+                                <div>
+                                    <div class="persona-card-header">
+                                        <span class="persona-card-title" style="color: #a855f7;">
+                                            <i class="fas fa-balance-scale"></i> <span x-text="t('product_reviews')"></span>
+                                        </span>
+                                        <i x-show="form.tone === 'creative' && form.audience === 'shoppers'" class="fas fa-check-circle" style="color: #a855f7; font-size: 0.85rem;"></i>
+                                    </div>
+                                    <div class="persona-card-desc" x-text="t('product_reviews_desc')"></div>
                                 </div>
-                                <div style="font-size: 0.73rem; color: var(--aw-text-dim);" x-text="t('real_estate_desc')"></div>
+                                <div class="persona-card-hint" x-text="t('product_reviews_hint')"></div>
                             </div>
 
-                            <!-- Preset 4: Business B2B -->
+                            <!-- Preset 5: Tech, Software & Developers -->
+                            <div @click="applyPersonaPreset('professional', 'developers')"
+                                 class="persona-card"
+                                 role="button"
+                                 tabindex="0"
+                                 :style="form.tone === 'professional' && form.audience === 'developers' ? 'background: rgba(14,165,233,0.2); border-color: #0ea5e9; box-shadow: 0 0 16px -2px rgba(14,165,233,0.5);' : ''">
+                                <div>
+                                    <div class="persona-card-header">
+                                        <span class="persona-card-title" style="color: #0ea5e9;">
+                                            <i class="fas fa-code"></i> <span x-text="t('tech_dev')"></span>
+                                        </span>
+                                        <i x-show="form.tone === 'professional' && form.audience === 'developers'" class="fas fa-check-circle" style="color: #0ea5e9; font-size: 0.85rem;"></i>
+                                    </div>
+                                    <div class="persona-card-desc" x-text="t('tech_dev_desc')"></div>
+                                </div>
+                                <div class="persona-card-hint" x-text="t('tech_dev_hint')"></div>
+                            </div>
+
+                            <!-- Preset 6: Business B2B & Startups -->
                             <div @click="applyPersonaPreset('professional', 'professionals')"
+                                 class="persona-card"
                                  role="button"
                                  tabindex="0"
-                                 style="cursor: pointer; padding: 0.75rem; border-radius: 12px; transition: all 0.2s ease;"
-                                 :style="form.tone === 'professional' && form.audience === 'professionals' ? 'background: rgba(16,185,129,0.2); border: 1px solid #10b981;' : 'background: rgba(0,0,0,0.25); border: 1px solid rgba(255,255,255,0.06);'">
-                                <div style="font-size: 0.7rem; font-weight: 900; color: #10b981; margin-bottom: 4px; display: flex; align-items: center; justify-content: space-between;">
-                                    <span><i class="fas fa-briefcase"></i> <span x-text="t('business_b2b')">BUSINESS B2B</span></span>
-                                    <i x-show="form.tone === 'professional' && form.audience === 'professionals'" class="fas fa-check-circle" style="color: #10b981;"></i>
+                                 :style="form.tone === 'professional' && form.audience === 'professionals' ? 'background: rgba(20,184,166,0.2); border-color: #14b8a6; box-shadow: 0 0 16px -2px rgba(20,184,166,0.5);' : ''">
+                                <div>
+                                    <div class="persona-card-header">
+                                        <span class="persona-card-title" style="color: #14b8a6;">
+                                            <i class="fas fa-briefcase"></i> <span x-text="t('business_b2b')"></span>
+                                        </span>
+                                        <i x-show="form.tone === 'professional' && form.audience === 'professionals'" class="fas fa-check-circle" style="color: #14b8a6; font-size: 0.85rem;"></i>
+                                    </div>
+                                    <div class="persona-card-desc" x-text="t('business_b2b_desc')"></div>
                                 </div>
-                                <div style="font-size: 0.73rem; color: var(--aw-text-dim);" x-text="t('business_b2b_desc')"></div>
+                                <div class="persona-card-hint" x-text="t('business_b2b_hint')"></div>
                             </div>
 
-                            <!-- Preset 5: Educational / Blog -->
+                            <!-- Preset 7: Step-by-Step & How-To Guides -->
                             <div @click="applyPersonaPreset('informative', 'beginners')"
+                                 class="persona-card"
                                  role="button"
                                  tabindex="0"
-                                 style="cursor: pointer; padding: 0.75rem; border-radius: 12px; transition: all 0.2s ease;"
-                                 :style="form.tone === 'informative' && form.audience === 'beginners' ? 'background: rgba(59,130,246,0.2); border: 1px solid #3b82f6;' : 'background: rgba(0,0,0,0.25); border: 1px solid rgba(255,255,255,0.06);'">
-                                <div style="font-size: 0.7rem; font-weight: 900; color: #3b82f6; margin-bottom: 4px; display: flex; align-items: center; justify-content: space-between;">
-                                    <span><i class="fas fa-graduation-cap"></i> <span x-text="t('edu_blog')">HOW-TO & GUIDES</span></span>
-                                    <i x-show="form.tone === 'informative' && form.audience === 'beginners'" class="fas fa-check-circle" style="color: #3b82f6;"></i>
+                                 :style="form.tone === 'informative' && form.audience === 'beginners' ? 'background: rgba(99,102,241,0.2); border-color: #6366f1; box-shadow: 0 0 16px -2px rgba(99,102,241,0.5);' : ''">
+                                <div>
+                                    <div class="persona-card-header">
+                                        <span class="persona-card-title" style="color: #818cf8;">
+                                            <i class="fas fa-graduation-cap"></i> <span x-text="t('edu_guides')"></span>
+                                        </span>
+                                        <i x-show="form.tone === 'informative' && form.audience === 'beginners'" class="fas fa-check-circle" style="color: #818cf8; font-size: 0.85rem;"></i>
+                                    </div>
+                                    <div class="persona-card-desc" x-text="t('edu_guides_desc')"></div>
                                 </div>
-                                <div style="font-size: 0.73rem; color: var(--aw-text-dim);" x-text="t('edu_blog_desc')"></div>
+                                <div class="persona-card-hint" x-text="t('edu_guides_hint')"></div>
+                            </div>
+
+                            <!-- Preset 8: Health, Wellness & Medical -->
+                            <div @click="applyPersonaPreset('authoritative', 'general')"
+                                 class="persona-card"
+                                 role="button"
+                                 tabindex="0"
+                                 :style="form.tone === 'authoritative' && form.audience === 'general' ? 'background: rgba(244,63,94,0.2); border-color: #f43f5e; box-shadow: 0 0 16px -2px rgba(244,63,94,0.5);' : ''">
+                                <div>
+                                    <div class="persona-card-header">
+                                        <span class="persona-card-title" style="color: #f43f5e;">
+                                            <i class="fas fa-heartbeat"></i> <span x-text="t('health_medical')"></span>
+                                        </span>
+                                        <i x-show="form.tone === 'authoritative' && form.audience === 'general'" class="fas fa-check-circle" style="color: #f43f5e; font-size: 0.85rem;"></i>
+                                    </div>
+                                    <div class="persona-card-desc" x-text="t('health_medical_desc')"></div>
+                                </div>
+                                <div class="persona-card-hint" x-text="t('health_medical_hint')"></div>
                             </div>
                         </div>
                     </div>
@@ -773,7 +853,71 @@
         font-size: 0.75rem;
     }
 
-    /* ===== SEARCH ICON ===== */
+    /* ===== PERSONA MASTERY GUIDE GRID ===== */
+    .persona-grid {
+        display: grid;
+        grid-template-columns: repeat(4, 1fr);
+        gap: 0.75rem;
+    }
+    @media (max-width: 1200px) {
+        .persona-grid {
+            grid-template-columns: repeat(2, 1fr);
+        }
+    }
+    @media (max-width: 640px) {
+        .persona-grid {
+            grid-template-columns: 1fr;
+        }
+    }
+    .persona-card {
+        background: rgba(15, 23, 42, 0.65);
+        border: 1px solid rgba(255, 255, 255, 0.07);
+        border-radius: 12px;
+        padding: 0.85rem 1rem;
+        cursor: pointer;
+        transition: all 0.22s cubic-bezier(0.4, 0, 0.2, 1);
+        display: flex;
+        flex-direction: column;
+        justify-content: space-between;
+        min-height: 86px;
+        position: relative;
+        text-align: inherit;
+    }
+    .persona-card:hover {
+        background: rgba(15, 23, 42, 0.95);
+        transform: translateY(-2px);
+        border-color: rgba(255, 255, 255, 0.2);
+        box-shadow: 0 8px 20px -4px rgba(0, 0, 0, 0.5);
+    }
+    .persona-card-header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        margin-bottom: 4px;
+    }
+    .persona-card-title {
+        font-size: 0.72rem;
+        font-weight: 900;
+        letter-spacing: 0.5px;
+        display: flex;
+        align-items: center;
+        gap: 0.45rem;
+    }
+    .persona-card-desc {
+        font-size: 0.72rem;
+        color: var(--aw-text-dim);
+        line-height: 1.35;
+        font-weight: 500;
+    }
+    .persona-card-hint {
+        font-size: 0.64rem;
+        color: rgba(255, 255, 255, 0.38);
+        margin-top: 4px;
+        font-weight: 500;
+        line-height: 1.3;
+    }
+
+    /* ===== LENGTH SELECTOR ===== */
     .aw-search-wrap {
         position: relative;
     }
@@ -964,17 +1108,31 @@ function articleWriter() {
                 editorial_tone: 'Editorial Tone',
                 target_audience: 'Target Audience',
                 persona_guide: 'Persona Mastery Guide',
-                persona_guide_hint: 'Click any preset to auto-apply tone & audience',
-                news_trends: 'NEWS & TRENDS',
+                persona_guide_hint: 'Click any niche preset to auto-apply optimal tone & audience',
+                news_trends: 'NEWS, TRENDS & SPORTS',
                 news_trends_desc: 'Informative + General Audience',
-                gold_markets: 'MARKETS & GOLD',
+                news_trends_hint: 'Live breaking news, match fixtures & Google Discover trends',
+                gold_markets: 'GOLD, COMMODITIES & PRICES',
                 gold_markets_desc: 'Professional + General Audience',
-                real_estate: 'SHOPPING & REVIEWS',
-                real_estate_desc: 'Creative & Engaging + Shoppers',
-                business_b2b: 'BUSINESS & TECH',
+                gold_markets_hint: 'Live price tables, bullion workmanship & market trends',
+                ecommerce_store: 'WOOCOMMERCE & STORES',
+                ecommerce_store_desc: 'Marketing & Sales + Shoppers',
+                ecommerce_store_hint: 'High-converting product descriptions & store campaigns',
+                product_reviews: 'REVIEWS & COMPARISONS',
+                product_reviews_desc: 'Creative & Engaging + Shoppers',
+                product_reviews_hint: 'Specs tables, real-world pros/cons & buying verdicts',
+                tech_dev: 'TECH, SAAS & DEVELOPERS',
+                tech_dev_desc: 'Professional + Developers & Tech',
+                tech_dev_hint: 'Code tutorials, software architecture & AI tools',
+                business_b2b: 'BUSINESS & STARTUPS',
                 business_b2b_desc: 'Professional + Industry Experts',
-                edu_blog: 'HOW-TO & GUIDES',
-                edu_blog_desc: 'Informative + Beginners',
+                business_b2b_hint: 'B2B frameworks, executive insights & market analysis',
+                edu_guides: 'STEP-BY-STEP & HOW-TO',
+                edu_guides_desc: 'Informative + Beginners',
+                edu_guides_hint: 'Actionable numbered steps, checklists & FAQs',
+                health_medical: 'HEALTH & WELLNESS',
+                health_medical_desc: 'Authoritative Expert + General Audience',
+                health_medical_hint: 'Evidence-based advice, nutrition & E-E-A-T health guides',
                 article_length: 'Article Length',
                 length_mini: 'MINI',
                 length_micro: 'MICRO',
@@ -1065,17 +1223,31 @@ function articleWriter() {
                 editorial_tone: 'أسلوب ونبرة الصياغة',
                 target_audience: 'الجمهور المستهدف',
                 persona_guide: 'دليل اختيار نبرة وأسلوب المقال',
-                persona_guide_hint: 'اضغط على أي نمط لتطبيقه تلقائياً بنقرة واحدة',
-                news_trends: 'الأخبار والترندات',
+                persona_guide_hint: 'اضغط على أي تخصص لتطبيق النبرة والجمهور المثالي فوراً',
+                news_trends: 'الأخبار والترند والرياضة',
                 news_trends_desc: 'إخباري وتثقيفي + الجمهور العام',
-                gold_markets: 'الذهب والأسواق والأسعار',
+                news_trends_hint: 'تغطيات حية، مباريات، وترند جوجل ديسكفر',
+                gold_markets: 'الذهب والأسعار والأسواق',
                 gold_markets_desc: 'احترافي وموثوق + الجمهور العام',
-                real_estate: 'المراجعات والمشتريات',
-                real_estate_desc: 'إبداعي وشيق + المتسوقين والمهتمين بالشراء',
-                business_b2b: 'الأعمال والتقنية',
+                gold_markets_hint: 'جداول أسعار لحظية، سبائك، وتحركات السوق',
+                ecommerce_store: 'متاجر ووكمرس والمنتجات',
+                ecommerce_store_desc: 'تسويقي وترويجي + المتسوقين',
+                ecommerce_store_hint: 'وصف المنتجات، عروض التخفيضات، وزيادة المبيعات',
+                product_reviews: 'المراجعات ومقارنة الأجهزة',
+                product_reviews_desc: 'إبداعي وشيق + المهتمين بالشراء',
+                product_reviews_hint: 'جداول مواصفات، مميزات وعيوب، وترشيحات',
+                tech_dev: 'التقنية والبرمجة والسوفتوير',
+                tech_dev_desc: 'احترافي وموثوق + المطورين والتقنيين',
+                tech_dev_hint: 'شروحات تقنية، أدوات SaaS، والذكاء الاصطناعي',
+                business_b2b: 'الشركات وبيزنس B2B',
                 business_b2b_desc: 'احترافي وموثوق + المتخصصين والخبراء',
-                edu_blog: 'الشروحات والأدلة',
-                edu_blog_desc: 'إخباري وتثقيفي + المبتدئين والباحثين عن تعلم',
+                business_b2b_hint: 'استراتيجيات الأعمال، القيادة، والشركات الناشئة',
+                edu_guides: 'الشروحات والأدلة (How-To)',
+                edu_guides_desc: 'إخباري وتثقيفي + المبتدئين والباحثين',
+                edu_guides_hint: 'خطوات مرتبة رقمياً، أدلة استخدام، وإرشادات',
+                health_medical: 'الصحة والطب والتغذية',
+                health_medical_desc: 'خبير متخصص + الجمهور العام',
+                health_medical_hint: 'معلومات طبية موثوقة، لياقة وتغذية بمعايير E-E-A-T',
                 article_length: 'طول المقال المطلوب',
                 length_mini: 'موجز',
                 length_micro: 'قصير جداً',
