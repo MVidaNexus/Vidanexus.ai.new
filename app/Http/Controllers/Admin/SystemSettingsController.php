@@ -302,7 +302,11 @@ class SystemSettingsController extends Controller
             }
 
             return redirect()->route('admin.horizon.settings.tab', ['tab' => $activeTab ?? 'availability'])
-                  public function apiKeys()
+                ->with('error', 'Error saving settings: '.$e->getMessage());
+        }
+    }
+
+    public function apiKeys()
     {
         $keys = [
             'OPENAI_API_KEY' => Setting::get('openai_api_key') ?: (config('services.openai.api_key') ?: env('OPENAI_API_KEY', '')),
