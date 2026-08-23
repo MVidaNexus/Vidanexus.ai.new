@@ -179,31 +179,31 @@
                                     class="length-card"
                                     :class="form.word_count === 300 ? 'length-card-active' : ''">
                                 <div class="length-card-title" x-text="t('length_mini')">MINI</div>
-                                <div class="length-card-words">~300</div>
+                                <div class="length-card-words" x-text="t('words_300')">~300</div>
                             </button>
                             <button @click="form.word_count = 500" type="button"
                                     class="length-card"
                                     :class="form.word_count === 500 ? 'length-card-active' : ''">
                                 <div class="length-card-title" x-text="t('length_micro')">MICRO</div>
-                                <div class="length-card-words">~500</div>
+                                <div class="length-card-words" x-text="t('words_500')">~500</div>
                             </button>
                             <button @click="form.word_count = 800" type="button"
                                     class="length-card"
                                     :class="form.word_count === 800 ? 'length-card-active' : ''">
                                 <div class="length-card-title" x-text="t('length_short')">SHORT</div>
-                                <div class="length-card-words">~800</div>
+                                <div class="length-card-words" x-text="t('words_800')">~800</div>
                             </button>
                             <button @click="form.word_count = 1500" type="button"
                                     class="length-card"
                                     :class="form.word_count === 1500 ? 'length-card-active' : ''">
                                 <div class="length-card-title" x-text="t('length_medium')">MEDIUM</div>
-                                <div class="length-card-words">~1.5k</div>
+                                <div class="length-card-words" x-text="t('words_1500')">~1.5k</div>
                             </button>
                             <button @click="form.word_count = 2500" type="button"
                                     class="length-card"
                                     :class="form.word_count === 2500 ? 'length-card-active' : ''">
                                 <div class="length-card-title" x-text="t('length_long')">LONG</div>
-                                <div class="length-card-words">~2.5k</div>
+                                <div class="length-card-words" x-text="t('words_2500')">~2.5k</div>
                             </button>
                         </div>
                     </div>
@@ -971,18 +971,29 @@ function articleWriter() {
                 alert_del_btn: 'Yes, Delete',
                 alert_cancel: 'Cancel',
                 alert_deleted: 'Article Deleted',
+                words_300: '~300',
+                words_500: '~500',
+                words_800: '~800',
+                words_1500: '~1.5k',
+                words_2500: '~2.5k',
                 tones: {
                     professional: 'Professional',
                     informative: 'Informative',
                     casual: 'Casual & Friendly',
                     authoritative: 'Authoritative Expert',
-                    creative: 'Creative & Engaging'
+                    creative: 'Creative & Engaging',
+                    marketers: 'Marketing & Sales',
+                    academic: 'Academic & Research',
+                    journalistic: 'Journalistic'
                 },
                 audiences: {
                     general: 'General Audience',
                     professionals: 'Industry Professionals',
                     beginners: 'Beginners & Learners',
-                    shoppers: 'Online Shoppers'
+                    shoppers: 'Online Shoppers',
+                    marketers: 'Marketers & Growth',
+                    developers: 'Developers & Technical',
+                    investors: 'Investors & Executives'
                 },
                 components: {
                     faq: 'FAQ Section',
@@ -1022,6 +1033,11 @@ function articleWriter() {
                 length_short: 'قصير',
                 length_medium: 'متوسط',
                 length_long: 'شامل ومفصل',
+                words_300: '~300 كلمة',
+                words_500: '~500 كلمة',
+                words_800: '~800 كلمة',
+                words_1500: '~1.5 ألف كلمة',
+                words_2500: '~2.5 ألف كلمة',
                 include_in_article: 'عناصر وتنسيقات المقال الإضافية',
                 btn_generate: 'توليد المقال بالذكاء الاصطناعي',
                 btn_generating: 'جاري صياغة المقال وتوليد السيو...',
@@ -1063,13 +1079,19 @@ function articleWriter() {
                     informative: 'إخباري وتثقيفي (Informative)',
                     casual: 'ودي وجذاب (Casual & Friendly)',
                     authoritative: 'خبير متخصص ومعتمد (Authoritative)',
-                    creative: 'إبداعي وشيق (Creative)'
+                    creative: 'إبداعي وشيق (Creative)',
+                    marketers: 'تسويقي وترويجي (Marketing)',
+                    academic: 'أكاديمي وبحثي (Academic)',
+                    journalistic: 'صحفي واستقصائي (Journalistic)'
                 },
                 audiences: {
                     general: 'الجمهور العام (General)',
                     professionals: 'المتخصصين والخبراء (Professionals)',
                     beginners: 'المبتدئين والباحثين عن تعلم (Beginners)',
-                    shoppers: 'المتسوقين والمهتمين بالشراء (Shoppers)'
+                    shoppers: 'المتسوقين والمهتمين بالشراء (Shoppers)',
+                    marketers: 'المسوقين ورواد الأعمال (Marketers)',
+                    developers: 'المطورين والتقنيين (Developers)',
+                    investors: 'المستثمرين ورجال الأعمال (Investors)'
                 },
                 components: {
                     faq: 'قسم الأسئلة الشائعة (FAQ)',
@@ -1087,18 +1109,21 @@ function articleWriter() {
         },
 
         getToneLabel(tone) {
+            const key = typeof tone === 'object' ? tone.value : tone;
             const lang = this.form.language === 'ar' ? 'ar' : 'en';
-            return this.i18n[lang]?.tones?.[tone.value] || tone.label;
+            return this.i18n[lang]?.tones?.[key] || (typeof tone === 'object' ? tone.label : tone);
         },
 
         getAudienceLabel(audience) {
+            const key = typeof audience === 'object' ? audience.value : audience;
             const lang = this.form.language === 'ar' ? 'ar' : 'en';
-            return this.i18n[lang]?.audiences?.[audience.value] || audience.label;
+            return this.i18n[lang]?.audiences?.[key] || (typeof audience === 'object' ? audience.label : audience);
         },
 
         getComponentLabel(comp) {
+            const key = typeof comp === 'object' ? comp.value : comp;
             const lang = this.form.language === 'ar' ? 'ar' : 'en';
-            return this.i18n[lang]?.components?.[comp.value] || comp.label;
+            return this.i18n[lang]?.components?.[key] || (typeof comp === 'object' ? comp.label : comp);
         },
 
         init() {
