@@ -51,7 +51,7 @@ Route::group(['middleware' => ['auth', 'verified'], 'prefix' => 'dashboard'], fu
     Route::post('nlp-entities/analyze', [NLPController::class, 'analyze'])->name('dashboard.nlp-entities.analyze');
 });
 
-Route::post('dashboard/ai-keyword-radar/sync', AiKeywordRadarSyncController::class)
+Route::post('dashboard/ai-keyword-radar/sync', [\Modules\AIKeywordRadar\Http\Controllers\AIKeywordRadarController::class, 'sync'])
     ->middleware(['auth', 'verified', 'tool.access:ai-keyword-radar'])
     ->name('dashboard.ai-keyword-radar.sync');
 
