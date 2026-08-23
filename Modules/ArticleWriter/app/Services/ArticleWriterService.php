@@ -146,7 +146,7 @@ class ArticleWriterService
         }
 
         // 1. Title Section (Mandatory)
-        $titlePrompt = Setting::get("{$slug}_prompt_title", "Generate a magnetic, high-CTR, Google Discover-optimized headline for [keyword] in [language]. Title should be 8-14 words, use power words, and trigger curiosity while matching user search intent.");
+        $titlePrompt = Setting::get("{$slug}_prompt_title", "Generate an engaging, high-CTR, Google Discover-compliant headline for [keyword] in [language]. Title should be 8-14 words, trigger intelligent curiosity while maintaining high credibility, and strictly avoid sensational clickbait words (like صادم, كارثة, لن تصدق).");
         $prompt .= "# TITLE ENGINEERING PROTOCOL\n" . $this->replaceVars($titlePrompt, $vars) . "\n\n";
 
         // 2. Content Intent & Dynamic Archetype Protocol
