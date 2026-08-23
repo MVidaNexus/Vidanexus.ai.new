@@ -215,18 +215,15 @@
                         </div>
                         <div style="display: flex; flex-wrap: wrap; gap: 0.5rem;">
                             <template x-for="comp in settings.components" :key="comp.value">
-                                <label class="comp-card"
-                                       :class="form.components.includes(comp.value) ? 'comp-card-active' : ''"
-                                       @click="toggleComponent(comp.value)">
-                                    <input type="checkbox" 
-                                           :value="comp.value" 
-                                           :checked="form.components.includes(comp.value)"
-                                           style="display: none;">
+                                <button type="button"
+                                        class="comp-card"
+                                        :class="form.components.includes(comp.value) ? 'comp-card-active' : ''"
+                                        @click="toggleComponent(comp.value)">
                                     <div class="comp-check">
                                         <i class="fas fa-check"></i>
                                     </div>
                                     <span class="comp-label" x-text="getComponentLabel(comp)"></span>
-                                </label>
+                                </button>
                             </template>
                         </div>
                     </div>

@@ -152,26 +152,42 @@ class ArticleWriterService
         //     inside paragraph text).
         $prompt .= $this->humanWritingRules($langName);
 
-        // 3. Components (Dynamic)
+        // 3. Components (Dynamic — strictly respect user selection)
         if (in_array('summary', $components)) {
             $compPrompt = Setting::get("{$slug}_prompt_summary", "Generate a Quick Summary box immediately after H1.");
             $prompt .= "## COMPONENT: QUICK SUMMARY\n" . $this->replaceVars($compPrompt, $vars) . "\n\n";
+        } else {
+            $prompt .= "## COMPONENT: QUICK SUMMARY (OMITTED BY USER)\nSTRICT RULE: Do NOT include any Quick Summary box or executive summary block. Omit it completely.\n\n";
         }
 
         if (in_array('takeaways', $components)) {
             $compPrompt = Setting::get("{$slug}_prompt_takeaways", "Generate a Key Takeaways section with 6-8 bullets.");
             $prompt .= "## COMPONENT: KEY TAKEAWAYS\n" . $this->replaceVars($compPrompt, $vars) . "\n\n";
+        } else {
+            $prompt .= "## COMPONENT: KEY TAKEAWAYS (OMITTED BY USER)\nSTRICT RULE: Do NOT include any Key Takeaways section or bullet point summary list. Omit it completely.\n\n";
         }
 
         if (in_array('faq', $components)) {
             $compPrompt = Setting::get("{$slug}_prompt_faq", "Generate a schema-ready FAQ section with 5-7 questions.");
             $prompt .= "## COMPONENT: FAQ SECTION\n" . $this->replaceVars($compPrompt, $vars) . "\n\n";
+        } else {
+            $prompt .= "## COMPONENT: FAQ SECTION (OMITTED BY USER)\nSTRICT RULE: Do NOT include any FAQ (Frequently Asked Questions) section. Omit it completely.\n\n";
         }
 
-        // 4. Meta Tags (Mandatory) — title, description, focus keyword,
-        //    and the new SEO-friendly slug suggestions in BOTH scripts.
-        $metaPrompt = Setting::get("{$slug}_prompt_meta", "Output [TITLE], [META_DESCRIPTION], and [FOCUS_KEYWORD] at the end.");
-        $prompt .= "# METADATA PROTOCOL\n" . $this->replaceVars($metaPrompt, $vars) . "\n";
+        if (in_array('internal_links', $components)) {
+            $compPrompt = Setting::get("{$slug}_prompt_internal_links", "Suggest 3-5 relevant internal linking anchor opportunities within the article.");
+            $prompt .= "## COMPONENT: INTERNAL LINKS\n" . $this->replaceVars($compPrompt, $vars) . "\n\n";
+        } else {
+            $prompt .= "## COMPONENT: INTERNAL LINKS (OMITTED BY USER)\nSTRICT RULE: Do NOT include internal link suggestions.\n\n";
+        }
+
+        // 4. Meta Tags Protocol (Dynamic — respect user selection)
+        if (in_array('meta', $components)) {
+            $metaPrompt = Setting::get("{$slug}_prompt_meta", "Output [TITLE], [META_DESCRIPTION], and [FOCUS_KEYWORD] at the end.");
+            $prompt .= "# METADATA PROTOCOL\n" . $this->replaceVars($metaPrompt, $vars) . "\n";
+        } else {
+            $prompt .= "# METADATA PROTOCOL\nOutput [TITLE] at the end.\n";
+        }
         $prompt .= "Additionally, ALWAYS append two slug suggestions on their own lines, in this exact format:\n";
         $prompt .= "[SLUG_EN]: short-seo-friendly-english-slug-derived-from-the-title\n";
         $prompt .= "[SLUG_AR]: شريحة-عربية-قصيرة-مشتقة-من-العنوان\n";
