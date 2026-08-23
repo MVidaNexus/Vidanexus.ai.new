@@ -609,8 +609,8 @@
     <meta name="credits-balance-url" content="{{ route('dashboard.credits.balance') }}">
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     <script src="{{ asset('script.js') }}"></script>
-    <script src="{{ asset('credits-live.js') }}?v=1" defer></script>
-    <script src="{{ asset('admin-ajax-save.js') }}?v=1" defer></script>
+    <script src="{{ asset('credits-live.js') }}?v={{ config('vidanexus.style_css_version', '2') }}" defer></script>
+    <script src="{{ asset('admin-ajax-save.js') }}?v={{ config('vidanexus.style_css_version', '2') }}.2" defer></script>
     <script>
         function toggleSidebar(open) {
             document.body.classList.toggle('sidebar-open', open);

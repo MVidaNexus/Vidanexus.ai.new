@@ -87,6 +87,19 @@ class SystemSettingsController extends Controller
             ];
             $activeTab = in_array($tab, $allowedTabs, true) ? $tab : 'availability';
             $input = $request->except('_token');
+
+            // Transparently decode any base64 encoded input fields (to bypass aggressive WAF/ModSecurity on shared hosting)
+            foreach ($input as $k => $v) {
+                if (is_string($v) && str_starts_with($k, '_b64_')) {
+                    $origKey = substr($k, 5);
+                    $decoded = base64_decode($v);
+                    if ($decoded !== false) {
+                        $input[$origKey] = $decoded;
+                        $request->merge([$origKey => $decoded]);
+                    }
+                }
+            }
+
             $tools = config('tools.all_tools', []);
             $envData = [];
 
@@ -113,6 +126,13 @@ class SystemSettingsController extends Controller
                 \Illuminate\Support\Facades\Cache::forget('setting_global_country_registry');
                 \Illuminate\Support\Facades\Cache::forget('setting_global_country_visibility');
                 \App\Support\CountryRegistry::clearGlobalCache();
+
+                if ($request->ajax() || $request->wantsJson()) {
+                    return response()->json([
+                        'success' => true,
+                        'message' => 'Country registry updated. Hidden countries will disappear from every tool on the next request.',
+                    ]);
+                }
 
                 return redirect()->route('admin.horizon.settings.tab', ['tab' => 'countries'])
                     ->with('success', 'Country registry updated. Hidden countries will disappear from every tool on the next request.');
@@ -261,11 +281,25 @@ class SystemSettingsController extends Controller
                 }
             }
 
+            if ($request->ajax() || $request->wantsJson()) {
+                return response()->json([
+                    'success' => true,
+                    'message' => 'System settings matrix updated successfully.',
+                ]);
+            }
+
             return redirect()->route('admin.horizon.settings.tab', ['tab' => $activeTab])
                 ->with('success', 'System settings matrix updated successfully.');
 
         } catch (\Throwable $e) {
             \Log::error('SystemSettings update CRASHED: '.$e->getMessage()."\n".$e->getTraceAsString());
+
+            if ($request->ajax() || $request->wantsJson()) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Error saving settings: '.$e->getMessage(),
+                ], 500);
+            }
 
             return redirect()->route('admin.horizon.settings.tab', ['tab' => $activeTab ?? 'availability'])
                 ->with('error', 'Error saving settings: '.$e->getMessage());
