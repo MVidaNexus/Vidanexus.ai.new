@@ -361,9 +361,9 @@
                                                value="{{ $text }}"
                                                style="accent-color:{{ $colorVar }};width:16px;height:16px;cursor:pointer;flex-shrink:0;"
                                                @change="toggleKeyword('{{ $boxKey }}', @js($text), $event.target.checked)">
-                                        <span class="keyword-text font-black text-sm sm:text-base" style="display:inline-flex;align-items:center;gap:6px;padding:6px 14px;border-radius:12px;line-height:1.3;border:1px solid {{ $colorVar }}40;background:{{ $colorVar }}18;color:{{ $colorVar }};max-width:100%;text-align:{{ $isAr ? 'right' : 'left' }};">
-                                            <i class="fas fa-hashtag text-[10px] opacity-70 flex-shrink-0"></i>
-                                            <span class="break-words font-black">{{ $text }}</span>
+                                        <span class="keyword-text font-black text-sm sm:text-base" style="display:inline-flex;align-items:center;gap:6px;padding:6px 14px;border-radius:12px;line-height:1.3;border:1px solid rgba(255,255,255,0.15);background:rgba(255,255,255,0.06);color:#ffffff;max-width:100%;text-align:{{ $isAr ? 'right' : 'left' }};">
+                                            <i class="fas fa-hashtag text-[10px] flex-shrink-0" style="color:{{ $colorVar }};"></i>
+                                            <span class="break-words font-black" style="color:#ffffff;">{{ $text }}</span>
                                         </span>
                                     </div>
                                     @endif
@@ -400,11 +400,11 @@
                         {{-- Bottom Body: Scraped Headline & Metadata --}}
                         <div class="p-3 sm:p-4" style="background:var(--card-bg);">
                             <div class="flex items-start gap-2.5 {{ $isAr ? '' : 'flex-row-reverse' }}">
-                                <span style="flex-shrink:0;width:26px;height:26px;display:flex;align-items:center;justify-content:center;border-radius:8px;font-size:10px;background:rgba(255,255,255,0.05);border:1px solid var(--glass-border);color:var(--text-muted);">
+                                <span style="flex-shrink:0;width:26px;height:26px;display:flex;align-items:center;justify-content:center;border-radius:8px;font-size:10px;background:{{ $colorVar }}15;border:1px solid {{ $colorVar }}30;color:{{ $colorVar }};">
                                     <i class="fas fa-newspaper text-[10px]"></i>
                                 </span>
                                 <div class="flex-1 min-w-0">
-                                    <h4 class="font-medium text-xs sm:text-sm break-words leading-relaxed mb-2" style="color:var(--text-main);opacity:0.9;">{{ $headlineTitle }}</h4>
+                                    <h4 class="font-bold text-xs sm:text-sm break-words leading-relaxed mb-2" style="color:{{ $colorVar }};opacity:0.95;">{{ $headlineTitle }}</h4>
                                     <div class="flex flex-wrap items-center gap-2.5">
                                         <span style="font-size:8.5px;color:#f87171;background:rgba(248,113,113,0.1);padding:2px 8px;border-radius:8px;font-weight:700;text-transform:uppercase;border:1px solid rgba(248,113,113,0.2);">{{ $source }}</span>
                                         <span style="font-size:9px;color:var(--text-muted);font-weight:600;">{{ count($groupKeywords) }} {{ count($groupKeywords) === 1 ? 'keyword' : 'keywords' }}</span>
