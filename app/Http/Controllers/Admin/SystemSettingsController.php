@@ -302,19 +302,15 @@ class SystemSettingsController extends Controller
             }
 
             return redirect()->route('admin.horizon.settings.tab', ['tab' => $activeTab ?? 'availability'])
-                ->with('error', 'Error saving settings: '.$e->getMessage());
-        }
-    }
-
-    public function apiKeys()
+                  public function apiKeys()
     {
         $keys = [
-            'OPENAI_API_KEY' => env('OPENAI_API_KEY'),
-            'GEMINI_API_KEY' => env('GEMINI_API_KEY'),
-            'OPENROUTER_API_KEY' => env('OPENROUTER_API_KEY'),
-            'FAWATERK_API_KEY' => env('FAWATERK_API_KEY'),
-            'FAWATERK_VENDOR_KEY' => env('FAWATERK_VENDOR_KEY'),
-            'FAWATERK_SANDBOX_MODE' => config('services.fawaterk.sandbox_mode'),
+            'OPENAI_API_KEY' => Setting::get('openai_api_key') ?: (config('services.openai.api_key') ?: env('OPENAI_API_KEY', '')),
+            'GEMINI_API_KEY' => Setting::get('gemini_api_key') ?: (config('services.gemini.api_key') ?: env('GEMINI_API_KEY', '')),
+            'OPENROUTER_API_KEY' => Setting::get('openrouter_api_key') ?: (config('services.openrouter.api_key') ?: env('OPENROUTER_API_KEY', '')),
+            'FAWATERK_API_KEY' => Setting::get('fawaterk_api_key') ?: (config('services.fawaterk.api_key') ?: env('FAWATERK_API_KEY', '')),
+            'FAWATERK_VENDOR_KEY' => Setting::get('fawaterk_vendor_key') ?: (config('services.fawaterk.vendor_key') ?: env('FAWATERK_VENDOR_KEY', '')),
+            'FAWATERK_SANDBOX_MODE' => Setting::get('fawaterk_sandbox_mode') ?: (config('services.fawaterk.sandbox_mode') ?: 'live'),
         ];
 
         // Also get tool routing for the second tab
@@ -342,39 +338,62 @@ class SystemSettingsController extends Controller
             'FAWATERK_SANDBOX_MODE' => 'required|in:auto,sandbox,live',
         ]);
 
-        $data = $request->only([
-            'OPENAI_API_KEY',
-            'GEMINI_API_KEY',
-            'OPENROUTER_API_KEY',
-            'FAWATERK_API_KEY',
-            'FAWATERK_VENDOR_KEY',
-        ]);
-        $data['FAWATERK_SANDBOX'] = match ($request->input('FAWATERK_SANDBOX_MODE')) {
-            'auto' => 'auto',
-            'sandbox' => 'true',
-            'live' => 'false',
-        };
+        $sandboxMode = $request->input('FAWATERK_SANDBOX_MODE', 'live');
+        $fawaterkApiKey = trim((string) $request->input('FAWATERK_API_KEY', ''));
+        $fawaterkVendorKey = trim((string) $request->input('FAWATERK_VENDOR_KEY', ''));
+        $openaiApiKey = trim((string) $request->input('OPENAI_API_KEY', ''));
+        $geminiApiKey = trim((string) $request->input('GEMINI_API_KEY', ''));
+        $openrouterApiKey = trim((string) $request->input('OPENROUTER_API_KEY', ''));
+
+        // 1. Save persistently to database settings table
+        Setting::set('fawaterk_api_key', $fawaterkApiKey, 'text', 'payment');
+        Setting::set('fawaterk_vendor_key', $fawaterkVendorKey, 'text', 'payment');
+        Setting::set('fawaterk_sandbox_mode', $sandboxMode, 'text', 'payment');
+        Setting::set('openai_api_key', $openaiApiKey, 'text', 'ai_api_keys');
+        Setting::set('gemini_api_key', $geminiApiKey, 'text', 'ai_api_keys');
+        Setting::set('openrouter_api_key', $openrouterApiKey, 'text', 'ai_api_keys');
+
+        // 2. Also write to .env file
+        $envData = [
+            'FAWATERK_API_KEY' => $fawaterkApiKey,
+            'FAWATERK_VENDOR_KEY' => $fawaterkVendorKey,
+            'FAWATERK_SANDBOX' => match ($sandboxMode) {
+                'auto' => 'auto',
+                'sandbox' => 'true',
+                'live' => 'false',
+            },
+            'OPENAI_API_KEY' => $openaiApiKey,
+            'GEMINI_API_KEY' => $geminiApiKey,
+            'OPENROUTER_API_KEY' => $openrouterApiKey,
+        ];
 
         try {
-            $this->updateEnv($data);
-
-            return back()->with('success', 'General API Keys updated successfully and persisted to .env');
+            $this->updateEnv($envData);
+            \Illuminate\Support\Facades\Artisan::call('config:cache');
         } catch (\Exception $e) {
-            return back()->with('error', 'Failed to update .env file: '.$e->getMessage());
+            \Log::warning('Could not update .env or rebuild config cache: '.$e->getMessage());
         }
+
+        if ($request->ajax() || $request->wantsJson()) {
+            return response()->json([
+                'success' => true,
+                'message' => 'API Keys & Payment Gateway updated and saved permanently.',
+            ]);
+        }
+
+        return back()->with('success', 'API Keys & Payment Gateway updated and saved permanently.');
     }
 
     public function apiReference()
     {
-        // 1. Get .env Keys (Global)
+        // 1. Get Keys from Setting DB or Config
         $envKeys = [
-            'OPENAI_API_KEY' => env('OPENAI_API_KEY'),
-            'GEMINI_API_KEY' => env('GEMINI_API_KEY'),
-            'OPENROUTER_API_KEY' => env('OPENROUTER_API_KEY'),
-            'FAWATERK_API_KEY' => env('FAWATERK_API_KEY'),
-            'FAWATERK_VENDOR_KEY' => env('FAWATERK_VENDOR_KEY'),
-            'FAWATERK_SANDBOX' => config('services.fawaterk.sandbox_mode')
-                .' → '.(config('services.fawaterk.sandbox') ? 'staging' : 'live')
+            'OPENAI_API_KEY' => Setting::get('openai_api_key') ?: (config('services.openai.api_key') ?: env('OPENAI_API_KEY', '')),
+            'GEMINI_API_KEY' => Setting::get('gemini_api_key') ?: (config('services.gemini.api_key') ?: env('GEMINI_API_KEY', '')),
+            'OPENROUTER_API_KEY' => Setting::get('openrouter_api_key') ?: (config('services.openrouter.api_key') ?: env('OPENROUTER_API_KEY', '')),
+            'FAWATERK_API_KEY' => Setting::get('fawaterk_api_key') ?: (config('services.fawaterk.api_key') ?: env('FAWATERK_API_KEY', '')),
+            'FAWATERK_VENDOR_KEY' => Setting::get('fawaterk_vendor_key') ?: (config('services.fawaterk.vendor_key') ?: env('FAWATERK_VENDOR_KEY', '')),
+            'FAWATERK_SANDBOX' => (Setting::get('fawaterk_sandbox_mode') ?: config('services.fawaterk.sandbox_mode', 'live'))
                 .' (APP_ENV='.config('app.env').')',
         ];
 

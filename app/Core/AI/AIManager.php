@@ -378,13 +378,19 @@ class AIManager
             $key = trim((string) (Setting::get('google_api_key') ?? ''));
         }
 
-        // Fallback to env when the DB value is empty or a stub placeholder.
+        // Fallback to config or env when the DB value is empty or a stub placeholder.
         if ($key === '' || strlen($key) < 5) {
-            $envKey = strtoupper($settingKey);
-            $key = trim((string) (env($envKey) ?? ''));
+            $configKey = match ($providerName) {
+                'google', 'gemini' => 'services.gemini.api_key',
+                'openai' => 'services.openai.api_key',
+                'openrouter' => 'services.openrouter.api_key',
+                'anthropic' => 'services.anthropic.api_key',
+                default => "services.{$providerName}.api_key",
+            };
+            $key = trim((string) (config($configKey) ?: (env(strtoupper($settingKey)) ?: '')));
 
             if ($key === '' && $providerName === 'openrouter') {
-                $key = trim((string) (env('OPEN_ROUTER_API_KEY') ?? ''));
+                $key = trim((string) (config('services.openrouter.api_key') ?: (env('OPEN_ROUTER_API_KEY') ?: '')));
             }
         }
 

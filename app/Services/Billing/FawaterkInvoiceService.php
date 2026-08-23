@@ -2,6 +2,7 @@
 
 namespace App\Services\Billing;
 
+use App\Models\Setting;
 use App\Models\User;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
@@ -19,12 +20,15 @@ class FawaterkInvoiceService
 
     protected function createInvoiceEndpoint(): string
     {
-        $override = config('services.fawaterk.api_base_url');
+        $override = Setting::get('fawaterk_api_base_url') ?: config('services.fawaterk.api_base_url');
         if (is_string($override) && $override !== '') {
             return rtrim($override, '/').'/createInvoiceLink';
         }
 
-        $base = config('services.fawaterk.sandbox', false)
+        $mode = Setting::get('fawaterk_sandbox_mode') ?: config('services.fawaterk.sandbox_mode', 'live');
+        $isSandbox = ($mode === 'sandbox') || ($mode === 'auto' && in_array(config('app.env'), ['local', 'testing', 'dev']));
+
+        $base = $isSandbox
             ? self::SANDBOX_API_BASE
             : self::LIVE_API_BASE;
 
@@ -130,7 +134,7 @@ class FawaterkInvoiceService
         ?string $guestEmail,
         bool $newAccountFlow
     ): array {
-        $apiKeyRaw = config('services.fawaterk.api_key', env('FAWATERK_API_KEY'));
+        $apiKeyRaw = Setting::get('fawaterk_api_key') ?: (config('services.fawaterk.api_key') ?: env('FAWATERK_API_KEY'));
         $apiKey = is_string($apiKeyRaw) ? trim($apiKeyRaw) : '';
         // withToken() adds "Bearer "; strip if the key was pasted including the prefix.
         $apiKey = (string) preg_replace('#^Bearer\s+#i', '', $apiKey);

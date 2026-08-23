@@ -1,4 +1,4 @@
-﻿
+
         <!-- Checkout Stepper -->
         <div class="checkout-stepper" style="margin-top: 8rem;">
             <div class="step completed">
@@ -53,14 +53,15 @@
                     <div class="payment-methods-strip">
                         <div class="methods-header">
                             <span style="font-weight: 600; color: var(--text-main);">Accepted Payment Methods</span>
-                            <div class="methods-icons">
+                            <div class="methods-icons" style="display: flex; gap: 0.75rem; font-size: 1.3rem; color: var(--primary-cyan);">
                                 <i class="fab fa-cc-visa" title="Visa"></i>
                                 <i class="fab fa-cc-mastercard" title="Mastercard"></i>
-                                <i class="fab fa-cc-amex" title="Amex"></i>
+                                <i class="fas fa-wallet" title="Mobile Wallets (Vodafone Cash, InstaPay, etc.)"></i>
+                                <i class="fas fa-credit-card" title="Meeza Cards & Debit Cards"></i>
                             </div>
                         </div>
                         <div class="methods-footer">
-                            <span style="color: var(--text-muted); font-size: 0.85rem;">Powered by Fawaterk — Official Payment Gateway Partner</span>
+                            <span style="color: var(--text-muted); font-size: 0.85rem;">Powered by Fawaterk — Visa, Mastercard, Meeza & Mobile Wallets</span>
                         </div>
                     </div>
 
