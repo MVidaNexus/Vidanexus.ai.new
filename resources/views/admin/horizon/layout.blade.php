@@ -459,6 +459,13 @@
             <a href="{{ route('admin.users.index') }}" class="nav-link {{ request()->routeIs('admin.users.index') ? 'active' : '' }}">
                 <i class="fas fa-users-cog"></i> Global Users
             </a>
+            <a href="{{ route('admin.horizon.feedback.index') }}" class="nav-link {{ request()->routeIs('admin.horizon.feedback.index') ? 'active' : '' }}">
+                <i class="fas fa-comment-dots" style="color: #38bdf8;"></i> User Feedbacks
+                @php $recentFeedbackCount = \App\Models\UserFeedback::where('created_at', '>=', now()->subDays(7))->count(); @endphp
+                @if($recentFeedbackCount > 0)
+                    <span style="margin-left: auto; background: rgba(14, 165, 233, 0.2); color: #38bdf8; font-size: 0.7rem; font-weight: 800; padding: 2px 7px; border-radius: 20px;">{{ $recentFeedbackCount }}</span>
+                @endif
+            </a>
             @php
                 $settingsNavItems = [
                     'availability' => ['label' => 'Tool Availability', 'icon' => 'fa-toggle-on'],
