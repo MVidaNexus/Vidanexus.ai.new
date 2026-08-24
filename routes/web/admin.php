@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\Admin\CouponController;
+use App\Http\Controllers\Admin\EmailCampaignController;
 use App\Http\Controllers\Admin\FeedbackAdminController;
 use App\Http\Controllers\Admin\FinancialLedgerController;
 use App\Http\Controllers\Admin\HorizonController;
@@ -12,6 +13,12 @@ Route::middleware(['auth', 'admin'])->prefix('horizon-admin')->group(function ()
     Route::get('/dashboard', [HorizonController::class, 'index'])->name('admin.horizon.index');
     Route::get('/feedback', [FeedbackAdminController::class, 'index'])->name('admin.horizon.feedback.index');
     Route::delete('/feedback/{feedback}', [FeedbackAdminController::class, 'destroy'])->name('admin.horizon.feedback.destroy');
+    
+    // Email Campaigns / Mass Broadcaster
+    Route::get('/email-campaigns', [EmailCampaignController::class, 'index'])->name('admin.horizon.email-campaigns.index');
+    Route::post('/email-campaigns/estimate', [EmailCampaignController::class, 'estimateAudience'])->name('admin.horizon.email-campaigns.estimate');
+    Route::post('/email-campaigns/test', [EmailCampaignController::class, 'sendTest'])->name('admin.horizon.email-campaigns.test');
+    Route::post('/email-campaigns/send', [EmailCampaignController::class, 'sendCampaign'])->name('admin.horizon.email-campaigns.send');
     Route::get('/settings', [SystemSettingsController::class, 'index'])->name('admin.horizon.settings.index');
     Route::get('/settings/{tab}', [SystemSettingsController::class, 'index'])->name('admin.horizon.settings.tab');
     Route::post('/settings/{tab?}', [SystemSettingsController::class, 'update'])->name('admin.horizon.settings.update');

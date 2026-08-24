@@ -9,6 +9,7 @@
         'coupons' => 'System Settings - Coupons',
         'packages' => 'System Settings - Credit Packages',
         'smtp' => 'System Settings - Email Setup (SMTP)',
+        'email-templates' => 'System Settings - Email Templates (HTML)',
         'scripts' => 'System Settings - Global Scripts',
         'infrastructure' => 'System Settings - Infrastructure',
         'ledger' => 'System Settings - Transaction Ledger',
@@ -538,6 +539,124 @@
                 </div>
             </div>
         </div>
+
+        @php
+            $defaultVerifyHtml = file_exists(resource_path('views/emails/auth-verify-email.blade.php')) ? file_get_contents(resource_path('views/emails/auth-verify-email.blade.php')) : '';
+            $defaultResetHtml = file_exists(resource_path('views/emails/auth-reset-password.blade.php')) ? file_get_contents(resource_path('views/emails/auth-reset-password.blade.php')) : '';
+            $currentVerifyHtml = $settings['template_email_verify_html'] ?? $defaultVerifyHtml;
+            $currentResetHtml = $settings['template_email_reset_html'] ?? $defaultResetHtml;
+        @endphp
+
+        <!-- Email Templates (HTML) -->
+        <div id="content-email-templates" class="tab-panel {{ $activeTab === 'email-templates' ? 'active' : '' }}">
+            <div class="card-admin">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 2rem; border-bottom: 1px solid var(--horizon-border); padding-bottom: 1rem; flex-wrap: wrap; gap: 1rem;">
+                    <div>
+                        <h3 style="color: var(--primary-cyan); margin-bottom: 0.25rem; display: flex; align-items: center; gap: 0.75rem; font-size: 1.25rem;">
+                            <i class="fas fa-envelope-open-text"></i> Email Templates & Layouts
+                        </h3>
+                        <p style="color: var(--text-muted); font-size: 0.8rem; margin: 0;">Customize the raw HTML code for automated system notification emails.</p>
+                    </div>
+
+                    <a href="{{ route('admin.horizon.email-campaigns.index') }}" class="vn-btn vn-btn-primary" style="padding: 0.6rem 1.25rem; font-size: 0.85rem; border-radius: 12px; display: inline-flex; align-items: center; gap: 0.5rem;">
+                        <i class="fas fa-bullhorn"></i> Open Mass Broadcaster
+                    </a>
+                </div>
+
+                {{-- Template Tabs Selector --}}
+                <div style="display: flex; gap: 0.5rem; margin-bottom: 1.5rem; border-bottom: 1px solid var(--horizon-border); padding-bottom: 0.75rem; overflow-x: auto;">
+                    <button type="button" onclick="switchTplTab('verify')" id="tab-btn-verify" class="vn-btn vn-btn-primary" style="padding: 0.5rem 1.25rem; font-size: 0.85rem; border-radius: 10px;">
+                        <i class="fas fa-user-check mr-1"></i> Verify Email Template
+                    </button>
+                    <button type="button" onclick="switchTplTab('reset')" id="tab-btn-reset" class="vn-btn" style="padding: 0.5rem 1.25rem; font-size: 0.85rem; border-radius: 10px; color: var(--text-muted);">
+                        <i class="fas fa-key mr-1"></i> Password Reset Template
+                    </button>
+                </div>
+
+                {{-- 1. Verification Template Subpanel --}}
+                <div id="tpl-section-verify" class="tpl-section">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.75rem; flex-wrap: wrap; gap: 0.5rem;">
+                        <label style="font-weight: 700; color: var(--text-main); font-size: 0.9rem;">Account Verification HTML Code:</label>
+                        <div style="display: flex; gap: 0.5rem; align-items: center;">
+                            <span style="font-size: 0.75rem; color: var(--text-muted);">Tags:</span>
+                            <button type="button" onclick="insertTplTag('template_email_verify_html', '{name}')" style="padding: 2px 7px; border-radius: 6px; background: rgba(14,165,233,0.15); border: 1px solid rgba(14,165,233,0.3); color: #38bdf8; font-size: 0.7rem; cursor: pointer;">{name}</button>
+                            <button type="button" onclick="insertTplTag('template_email_verify_html', '{email}')" style="padding: 2px 7px; border-radius: 6px; background: rgba(14,165,233,0.15); border: 1px solid rgba(14,165,233,0.3); color: #38bdf8; font-size: 0.7rem; cursor: pointer;">{email}</button>
+                            <button type="button" onclick="insertTplTag('template_email_verify_html', '{url}')" style="padding: 2px 7px; border-radius: 6px; background: rgba(16,185,129,0.15); border: 1px solid rgba(16,185,129,0.3); color: #10b981; font-size: 0.7rem; cursor: pointer;">{url}</button>
+                        </div>
+                    </div>
+                    <textarea name="template_email_verify_html" id="template_email_verify_html" rows="18" style="width: 100%; padding: 1rem; background: #080c14; border: 1px solid var(--horizon-border); border-radius: 14px; color: #38bdf8; font-family: 'SFMono-Regular', Consolas, Menlo, monospace; font-size: 0.85rem; line-height: 1.6; outline: none; resize: vertical;">{{ $currentVerifyHtml }}</textarea>
+                    <div style="display: flex; justify-content: flex-end; gap: 0.75rem; margin-top: 0.75rem;">
+                        <button type="button" onclick="previewTpl('template_email_verify_html')" class="vn-btn" style="padding: 0.5rem 1rem; font-size: 0.8rem; border-radius: 8px;">
+                            <i class="fas fa-eye text-sky-400"></i> Preview Verification Email
+                        </button>
+                    </div>
+                </div>
+
+                {{-- 2. Password Reset Template Subpanel --}}
+                <div id="tpl-section-reset" class="tpl-section" style="display: none;">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.75rem; flex-wrap: wrap; gap: 0.5rem;">
+                        <label style="font-weight: 700; color: var(--text-main); font-size: 0.9rem;">Password Reset HTML Code:</label>
+                        <div style="display: flex; gap: 0.5rem; align-items: center;">
+                            <span style="font-size: 0.75rem; color: var(--text-muted);">Tags:</span>
+                            <button type="button" onclick="insertTplTag('template_email_reset_html', '{name}')" style="padding: 2px 7px; border-radius: 6px; background: rgba(168,85,247,0.15); border: 1px solid rgba(168,85,247,0.3); color: #c084fc; font-size: 0.7rem; cursor: pointer;">{name}</button>
+                            <button type="button" onclick="insertTplTag('template_email_reset_html', '{email}')" style="padding: 2px 7px; border-radius: 6px; background: rgba(168,85,247,0.15); border: 1px solid rgba(168,85,247,0.3); color: #c084fc; font-size: 0.7rem; cursor: pointer;">{email}</button>
+                            <button type="button" onclick="insertTplTag('template_email_reset_html', '{url}')" style="padding: 2px 7px; border-radius: 6px; background: rgba(16,185,129,0.15); border: 1px solid rgba(16,185,129,0.3); color: #10b981; font-size: 0.7rem; cursor: pointer;">{url}</button>
+                        </div>
+                    </div>
+                    <textarea name="template_email_reset_html" id="template_email_reset_html" rows="18" style="width: 100%; padding: 1rem; background: #080c14; border: 1px solid var(--horizon-border); border-radius: 14px; color: #c084fc; font-family: 'SFMono-Regular', Consolas, Menlo, monospace; font-size: 0.85rem; line-height: 1.6; outline: none; resize: vertical;">{{ $currentResetHtml }}</textarea>
+                    <div style="display: flex; justify-content: flex-end; gap: 0.75rem; margin-top: 0.75rem;">
+                        <button type="button" onclick="previewTpl('template_email_reset_html')" class="vn-btn" style="padding: 0.5rem 1rem; font-size: 0.8rem; border-radius: 8px;">
+                            <i class="fas fa-eye text-purple-400"></i> Preview Reset Email
+                        </button>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+
+        <script>
+            function switchTplTab(tab) {
+                document.getElementById('tpl-section-verify').style.display = tab === 'verify' ? 'block' : 'none';
+                document.getElementById('tpl-section-reset').style.display = tab === 'reset' ? 'block' : 'none';
+
+                const btnV = document.getElementById('tab-btn-verify');
+                const btnR = document.getElementById('tab-btn-reset');
+                if (tab === 'verify') {
+                    btnV.className = 'vn-btn vn-btn-primary';
+                    btnV.style.color = '#fff';
+                    btnR.className = 'vn-btn';
+                    btnR.style.color = 'var(--text-muted)';
+                } else {
+                    btnR.className = 'vn-btn vn-btn-primary';
+                    btnR.style.color = '#fff';
+                    btnV.className = 'vn-btn';
+                    btnV.style.color = 'var(--text-muted)';
+                }
+            }
+
+            function insertTplTag(textareaId, tag) {
+                const textarea = document.getElementById(textareaId);
+                const start = textarea.selectionStart;
+                const end = textarea.selectionEnd;
+                const text = textarea.value;
+                textarea.value = text.substring(0, start) + tag + text.substring(end);
+                textarea.selectionStart = textarea.selectionEnd = start + tag.length;
+                textarea.focus();
+            }
+
+            function previewTpl(textareaId) {
+                const content = document.getElementById(textareaId).value;
+                const parsed = content
+                    .replaceAll('{name}', 'John Doe')
+                    .replaceAll('{email}', 'john@example.com')
+                    .replaceAll('{url}', 'https://vidanexus.ai/verify/demo-token-123')
+                    .replaceAll('{app_name}', 'VidaNexus AI');
+
+                const w = window.open('', '_blank');
+                w.document.write(parsed);
+                w.document.close();
+            }
+        </script>
 
         <!-- 6. Global Scripts -->
         <div id="content-scripts" class="tab-panel {{ $activeTab === 'scripts' ? 'active' : '' }}">

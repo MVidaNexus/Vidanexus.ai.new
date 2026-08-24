@@ -466,6 +466,9 @@
                     <span style="margin-left: auto; background: rgba(14, 165, 233, 0.2); color: #38bdf8; font-size: 0.7rem; font-weight: 800; padding: 2px 7px; border-radius: 20px;">{{ $recentFeedbackCount }}</span>
                 @endif
             </a>
+            <a href="{{ route('admin.horizon.email-campaigns.index') }}" class="nav-link {{ request()->routeIs('admin.horizon.email-campaigns.index') ? 'active' : '' }}">
+                <i class="fas fa-bullhorn" style="color: #0ea5e9;"></i> Email Broadcaster
+            </a>
             @php
                 $settingsNavItems = [
                     'availability' => ['label' => 'Tool Availability', 'icon' => 'fa-toggle-on'],
@@ -476,6 +479,7 @@
                     'coupons' => ['label' => 'Coupons', 'icon' => 'fa-tag'],
                     'packages' => ['label' => 'Credit Packages', 'icon' => 'fa-box'],
                     'smtp' => ['label' => 'Email Setup (SMTP)', 'icon' => 'fa-envelope-open-text'],
+                    'email-templates' => ['label' => 'Email Templates (HTML)', 'icon' => 'fa-file-code'],
                     'scripts' => ['label' => 'Global Scripts', 'icon' => 'fa-code'],
                     'infrastructure' => ['label' => 'Infrastructure', 'icon' => 'fa-server'],
                     'ledger' => ['label' => 'Transaction Ledger', 'icon' => 'fa-coins'],

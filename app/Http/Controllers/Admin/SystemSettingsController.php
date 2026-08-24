@@ -27,6 +27,7 @@ class SystemSettingsController extends Controller
             'coupons',
             'packages',
             'smtp',
+            'email-templates',
             'scripts',
             'infrastructure',
             'ledger',
@@ -136,6 +137,25 @@ class SystemSettingsController extends Controller
 
                 return redirect()->route('admin.horizon.settings.tab', ['tab' => 'countries'])
                     ->with('success', 'Country registry updated. Hidden countries will disappear from every tool on the next request.');
+            }
+
+            // ─── Email Templates ────────────────────────────────────────
+            if ($activeTab === 'email-templates') {
+                foreach (['template_email_verify_html', 'template_email_reset_html', 'template_email_welcome_html'] as $tplKey) {
+                    if ($request->has($tplKey)) {
+                        Setting::set($tplKey, (string) $request->input($tplKey), 'textarea', 'email_templates');
+                    }
+                }
+
+                if ($request->ajax() || $request->wantsJson()) {
+                    return response()->json([
+                        'success' => true,
+                        'message' => 'Email templates updated successfully.',
+                    ]);
+                }
+
+                return redirect()->route('admin.horizon.settings.tab', ['tab' => 'email-templates'])
+                    ->with('success', 'Email templates updated successfully.');
             }
 
             // Handle all input fields
