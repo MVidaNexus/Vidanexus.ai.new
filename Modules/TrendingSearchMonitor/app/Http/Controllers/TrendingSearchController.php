@@ -915,16 +915,23 @@ class TrendingSearchController extends Controller
         $cacheKey = "trending_youtube_v2_{$region}_{$maxTrends}";
         if ($forceRefresh) Cache::forget($cacheKey);
 
-        $trends = Cache::remember($cacheKey, 3600, function () use ($region, $countryName, $maxTrends) {
+        $trends = Cache::remember($cacheKey, 1800, function () use ($region, $countryName, $maxTrends) {
             
-            // Strategy 1: Direct YouTube Trending Page Scraping
+            // Strategy 1: Real-time Today's YouTube Trending Videos (Google News YouTube Feed for region)
+            $items = $this->tryYouTubeGoogleNews($region, $countryName, $maxTrends);
+            if (!empty($items)) {
+                Log::info("YouTube Trends [Google News Feed]: SUCCESS. Fetched " . count($items) . " for {$region}");
+                return $items;
+            }
+
+            // Strategy 2: Direct YouTube Trending Page Scraping
             $items = $this->tryYouTubeDirectScrape($region, $countryName, $maxTrends);
             if (!empty($items)) {
                 Log::info("YouTube Trends [Direct]: SUCCESS. Fetched " . count($items) . " for {$region}");
                 return $items;
             }
 
-            // Strategy 2: Google video search fallback
+            // Strategy 3: Google video search fallback
             $items = $this->tryYouTubeGoogleFallback($region, $countryName, $maxTrends);
             if (!empty($items)) {
                 Log::info("YouTube Trends [Google]: SUCCESS. Fetched " . count($items) . " for {$region}");
@@ -936,6 +943,72 @@ class TrendingSearchController extends Controller
         });
 
         return array_slice($trends, 0, $maxTrends);
+    }
+
+    /**
+     * Fetch real-time YouTube trending videos for country via Google News YouTube feed (when:24h)
+     */
+    protected function tryYouTubeGoogleNews($region, $countryName, $maxTrends)
+    {
+        try {
+            $lang = CountryRegistry::langFor($region);
+            $googleCountry = strtoupper($region);
+            $googleHl = ($lang === 'en') ? 'en' : 'ar';
+            $url = \App\Support\GoogleNewsRss::searchUrl("site:youtube.com/watch when:24h", $googleCountry, $googleHl);
+
+            $response = Http::withHeaders([
+                'User-Agent' => 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+                'Accept' => 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
+            ])->withOptions(['force_ip_resolve' => 'v4'])->timeout(6)->get($url);
+
+            if ($response->failed()) return [];
+
+            $xml = @simplexml_load_string($response->body());
+            if (!$xml || !isset($xml->channel->item)) return [];
+
+            $items = [];
+            $seen = [];
+            foreach ($xml->channel->item as $item) {
+                $rawTitle = trim((string) $item->title);
+                $title = preg_replace('/\s*-\s*YouTube\s*$/iu', '', $rawTitle);
+                $link = (string) ($item->link ?? '');
+                $pubDate = (string) ($item->pubDate ?? '');
+
+                if (empty($title) || mb_strlen($title) < 5) continue;
+                $key = $this->normalizeTitleKey($title);
+                if (isset($seen[$key])) continue;
+                $seen[$key] = true;
+
+                $videoId = '';
+                if (preg_match('/(?:v=|\/embed\/|\/shorts\/|youtu\.be\/|\/v\/)([a-zA-Z0-9_-]{11})/i', $link, $m)) {
+                    $videoId = $m[1];
+                }
+
+                $thumbnail = $videoId ? "https://i.ytimg.com/vi/{$videoId}/hqdefault.jpg" : "https://img.youtube.com/vi/default/hqdefault.jpg";
+                $publishedText = $pubDate ? \Carbon\Carbon::parse($pubDate)->diffForHumans() : 'Today';
+
+                $items[] = [
+                    'title' => $title,
+                    'traffic' => '🔥 Trending',
+                    'image' => $thumbnail,
+                    'news' => [[
+                        'title' => $title,
+                        'url' => $videoId ? "https://www.youtube.com/watch?v={$videoId}" : $link,
+                        'source' => 'YouTube',
+                    ]],
+                    'subtitle' => "🔥 Trending on YouTube in {$countryName} · {$publishedText}",
+                    'platform' => 'youtube',
+                    '_views_int' => 100000 - count($items),
+                ];
+
+                if (count($items) >= $maxTrends) break;
+            }
+
+            return $items;
+        } catch (\Throwable $e) {
+            Log::warning("YouTube Google News failed for {$region}: " . $e->getMessage());
+            return [];
+        }
     }
 
     /**
