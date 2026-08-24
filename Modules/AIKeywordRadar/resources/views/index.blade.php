@@ -736,7 +736,7 @@ function keywordRadar() {
         copySelectedKeywords(boxKey) {
             const list = this.selectedKeywords[boxKey] || [];
             if (list.length === 0) return;
-            const text = list.join(', ');
+            const text = list.join('\n');
             if (navigator.clipboard && window.isSecureContext) {
                 navigator.clipboard.writeText(text);
             } else {
