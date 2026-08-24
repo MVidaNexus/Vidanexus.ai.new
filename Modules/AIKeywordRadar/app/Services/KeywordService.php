@@ -789,7 +789,8 @@ class KeywordService
                     $domain = preg_replace('/^www\./i', '', $host);
                     $googleNewsUrl = \App\Support\GoogleNewsRss::searchUrl("site:{$domain} when:{$googleWhen}", $googleCountry, $googleHl);
 
-                    $reqs[$domain] = $pool->withHeaders($googleHeaders)
+                    $reqs[] = $pool->as($domain)
+                        ->withHeaders($googleHeaders)
                         ->withOptions(['curl' => [CURLOPT_IPRESOLVE => CURL_IPRESOLVE_V4, CURLOPT_TIMEOUT => 5]])
                         ->timeout(5)->get($googleNewsUrl);
                 }
