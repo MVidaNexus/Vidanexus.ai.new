@@ -37,11 +37,11 @@
         {{-- Sort Dropdown --}}
         <div class="relative" x-data="{ sortOpen: false, currentSort: 'Newest Publish' }" @click.away="sortOpen = false">
             <button type="button" @click="sortOpen = !sortOpen" 
-                style="display:inline-flex;align-items:center;gap:6px;padding:6px 14px;border-radius:12px;font-size:11px;font-weight:700;white-space:nowrap;background:var(--card-bg);border:1px solid var(--glass-border);color:var(--text-main);box-shadow:0 2px 10px rgba(0,0,0,0.05);cursor:pointer;transition:all 0.2s;"
-                onmouseover="this.style.background='var(--glass-bg)'" onmouseout="this.style.background='var(--card-bg)'">
+                style="display:inline-flex;align-items:center;gap:6px;padding:6px 14px;border-radius:12px;font-size:11px;font-weight:700;white-space:nowrap;background:#0f172a;border:1px solid rgba(255,255,255,0.15);color:#ffffff;box-shadow:0 2px 10px rgba(0,0,0,0.2);cursor:pointer;transition:all 0.2s;"
+                onmouseover="this.style.background='rgba(255,255,255,0.1)'" onmouseout="this.style.background='#0f172a'">
                 <i class="fas fa-sort-amount-down text-[10px]" style="color: {{ $colorVar }};"></i> 
-                <span x-text="currentSort">Latest Published</span>
-                <i class="fas fa-chevron-down text-[8px] opacity-60 transition-transform duration-200" :class="{'rotate-180': sortOpen}"></i>
+                <span x-text="currentSort" style="color: #ffffff;">Latest Published</span>
+                <i class="fas fa-chevron-down text-[8px] opacity-70 transition-transform duration-200" :class="{'rotate-180': sortOpen}"></i>
             </button>
             <div x-show="sortOpen" x-cloak
                  x-transition:enter="transition ease-out duration-150"
@@ -50,27 +50,27 @@
                  x-transition:leave="transition ease-in duration-100"
                  x-transition:leave-start="opacity-100"
                  x-transition:leave-end="opacity-0"
-                 style="position:absolute;top:calc(100% + 6px);{{ $isAr ? 'right:0' : 'left:0' }};width:220px;background:var(--card-bg);border:1px solid var(--glass-border);border-radius:14px;overflow:hidden;z-index:9999;box-shadow:0 15px 40px rgba(0,0,0,0.15);">
-                <div style="padding:8px 14px;font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:0.08em;color:var(--text-muted);border-bottom:1px solid var(--glass-border);">
-                    <i class="fas fa-satellite-dish text-[8px] mr-1 opacity-40"></i> Sort Radar Findings
+                 style="position:absolute;top:calc(100% + 6px);{{ $isAr ? 'right:0' : 'left:0' }};width:230px;background:#0f172a !important;border:1px solid rgba(255,255,255,0.18) !important;border-radius:14px;overflow:hidden;z-index:99999;box-shadow:0 25px 60px rgba(0,0,0,0.85);backdrop-filter:blur(20px);">
+                <div style="padding:10px 14px;font-size:10px;font-weight:800;text-transform:uppercase;letter-spacing:0.08em;color:#94a3b8;border-bottom:1px solid rgba(255,255,255,0.1);background:#0b1120;">
+                    <i class="fas fa-satellite-dish text-[9px] mr-1 text-amber-400"></i> Sort Radar Findings
                 </div>
                 <button type="button" @click="sortOpen = false; currentSort = 'Newest Sync'; window.executeKeywordSort('{{ $lang }}', 'pulldate');"
-                    style="display:flex;align-items:center;gap:10px;width:100%;text-align:{{ $isAr ? 'right' : 'left' }};padding:10px 14px;background:transparent;color:var(--text-main);border:none;cursor:pointer;font-size:12px;font-weight:600;transition:background 0.15s;"
-                    onmouseover="this.style.background='var(--glass-bg)'" onmouseout="this.style.background='transparent'">
-                    <span style="display:flex;align-items:center;justify-content:center;width:26px;height:26px;border-radius:7px;background:rgba(245,158,11,0.15);color:#f59e0b;flex-shrink:0;font-size:10px;"><i class="fas fa-satellite-dish"></i></span>
-                    <span>Radar Detection</span>
+                    style="display:flex;align-items:center;gap:10px;width:100%;text-align:{{ $isAr ? 'right' : 'left' }};padding:11px 14px;background:transparent;color:#ffffff;border:none;cursor:pointer;font-size:12px;font-weight:600;transition:background 0.15s;"
+                    onmouseover="this.style.background='rgba(255,255,255,0.08)'" onmouseout="this.style.background='transparent'">
+                    <span style="display:flex;align-items:center;justify-content:center;width:28px;height:28px;border-radius:8px;background:rgba(245,158,11,0.2);color:#f59e0b;flex-shrink:0;font-size:11px;"><i class="fas fa-satellite-dish"></i></span>
+                    <span style="color:#ffffff;">Radar Detection</span>
                 </button>
                 <button type="button" @click="sortOpen = false; currentSort = 'Newest Publish'; window.executeKeywordSort('{{ $lang }}', 'pubdate');"
-                    style="display:flex;align-items:center;gap:10px;width:100%;text-align:{{ $isAr ? 'right' : 'left' }};padding:10px 14px;background:transparent;color:var(--text-main);border:none;border-top:1px solid var(--glass-border);cursor:pointer;font-size:12px;font-weight:600;transition:background 0.15s;"
-                    onmouseover="this.style.background='var(--glass-bg)'" onmouseout="this.style.background='transparent'">
-                    <span style="display:flex;align-items:center;justify-content:center;width:26px;height:26px;border-radius:7px;background:rgba(14,165,233,0.15);color:#0ea5e9;flex-shrink:0;font-size:10px;"><i class="fas fa-clock"></i></span>
-                    <span>Market Timestamp</span>
+                    style="display:flex;align-items:center;gap:10px;width:100%;text-align:{{ $isAr ? 'right' : 'left' }};padding:11px 14px;background:transparent;color:#ffffff;border:none;border-top:1px solid rgba(255,255,255,0.08);cursor:pointer;font-size:12px;font-weight:600;transition:background 0.15s;"
+                    onmouseover="this.style.background='rgba(255,255,255,0.08)'" onmouseout="this.style.background='transparent'">
+                    <span style="display:flex;align-items:center;justify-content:center;width:28px;height:28px;border-radius:8px;background:rgba(14,165,233,0.2);color:#38bdf8;flex-shrink:0;font-size:11px;"><i class="fas fa-clock"></i></span>
+                    <span style="color:#ffffff;">Market Timestamp</span>
                 </button>
                 <button type="button" @click="sortOpen = false; currentSort = 'A → Z'; window.executeKeywordSort('{{ $lang }}', 'alphabetical');"
-                    style="display:flex;align-items:center;gap:10px;width:100%;text-align:{{ $isAr ? 'right' : 'left' }};padding:10px 14px;background:transparent;color:var(--text-main);border:none;border-top:1px solid var(--glass-border);cursor:pointer;font-size:12px;font-weight:600;transition:background 0.15s;"
-                    onmouseover="this.style.background='var(--glass-bg)'" onmouseout="this.style.background='transparent'">
-                    <span style="display:flex;align-items:center;justify-content:center;width:26px;height:26px;border-radius:7px;background:rgba(168,85,247,0.15);color:#a855f7;flex-shrink:0;font-size:10px;"><i class="fas fa-sort-alpha-down"></i></span>
-                    <span>Alphabetical (A-Z)</span>
+                    style="display:flex;align-items:center;gap:10px;width:100%;text-align:{{ $isAr ? 'right' : 'left' }};padding:11px 14px;background:transparent;color:#ffffff;border:none;border-top:1px solid rgba(255,255,255,0.08);cursor:pointer;font-size:12px;font-weight:600;transition:background 0.15s;"
+                    onmouseover="this.style.background='rgba(255,255,255,0.08)'" onmouseout="this.style.background='transparent'">
+                    <span style="display:flex;align-items:center;justify-content:center;width:28px;height:28px;border-radius:8px;background:rgba(168,85,247,0.2);color:#c084fc;flex-shrink:0;font-size:11px;"><i class="fas fa-sort-alpha-down"></i></span>
+                    <span style="color:#ffffff;">Alphabetical (A-Z)</span>
                 </button>
             </div>
         </div>
@@ -93,11 +93,6 @@
                     if (typeof window.applyKeywordTimeFilter === 'function') {
                         window.applyKeywordTimeFilter('{{ $lang }}', opt.value);
                     }
-                },
-                optionBg(opt) {
-                    if (this.hoverValue === opt.value) return 'var(--glass-bg)';
-                    if (this.timeValue === opt.value) return opt.color + '22';
-                    return 'transparent';
                 },
                 modeOpen: false,
                 modeLabel: '🎯 Smart Focus',
@@ -123,10 +118,10 @@
             {{-- Mode Dropdown --}}
             <div class="relative" @click.away="modeOpen = false">
                 <button type="button" @click="modeOpen = !modeOpen" 
-                    style="display:inline-flex;align-items:center;gap:6px;padding:6px 14px;border-radius:12px;font-size:11px;font-weight:700;white-space:nowrap;background:var(--card-bg);border:1px solid var(--glass-border);color:var(--text-main);box-shadow:0 2px 10px rgba(0,0,0,0.05);cursor:pointer;transition:all 0.2s;"
-                    onmouseover="this.style.background='var(--glass-bg)'" onmouseout="this.style.background='var(--card-bg)'">
-                    <span x-text="modeLabel">🎯 Smart Focus</span>
-                    <i class="fas fa-chevron-down text-[8px] opacity-60 transition-transform duration-200" :class="{'rotate-180': modeOpen}"></i>
+                    style="display:inline-flex;align-items:center;gap:6px;padding:6px 14px;border-radius:12px;font-size:11px;font-weight:700;white-space:nowrap;background:#0f172a;border:1px solid rgba(255,255,255,0.15);color:#ffffff;box-shadow:0 2px 10px rgba(0,0,0,0.2);cursor:pointer;transition:all 0.2s;"
+                    onmouseover="this.style.background='rgba(255,255,255,0.1)'" onmouseout="this.style.background='#0f172a'">
+                    <span x-text="modeLabel" style="color:#ffffff;">🎯 Smart Focus</span>
+                    <i class="fas fa-chevron-down text-[8px] opacity-70 transition-transform duration-200" :class="{'rotate-180': modeOpen}"></i>
                 </button>
                 <div x-show="modeOpen" x-cloak
                      x-transition:enter="transition ease-out duration-150"
@@ -135,24 +130,26 @@
                      x-transition:leave="transition ease-in duration-100"
                      x-transition:leave-start="opacity-100"
                      x-transition:leave-end="opacity-0"
-                     style="position:absolute;top:calc(100% + 6px);{{ $isAr ? 'right:0' : 'left:0' }};width:250px;background:var(--card-bg);border:1px solid var(--glass-border);border-radius:14px;z-index:9999;box-shadow:0 15px 40px rgba(0,0,0,0.15);overflow:hidden;">
-                    <div style="padding:8px 14px;font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:0.08em;color:var(--text-muted);border-bottom:1px solid var(--glass-border);">
-                        <i class="fas fa-sliders-h text-[8px] mr-1 opacity-40"></i> Extraction Mode
+                     style="position:absolute;top:calc(100% + 6px);{{ $isAr ? 'right:0' : 'left:0' }};width:270px;background:#0f172a !important;border:1px solid rgba(255,255,255,0.18) !important;border-radius:14px;z-index:99999;box-shadow:0 25px 60px rgba(0,0,0,0.85);backdrop-filter:blur(20px);overflow:hidden;">
+                    <div style="padding:10px 14px;font-size:10px;font-weight:800;text-transform:uppercase;letter-spacing:0.08em;color:#94a3b8;border-bottom:1px solid rgba(255,255,255,0.1);background:#0b1120;">
+                        <i class="fas fa-sliders-h text-[9px] mr-1 text-purple-400"></i> Extraction Mode
                     </div>
                     <template x-for="(opt, idx) in modeOptions" :key="opt.value">
                         <button type="button" @click="selectMode(opt)"
-                            style="display:flex;align-items:center;justify-content:space-between;gap:12px;width:100%;padding:10px 14px;text-align:{{ $isAr ? 'right' : 'left' }};color:var(--text-main);border:none;cursor:pointer;transition:background 0.15s;background:transparent;"
-                            :style="{ borderTop: idx > 0 ? '1px solid var(--glass-border)' : 'none', background: modeValue === opt.value ? opt.color + '22' : 'transparent' }">
+                            style="display:flex;align-items:center;justify-content:space-between;gap:12px;width:100%;padding:12px 14px;text-align:{{ $isAr ? 'right' : 'left' }};color:#ffffff;border:none;cursor:pointer;transition:background 0.15s;background:transparent;"
+                            :style="{ borderTop: idx > 0 ? '1px solid rgba(255,255,255,0.08)' : 'none', background: modeValue === opt.value ? opt.color + '26' : 'transparent' }"
+                            onmouseover="this.style.background='rgba(255,255,255,0.08)'"
+                            :onmouseout="'this.style.background=' + (modeValue === opt.value ? JSON.stringify(opt.color + '26') : `'transparent'`)">
                             <div style="display:flex;align-items:center;gap:10px;">
-                                <span :style="{ background: opt.color + '22', color: opt.color }" style="display:flex;align-items:center;justify-content:center;width:26px;height:26px;border-radius:7px;font-size:10px;flex-shrink:0;">
+                                <span :style="{ background: opt.color + '33', color: opt.color }" style="display:flex;align-items:center;justify-content:center;width:30px;height:30px;border-radius:8px;font-size:12px;flex-shrink:0;">
                                     <i :class="opt.icon"></i>
                                 </span>
-                                <div style="display:flex;flex-direction:column;">
-                                    <span style="font-size:11px;font-weight:700;" x-text="opt.title"></span>
-                                    <span style="font-size:9px;color:var(--text-muted);" x-text="opt.hint"></span>
+                                <div style="display:flex;flex-direction:column;text-align:{{ $isAr ? 'right' : 'left' }};">
+                                    <span style="font-size:12px;font-weight:700;color:#ffffff;" x-text="opt.title"></span>
+                                    <span style="font-size:10px;color:#94a3b8;margin-top:2px;" x-text="opt.hint"></span>
                                 </div>
                             </div>
-                            <i class="fas fa-check text-[10px]" :style="{ color: opt.color }" x-show="modeValue === opt.value"></i>
+                            <i class="fas fa-check text-[11px]" :style="{ color: opt.color }" x-show="modeValue === opt.value"></i>
                         </button>
                     </template>
                 </div>
@@ -161,11 +158,11 @@
             {{-- Time Filter Button + Dropdown --}}
             <div class="relative" @click.away="timeOpen = false">
                 <button type="button" @click="timeOpen = !timeOpen" 
-                    style="display:inline-flex;align-items:center;gap:6px;padding:6px 14px;border-radius:12px;font-size:11px;font-weight:700;white-space:nowrap;background:var(--card-bg);border:1px solid var(--glass-border);color:var(--text-main);box-shadow:0 2px 10px rgba(0,0,0,0.05);cursor:pointer;transition:all 0.2s;"
-                    onmouseover="this.style.background='var(--glass-bg)'" onmouseout="this.style.background='var(--card-bg)'">
+                    style="display:inline-flex;align-items:center;gap:6px;padding:6px 14px;border-radius:12px;font-size:11px;font-weight:700;white-space:nowrap;background:#0f172a;border:1px solid rgba(255,255,255,0.15);color:#ffffff;box-shadow:0 2px 10px rgba(0,0,0,0.2);cursor:pointer;transition:all 0.2s;"
+                    onmouseover="this.style.background='rgba(255,255,255,0.1)'" onmouseout="this.style.background='#0f172a'">
                     <i class="fas fa-clock text-[10px]" style="color: #10b981;"></i> 
-                    <span x-text="timeLabel">Last 60m</span>
-                    <i class="fas fa-chevron-down text-[8px] opacity-60 transition-transform duration-200" :class="{'rotate-180': timeOpen}"></i>
+                    <span x-text="timeLabel" style="color:#ffffff;">Last 60m</span>
+                    <i class="fas fa-chevron-down text-[8px] opacity-70 transition-transform duration-200" :class="{'rotate-180': timeOpen}"></i>
                 </button>
                 <div x-show="timeOpen" x-cloak
                      x-transition:enter="transition ease-out duration-150"
@@ -174,27 +171,27 @@
                      x-transition:leave="transition ease-in duration-100"
                      x-transition:leave-start="opacity-100"
                      x-transition:leave-end="opacity-0"
-                     style="position:absolute;top:calc(100% + 6px);{{ $isAr ? 'right:0' : 'left:0' }};width:260px;max-height:360px;overflow-y:auto;background:var(--card-bg);border:1px solid var(--glass-border);border-radius:14px;z-index:9999;box-shadow:0 15px 40px rgba(0,0,0,0.15);">
-                    <div style="padding:8px 14px;font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:0.08em;color:var(--text-muted);border-bottom:1px solid var(--glass-border);position:sticky;top:0;background:var(--card-bg);z-index:1;">
-                        <i class="fas fa-filter text-[8px] mr-1 opacity-40"></i> Select Time Range
+                     style="position:absolute;top:calc(100% + 6px);{{ $isAr ? 'right:0' : 'left:0' }};width:270px;max-height:360px;overflow-y:auto;background:#0f172a !important;border:1px solid rgba(255,255,255,0.18) !important;border-radius:14px;z-index:99999;box-shadow:0 25px 60px rgba(0,0,0,0.85);backdrop-filter:blur(20px);">
+                    <div style="padding:10px 14px;font-size:10px;font-weight:800;text-transform:uppercase;letter-spacing:0.08em;color:#94a3b8;border-bottom:1px solid rgba(255,255,255,0.1);position:sticky;top:0;background:#0b1120;z-index:1;">
+                        <i class="fas fa-filter text-[9px] mr-1 text-emerald-400"></i> Select Time Range
                     </div>
                     <template x-for="(opt, idx) in timeOptions" :key="opt.value">
                         <button type="button"
                             @click="selectTime(opt)"
-                            @mouseenter="hoverValue = opt.value"
-                            @mouseleave="hoverValue = null"
-                            style="display:flex;align-items:center;justify-content:space-between;gap:12px;width:100%;min-height:56px;padding:12px 14px;text-align:{{ $isAr ? 'right' : 'left' }};color:var(--text-main);border:none;cursor:pointer;transition:background 0.15s;background:transparent;"
+                            style="display:flex;align-items:center;justify-content:space-between;gap:12px;width:100%;min-height:56px;padding:12px 14px;text-align:{{ $isAr ? 'right' : 'left' }};color:#ffffff;border:none;cursor:pointer;transition:background 0.15s;background:transparent;"
                             :style="{
-                                background: optionBg(opt),
-                                borderTop: idx > 0 ? '1px solid var(--glass-border)' : 'none'
-                            }">
+                                background: timeValue === opt.value ? opt.color + '26' : 'transparent',
+                                borderTop: idx > 0 ? '1px solid rgba(255,255,255,0.08)' : 'none'
+                            }"
+                            onmouseover="this.style.background='rgba(255,255,255,0.08)'"
+                            :onmouseout="'this.style.background=' + (timeValue === opt.value ? JSON.stringify(opt.color + '26') : `'transparent'`)">
                             <div style="display:flex;align-items:center;gap:12px;">
-                                <span :style="{ background: opt.color + '22', color: opt.color }" style="display:flex;align-items:center;justify-content:center;width:32px;height:32px;border-radius:9px;font-size:12px;flex-shrink:0;">
+                                <span :style="{ background: opt.color + '33', color: opt.color }" style="display:flex;align-items:center;justify-content:center;width:32px;height:32px;border-radius:9px;font-size:12px;flex-shrink:0;">
                                     <i :class="opt.icon"></i>
                                 </span>
-                                <div style="display:flex;flex-direction:column;gap:2px;">
-                                    <span style="font-size:12px;font-weight:700;color:var(--text-main);" x-text="opt.title"></span>
-                                    <span style="font-size:10px;color:var(--text-muted);" x-text="opt.hint"></span>
+                                <div style="display:flex;flex-direction:column;gap:2px;text-align:{{ $isAr ? 'right' : 'left' }};">
+                                    <span style="font-size:12px;font-weight:700;color:#ffffff;" x-text="opt.title"></span>
+                                    <span style="font-size:10px;color:#94a3b8;" x-text="opt.hint"></span>
                                 </div>
                             </div>
                             <i class="fas fa-check text-xs" :style="{ color: opt.color }" x-show="timeValue === opt.value"></i>
