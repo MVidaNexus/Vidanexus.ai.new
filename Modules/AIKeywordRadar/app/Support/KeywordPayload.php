@@ -58,7 +58,7 @@ class KeywordPayload
 
     public static function maxHeadlinesForAi(): int
     {
-        return max(40, min(200, (int) \App\Models\Setting::get('ai-keyword-radar_max_headlines', 120)));
+        return max(20, min(200, (int) \App\Models\Setting::get('ai-keyword-radar_max_headlines', 60)));
     }
 
     public static function syncLockKey(int $userId, string $lang, ?string $boxId = null): string
@@ -69,7 +69,7 @@ class KeywordPayload
     /** Max seconds a sync lock may live before we treat it as stale (crashed worker). */
     public static function syncLockStaleSeconds(): int
     {
-        return 660;
+        return 300;
     }
 
     public static function acquireSyncLock(int $userId, string $lang, ?string $boxId = null): void

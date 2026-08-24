@@ -268,7 +268,7 @@ function keywordRadar() {
             }
 
             let polls = 0;
-            const maxPolls = 150;
+            const maxPolls = 40;
             const pollMs = 5000;
 
             const pollFn = async () => {
@@ -339,9 +339,9 @@ function keywordRadar() {
 
         _estimateSyncSeconds(timeFilter) {
             const t = String(timeFilter || '60m').toLowerCase().trim();
-            if (t === 'all' || t === 'any' || t === 'unlimited') return 540;
-            if (t === '24h' || t === '1d') return 480;
-            return 360;
+            if (t === 'all' || t === 'any' || t === 'unlimited') return 180;
+            if (t === '24h' || t === '1d') return 150;
+            return 120;
         },
 
         _startSyncCountdown(prop, timeFilter, initialSeconds = null) {
@@ -560,7 +560,7 @@ function keywordRadar() {
 
         _startSyncPolling(prop, lang, boxId, initialCount) {
             let pollCount = 0;
-            const maxPolls = 100; // 20 minutes max
+            const maxPolls = 25; // 5 minutes max
             const pollInterval = 12000; // 12 seconds
             
             console.log(`[Sync Poll] Started for ${prop}. Initial count: ${initialCount}, lang: ${lang}`);
