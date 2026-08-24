@@ -58,7 +58,7 @@ class KeywordPayload
 
     public static function maxHeadlinesForAi(): int
     {
-        return max(20, min(200, (int) \App\Models\Setting::get('ai-keyword-radar_max_headlines', 40)));
+        return max(15, min(100, (int) \App\Models\Setting::get('ai-keyword-radar_max_headlines', 30)));
     }
 
     public static function syncLockKey(int $userId, string $lang, ?string $boxId = null): string

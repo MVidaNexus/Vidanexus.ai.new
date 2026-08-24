@@ -824,11 +824,11 @@ class KeywordService
             unset($responses);
         }
 
-        // === PHASE 2: FAST DIRECT RSS FALLBACK (Only for domains with no Google News results) ===
-        if (!empty($needsFallback) && (microtime(true) - $syncStart) < 50) {
+        // === PHASE 2: FAST DIRECT RSS FALLBACK (ONLY if Phase 1 collected ZERO headlines) ===
+        if (empty($allHeadlines) && !empty($needsFallback) && (microtime(true) - $syncStart) < 30) {
             Log::info("[Keyword Radar] Phase 2: Fast fallback for " . count($needsFallback) . " competitors.");
             foreach ($needsFallback as $url) {
-                if ((microtime(true) - $syncStart) > 60) break;
+                if ((microtime(true) - $syncStart) > 40) break;
 
                 $url = rtrim(trim($url), '/');
                 $host = parse_url($url, PHP_URL_HOST) ?: $url;
