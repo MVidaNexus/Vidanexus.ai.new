@@ -26,4 +26,19 @@ class QueuedResetPassword extends ResetPassword implements ShouldQueue
             'mail' => 'emails',
         ];
     }
+
+    public function toMail($notifiable)
+    {
+        $resetUrl = url(route('password.reset', [
+            'token' => $this->token,
+            'email' => $notifiable->getEmailForPasswordReset(),
+        ], false));
+
+        return (new \Illuminate\Notifications\Messages\MailMessage)
+            ->subject('Reset Your Password | VidaNexus AI')
+            ->view('emails.auth-reset-password', [
+                'user' => $notifiable,
+                'url' => $resetUrl,
+            ]);
+    }
 }

@@ -26,4 +26,16 @@ class QueuedVerifyEmail extends VerifyEmail implements ShouldQueue
             'mail' => 'emails',
         ];
     }
+
+    public function toMail($notifiable)
+    {
+        $verificationUrl = $this->verificationUrl($notifiable);
+
+        return (new \Illuminate\Notifications\Messages\MailMessage)
+            ->subject('Activate Your Account | VidaNexus AI')
+            ->view('emails.auth-verify-email', [
+                'user' => $notifiable,
+                'url' => $verificationUrl,
+            ]);
+    }
 }
