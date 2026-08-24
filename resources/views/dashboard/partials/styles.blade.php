@@ -609,6 +609,11 @@
 
         @media (max-width: 600px) {
             .billing-summary { grid-template-columns: 1fr; }
+            .dashboard-container { margin-top: 1rem; }
+            .upgrade-grid, .billing-grid { grid-template-columns: 1fr !important; gap: 1rem; }
+            .premium-coupon-block { padding: 1.25rem 1rem !important; }
+            .panel-title { font-size: 1.15rem !important; }
+            .stat-info .value { font-size: 1.4rem !important; }
         }
 
         /* ========== MOBILE RESPONSIVE ========== */

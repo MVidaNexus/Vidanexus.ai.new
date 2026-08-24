@@ -150,18 +150,18 @@
     @include('partials.tool-usage-badge', ['slug' => 'trending-search-monitor'])
 
     {{-- V2.0 Platform Switcher (only show enabled platforms) --}}
-    <div class="flex items-center gap-2 bg-white/3 p-1.5 rounded-2xl border border-white/5 w-fit">
+    <div class="flex items-center gap-2 bg-white/3 p-1.5 rounded-2xl border border-white/5 w-full max-w-full overflow-x-auto flex-nowrap sm:flex-wrap" style="scrollbar-width:none;-webkit-overflow-scrolling:touch;">
         @if($enabledPlatforms['google'] ?? true)
-            <button onclick="switchPlatform('google', this)" class="platform-tab {{ ($platform ?? 'google') === 'google' ? 'active' : '' }}"><i class="fab fa-google mr-2 text-xs"></i> Google Search</button>
+            <button onclick="switchPlatform('google', this)" class="platform-tab whitespace-nowrap flex-shrink-0 {{ ($platform ?? 'google') === 'google' ? 'active' : '' }}"><i class="fab fa-google mr-2 text-xs"></i> Google Search</button>
         @endif
         @if($enabledPlatforms['x'] ?? true)
-            <button onclick="switchPlatform('x', this)" class="platform-tab {{ ($platform ?? '') === 'x' ? 'active' : '' }}"><i class="fab fa-twitter mr-2 text-xs"></i> X (Twitter)</button>
+            <button onclick="switchPlatform('x', this)" class="platform-tab whitespace-nowrap flex-shrink-0 {{ ($platform ?? '') === 'x' ? 'active' : '' }}"><i class="fab fa-twitter mr-2 text-xs"></i> X (Twitter)</button>
         @endif
         @if($enabledPlatforms['tiktok'] ?? true)
-            <button onclick="switchPlatform('tiktok', this)" class="platform-tab {{ ($platform ?? '') === 'tiktok' ? 'active' : '' }}"><i class="fab fa-tiktok mr-2 text-xs"></i> TikTok Trends</button>
+            <button onclick="switchPlatform('tiktok', this)" class="platform-tab whitespace-nowrap flex-shrink-0 {{ ($platform ?? '') === 'tiktok' ? 'active' : '' }}"><i class="fab fa-tiktok mr-2 text-xs"></i> TikTok Trends</button>
         @endif
         @if($enabledPlatforms['youtube'] ?? true)
-            <button onclick="switchPlatform('youtube', this)" class="platform-tab {{ ($platform ?? '') === 'youtube' ? 'active' : '' }}"><i class="fab fa-youtube mr-2 text-xs"></i> YouTube Trends</button>
+            <button onclick="switchPlatform('youtube', this)" class="platform-tab whitespace-nowrap flex-shrink-0 {{ ($platform ?? '') === 'youtube' ? 'active' : '' }}"><i class="fab fa-youtube mr-2 text-xs"></i> YouTube Trends</button>
         @endif
     </div>
 

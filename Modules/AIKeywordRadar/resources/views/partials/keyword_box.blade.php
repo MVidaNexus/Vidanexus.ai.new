@@ -50,7 +50,7 @@
                  x-transition:leave="transition ease-in duration-100"
                  x-transition:leave-start="opacity-100"
                  x-transition:leave-end="opacity-0"
-                 style="position:absolute;top:calc(100% + 6px);{{ $isAr ? 'right:0' : 'left:0' }};width:230px;background:#0f172a !important;border:1px solid rgba(255,255,255,0.18) !important;border-radius:14px;overflow:hidden;z-index:99999;box-shadow:0 25px 60px rgba(0,0,0,0.85);backdrop-filter:blur(20px);">
+                 style="position:absolute;top:calc(100% + 6px);{{ $isAr ? 'right:0' : 'left:0' }};width:230px;max-width:calc(100vw - 24px);background:#0f172a !important;border:1px solid rgba(255,255,255,0.18) !important;border-radius:14px;overflow:hidden;z-index:99999;box-shadow:0 25px 60px rgba(0,0,0,0.85);backdrop-filter:blur(20px);">
                 <div style="padding:10px 14px;font-size:10px;font-weight:800;text-transform:uppercase;letter-spacing:0.08em;color:#94a3b8;border-bottom:1px solid rgba(255,255,255,0.1);background:#0b1120;">
                     <i class="fas fa-satellite-dish text-[9px] mr-1 text-amber-400"></i> Sort Radar Findings
                 </div>
@@ -130,7 +130,7 @@
                      x-transition:leave="transition ease-in duration-100"
                      x-transition:leave-start="opacity-100"
                      x-transition:leave-end="opacity-0"
-                     style="position:absolute;top:calc(100% + 6px);{{ $isAr ? 'right:0' : 'left:0' }};width:270px;background:#0f172a !important;border:1px solid rgba(255,255,255,0.18) !important;border-radius:14px;z-index:99999;box-shadow:0 25px 60px rgba(0,0,0,0.85);backdrop-filter:blur(20px);overflow:hidden;">
+                     style="position:absolute;top:calc(100% + 6px);{{ $isAr ? 'right:0' : 'left:0' }};width:270px;max-width:calc(100vw - 24px);background:#0f172a !important;border:1px solid rgba(255,255,255,0.18) !important;border-radius:14px;z-index:99999;box-shadow:0 25px 60px rgba(0,0,0,0.85);backdrop-filter:blur(20px);overflow:hidden;">
                     <div style="padding:10px 14px;font-size:10px;font-weight:800;text-transform:uppercase;letter-spacing:0.08em;color:#94a3b8;border-bottom:1px solid rgba(255,255,255,0.1);background:#0b1120;">
                         <i class="fas fa-sliders-h text-[9px] mr-1 text-purple-400"></i> Extraction Mode
                     </div>
@@ -171,7 +171,7 @@
                      x-transition:leave="transition ease-in duration-100"
                      x-transition:leave-start="opacity-100"
                      x-transition:leave-end="opacity-0"
-                     style="position:absolute;top:calc(100% + 6px);{{ $isAr ? 'right:0' : 'left:0' }};width:270px;max-height:360px;overflow-y:auto;background:#0f172a !important;border:1px solid rgba(255,255,255,0.18) !important;border-radius:14px;z-index:99999;box-shadow:0 25px 60px rgba(0,0,0,0.85);backdrop-filter:blur(20px);">
+                     style="position:absolute;top:calc(100% + 6px);{{ $isAr ? 'right:0' : 'left:0' }};width:270px;max-width:calc(100vw - 24px);max-height:360px;overflow-y:auto;background:#0f172a !important;border:1px solid rgba(255,255,255,0.18) !important;border-radius:14px;z-index:99999;box-shadow:0 25px 60px rgba(0,0,0,0.85);backdrop-filter:blur(20px);">
                     <div style="padding:10px 14px;font-size:10px;font-weight:800;text-transform:uppercase;letter-spacing:0.08em;color:#94a3b8;border-bottom:1px solid rgba(255,255,255,0.1);position:sticky;top:0;background:#0b1120;z-index:1;">
                         <i class="fas fa-filter text-[9px] mr-1 text-emerald-400"></i> Select Time Range
                     </div>
