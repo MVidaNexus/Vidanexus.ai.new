@@ -843,20 +843,19 @@ class TrendingSearchController extends Controller
 
             // Walk every trend-card block (Now, 1h ago, 3h ago, …).
             $blocks = [];
-            if (preg_match_all('/<ol[^>]*class=["\'][^"\']*trend-card__list[^"\']*["\'][^>]*>(.*?)<\/ol>/sui', $html, $blockMatches)) {
+            if (preg_match_all('/<ol[^>]*class=[^>]*trend-card__list[^>]*>(.*?)<\/ol>/sui', $html, $blockMatches)) {
                 $blocks = $blockMatches[1];
-            } elseif (preg_match_all('/<ul[^>]*class=["\'][^"\']*trend-card__list[^"\']*["\'][^>]*>(.*?)<\/ul>/sui', $html, $blockMatches)) {
+            } elseif (preg_match_all('/<ul[^>]*class=[^>]*trend-card__list[^>]*>(.*?)<\/ul>/sui', $html, $blockMatches)) {
                 $blocks = $blockMatches[1];
             }
 
             if (empty($blocks)) {
-                // Older Trends24 layout still in some markets.
                 $blocks = [$html];
             }
 
             $rank = 0;
             foreach ($blocks as $block) {
-                if (! preg_match_all('/<a[^>]*class=["\'][^"\']*trend-link[^"\']*["\'][^>]*>([^<]+)<\/a>/iu', (string) $block, $matches)) {
+                if (! preg_match_all('/<a[^>]*class=[^>]*trend-link[^>]*>([^<]+)<\/a>/iu', (string) $block, $matches)) {
                     continue;
                 }
 
@@ -1252,14 +1251,21 @@ class TrendingSearchController extends Controller
                 }
             }
 
-            // Strategy 1: Try TikTok Creative Center internal API with browser-like headers
+            // Strategy 1: Real-time TikTok Search Results (Google News TikTok search for region)
+            $items = $this->tryGoogleTikTokNews($region, $countryName, $maxTrends);
+            if (!empty($items)) {
+                Log::info("TikTok Trends [TikTok Feed]: SUCCESS. Fetched " . count($items) . " for {$region}");
+                return $items;
+            }
+
+            // Strategy 2: Try TikTok Creative Center internal API with browser-like headers
             $items = $this->tryTikTokCreativeCenter($region, $maxTrends);
             if (!empty($items)) {
                 Log::info("TikTok Trends [Creative Center]: SUCCESS. Fetched " . count($items) . " for {$region}");
                 return $items;
             }
 
-            // Strategy 2: Scrape Google for "trending on TikTok" in the specific country
+            // Strategy 3: Scrape Google for "trending on TikTok" in the specific country
             $items = $this->tryGoogleTikTokTrends($region, $countryName, $maxTrends);
             if (!empty($items)) {
                 Log::info("TikTok Trends [Google Fallback]: SUCCESS. Fetched " . count($items) . " for {$region}");
@@ -1373,6 +1379,72 @@ class TrendingSearchController extends Controller
 
         } catch (\Exception $e) {
             Log::error("TikTok RapidAPI Error: " . $e->getMessage());
+            return [];
+        }
+    }
+
+    /**
+     * Real-time TikTok Trends from Google News TikTok search (when:24h)
+     */
+    protected function tryGoogleTikTokNews($region, $countryName, $maxTrends)
+    {
+        try {
+            $lang = CountryRegistry::langFor($region);
+            $googleCountry = strtoupper($region);
+            $googleHl = ($lang === 'en') ? 'en' : 'ar';
+            $url = \App\Support\GoogleNewsRss::searchUrl("site:tiktok.com when:24h", $googleCountry, $googleHl);
+
+            $response = Http::withHeaders([
+                'User-Agent' => 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+                'Accept' => 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
+            ])->withOptions(['force_ip_resolve' => 'v4'])->timeout(6)->get($url);
+
+            if ($response->failed()) return [];
+
+            $xml = @simplexml_load_string($response->body());
+            if (!$xml || !isset($xml->channel->item)) return [];
+
+            $items = [];
+            $seen = [];
+            foreach ($xml->channel->item as $item) {
+                $rawTitle = trim((string) $item->title);
+                $title = preg_replace('/\s*-\s*TikTok\s*$/iu', '', $rawTitle);
+                $link = (string) ($item->link ?? '');
+
+                if (empty($title) || mb_strlen($title) < 3) continue;
+
+                // Extract hashtags if present in title
+                preg_match_all('/#[\p{L}\p{N}_]+/u', $title, $tagMatches);
+                $hashtags = $tagMatches[0] ?? [];
+
+                $trendTitle = !empty($hashtags) ? implode(' ', array_slice($hashtags, 0, 3)) : $title;
+                if (!str_starts_with($trendTitle, '#') && !str_contains($trendTitle, ' ')) {
+                    $trendTitle = '#' . $trendTitle;
+                }
+
+                $key = $this->normalizeTitleKey($trendTitle);
+                if (isset($seen[$key])) continue;
+                $seen[$key] = true;
+
+                $items[] = [
+                    'title' => $trendTitle,
+                    'traffic' => '🔥 Viral',
+                    'image' => null,
+                    'news' => [[
+                        'title' => $title,
+                        'url' => $link,
+                        'source' => 'TikTok',
+                    ]],
+                    'subtitle' => "🔥 Viral on TikTok in {$countryName}",
+                    'platform' => 'tiktok',
+                ];
+
+                if (count($items) >= $maxTrends) break;
+            }
+
+            return $items;
+        } catch (\Throwable $e) {
+            Log::warning("TikTok Google News failed for {$region}: " . $e->getMessage());
             return [];
         }
     }
