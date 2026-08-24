@@ -167,7 +167,7 @@ class AiKeywordRadarSyncController extends Controller
             ]);
 
             if ($request->ajax()) {
-                $user->load('wallet');
+                $freshBalance = (float) ($user->wallet()->value('balance_credits') ?? 0);
 
                 return response()->json([
                     'success' => true,
@@ -179,7 +179,8 @@ class AiKeywordRadarSyncController extends Controller
                     'lang' => $lang,
                     'box_id' => $boxId,
                     'headlines' => $headlines,
-                    'balance' => (float) ($user->wallet->balance_credits ?? 0),
+                    'balance' => $freshBalance,
+                    'credits_balance' => $freshBalance,
                 ]);
             }
 

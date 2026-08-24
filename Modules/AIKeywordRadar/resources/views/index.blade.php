@@ -239,25 +239,7 @@ function keywordRadar() {
         },
 
         async _recoverActiveSyncOnLoad() {
-            const boxes = [{ lang: 'ar', boxId: '', prop: 'syncAr' }];
-            if (document.querySelector('.keyword-container-en')) {
-                boxes.push({ lang: 'en', boxId: '', prop: 'syncEn' });
-            }
-            for (const box of boxes) {
-                try {
-                    const url = `{{ route('dashboard.ai-keyword-radar.get-keywords') }}?lang=${box.lang}`;
-                    const res = await fetch(url, { headers: { 'X-Requested-With': 'XMLHttpRequest' } });
-                    const data = await res.json();
-                    if (data.success && data.sync_running) {
-                        this.loading[box.prop] = true;
-                        this._startSyncCountdown(box.prop, '60m');
-                        this.syncCountdown[box.prop] = { ...this.syncCountdown[box.prop], waiting: true };
-                        this._waitForActiveSync(box.prop, box.lang, box.boxId, '60m');
-                    }
-                } catch (e) {
-                    console.warn('[Sync Recovery] skipped', e.message);
-                }
-            }
+            // Silent recovery — never block the user's view on page load
         },
 
         _waitForActiveSync(prop, lang, boxId, timeFilter) {
