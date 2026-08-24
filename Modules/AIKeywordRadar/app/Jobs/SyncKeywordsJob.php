@@ -70,9 +70,23 @@ class SyncKeywordsJob implements ShouldQueue
      */
     public function handle(KeywordService $service)
     {
+        @ini_set('memory_limit', '512M');
+        @ini_set('max_execution_time', 300);
+        @set_time_limit(300);
+
+        $userId = $this->userId;
+        $lang = $this->lang;
+        $boxId = $this->boxId;
+
+        // Ensure lock is released even if worker is terminated unexpectedly
+        register_shutdown_function(function () use ($userId, $lang, $boxId) {
+            KeywordPayload::releaseSyncLock($userId, $lang, $boxId);
+        });
+
         $user = User::find($this->userId);
         if (!$user) {
             Log::error("[SyncKeywordsJob] User #{$this->userId} not found.");
+            KeywordPayload::releaseSyncLock($this->userId, $this->lang, $this->boxId);
             return;
         }
 

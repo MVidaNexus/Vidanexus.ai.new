@@ -308,11 +308,11 @@ class AIKeywordRadarController extends Controller
 
             Log::info("[Keyword Radar Sync] Job dispatched for user #{$user->id} ({$lang}) Filter: {$timeFilter}");
 
-            // Spawn queue worker targeting only the keyword-radar queue
+            // Spawn queue worker targeting only the keyword-radar queue with 512M memory
             $php = PHP_BINARY;
             $artisan = base_path('artisan');
             $logFile = storage_path('logs/queue-worker.log');
-            $cmd = "nohup {$php} {$artisan} queue:work --queue=keyword-radar --once --timeout=600 --memory=512 >> {$logFile} 2>&1 &";
+            $cmd = "nohup {$php} -d memory_limit=512M {$artisan} queue:work --queue=keyword-radar --once --timeout=300 >> {$logFile} 2>&1 &";
             exec($cmd);
             
             Log::info("[Keyword Radar Sync] Queue worker spawned in background.");

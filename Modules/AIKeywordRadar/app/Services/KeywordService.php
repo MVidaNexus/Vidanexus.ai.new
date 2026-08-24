@@ -758,84 +758,87 @@ class KeywordService
 
         Log::info("[Keyword Radar] Processing ALL " . count($competitorUrls) . " competitors. [Filter: {$filterLabel}]");
 
+        @ini_set('memory_limit', '512M');
         $allHeadlines = [];
         $userAgent = $this->getRandomUserAgent();
-
-        // === PHASE 1: MASSIVE PARALLEL FETCH ===
-        // Fire ALL request variants at once — sitemap, RSS (/rss, /feed, /rss.xml), and homepage HTML.
-        // This eliminates the slow sequential fallback for most competitors.
-        $responses = Http::pool(function ($pool) use ($competitorUrls, $userAgent) {
-            $reqs = [];
-            foreach ($competitorUrls as $url) {
-                $url = rtrim(trim($url), '/');
-                $domain = parse_url($url, PHP_URL_HOST) ?: $url;
-
-                $reqs["{$domain}_sitemap"] = $pool->withHeaders(['User-Agent' => $userAgent])
-                    ->timeout(12)->get($url . '/sitemap-news.xml');
-
-                $reqs["{$domain}_rss"] = $pool->withHeaders(['User-Agent' => $userAgent])
-                    ->timeout(12)->get($url . '/rss');
-                $reqs["{$domain}_feed"] = $pool->withHeaders(['User-Agent' => $userAgent])
-                    ->timeout(12)->get($url . '/feed');
-
-                $reqs["{$domain}_html"] = $pool->withHeaders(['User-Agent' => $userAgent])
-                    ->timeout(12)->get($url);
-            }
-            return $reqs;
-        });
-
-        Log::info("[Keyword Radar] Parallel pool completed for " . count($competitorUrls) . " competitors. Processing responses...");
-
         $needsFallback = [];
 
-        foreach ($competitorUrls as $url) {
+        // === PHASE 1: CHUNKED PARALLEL FETCH (5 competitors per batch) ===
+        // Chunking prevents memory exhaustion (mmap / OOM) on shared hosting
+        // while maintaining massive parallel fetch speed.
+        $chunks = array_chunk($competitorUrls, 5);
+        foreach ($chunks as $chunkIndex => $chunkUrls) {
             if ((microtime(true) - $syncStart) > 120) {
                 Log::warning("[Keyword Radar] Headline fetch budget reached (" . round(microtime(true) - $syncStart) . "s). " . count($allHeadlines) . " headlines collected.");
                 break;
             }
 
-            $url = rtrim(trim($url), '/');
-            $domain = parse_url($url, PHP_URL_HOST) ?: $url;
-            $siteHeadlines = [];
+            $responses = Http::pool(function ($pool) use ($chunkUrls, $userAgent) {
+                $reqs = [];
+                foreach ($chunkUrls as $url) {
+                    $url = rtrim(trim($url), '/');
+                    $domain = parse_url($url, PHP_URL_HOST) ?: $url;
 
-            // Try Sitemap first — has real publication_date timestamps.
-            $sitemapResp = $responses["{$domain}_sitemap"] ?? null;
-            if ($sitemapResp && $sitemapResp->successful()) {
-                $siteHeadlines = $this->parseSimpleSitemap($sitemapResp->body());
-            }
+                    $reqs["{$domain}_sitemap"] = $pool->withHeaders(['User-Agent' => $userAgent])
+                        ->timeout(10)->get($url . '/sitemap-news.xml');
 
-            // Try RSS variants — also has real pubDate.
-            if (empty($siteHeadlines)) {
-                foreach (["{$domain}_rss", "{$domain}_feed"] as $key) {
-                    $rssResp = $responses[$key] ?? null;
-                    if ($rssResp && $rssResp->successful()) {
-                        $body = $rssResp->body();
-                        if (str_contains($body, '<rss') || str_contains($body, '<feed') || str_contains($body, '<channel')) {
-                            $siteHeadlines = $this->parseSimpleRss($body);
-                            if (!empty($siteHeadlines)) break;
+                    $reqs["{$domain}_rss"] = $pool->withHeaders(['User-Agent' => $userAgent])
+                        ->timeout(10)->get($url . '/rss');
+                    $reqs["{$domain}_feed"] = $pool->withHeaders(['User-Agent' => $userAgent])
+                        ->timeout(10)->get($url . '/feed');
+
+                    $reqs["{$domain}_html"] = $pool->withHeaders(['User-Agent' => $userAgent])
+                        ->timeout(10)->get($url);
+                }
+                return $reqs;
+            });
+
+            foreach ($chunkUrls as $url) {
+                $url = rtrim(trim($url), '/');
+                $domain = parse_url($url, PHP_URL_HOST) ?: $url;
+                $siteHeadlines = [];
+
+                // Try Sitemap first — has real publication_date timestamps.
+                $sitemapResp = $responses["{$domain}_sitemap"] ?? null;
+                if ($sitemapResp && $sitemapResp->successful()) {
+                    $siteHeadlines = $this->parseSimpleSitemap($sitemapResp->body());
+                }
+
+                // Try RSS variants — also has real pubDate.
+                if (empty($siteHeadlines)) {
+                    foreach (["{$domain}_rss", "{$domain}_feed"] as $key) {
+                        $rssResp = $responses[$key] ?? null;
+                        if ($rssResp && $rssResp->successful()) {
+                            $body = $rssResp->body();
+                            if (str_contains($body, '<rss') || str_contains($body, '<feed') || str_contains($body, '<channel')) {
+                                $siteHeadlines = $this->parseSimpleRss($body);
+                                if (!empty($siteHeadlines)) break;
+                            }
                         }
                     }
                 }
-            }
 
-            // Fallback: HTML scraping (NO real publish date — items flagged pubDate_known=false).
-            if (empty($siteHeadlines)) {
-                $htmlResp = $responses["{$domain}_html"] ?? null;
-                if ($htmlResp && $htmlResp->successful()) {
-                    $siteHeadlines = $this->extractHeadlinesFromHtml($htmlResp->body(), $domain);
+                // Fallback: HTML scraping (NO real publish date — items flagged pubDate_known=false).
+                if (empty($siteHeadlines)) {
+                    $htmlResp = $responses["{$domain}_html"] ?? null;
+                    if ($htmlResp && $htmlResp->successful()) {
+                        $siteHeadlines = $this->extractHeadlinesFromHtml($htmlResp->body(), $domain);
+                    }
                 }
+
+                if (empty($siteHeadlines)) {
+                    $needsFallback[] = $url;
+                    continue;
+                }
+
+                $applied = $this->applyTimeFilter($siteHeadlines, $freshnessLimit, $domain);
+                $allHeadlines = array_merge($allHeadlines, $applied['kept']);
+
+                Log::info("[Competitor Sync] {$domain}: {$applied['total']} total → {$applied['fresh']} fresh "
+                    . "(skipped: {$applied['too_old']} old, {$applied['no_date']} no-date) [Filter: {$filterLabel}]");
             }
 
-            if (empty($siteHeadlines)) {
-                $needsFallback[] = $url;
-                continue;
-            }
-
-            $applied = $this->applyTimeFilter($siteHeadlines, $freshnessLimit, $domain);
-            $allHeadlines = array_merge($allHeadlines, $applied['kept']);
-
-            Log::info("[Competitor Sync] {$domain}: {$applied['total']} total → {$applied['fresh']} fresh "
-                . "(skipped: {$applied['too_old']} old, {$applied['no_date']} no-date) [Filter: {$filterLabel}]");
+            unset($responses);
         }
 
         // === PHASE 2: FAST SEQUENTIAL FALLBACK ===
