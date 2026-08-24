@@ -558,10 +558,17 @@ function keywordRadar() {
             return messages.SERVER_ERROR;
         },
 
+        _estimateSyncSeconds(timeFilter) {
+            const t = String(timeFilter || '60m').toLowerCase().trim();
+            if (t === 'all' || t === 'any' || t === 'unlimited') return 45;
+            if (t === '24h' || t === '1d') return 35;
+            return 25;
+        },
+
         _startSyncPolling(prop, lang, boxId, initialCount) {
             let pollCount = 0;
-            const maxPolls = 25; // 5 minutes max
-            const pollInterval = 12000; // 12 seconds
+            const maxPolls = 30; // 90 seconds max
+            const pollInterval = 3000; // 3 seconds fast check
             
             console.log(`[Sync Poll] Started for ${prop}. Initial count: ${initialCount}, lang: ${lang}`);
 
@@ -589,19 +596,16 @@ function keywordRadar() {
                         const newCount = (data.keywords || []).length;
                         const syncRunning = data.sync_running || false;
 
-                        // Case 1: New keywords found! Perfect.
+                        // Case 1: New keywords found
                         if (newCount > initialCount) {
                             this._finishSyncLoading(prop);
                             const added = newCount - initialCount;
-                            // Polling payload has no balance — pull it from
-                            // /dashboard/credits/balance so the chip flashes
-                            // before we reload to show the new keywords.
                             if (window.VidaCredits) window.VidaCredits.refresh();
                             await Swal.fire({
                                 title: `🎯 ${added} New Leads!`,
                                 text: `Intelligence update complete. Found ${added} high-value keywords.`,
                                 icon: 'success',
-                                timer: 3500,
+                                timer: 2500,
                                 timerProgressBar: true,
                                 showConfirmButton: false,
                                 background: '#0f172a',
@@ -611,25 +615,21 @@ function keywordRadar() {
                             return;
                         }
 
-                        // Case 2: No new keywords, but the job has FINISHED (sync_lock is gone)
-                        // We skip the first few polls to give the job time to start and acquire the lock
+                        // Case 2: Job completed
                         if (!syncRunning && pollCount > 1) {
                             this._finishSyncLoading(prop);
-                            // The background job may have charged credits — refresh
-                            // the chip without forcing a full page reload below.
                             if (window.VidaCredits) window.VidaCredits.refresh();
-                            Swal.fire({
-                                title: 'Insight Update Complete',
-                                text: 'No new market shifts detected in the selected timeframe.',
+                            await Swal.fire({
+                                title: lang === 'ar' ? 'اكتمل المسح' : 'Insight Update Complete',
+                                text: lang === 'ar' ? 'تم تحديث الرادار بأحدث البيانات.' : 'Radar updated with latest news.',
                                 icon: 'info',
-                                timer: 3000,
+                                timer: 2000,
                                 timerProgressBar: true,
                                 showConfirmButton: false,
                                 background: '#0f172a',
                                 color: '#fff'
                             });
-                            // No new data → no reload; keep the existing list
-                            // and the freshly-animated balance in place.
+                            window.location.reload();
                             return;
                         }
                     }
@@ -641,8 +641,8 @@ function keywordRadar() {
                 setTimeout(pollFn, pollInterval);
             };
 
-            // Start first poll after delay
-            setTimeout(pollFn, pollInterval);
+            // Start first poll quickly after 2s
+            setTimeout(pollFn, 2000);
         },
 
         async refreshBoxData(lang, boxId) {

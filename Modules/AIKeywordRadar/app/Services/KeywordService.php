@@ -763,32 +763,40 @@ class KeywordService
         $userAgent = $this->getRandomUserAgent();
         $needsFallback = [];
 
-        // === PHASE 1: CHUNKED PARALLEL FETCH (5 competitors per batch) ===
-        // Chunking prevents memory exhaustion (mmap / OOM) on shared hosting
-        // while maintaining massive parallel fetch speed.
-        $chunks = array_chunk($competitorUrls, 5);
+        $googleWhen = ($timeFilter === '24h' || $timeFilter === '1d') ? '24h' : (($timeFilter === 'all' || $timeFilter === 'unlimited') ? '7d' : '1h');
+        $googleCountry = ($lang === 'en') ? 'US' : 'EG';
+        $googleHl = ($lang === 'en') ? 'en' : 'ar';
+        $googleHeaders = [
+            'User-Agent' => $userAgent,
+            'Accept' => 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
+            'Accept-Language' => ($googleHl === 'en') ? 'en-US,en;q=0.9' : 'ar,en-US;q=0.9,en;q=0.8',
+            'Referer' => 'https://www.google.com/',
+        ];
+
+        // === PHASE 1: CHUNKED PARALLEL FETCH (8 competitors per batch) ===
+        // Includes Google News RSS + Sitemap + Direct RSS in parallel
+        $chunks = array_chunk($competitorUrls, 8);
         foreach ($chunks as $chunkIndex => $chunkUrls) {
-            if ((microtime(true) - $syncStart) > 120) {
+            if ((microtime(true) - $syncStart) > 60) {
                 Log::warning("[Keyword Radar] Headline fetch budget reached (" . round(microtime(true) - $syncStart) . "s). " . count($allHeadlines) . " headlines collected.");
                 break;
             }
 
-            $responses = Http::pool(function ($pool) use ($chunkUrls, $userAgent) {
+            $responses = Http::pool(function ($pool) use ($chunkUrls, $userAgent, $googleHeaders, $googleWhen, $googleCountry, $googleHl) {
                 $reqs = [];
                 foreach ($chunkUrls as $url) {
                     $url = rtrim(trim($url), '/');
                     $domain = parse_url($url, PHP_URL_HOST) ?: $url;
+                    $googleNewsUrl = \App\Support\GoogleNewsRss::searchUrl("site:{$domain} when:{$googleWhen}", $googleCountry, $googleHl);
+
+                    $reqs["{$domain}_gnews"] = $pool->withHeaders($googleHeaders)
+                        ->timeout(8)->get($googleNewsUrl);
 
                     $reqs["{$domain}_sitemap"] = $pool->withHeaders(['User-Agent' => $userAgent])
-                        ->timeout(10)->get($url . '/sitemap-news.xml');
+                        ->timeout(8)->get($url . '/sitemap-news.xml');
 
                     $reqs["{$domain}_rss"] = $pool->withHeaders(['User-Agent' => $userAgent])
-                        ->timeout(10)->get($url . '/rss');
-                    $reqs["{$domain}_feed"] = $pool->withHeaders(['User-Agent' => $userAgent])
-                        ->timeout(10)->get($url . '/feed');
-
-                    $reqs["{$domain}_html"] = $pool->withHeaders(['User-Agent' => $userAgent])
-                        ->timeout(10)->get($url);
+                        ->timeout(8)->get($url . '/rss');
                 }
                 return $reqs;
             });
@@ -798,31 +806,28 @@ class KeywordService
                 $domain = parse_url($url, PHP_URL_HOST) ?: $url;
                 $siteHeadlines = [];
 
-                // Try Sitemap first — has real publication_date timestamps.
-                $sitemapResp = $responses["{$domain}_sitemap"] ?? null;
-                if ($sitemapResp && $sitemapResp->successful()) {
-                    $siteHeadlines = $this->parseSimpleSitemap($sitemapResp->body());
+                // 1. Google News RSS (most reliable, bypasses anti-bot, has true timestamps)
+                $gnewsResp = $responses["{$domain}_gnews"] ?? null;
+                if ($gnewsResp && $gnewsResp->successful()) {
+                    $siteHeadlines = $this->parseGoogleNewsRss($gnewsResp->body());
                 }
 
-                // Try RSS variants — also has real pubDate.
+                // 2. Try Sitemap (has publication_date timestamps)
                 if (empty($siteHeadlines)) {
-                    foreach (["{$domain}_rss", "{$domain}_feed"] as $key) {
-                        $rssResp = $responses[$key] ?? null;
-                        if ($rssResp && $rssResp->successful()) {
-                            $body = $rssResp->body();
-                            if (str_contains($body, '<rss') || str_contains($body, '<feed') || str_contains($body, '<channel')) {
-                                $siteHeadlines = $this->parseSimpleRss($body);
-                                if (!empty($siteHeadlines)) break;
-                            }
-                        }
+                    $sitemapResp = $responses["{$domain}_sitemap"] ?? null;
+                    if ($sitemapResp && $sitemapResp->successful()) {
+                        $siteHeadlines = $this->parseSimpleSitemap($sitemapResp->body());
                     }
                 }
 
-                // Fallback: HTML scraping (NO real publish date — items flagged pubDate_known=false).
+                // 3. Try RSS
                 if (empty($siteHeadlines)) {
-                    $htmlResp = $responses["{$domain}_html"] ?? null;
-                    if ($htmlResp && $htmlResp->successful()) {
-                        $siteHeadlines = $this->extractHeadlinesFromHtml($htmlResp->body(), $domain);
+                    $rssResp = $responses["{$domain}_rss"] ?? null;
+                    if ($rssResp && $rssResp->successful()) {
+                        $body = $rssResp->body();
+                        if (str_contains($body, '<rss') || str_contains($body, '<feed') || str_contains($body, '<channel')) {
+                            $siteHeadlines = $this->parseSimpleRss($body);
+                        }
                     }
                 }
 
