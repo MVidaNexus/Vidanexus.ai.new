@@ -45,13 +45,13 @@ class GenericIntelligenceController extends Controller
         // Refresh the wallet so the post-deduction balance is returned to
         // the client. The live-credits JS module reads this `balance` key
         // to animate the navbar chip without a page refresh.
-        $user->load('wallet');
-        $balance = (float) ($user->wallet->balance_credits ?? 0);
+        $balance = (float) ($user->wallet()->value('balance_credits') ?? 0);
 
         return response()->json([
             'status' => 'success',
             'response' => $result['response'],
             'balance' => $balance,
+            'credits_balance' => $balance,
         ]);
     }
 }

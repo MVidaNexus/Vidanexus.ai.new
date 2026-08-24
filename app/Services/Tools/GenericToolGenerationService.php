@@ -91,7 +91,8 @@ class GenericToolGenerationService
                 'status' => 'success',
             ]);
 
-            return ['ok' => true, 'response' => $response];
+            $freshBalance = (float) ($user->wallet()->value('balance_credits') ?? 0);
+            return ['ok' => true, 'response' => $response, 'balance' => $freshBalance];
         } catch (\Exception $e) {
             Log::error("Generic Tool Generation Error ({$slug}): ".$e->getMessage());
 
