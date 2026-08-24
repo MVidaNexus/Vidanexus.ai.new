@@ -19,8 +19,8 @@
                             </div>
                         </div>
                         <div class="billing-item">
-                            <label>Account Type</label>
-                            <div class="val">Pay-per-Action</div>
+                            <label>Account Plan</label>
+                            <div class="val" style="color: #38bdf8; font-weight: 700;">{{ ucfirst($user->isAdmin() ? 'Super Admin' : ($user->subscription_tier ?? 'Standard')) }}</div>
                         </div>
                         <div class="billing-item">
                             <label>Last Activity</label>

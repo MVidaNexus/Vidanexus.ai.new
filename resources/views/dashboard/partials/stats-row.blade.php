@@ -31,12 +31,12 @@
                     <div class="stat-card premium-stat-card" style="border: 1px solid rgba(168,85,247,0.3);">
                         <div style="position: absolute; top: -50px; right: -50px; width: 100px; height: 100px; background: rgba(168,85,247,0.1); filter: blur(30px); border-radius: 50%;"></div>
                         <div class="stat-icon purple" style="background: linear-gradient(135deg, rgba(168,85,247,0.2), rgba(168,85,247,0.05)); border: 1px solid rgba(168,85,247,0.2); box-shadow: 0 0 15px rgba(168,85,247,0.1);">
-                            <i class="fas fa-bolt" style="background: linear-gradient(135deg, #a855f7, #c084fc); -webkit-background-clip: text; -webkit-text-fill-color: transparent;"></i>
+                            <i class="fas fa-shield-alt" style="background: linear-gradient(135deg, #a855f7, #c084fc); -webkit-background-clip: text; -webkit-text-fill-color: transparent;"></i>
                         </div>
                         <div class="stat-info">
-                            <h4 style="color: #a855f7; font-weight: 700;">Account Model</h4>
-                            <div class="value premium-account-model-text" style="font-size: 1.4rem; line-height: 1.2; padding-top: 0.4rem;">
-                                Pay-per-Action
+                            <h4 style="color: #a855f7; font-weight: 700;">Account Status</h4>
+                            <div class="value" style="font-size: 1.25rem; line-height: 1.2; padding-top: 0.4rem; color: #10b981; display: flex; align-items: center; gap: 0.4rem;">
+                                <i class="fas fa-check-circle" style="font-size: 1rem;"></i> Active Member
                             </div>
                         </div>
                     </div>
