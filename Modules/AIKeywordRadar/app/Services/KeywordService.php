@@ -773,11 +773,10 @@ class KeywordService
             'Referer' => 'https://www.google.com/',
         ];
 
-        // === PHASE 1: LIGHTWEIGHT PARALLEL GOOGLE NEWS FETCH (10 competitors per batch) ===
-        // Extremely low memory footprint (~50KB/batch), ultra-fast (2-3s total)
+        // === PHASE 1: LIGHTWEIGHT PARALLEL GOOGLE NEWS FETCH (IPv4 forced, 5s timeout) ===
         $chunks = array_chunk($competitorUrls, 10);
         foreach ($chunks as $chunkIndex => $chunkUrls) {
-            if ((microtime(true) - $syncStart) > 60) {
+            if ((microtime(true) - $syncStart) > 40) {
                 Log::warning("[Keyword Radar] Headline fetch budget reached (" . round(microtime(true) - $syncStart) . "s). " . count($allHeadlines) . " headlines collected.");
                 break;
             }
@@ -786,22 +785,25 @@ class KeywordService
                 $reqs = [];
                 foreach ($chunkUrls as $url) {
                     $url = rtrim(trim($url), '/');
-                    $domain = parse_url($url, PHP_URL_HOST) ?: $url;
+                    $host = parse_url($url, PHP_URL_HOST) ?: $url;
+                    $domain = preg_replace('/^www\./i', '', $host);
                     $googleNewsUrl = \App\Support\GoogleNewsRss::searchUrl("site:{$domain} when:{$googleWhen}", $googleCountry, $googleHl);
 
                     $reqs[$domain] = $pool->withHeaders($googleHeaders)
-                        ->timeout(6)->get($googleNewsUrl);
+                        ->withOptions(['curl' => [CURLOPT_IPRESOLVE => CURL_IPRESOLVE_V4, CURLOPT_TIMEOUT => 5]])
+                        ->timeout(5)->get($googleNewsUrl);
                 }
                 return $reqs;
             });
 
             foreach ($chunkUrls as $url) {
                 $url = rtrim(trim($url), '/');
-                $domain = parse_url($url, PHP_URL_HOST) ?: $url;
+                $host = parse_url($url, PHP_URL_HOST) ?: $url;
+                $domain = preg_replace('/^www\./i', '', $host);
                 $siteHeadlines = [];
 
                 $gnewsResp = $responses[$domain] ?? null;
-                if ($gnewsResp && $gnewsResp->successful()) {
+                if ($gnewsResp instanceof \Illuminate\Http\Client\Response && $gnewsResp->successful()) {
                     $siteHeadlines = $this->parseGoogleNewsRss($gnewsResp->body());
                 }
 
@@ -820,27 +822,42 @@ class KeywordService
             unset($responses);
         }
 
-        // === PHASE 2: FAST SEQUENTIAL FALLBACK ===
-        if (!empty($needsFallback)) {
-            Log::info("[Keyword Radar] Phase 2: Sequential fallback for " . count($needsFallback) . " competitors.");
+        // === PHASE 2: FAST DIRECT RSS FALLBACK (Only for domains with no Google News results) ===
+        if (!empty($needsFallback) && (microtime(true) - $syncStart) < 50) {
+            Log::info("[Keyword Radar] Phase 2: Fast fallback for " . count($needsFallback) . " competitors.");
             foreach ($needsFallback as $url) {
-                if ((microtime(true) - $syncStart) > 150) {
-                    Log::warning("[Keyword Radar] Fallback time budget reached. Skipping remaining " . count($needsFallback) . " competitors.");
-                    break;
-                }
+                if ((microtime(true) - $syncStart) > 60) break;
 
                 $url = rtrim(trim($url), '/');
-                $domain = parse_url($url, PHP_URL_HOST) ?: $url;
-                $testResult = $this->testUrl($url, $lang, $userId, $timeFilter);
-                $siteHeadlines = $testResult['headlines'] ?? [];
+                $host = parse_url($url, PHP_URL_HOST) ?: $url;
+                $domain = preg_replace('/^www\./i', '', $host);
+                $siteHeadlines = [];
 
-                if (empty($siteHeadlines)) continue;
+                try {
+                    $rssResp = Http::withHeaders(['User-Agent' => $userAgent])
+                        ->withOptions(['curl' => [CURLOPT_IPRESOLVE => CURL_IPRESOLVE_V4, CURLOPT_TIMEOUT => 4]])
+                        ->timeout(4)->get($url . '/feed');
+                    if ($rssResp->successful() && (str_contains($rssResp->body(), '<rss') || str_contains($rssResp->body(), '<feed'))) {
+                        $siteHeadlines = $this->parseSimpleRss($rssResp->body());
+                    }
+                } catch (\Throwable $e) {}
 
-                $applied = $this->applyTimeFilter($siteHeadlines, $freshnessLimit, $domain);
-                $allHeadlines = array_merge($allHeadlines, $applied['kept']);
+                if (empty($siteHeadlines)) {
+                    try {
+                        $rssResp = Http::withHeaders(['User-Agent' => $userAgent])
+                            ->withOptions(['curl' => [CURLOPT_IPRESOLVE => CURL_IPRESOLVE_V4, CURLOPT_TIMEOUT => 4]])
+                            ->timeout(4)->get($url . '/rss');
+                        if ($rssResp->successful() && (str_contains($rssResp->body(), '<rss') || str_contains($rssResp->body(), '<feed'))) {
+                            $siteHeadlines = $this->parseSimpleRss($rssResp->body());
+                        }
+                    } catch (\Throwable $e) {}
+                }
 
-                Log::info("[Fallback Sync] {$domain}: {$applied['total']} total → {$applied['fresh']} fresh "
-                    . "(skipped: {$applied['too_old']} old, {$applied['no_date']} no-date) [Filter: {$filterLabel}]");
+                if (!empty($siteHeadlines)) {
+                    $applied = $this->applyTimeFilter($siteHeadlines, $freshnessLimit, $domain);
+                    $allHeadlines = array_merge($allHeadlines, $applied['kept']);
+                    Log::info("[Fallback Sync] {$domain}: {$applied['total']} total → {$applied['fresh']} fresh [Filter: {$filterLabel}]");
+                }
             }
         }
 
