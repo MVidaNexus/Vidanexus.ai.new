@@ -1,4 +1,4 @@
-﻿                <div class="content-panel" id="settings" style="display: none;">
+                <div class="content-panel" id="settings" style="display: none;">
                     <div class="panel-header">
                         <h2 class="panel-title"><i class="fas fa-cog"></i> Account Settings</h2>
                     </div>
@@ -84,28 +84,67 @@
                         </div>
 
                         <div style="border-top: 1px solid var(--glass-border); padding-top: 2rem; margin-top: 2rem;">
-                            <h3 style="font-family: var(--font-heading); font-size: 1.1rem; margin-bottom: 1.5rem; color: var(--primary-cyan);">Change Password</h3>
+                            <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 1.5rem; flex-wrap: wrap; gap: 0.5rem;">
+                                <h3 style="font-family: var(--font-heading); font-size: 1.1rem; margin: 0; color: var(--primary-cyan); display: flex; align-items: center; gap: 0.5rem;">
+                                    <i class="fas fa-lock text-sm"></i> Security & Password
+                                </h3>
+                                <span style="font-size: 0.75rem; color: var(--text-muted);">Leave blank if you do not wish to change your password</span>
+                            </div>
                             
                             <div style="margin-bottom: 1.5rem;">
-                                <label style="display: block; color: var(--text-muted); margin-bottom: 0.5rem; font-size: 0.9rem;">Current Password (required to change)</label>
-                                <input type="password" name="current_password" style="width: 100%; background: rgba(255,255,255,0.05); border: 1px solid var(--glass-border); color: var(--text-main); padding: 1rem; border-radius: 8px; font-family: inherit;">
+                                <label style="display: block; color: var(--text-muted); margin-bottom: 0.5rem; font-size: 0.85rem; font-weight: 600;">Current Password <span style="font-size: 0.75rem; color: var(--text-dim);">(Required only when changing password)</span></label>
+                                <div style="position: relative;">
+                                    <input type="password" id="userCurrentPassword" name="current_password" autocomplete="current-password" placeholder="Enter your current password" style="width: 100%; background: rgba(255,255,255,0.05); border: 1px solid var(--glass-border); color: var(--text-main); padding: 0.9rem 3rem 0.9rem 1rem; border-radius: 10px; font-family: inherit; outline: none; transition: border-color 0.2s;" onfocus="this.style.borderColor='var(--primary-cyan)'" onblur="this.style.borderColor='var(--glass-border)'">
+                                    <button type="button" onclick="togglePasswordVisibility('userCurrentPassword', 'eyeCurrentPassword')" aria-label="Toggle password visibility" style="position: absolute; right: 1rem; top: 50%; transform: translateY(-50%); background: none; border: none; color: var(--text-muted); cursor: pointer; padding: 4px;">
+                                        <i class="fas fa-eye" id="eyeCurrentPassword"></i>
+                                    </button>
+                                </div>
                             </div>
 
-                            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
-                                <div style="margin-bottom: 1.5rem;">
-                                    <label style="display: block; color: var(--text-muted); margin-bottom: 0.5rem; font-size: 0.9rem;">New Password</label>
-                                    <input type="password" name="password" style="width: 100%; background: rgba(255,255,255,0.05); border: 1px solid var(--glass-border); color: var(--text-main); padding: 1rem; border-radius: 8px; font-family: inherit;">
+                            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 1.25rem; margin-bottom: 1.5rem;">
+                                <div>
+                                    <label style="display: block; color: var(--text-muted); margin-bottom: 0.5rem; font-size: 0.85rem; font-weight: 600;">New Password <span style="font-size: 0.75rem; color: var(--text-dim);">(Min. 8 characters)</span></label>
+                                    <div style="position: relative;">
+                                        <input type="password" id="userNewPassword" name="password" autocomplete="new-password" minlength="8" placeholder="Enter new strong password" style="width: 100%; background: rgba(255,255,255,0.05); border: 1px solid var(--glass-border); color: var(--text-main); padding: 0.9rem 3rem 0.9rem 1rem; border-radius: 10px; font-family: inherit; outline: none; transition: border-color 0.2s;" onfocus="this.style.borderColor='var(--primary-cyan)'" onblur="this.style.borderColor='var(--glass-border)'">
+                                        <button type="button" onclick="togglePasswordVisibility('userNewPassword', 'eyeNewPassword')" aria-label="Toggle password visibility" style="position: absolute; right: 1rem; top: 50%; transform: translateY(-50%); background: none; border: none; color: var(--text-muted); cursor: pointer; padding: 4px;">
+                                            <i class="fas fa-eye" id="eyeNewPassword"></i>
+                                        </button>
+                                    </div>
                                 </div>
 
-                                <div style="margin-bottom: 1.5rem;">
-                                    <label style="display: block; color: var(--text-muted); margin-bottom: 0.5rem; font-size: 0.9rem;">Confirm New Password</label>
-                                    <input type="password" name="password_confirmation" style="width: 100%; background: rgba(255,255,255,0.05); border: 1px solid var(--glass-border); color: var(--text-main); padding: 1rem; border-radius: 8px; font-family: inherit;">
+                                <div>
+                                    <label style="display: block; color: var(--text-muted); margin-bottom: 0.5rem; font-size: 0.85rem; font-weight: 600;">Confirm New Password</label>
+                                    <div style="position: relative;">
+                                        <input type="password" id="userConfirmPassword" name="password_confirmation" autocomplete="new-password" placeholder="Re-type new password" style="width: 100%; background: rgba(255,255,255,0.05); border: 1px solid var(--glass-border); color: var(--text-main); padding: 0.9rem 3rem 0.9rem 1rem; border-radius: 10px; font-family: inherit; outline: none; transition: border-color 0.2s;" onfocus="this.style.borderColor='var(--primary-cyan)'" onblur="this.style.borderColor='var(--glass-border)'">
+                                        <button type="button" onclick="togglePasswordVisibility('userConfirmPassword', 'eyeConfirmPassword')" aria-label="Toggle password visibility" style="position: absolute; right: 1rem; top: 50%; transform: translateY(-50%); background: none; border: none; color: var(--text-muted); cursor: pointer; padding: 4px;">
+                                            <i class="fas fa-eye" id="eyeConfirmPassword"></i>
+                                        </button>
+                                    </div>
                                 </div>
                             </div>
                         </div>
 
-                        <button type="submit" class="vn-btn vn-btn-primary" style="margin-top: 1rem; width: fit-content; padding-left: 3rem; padding-right: 3rem;">
-                            Save Account Changes
+                        <button type="submit" class="vn-btn vn-btn-primary" style="margin-top: 1rem; width: 100%; max-width: 280px; padding: 0.9rem 2rem; border-radius: 12px; font-weight: 700; display: flex; align-items: center; justify-content: center; gap: 0.5rem;">
+                            <i class="fas fa-save"></i> Save Account Changes
                         </button>
                     </form>
                 </div>
+
+                <script>
+                    function togglePasswordVisibility(inputId, iconId) {
+                        const input = document.getElementById(inputId);
+                        const icon = document.getElementById(iconId);
+                        if (!input || !icon) return;
+                        if (input.type === 'password') {
+                            input.type = 'text';
+                            icon.classList.remove('fa-eye');
+                            icon.classList.add('fa-eye-slash');
+                            icon.style.color = 'var(--primary-cyan)';
+                        } else {
+                            input.type = 'password';
+                            icon.classList.remove('fa-eye-slash');
+                            icon.classList.add('fa-eye');
+                            icon.style.color = 'var(--text-muted)';
+                        }
+                    }
+                </script>

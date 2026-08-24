@@ -20,6 +20,12 @@
             top: 120px;
         }
 
+        .dash-nav-list {
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+        }
+
         .dash-nav-item {
             display: flex;
             align-items: center;
@@ -583,24 +589,41 @@
             }
             .dash-sidebar {
                 position: sticky;
-                top: 80px;
-                z-index: 100;
-                display: flex;
-                overflow-x: auto;
-                padding: 0.75rem;
-                background: var(--header-bg);
+                top: 75px;
+                z-index: 80;
+                display: block;
+                padding: 0.5rem 0.75rem;
+                background: rgba(10, 14, 23, 0.95);
                 backdrop-filter: blur(20px);
+                border: 1px solid var(--glass-border);
                 border-radius: 16px;
-                gap: 0.5rem;
-                scrollbar-width: none;
+                box-shadow: 0 10px 30px rgba(0,0,0,0.3);
             }
-            .dash-sidebar::-webkit-scrollbar { display: none; }
-            .dash-sidebar > div:first-child { display: none; }
+            .dash-sidebar .user-profile-widget {
+                display: none;
+            }
+            .dash-nav-list {
+                display: flex;
+                flex-direction: row;
+                gap: 0.35rem;
+                overflow-x: auto;
+                -webkit-overflow-scrolling: touch;
+                scrollbar-width: none;
+                width: 100%;
+                padding: 2px 0;
+            }
+            .dash-nav-list::-webkit-scrollbar { display: none; }
             .dash-nav-item {
                 white-space: nowrap;
                 margin-bottom: 0;
-                padding: 0.75rem 1.25rem;
-                font-size: 0.9rem;
+                padding: 0.6rem 1rem;
+                font-size: 0.85rem;
+                flex-shrink: 0;
+                border-radius: 10px;
+            }
+            .dash-nav-item.active {
+                border-left: none;
+                border-bottom: 2px solid var(--primary-cyan);
             }
             .content-panel { padding: 1.5rem; border-radius: 20px; }
             .stats-grid { grid-template-columns: 1fr 1fr; }
@@ -614,6 +637,8 @@
             .premium-coupon-block { padding: 1.25rem 1rem !important; }
             .panel-title { font-size: 1.15rem !important; }
             .stat-info .value { font-size: 1.4rem !important; }
+            .stats-grid { grid-template-columns: 1fr; gap: 0.75rem; }
+            .content-panel { padding: 1.25rem 1rem; }
         }
 
         /* ========== MOBILE RESPONSIVE ========== */

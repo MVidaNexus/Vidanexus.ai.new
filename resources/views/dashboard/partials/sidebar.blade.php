@@ -11,7 +11,7 @@
                     </div>
                 </div>
 
-                <nav style="display: flex; flex-direction: column; gap: 0.5rem;">
+                <nav class="dash-nav-list">
 
                     <a href="#overview" class="dash-nav-item active">
                         <i class="fas fa-chart-pie"></i>
