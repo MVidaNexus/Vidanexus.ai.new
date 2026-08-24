@@ -758,7 +758,8 @@ class KeywordService
 
         Log::info("[Keyword Radar] Processing ALL " . count($competitorUrls) . " competitors. [Filter: {$filterLabel}]");
 
-        @ini_set('memory_limit', '512M');
+        @ini_set('memory_limit', '-1');
+        @ini_set('max_execution_time', 300);
         $allHeadlines = [];
         $userAgent = $this->getRandomUserAgent();
         $needsFallback = [];
