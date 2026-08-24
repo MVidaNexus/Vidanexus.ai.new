@@ -406,7 +406,7 @@
                                 <div class="flex-1 min-w-0">
                                     <h4 class="font-bold text-xs sm:text-sm break-words leading-relaxed mb-2" style="color:{{ $colorVar }};opacity:0.95;">{{ $headlineTitle }}</h4>
                                     <div class="flex flex-wrap items-center gap-2.5">
-                                        <span style="font-size:9.5px;color:#38bdf8;background:rgba(14,165,233,0.12);padding:2.5px 9px;border-radius:8px;font-weight:800;text-transform:uppercase;border:1px solid rgba(56,189,248,0.35);display:inline-flex;align-items:center;gap:4px;box-shadow:0 0 10px rgba(14,165,233,0.1);"><i class="fas fa-globe text-[8px] opacity-75"></i> {{ $source }}</span>
+                                        <span style="font-size:10px;color:#ffffff;background:rgba(255,255,255,0.12);padding:3px 10px;border-radius:8px;font-weight:900;text-transform:uppercase;border:1px solid rgba(255,255,255,0.3);display:inline-flex;align-items:center;gap:5px;letter-spacing:0.3px;box-shadow:0 2px 8px rgba(0,0,0,0.4);"><i class="fas fa-globe text-[9px]" style="color:var(--primary-cyan, #0ea5e9);"></i> <span style="color:#ffffff !important;font-weight:900;">{{ $source }}</span></span>
                                         @if($pubTime)
                                             @php 
                                                 $pubCarbon = \Carbon\Carbon::parse($pubTime); 
