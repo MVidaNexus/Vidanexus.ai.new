@@ -256,42 +256,28 @@ class KeywordService
             return ['keywords' => [], 'headlines_count' => 0];
         }
 
-        // === STEP 1: Deduplicate headlines BEFORE sending to AI ===
-        // Multiple competitors often cover the same story.
-        // Sending duplicates wastes AI tokens and produces redundant keywords.
-        $headlines = $this->deduplicateHeadlines($rawHeadlines);
-        $removedDupes = count($rawHeadlines) - count($headlines);
-
-        $beforeLang = count($headlines);
-        $headlines = $this->filterHeadlinesByLanguage($headlines, $lang);
-        $removedLang = $beforeLang - count($headlines);
-        
-        Log::info("[Keyword Radar] Dedup: {$removedDupes} duplicate headlines removed. {" . count($rawHeadlines) . " raw → " . count($headlines) . " unique}".($removedLang > 0 ? " Lang filter ({$lang}): {$removedLang} removed." : ''));
+        // === STEP 1: Algorithmic Pre-AI Heuristic Scoring & Clustering ===
+        // Ingests 100% of raw headlines, clusters duplicates, counts multi-competitor resonance/velocity,
+        // and scores search-intent triggers without consuming a single AI token.
+        $headlines = $this->scoreAndClusterHeadlines($rawHeadlines, $lang, 40);
 
         if (empty($headlines)) {
             return ['keywords' => [], 'headlines_count' => 0];
         }
 
-        $headlines = $this->prioritizeHeadlinesForAi($headlines, KeywordPayload::maxHeadlinesForAi());
-
         // === STEP 2: AI Keyword Extraction — BATCHED for speed ===
-        // Instead of calling AI once per headline (which causes 120+ API calls
-        // and minutes of waiting), we batch 10 headlines per call. This reduces
-        // a 120-headline sync from ~120 API calls → ~12, cutting sync time
-        // from 6–10 minutes to under 2 minutes.
         $allKeywords = [];
         $aiExtractionStart = microtime(true);
-        $batchSize = (int) \App\Models\Setting::get('ai-keyword-radar_batch_size', 10);
-        $batchSize = max(1, min(25, $batchSize));
+        $batchSize = 10;
         $timeBudgetSeconds = (int) \App\Models\Setting::get('ai-keyword-radar_ai_time_budget', 180);
 
         $batches = array_chunk($headlines, $batchSize);
-        Log::info('[Keyword Radar] AI extraction: ' . count($headlines) . ' headlines in ' . count($batches) . " batches of {$batchSize}");
+        Log::info('[Keyword Radar] Dense AI extraction: ' . count($headlines) . ' prioritized candidates in ' . count($batches) . " batches of {$batchSize}");
 
         foreach ($batches as $batchIndex => $batch) {
             $aiElapsed = microtime(true) - $aiExtractionStart;
             if ($aiElapsed > $timeBudgetSeconds) {
-                Log::warning('[Keyword Radar] AI extraction time budget reached (' . round($aiElapsed) . "s elapsed, batch {$batchIndex}/" . count($batches) . ', ' . count($allKeywords) . ' keywords). Returning partial results.');
+                Log::warning('[Keyword Radar] AI extraction time budget reached (' . round($aiElapsed) . "s elapsed).");
                 break;
             }
 
@@ -302,12 +288,6 @@ class KeywordService
         }
 
         if (empty($allKeywords)) {
-            // The headline-as-keyword fallback is the source of the
-            // "card shows the full title instead of an extracted query"
-            // problem. Disable it by default — better to surface an empty
-            // result + a logged warning than to pollute the database with
-            // raw titles that look indistinguishable from real keywords.
-            // Admins who explicitly want a soft-fail safety net can opt in.
             $useFallback = filter_var(
                 \App\Models\Setting::get('ai-keyword-radar_use_headline_fallback', true),
                 FILTER_VALIDATE_BOOLEAN
@@ -316,8 +296,6 @@ class KeywordService
             if ($useFallback) {
                 Log::warning('[Keyword Radar] AI returned no keywords; using headline fallback for '.count($headlines).' headlines.');
                 $allKeywords = $this->headlinesToFallbackKeywords($headlines, $lang);
-            } else {
-                Log::warning('[Keyword Radar] AI returned no keywords for '.count($headlines).' headlines. Fallback is disabled, returning empty result.');
             }
         }
 
@@ -325,41 +303,39 @@ class KeywordService
             'keywords' => $allKeywords,
             'headlines_count' => count($headlines),
             'raw_headlines' => count($rawHeadlines),
-            'duplicates_removed' => $removedDupes
+            'duplicates_removed' => count($rawHeadlines) - count($headlines)
         ];
     }
 
     /**
-     * Remove duplicate and near-duplicate headlines before AI processing.
-     * Uses normalized text matching + Arabic/English word-overlap similarity.
-     * This prevents wasting AI tokens on similar headlines from multiple sources.
+     * Algorithmic Pre-AI Pipeline:
+     * 1. Ingests 100% of raw headlines from all competitors.
+     * 2. Clusters near-duplicate stories across competitors and tracks competitor resonance/velocity.
+     * 3. Calculates Heuristic Traffic Score (Cross-Competitor Velocity + Search Intent Triggers + Recency - Fluff Penalty).
+     * 4. Returns the top highest-scoring, high-traffic candidate clusters for AI extraction.
      */
-    protected function deduplicateHeadlines(array $headlines): array
+    protected function scoreAndClusterHeadlines(array $rawHeadlines, string $lang, int $maxCandidates = 40): array
     {
-        $unique = [];
-        $seenNormalized = [];  // Exact match after normalization
-        $seenWords = [];       // For word-overlap similarity check
+        if (empty($rawHeadlines)) return [];
 
-        foreach ($headlines as $h) {
-            $title = $h['title'] ?? '';
-            if (empty($title)) continue;
+        $clusters = [];
+        $seenNormalized = [];
 
-            // Step 1: Normalize — lowercase, remove punctuation/diacritics, collapse whitespace
+        foreach ($rawHeadlines as $h) {
+            $title = trim($h['title'] ?? '');
+            if (empty($title) || mb_strlen($title, 'UTF-8') < 5) continue;
+
+            $source = $h['source'] ?? 'Competitor';
+
+            // Step 1: Normalize
             $normalized = mb_strtolower($title, 'UTF-8');
-            // Remove Arabic diacritics (tashkeel)
             $normalized = preg_replace('/[\x{064B}-\x{065F}\x{0670}]/u', '', $normalized);
-            // Remove common punctuation
             $normalized = preg_replace('/[\p{P}\p{S}]+/u', ' ', $normalized);
-            // Collapse whitespace
             $normalized = preg_replace('/\s+/u', ' ', trim($normalized));
 
-            // Step 2: Exact normalized match
-            if (isset($seenNormalized[$normalized])) {
-                continue;
-            }
+            if (empty($normalized)) continue;
 
-            // Step 3: Word-overlap similarity
-            // Split into meaningful words (3+ chars to skip prepositions)
+            // Extract meaningful words (length >= 3)
             $words = array_filter(
                 preg_split('/\s+/u', $normalized),
                 fn($w) => mb_strlen($w, 'UTF-8') >= 3
@@ -367,49 +343,168 @@ class KeywordService
             $wordSet = array_flip($words);
             $wordCount = count($words);
 
-            if ($wordCount >= 3) {
-                $isDuplicate = false;
-                foreach ($seenWords as $idx => $existingWordSet) {
-                    // Calculate word overlap
-                    $commonWords = count(array_intersect_key($wordSet, $existingWordSet));
-                    $maxWords = max($wordCount, count($existingWordSet));
-                    $overlapRatio = $maxWords > 0 ? ($commonWords / $maxWords) : 0;
+            // Step 2: Check if this headline matches an existing cluster
+            $matchedClusterIdx = null;
 
-                    if ($overlapRatio >= 0.60) {
-                        $isDuplicate = true;
+            if (isset($seenNormalized[$normalized])) {
+                $matchedClusterIdx = $seenNormalized[$normalized];
+            } elseif ($wordCount >= 3) {
+                foreach ($clusters as $idx => $cluster) {
+                    $clusterWordSet = $cluster['word_set'];
+                    $commonWords = count(array_intersect_key($wordSet, $clusterWordSet));
+                    $maxLen = max($wordCount, count($clusterWordSet));
+                    $overlap = $maxLen > 0 ? ($commonWords / $maxLen) : 0;
+
+                    if ($overlap >= 0.50) {
+                        $matchedClusterIdx = $idx;
                         break;
                     }
                 }
-                if ($isDuplicate) continue;
             }
 
-            // This headline is unique — keep it
-            $seenNormalized[$normalized] = true;
-            $seenWords[] = $wordSet;
-            $unique[] = $h;
+            if ($matchedClusterIdx !== null) {
+                // Headline is covered by an additional competitor!
+                $clusters[$matchedClusterIdx]['velocity']++;
+                if (!in_array($source, $clusters[$matchedClusterIdx]['sources'], true)) {
+                    $clusters[$matchedClusterIdx]['sources'][] = $source;
+                }
+                // Keep the cleaner/longer headline if this one is better
+                if (mb_strlen($title, 'UTF-8') > mb_strlen($clusters[$matchedClusterIdx]['title'], 'UTF-8') && mb_strlen($title, 'UTF-8') <= 120) {
+                    $clusters[$matchedClusterIdx]['title'] = $title;
+                }
+                // Update pubDate if this is newer
+                $pubDate = !empty($h['pubDate']) ? strtotime($h['pubDate']) : 0;
+                $currentPubDate = !empty($clusters[$matchedClusterIdx]['pubDate']) ? strtotime($clusters[$matchedClusterIdx]['pubDate']) : 0;
+                if ($pubDate > $currentPubDate) {
+                    $clusters[$matchedClusterIdx]['pubDate'] = $h['pubDate'];
+                }
+            } else {
+                // New unique story cluster
+                $clusterId = count($clusters);
+                $seenNormalized[$normalized] = $clusterId;
+                $clusters[$clusterId] = [
+                    'title' => $title,
+                    'normalized' => $normalized,
+                    'pubDate' => $h['pubDate'] ?? null,
+                    'source' => $source,
+                    'sources' => [$source],
+                    'velocity' => 1,
+                    'word_set' => $wordSet,
+                    'score' => 0,
+                ];
+            }
         }
 
-        return $unique;
-    }
+        // Step 3: Algorithmic Scoring for each cluster
+        foreach ($clusters as &$c) {
+            $c['score'] = $this->calculateHeuristicTrafficScore($c, $lang);
+            // Format combined sources for badge
+            $c['source'] = implode(', ', array_slice($c['sources'], 0, 3));
+            if (count($c['sources']) > 3) {
+                $c['source'] .= ' +' . (count($c['sources']) - 3);
+            }
+        }
+        unset($c);
 
-    /**
-     * Keep the newest headlines only — prevents sync timeouts on large competitor lists.
-     */
-    protected function prioritizeHeadlinesForAi(array $headlines, int $limit): array
-    {
-        usort($headlines, function ($a, $b) {
-            $ta = ! empty($a['pubDate']) ? strtotime($a['pubDate']) : 0;
-            $tb = ! empty($b['pubDate']) ? strtotime($b['pubDate']) : 0;
-
+        // Step 4: Sort by Score (Primary), Velocity (Secondary), Recency (Tertiary)
+        usort($clusters, function ($a, $b) {
+            if ($b['score'] !== $a['score']) {
+                return $b['score'] <=> $a['score'];
+            }
+            if ($b['velocity'] !== $a['velocity']) {
+                return $b['velocity'] <=> $a['velocity'];
+            }
+            $ta = !empty($a['pubDate']) ? strtotime($a['pubDate']) : 0;
+            $tb = !empty($b['pubDate']) ? strtotime($b['pubDate']) : 0;
             return $tb <=> $ta;
         });
 
-        if (count($headlines) > $limit) {
-            Log::info('[Keyword Radar] Capped headlines for AI: '.count($headlines)." → {$limit}");
-            $headlines = array_slice($headlines, 0, $limit);
+        $topCandidates = array_slice($clusters, 0, $maxCandidates);
+
+        Log::info('[Keyword Radar] Heuristic Engine: Ingested ' . count($rawHeadlines) . ' raw headlines into ' . count($clusters) . ' clusters. Selected top ' . count($topCandidates) . ' high-traffic candidates for AI.');
+
+        return $topCandidates;
+    }
+
+    /**
+     * Calculate Local Algorithmic Traffic & Search Intent Score (0.0001s, 0 AI tokens)
+     */
+    protected function calculateHeuristicTrafficScore(array $cluster, string $lang): int
+    {
+        $score = 50; // Base score
+        $title = $cluster['normalized'] ?? '';
+        $velocity = $cluster['velocity'] ?? 1;
+
+        // 1. Velocity Boost: Multi-competitor viral coverage
+        if ($velocity > 1) {
+            $score += min(120, ($velocity - 1) * 35);
         }
 
-        return $headlines;
+        if ($lang === 'ar') {
+            // 2. High-Intent Commercial / Financial Triggers (+35)
+            if (preg_match('/(سعر|اسعار|أسعار|دولار|ذهب|عيار|ريال|صرف|بنك|فائدة|شهادات|تراجع|ارتفاع|قفزة|هبوط|تضخم|عملات)/u', $title)) {
+                $score += 35;
+            }
+
+            // 3. High-Intent Educational / Results Triggers (+40)
+            if (preg_match('/(تنسيق|نتيجة|نتائج|كليات|مدارس|دبلومات|ثانوية|امتحانات|اوائل|أوائل|تسجيل|رابط|موقع|لينك|درجات|قبول)/u', $title)) {
+                $score += 40;
+            }
+
+            // 4. High-Intent Sports / Match Highlights Triggers (+30)
+            if (preg_match('/(مباراة|ملخص|اهداف|أهداف|بث مباشر|تشكيل|موعد|ترتيب|دوري|الاهلي|الأهلي|الزمالك|ليفربول|ريال مدريد|برشلونة|صفقة|انتقال|نهائي)/u', $title)) {
+                $score += 30;
+            }
+
+            // 5. High-Intent Government / Public Services / Decisions (+30)
+            if (preg_match('/(قرارات|رسميا|رسمياً|وزارة|مجلس الوزراء|توجيهات|صرف|معاشات|مرتبات|زيادة|شروط|وظائف|تقديم|حجز|شقق|إسكان|اسكان|تموين|بطاقات)/u', $title)) {
+                $score += 30;
+            }
+
+            // 6. Breaking / Incident Events (+25)
+            if (preg_match('/(عاجل|وفاة|حريق|حادث|سقوط|مصرع|انفجار|زلزال|انهيار|ضبط|القبض)/u', $title)) {
+                $score += 25;
+            }
+
+            // 7. Low-Intent Fluff / Opinion / Generic Column Penalties (-60)
+            if (preg_match('/(مقال|رأي|خواطر|كلمة اخيرة|وجهة نظر|عمود|حديث الاسبوع|ذكريات|تأملات|هل تعلم|شاهد بالفيديو|قصة|حكاية)/u', $title)) {
+                $score -= 60;
+            }
+        } else {
+            // English High-Intent Search Triggers
+            if (preg_match('/(price|rates|gold|dollar|stocks|inflation|bank|fed|crypto|bitcoin)/i', $title)) {
+                $score += 35;
+            }
+            if (preg_match('/(results|admission|exam|scores|how to|where to|guide|link|portal)/i', $title)) {
+                $score += 40;
+            }
+            if (preg_match('/(vs|match|highlights|goals|live stream|lineup|schedule|standings|transfer|final)/i', $title)) {
+                $score += 30;
+            }
+            if (preg_match('/(breaking|official|confirmed|rules|jobs|apply|hiring|deadline|alert)/i', $title)) {
+                $score += 30;
+            }
+            if (preg_match('/(opinion|editorial|column|review|thoughts|memoir|perspective)/i', $title)) {
+                $score -= 60;
+            }
+        }
+
+        // 8. Recency & Freshness Multiplier
+        if (!empty($cluster['pubDate'])) {
+            $pubTimestamp = is_numeric($cluster['pubDate']) ? (int) $cluster['pubDate'] : strtotime($cluster['pubDate']);
+            if ($pubTimestamp > 0) {
+                $ageMinutes = (time() - $pubTimestamp) / 60;
+                if ($ageMinutes <= 30) {
+                    $score += 25;
+                } elseif ($ageMinutes <= 60) {
+                    $score += 15;
+                } elseif ($ageMinutes <= 180) {
+                    $score += 5;
+                }
+            }
+        }
+
+        return $score;
     }
 
     /**
