@@ -71,7 +71,9 @@ class GoogleProvider implements AIProvider
         }
 
         try {
-            $response = Http::timeout((int) ($options['timeout'] ?? 45))->post($url, $payload);
+            $response = Http::timeout((int) ($options['timeout'] ?? 45))
+                ->withOptions(['curl' => [CURLOPT_IPRESOLVE => CURL_IPRESOLVE_V4]])
+                ->post($url, $payload);
         } catch (\Throwable $e) {
             Log::warning('ai.google.network_error', ['exception' => $e->getMessage(), 'model' => $model]);
             throw new AIProviderFailureException('Gemini network error: '.$e->getMessage(), [], $e);

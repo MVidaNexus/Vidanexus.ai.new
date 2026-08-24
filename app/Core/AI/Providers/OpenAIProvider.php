@@ -46,6 +46,7 @@ class OpenAIProvider implements AIProvider
 
         try {
             $response = Http::timeout((int) ($options['timeout'] ?? 45))
+                ->withOptions(['curl' => [CURLOPT_IPRESOLVE => CURL_IPRESOLVE_V4]])
                 ->withToken($apiKey)
                 ->post($url, $payload);
         } catch (\Throwable $e) {

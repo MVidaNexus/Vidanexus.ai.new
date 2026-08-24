@@ -66,6 +66,7 @@ class OpenRouterProvider implements AIProvider
 
         try {
             $response = Http::timeout((int) ($options['timeout'] ?? 45))
+                ->withOptions(['curl' => [CURLOPT_IPRESOLVE => CURL_IPRESOLVE_V4]])
                 ->withHeaders([
                     'Authorization' => "Bearer {$apiKey}",
                     'HTTP-Referer' => config('app.url', 'https://vidanexus.ai'),
