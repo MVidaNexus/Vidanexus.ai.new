@@ -17,8 +17,9 @@ class AiKeywordRadarSyncController extends Controller
 {
     public function __invoke(Request $request, KeywordService $keywordService)
     {
-        ini_set('max_execution_time', 300);
-        set_time_limit(300);
+        @ini_set('memory_limit', '512M');
+        @ini_set('max_execution_time', 300);
+        @set_time_limit(300);
 
         $user = auth()->user();
         $slug = 'ai-keyword-radar';
