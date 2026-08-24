@@ -321,9 +321,9 @@ function keywordRadar() {
 
         _estimateSyncSeconds(timeFilter) {
             const t = String(timeFilter || '60m').toLowerCase().trim();
-            if (t === 'all' || t === 'any' || t === 'unlimited') return 180;
-            if (t === '24h' || t === '1d') return 150;
-            return 120;
+            if (t === 'all' || t === 'any' || t === 'unlimited') return 90;
+            if (t === '24h' || t === '1d') return 75;
+            return 60;
         },
 
         _startSyncCountdown(prop, timeFilter, initialSeconds = null) {
@@ -405,7 +405,7 @@ function keywordRadar() {
             formData.append('time_filter', timeFilter);
             if (boxId) formData.append('box_id', boxId);
             const controller = new AbortController();
-            const syncTimeoutMs = (this._estimateSyncSeconds(timeFilter) + 30) * 1000;
+            const syncTimeoutMs = 240 * 1000; // 4 minutes generous timeout so browser never aborts prematurely
             const syncTimeout = setTimeout(() => controller.abort(), syncTimeoutMs);
             fetch(`{{ route('dashboard.ai-keyword-radar.sync') }}`, { method:'POST', headers:{'X-Requested-With':'XMLHttpRequest','Accept':'application/json'}, body:formData, signal: controller.signal })
             .then(async res => {
@@ -538,13 +538,6 @@ function keywordRadar() {
             if (status === 408 || status === 504) return messages.NETWORK_ERROR;
             if (status >= 500) return messages.FETCH_FAILED;
             return messages.SERVER_ERROR;
-        },
-
-        _estimateSyncSeconds(timeFilter) {
-            const t = String(timeFilter || '60m').toLowerCase().trim();
-            if (t === 'all' || t === 'any' || t === 'unlimited') return 45;
-            if (t === '24h' || t === '1d') return 35;
-            return 25;
         },
 
         _startSyncPolling(prop, lang, boxId, initialCount) {
