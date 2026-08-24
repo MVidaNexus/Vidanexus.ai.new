@@ -16,7 +16,7 @@ class AIKeywordRadarController extends Controller
     /**
      * Max "Inject Market Source" URLs (Arabic + English combined) for non-admin users.
      */
-    private const MAX_MARKET_SOURCES_NON_ADMIN = 5;
+    private const MAX_MARKET_SOURCES_NON_ADMIN = 20;
 
     /**
      * Time filter tokens exposed by the radar UI. Anything outside this
@@ -118,9 +118,11 @@ class AIKeywordRadarController extends Controller
         $user = auth()->user();
         $settings = $user->settings ?? [];
 
+        $limit = $user->isAdmin() ? null : (int) \App\Models\Setting::get('ai-keyword-radar_max_competitors', self::MAX_MARKET_SOURCES_NON_ADMIN);
+
         return view('aikeywordradar::settings', [
             'settings' => $settings,
-            'keywordRadarMarketSourceLimit' => $user->isAdmin() ? null : self::MAX_MARKET_SOURCES_NON_ADMIN,
+            'keywordRadarMarketSourceLimit' => $limit,
         ]);
     }
 
@@ -141,11 +143,12 @@ class AIKeywordRadarController extends Controller
 
         $arClean = $this->parseDedupedCompetitorLines($request->input('keywords_competitors'));
         $enClean = $this->parseDedupedCompetitorLines($request->input('keywords_competitors_en'));
+        $limit = $user->isAdmin() ? null : (int) \App\Models\Setting::get('ai-keyword-radar_max_competitors', self::MAX_MARKET_SOURCES_NON_ADMIN);
 
-        if (! $user->isAdmin() && count($arClean) + count($enClean) > self::MAX_MARKET_SOURCES_NON_ADMIN) {
+        if ($limit !== null && count($arClean) + count($enClean) > $limit) {
             return back()
                 ->withErrors([
-                    'market_sources' => 'Standard accounts may add up to '.self::MAX_MARKET_SOURCES_NON_ADMIN.' market sources combined (Arabic + English). Remove some sources or use an administrator account.',
+                    'market_sources' => 'Standard accounts may add up to '.$limit.' market sources combined (Arabic + English). Remove some sources or use an administrator account.',
                 ])
                 ->withInput();
         }
