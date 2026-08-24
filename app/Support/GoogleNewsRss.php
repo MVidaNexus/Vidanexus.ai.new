@@ -44,7 +44,7 @@ class GoogleNewsRss
 
     public static function searchUrl(string $query, string $country, ?string $lang = null): string
     {
-        return self::feedUrl($country, $lang, ['q' => $query]);
+        return self::feedUrl($country, $lang, ['q' => $query], 'search');
     }
 
     /**
