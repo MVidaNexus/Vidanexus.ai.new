@@ -116,14 +116,14 @@ class KeywordService
     /**
      * Sync and Save Keywords (Manual Trigger)
      */
-    public function syncKeywords(int $limit = 500, string $lang = 'ar', $userId = null, string $timeFilter = '60m', ?string $boxId = null)
+    public function syncKeywords(int $limit = 500, string $lang = 'ar', $userId = null, string $timeFilter = '60m', ?string $boxId = null, string $mode = 'smart')
     {
         ini_set('max_execution_time', 300);
         set_time_limit(300);
         $syncStart = microtime(true);
         $user = \App\Models\User::find($userId);
         
-        $results = $this->getTargetKeywordsFromCompetitors($lang, $userId, $syncStart, $timeFilter, $boxId);
+        $results = $this->getTargetKeywordsFromCompetitors($lang, $userId, $syncStart, $timeFilter, $boxId, $mode);
         $newKeywords = $results['keywords'] ?? [];
         $headlinesCount = $results['headlines_count'] ?? 0;
 
@@ -247,7 +247,7 @@ class KeywordService
     /**
      * Fetch competitor headlines and extract keywords using AI
      */
-    public function getTargetKeywordsFromCompetitors($lang = 'ar', $userId = null, $syncStart = null, string $timeFilter = '60m', ?string $boxId = null)
+    public function getTargetKeywordsFromCompetitors($lang = 'ar', $userId = null, $syncStart = null, string $timeFilter = '60m', ?string $boxId = null, string $mode = 'smart')
     {
         $syncStart = $syncStart ?? microtime(true);
         $rawHeadlines = $this->fetchCompetitorsHeadlines($lang, $userId, $syncStart, $timeFilter, $boxId);
@@ -256,10 +256,12 @@ class KeywordService
             return ['keywords' => [], 'headlines_count' => 0];
         }
 
+        // Mode determines how many candidates to process and whether to use deep coverage
+        $isDeep = ($mode === 'deep');
+        $maxCandidates = $isDeep ? 80 : 40;
+
         // === STEP 1: Algorithmic Pre-AI Heuristic Scoring & Clustering ===
-        // Ingests 100% of raw headlines, clusters duplicates, counts multi-competitor resonance/velocity,
-        // and scores search-intent triggers without consuming a single AI token.
-        $headlines = $this->scoreAndClusterHeadlines($rawHeadlines, $lang, 40);
+        $headlines = $this->scoreAndClusterHeadlines($rawHeadlines, $lang, $maxCandidates, $isDeep);
 
         if (empty($headlines)) {
             return ['keywords' => [], 'headlines_count' => 0];
@@ -272,7 +274,7 @@ class KeywordService
         $timeBudgetSeconds = (int) \App\Models\Setting::get('ai-keyword-radar_ai_time_budget', 180);
 
         $batches = array_chunk($headlines, $batchSize);
-        Log::info('[Keyword Radar] Dense AI extraction: ' . count($headlines) . ' prioritized candidates in ' . count($batches) . " batches of {$batchSize}");
+        Log::info("[Keyword Radar] AI extraction [Mode: {$mode}]: " . count($headlines) . ' prioritized candidates in ' . count($batches) . " batches.");
 
         foreach ($batches as $batchIndex => $batch) {
             $aiElapsed = microtime(true) - $aiExtractionStart;
@@ -294,7 +296,7 @@ class KeywordService
             );
 
             if ($useFallback) {
-                Log::warning('[Keyword Radar] AI returned no keywords; using headline fallback for '.count($headlines).' headlines.');
+                Log::warning('[Keyword Radar] AI returned no keywords; using headline fallback.');
                 $allKeywords = $this->headlinesToFallbackKeywords($headlines, $lang);
             }
         }
@@ -303,7 +305,8 @@ class KeywordService
             'keywords' => $allKeywords,
             'headlines_count' => count($headlines),
             'raw_headlines' => count($rawHeadlines),
-            'duplicates_removed' => count($rawHeadlines) - count($headlines)
+            'duplicates_removed' => count($rawHeadlines) - count($headlines),
+            'mode' => $mode,
         ];
     }
 
@@ -314,7 +317,7 @@ class KeywordService
      * 3. Calculates Heuristic Traffic Score (Cross-Competitor Velocity + Search Intent Triggers + Recency - Fluff Penalty).
      * 4. Returns the top highest-scoring, high-traffic candidate clusters for AI extraction.
      */
-    protected function scoreAndClusterHeadlines(array $rawHeadlines, string $lang, int $maxCandidates = 40): array
+    protected function scoreAndClusterHeadlines(array $rawHeadlines, string $lang, int $maxCandidates = 40, bool $deepMode = false): array
     {
         if (empty($rawHeadlines)) return [];
 
@@ -368,18 +371,15 @@ class KeywordService
                 if (!in_array($source, $clusters[$matchedClusterIdx]['sources'], true)) {
                     $clusters[$matchedClusterIdx]['sources'][] = $source;
                 }
-                // Keep the cleaner/longer headline if this one is better
                 if (mb_strlen($title, 'UTF-8') > mb_strlen($clusters[$matchedClusterIdx]['title'], 'UTF-8') && mb_strlen($title, 'UTF-8') <= 120) {
                     $clusters[$matchedClusterIdx]['title'] = $title;
                 }
-                // Update pubDate if this is newer
                 $pubDate = !empty($h['pubDate']) ? strtotime($h['pubDate']) : 0;
                 $currentPubDate = !empty($clusters[$matchedClusterIdx]['pubDate']) ? strtotime($clusters[$matchedClusterIdx]['pubDate']) : 0;
                 if ($pubDate > $currentPubDate) {
                     $clusters[$matchedClusterIdx]['pubDate'] = $h['pubDate'];
                 }
             } else {
-                // New unique story cluster
                 $clusterId = count($clusters);
                 $seenNormalized[$normalized] = $clusterId;
                 $clusters[$clusterId] = [
@@ -397,8 +397,7 @@ class KeywordService
 
         // Step 3: Algorithmic Scoring for each cluster
         foreach ($clusters as &$c) {
-            $c['score'] = $this->calculateHeuristicTrafficScore($c, $lang);
-            // Format combined sources for badge
+            $c['score'] = $this->calculateHeuristicTrafficScore($c, $lang, $deepMode);
             $c['source'] = implode(', ', array_slice($c['sources'], 0, 3));
             if (count($c['sources']) > 3) {
                 $c['source'] .= ' +' . (count($c['sources']) - 3);
@@ -421,7 +420,7 @@ class KeywordService
 
         $topCandidates = array_slice($clusters, 0, $maxCandidates);
 
-        Log::info('[Keyword Radar] Heuristic Engine: Ingested ' . count($rawHeadlines) . ' raw headlines into ' . count($clusters) . ' clusters. Selected top ' . count($topCandidates) . ' high-traffic candidates for AI.');
+        Log::info('[Keyword Radar] Heuristic Engine: Ingested ' . count($rawHeadlines) . ' raw headlines into ' . count($clusters) . ' clusters. Selected top ' . count($topCandidates) . " candidates (Deep: " . ($deepMode ? 'YES' : 'NO') . ") for AI.");
 
         return $topCandidates;
     }
@@ -429,7 +428,7 @@ class KeywordService
     /**
      * Calculate Local Algorithmic Traffic & Search Intent Score (0.0001s, 0 AI tokens)
      */
-    protected function calculateHeuristicTrafficScore(array $cluster, string $lang): int
+    protected function calculateHeuristicTrafficScore(array $cluster, string $lang, bool $deepMode = false): int
     {
         $score = 50; // Base score
         $title = $cluster['normalized'] ?? '';
@@ -466,8 +465,8 @@ class KeywordService
                 $score += 25;
             }
 
-            // 7. Low-Intent Fluff / Opinion / Generic Column Penalties (-60)
-            if (preg_match('/(مقال|رأي|خواطر|كلمة اخيرة|وجهة نظر|عمود|حديث الاسبوع|ذكريات|تأملات|هل تعلم|شاهد بالفيديو|قصة|حكاية)/u', $title)) {
+            // 7. Low-Intent Fluff / Opinion / Generic Column Penalties (-60) (Skipped in Deep Mode)
+            if (!$deepMode && preg_match('/(مقال|رأي|خواطر|كلمة اخيرة|وجهة نظر|عمود|حديث الاسبوع|ذكريات|تأملات|هل تعلم|شاهد بالفيديو|قصة|حكاية)/u', $title)) {
                 $score -= 60;
             }
         } else {
@@ -484,7 +483,7 @@ class KeywordService
             if (preg_match('/(breaking|official|confirmed|rules|jobs|apply|hiring|deadline|alert)/i', $title)) {
                 $score += 30;
             }
-            if (preg_match('/(opinion|editorial|column|review|thoughts|memoir|perspective)/i', $title)) {
+            if (!$deepMode && preg_match('/(opinion|editorial|column|review|thoughts|memoir|perspective)/i', $title)) {
                 $score -= 60;
             }
         }

@@ -26,12 +26,14 @@ class AiKeywordRadarSyncController extends Controller
         $lang = $request->get('lang', 'ar');
         $timeFilter = $request->get('time_filter', '60m');
         $boxId = $request->get('box_id');
+        $mode = $request->get('mode', 'smart');
 
         Log::info('[Keyword Radar Sync] Request received', [
             'user_id' => $user->id,
             'lang' => $lang,
             'time_filter' => $timeFilter,
             'box_id' => $boxId,
+            'mode' => $mode,
         ]);
 
         if (! $user->canUseTool($slug)) {
@@ -109,7 +111,7 @@ class AiKeywordRadarSyncController extends Controller
                 'time_filter' => $timeFilter,
             ]);
 
-            $result = $keywordService->syncKeywords(500, $lang, $user->id, $timeFilter, $boxId);
+            $result = $keywordService->syncKeywords(500, $lang, $user->id, $timeFilter, $boxId, $mode);
             $saved = (int) ($result['saved'] ?? 0);
             $headlines = (int) ($result['headlines'] ?? 0);
 

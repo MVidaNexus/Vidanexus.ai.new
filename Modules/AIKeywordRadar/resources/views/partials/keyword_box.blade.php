@@ -75,8 +75,8 @@
             </div>
         </div>
 
-        {{-- Time Filter + Sync --}}
-        <div class="relative" x-data="{
+        {{-- Mode Selector + Time Filter + Sync --}}
+        <div class="flex items-center gap-2 flex-wrap" x-data="{
                 timeOpen: false,
                 timeLabel: 'Last 60m',
                 timeValue: '60m',
@@ -99,6 +99,18 @@
                     if (this.timeValue === opt.value) return opt.color + '22';
                     return 'transparent';
                 },
+                modeOpen: false,
+                modeLabel: '🎯 Smart Focus',
+                modeValue: 'smart',
+                modeOptions: [
+                    { value: 'smart', label: '🎯 Smart Focus', title: 'Smart Focus (Filtered)', hint: 'Top viral & commercial keywords', icon: 'fas fa-bullseye', color: '#10b981' },
+                    { value: 'deep', label: '🌐 Deep Coverage', title: 'Deep Coverage (All News)', hint: 'Process all headlines without filtering', icon: 'fas fa-globe', color: '#a855f7' },
+                ],
+                selectMode(opt) {
+                    this.modeValue = opt.value;
+                    this.modeLabel = opt.label;
+                    this.modeOpen = false;
+                },
                 init() {
                     this.$nextTick(() => {
                         if (typeof window.applyKeywordTimeFilter === 'function') {
@@ -106,9 +118,48 @@
                         }
                     });
                 }
-             }" @click.away="timeOpen = false">
-            <div class="flex items-center gap-2">
-                {{-- Time Filter Button --}}
+             }">
+
+            {{-- Mode Dropdown --}}
+            <div class="relative" @click.away="modeOpen = false">
+                <button type="button" @click="modeOpen = !modeOpen" 
+                    style="display:inline-flex;align-items:center;gap:6px;padding:6px 14px;border-radius:12px;font-size:11px;font-weight:700;white-space:nowrap;background:var(--card-bg);border:1px solid var(--glass-border);color:var(--text-main);box-shadow:0 2px 10px rgba(0,0,0,0.05);cursor:pointer;transition:all 0.2s;"
+                    onmouseover="this.style.background='var(--glass-bg)'" onmouseout="this.style.background='var(--card-bg)'">
+                    <span x-text="modeLabel">🎯 Smart Focus</span>
+                    <i class="fas fa-chevron-down text-[8px] opacity-60 transition-transform duration-200" :class="{'rotate-180': modeOpen}"></i>
+                </button>
+                <div x-show="modeOpen" x-cloak
+                     x-transition:enter="transition ease-out duration-150"
+                     x-transition:enter-start="opacity-0 translate-y-[-4px]"
+                     x-transition:enter-end="opacity-100 translate-y-0"
+                     x-transition:leave="transition ease-in duration-100"
+                     x-transition:leave-start="opacity-100"
+                     x-transition:leave-end="opacity-0"
+                     style="position:absolute;top:calc(100% + 6px);{{ $isAr ? 'right:0' : 'left:0' }};width:250px;background:var(--card-bg);border:1px solid var(--glass-border);border-radius:14px;z-index:9999;box-shadow:0 15px 40px rgba(0,0,0,0.15);overflow:hidden;">
+                    <div style="padding:8px 14px;font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:0.08em;color:var(--text-muted);border-bottom:1px solid var(--glass-border);">
+                        <i class="fas fa-sliders-h text-[8px] mr-1 opacity-40"></i> Extraction Mode
+                    </div>
+                    <template x-for="(opt, idx) in modeOptions" :key="opt.value">
+                        <button type="button" @click="selectMode(opt)"
+                            style="display:flex;align-items:center;justify-content:space-between;gap:12px;width:100%;padding:10px 14px;text-align:{{ $isAr ? 'right' : 'left' }};color:var(--text-main);border:none;cursor:pointer;transition:background 0.15s;background:transparent;"
+                            :style="{ borderTop: idx > 0 ? '1px solid var(--glass-border)' : 'none', background: modeValue === opt.value ? opt.color + '22' : 'transparent' }">
+                            <div style="display:flex;align-items:center;gap:10px;">
+                                <span :style="{ background: opt.color + '22', color: opt.color }" style="display:flex;align-items:center;justify-content:center;width:26px;height:26px;border-radius:7px;font-size:10px;flex-shrink:0;">
+                                    <i :class="opt.icon"></i>
+                                </span>
+                                <div style="display:flex;flex-direction:column;">
+                                    <span style="font-size:11px;font-weight:700;" x-text="opt.title"></span>
+                                    <span style="font-size:9px;color:var(--text-muted);" x-text="opt.hint"></span>
+                                </div>
+                            </div>
+                            <i class="fas fa-check text-[10px]" :style="{ color: opt.color }" x-show="modeValue === opt.value"></i>
+                        </button>
+                    </template>
+                </div>
+            </div>
+
+            {{-- Time Filter Button + Dropdown --}}
+            <div class="relative" @click.away="timeOpen = false">
                 <button type="button" @click="timeOpen = !timeOpen" 
                     style="display:inline-flex;align-items:center;gap:6px;padding:6px 14px;border-radius:12px;font-size:11px;font-weight:700;white-space:nowrap;background:var(--card-bg);border:1px solid var(--glass-border);color:var(--text-main);box-shadow:0 2px 10px rgba(0,0,0,0.05);cursor:pointer;transition:all 0.2s;"
                     onmouseover="this.style.background='var(--glass-bg)'" onmouseout="this.style.background='var(--card-bg)'">
@@ -116,60 +167,49 @@
                     <span x-text="timeLabel">Last 60m</span>
                     <i class="fas fa-chevron-down text-[8px] opacity-60 transition-transform duration-200" :class="{'rotate-180': timeOpen}"></i>
                 </button>
-
-                {{-- Sync Button --}}
-                <button @click="syncCompetitors('{{ $lang }}', timeValue, '{{ $customBoxId ?? '' }}')" :disabled="{{ $loadingModel }}" 
-                    style="display:inline-flex;align-items:center;gap:6px;padding:6px 16px;border-radius:12px;font-size:11px;font-weight:900;color:#fff;white-space:nowrap;border:1px solid rgba(255,255,255,0.2);background:{{ $colorVar }};box-shadow:0 4px 20px {{ $colorVar }}35;cursor:pointer;transition:transform 0.15s;"
-                    onmouseover="if(!this.disabled)this.style.transform='scale(1.05)'" onmouseout="this.style.transform='scale(1)'">
-                    <i class="fas fa-sync-alt text-[10px]" :class="{ 'fa-spin': {{ $loadingModel }} }"></i> 
-                    <span x-text="{{ $loadingModel }} ? 'Initial Scanning...' : 'Refresh Radar'"></span>
-                </button>
-            </div>
-
-            {{-- Time Filter Dropdown --}}
-            <div x-show="timeOpen" x-cloak
-                 x-transition:enter="transition ease-out duration-150"
-                 x-transition:enter-start="opacity-0 translate-y-[-4px]"
-                 x-transition:enter-end="opacity-100 translate-y-0"
-                 x-transition:leave="transition ease-in duration-100"
-                 x-transition:leave-start="opacity-100"
-                 x-transition:leave-end="opacity-0"
-                 style="position:absolute;top:calc(100% + 6px);{{ $isAr ? 'right:0' : 'left:0' }};width:260px;max-height:360px;overflow-y:auto;background:var(--card-bg);border:1px solid var(--glass-border);border-radius:14px;z-index:9999;box-shadow:0 15px 40px rgba(0,0,0,0.15);">
-                <div style="padding:8px 14px;font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:0.08em;color:var(--text-muted);border-bottom:1px solid var(--glass-border);position:sticky;top:0;background:var(--card-bg);z-index:1;">
-                    <i class="fas fa-filter text-[8px] mr-1 opacity-40"></i> Select Time Range
-                </div>
-
-                <template x-for="(opt, idx) in timeOptions" :key="opt.value">
-                    <button type="button"
-                        @click="selectTime(opt)"
-                        @mouseenter="hoverValue = opt.value"
-                        @mouseleave="hoverValue = null"
-                        style="display:flex;align-items:center;justify-content:space-between;gap:12px;width:100%;min-height:56px;padding:12px 14px;text-align:{{ $isAr ? 'right' : 'left' }};color:var(--text-main);border:none;cursor:pointer;transition:background 0.15s;background:transparent;"
-                        :style="{
-                            background: optionBg(opt),
-                            borderTop: idx > 0 ? '1px solid var(--glass-border)' : 'none'
-                        }">
-                        <div style="display:flex;align-items:center;gap:10px;min-width:0;flex:1;">
-                            <span
-                                style="display:flex;align-items:center;justify-content:center;width:32px;height:32px;border-radius:8px;flex-shrink:0;font-size:12px;"
-                                :style="{
-                                    background: opt.color + '26',
-                                    color: opt.color
-                                }">
-                                <i :class="opt.icon"></i>
-                            </span>
-                            <div style="display:flex;flex-direction:column;min-width:0;">
-                                <span style="font-size:12px;font-weight:700;line-height:1.3;color:var(--text-main);" x-text="opt.title"></span>
-                                <span style="font-size:10px;line-height:1.4;color:var(--text-muted);font-weight:500;margin-top:2px;" x-text="opt.hint"></span>
+                <div x-show="timeOpen" x-cloak
+                     x-transition:enter="transition ease-out duration-150"
+                     x-transition:enter-start="opacity-0 translate-y-[-4px]"
+                     x-transition:enter-end="opacity-100 translate-y-0"
+                     x-transition:leave="transition ease-in duration-100"
+                     x-transition:leave-start="opacity-100"
+                     x-transition:leave-end="opacity-0"
+                     style="position:absolute;top:calc(100% + 6px);{{ $isAr ? 'right:0' : 'left:0' }};width:260px;max-height:360px;overflow-y:auto;background:var(--card-bg);border:1px solid var(--glass-border);border-radius:14px;z-index:9999;box-shadow:0 15px 40px rgba(0,0,0,0.15);">
+                    <div style="padding:8px 14px;font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:0.08em;color:var(--text-muted);border-bottom:1px solid var(--glass-border);position:sticky;top:0;background:var(--card-bg);z-index:1;">
+                        <i class="fas fa-filter text-[8px] mr-1 opacity-40"></i> Select Time Range
+                    </div>
+                    <template x-for="(opt, idx) in timeOptions" :key="opt.value">
+                        <button type="button"
+                            @click="selectTime(opt)"
+                            @mouseenter="hoverValue = opt.value"
+                            @mouseleave="hoverValue = null"
+                            style="display:flex;align-items:center;justify-content:space-between;gap:12px;width:100%;min-height:56px;padding:12px 14px;text-align:{{ $isAr ? 'right' : 'left' }};color:var(--text-main);border:none;cursor:pointer;transition:background 0.15s;background:transparent;"
+                            :style="{
+                                background: optionBg(opt),
+                                borderTop: idx > 0 ? '1px solid var(--glass-border)' : 'none'
+                            }">
+                            <div style="display:flex;align-items:center;gap:12px;">
+                                <span :style="{ background: opt.color + '22', color: opt.color }" style="display:flex;align-items:center;justify-content:center;width:32px;height:32px;border-radius:9px;font-size:12px;flex-shrink:0;">
+                                    <i :class="opt.icon"></i>
+                                </span>
+                                <div style="display:flex;flex-direction:column;gap:2px;">
+                                    <span style="font-size:12px;font-weight:700;color:var(--text-main);" x-text="opt.title"></span>
+                                    <span style="font-size:10px;color:var(--text-muted);" x-text="opt.hint"></span>
+                                </div>
                             </div>
-                        </div>
-                        <i class="fas fa-check"
-                           style="font-size:11px;flex-shrink:0;"
-                           x-show="timeValue === opt.value"
-                           :style="{ color: opt.color }"></i>
-                    </button>
-                </template>
+                            <i class="fas fa-check text-xs" :style="{ color: opt.color }" x-show="timeValue === opt.value"></i>
+                        </button>
+                    </template>
+                </div>
             </div>
+
+            {{-- Sync Button --}}
+            <button @click="syncCompetitors('{{ $lang }}', timeValue, '{{ $customBoxId ?? '' }}', modeValue)" :disabled="{{ $loadingModel }}" 
+                style="display:inline-flex;align-items:center;gap:6px;padding:6px 16px;border-radius:12px;font-size:11px;font-weight:900;color:#fff;white-space:nowrap;border:1px solid rgba(255,255,255,0.2);background:{{ $colorVar }};box-shadow:0 4px 20px {{ $colorVar }}35;cursor:pointer;transition:transform 0.15s;"
+                onmouseover="if(!this.disabled)this.style.transform='scale(1.05)'" onmouseout="this.style.transform='scale(1)'">
+                <i class="fas fa-sync-alt text-[10px]" :class="{ 'fa-spin': {{ $loadingModel }} }"></i> 
+                <span x-text="{{ $loadingModel }} ? 'Scanning...' : 'Refresh Radar'"></span>
+            </button>
         </div>
 
         {{-- Settings --}}

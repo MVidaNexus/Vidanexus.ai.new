@@ -392,7 +392,7 @@ function keywordRadar() {
             return 100;
         },
 
-        syncCompetitors(lang, timeFilter = '60m', boxId = '') {
+        syncCompetitors(lang, timeFilter = '60m', boxId = '', mode = 'smart') {
             const prop = boxId ? `sync_${boxId}` : (lang === 'ar' ? 'syncAr' : 'syncEn');
             if (this.loading[prop]) return;
             this.loading[prop] = true;
@@ -403,6 +403,7 @@ function keywordRadar() {
             formData.append('_token', '{{ csrf_token() }}');
             formData.append('lang', lang);
             formData.append('time_filter', timeFilter);
+            formData.append('mode', mode || 'smart');
             if (boxId) formData.append('box_id', boxId);
             const controller = new AbortController();
             const syncTimeoutMs = 240 * 1000; // 4 minutes generous timeout so browser never aborts prematurely
