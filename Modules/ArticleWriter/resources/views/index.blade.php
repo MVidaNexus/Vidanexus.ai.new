@@ -1612,12 +1612,17 @@ function articleWriter() {
                     this.view = 'result';
                     this.articleTab = 'read';
 
+                    const newBal = (typeof data.balance !== 'undefined') ? data.balance : data.credits_balance;
                     if (window.VidaCredits) {
-                        if (typeof data.balance !== 'undefined') {
-                            window.VidaCredits.updateAll(data.balance);
+                        if (typeof newBal !== 'undefined' && newBal !== null) {
+                            window.VidaCredits.updateAll(newBal);
                         } else {
                             window.VidaCredits.refresh();
                         }
+                    }
+                    if (typeof newBal !== 'undefined' && newBal !== null) {
+                        window.dispatchEvent(new CustomEvent('credits:update', { detail: { balance: newBal } }));
+                        document.dispatchEvent(new CustomEvent('credits:update', { detail: { balance: newBal } }));
                     }
 
                     Swal.fire({

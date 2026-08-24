@@ -31,7 +31,7 @@
 (function () {
     if (window.VidaCredits) return;
 
-    var SELECTOR = '.js-credit-balance';
+    var SELECTOR = '.js-credit-balance, [data-credit-balance], .user-credit-balance, .credit-balance-display';
     var lastKnownBalance = null;
     var refreshUrl = null;
     var refreshing = false;
@@ -64,12 +64,13 @@
     }
 
     function animateElement(el, toValue) {
-        var fromRaw = parseFloat(el.dataset.creditValue);
+        var fromRaw = parseFloat(el.dataset.creditValue || el.getAttribute('data-credit-value') || el.textContent.replace(/[^0-9.]/g, ''));
         var to = Number(toValue);
         if (isNaN(to)) return;
 
         var from = isNaN(fromRaw) ? to : fromRaw;
         el.dataset.creditValue = String(to);
+        el.setAttribute('data-credit-value', String(to));
 
         if (from === to) {
             render(el, to);
@@ -112,6 +113,9 @@
         document.dispatchEvent(new CustomEvent('credits:changed', {
             detail: { balance: v },
         }));
+        window.dispatchEvent(new CustomEvent('credits:changed', {
+            detail: { balance: v },
+        }));
     }
 
     function refresh() {
@@ -132,10 +136,11 @@
                 return res.json();
             })
             .then(function (data) {
-                if (data && typeof data.balance !== 'undefined') {
-                    updateAll(data.balance);
+                var bal = (data && typeof data.balance !== 'undefined') ? data.balance : (data ? data.credits_balance : null);
+                if (bal !== null && typeof bal !== 'undefined') {
+                    updateAll(bal);
                 }
-                return data ? data.balance : null;
+                return bal;
             })
             .catch(function () {
                 return null;
@@ -154,11 +159,20 @@
     }
 
     function init() {
-        refreshUrl = readMeta('credits-balance-url');
+        refreshUrl = readMeta('credits-balance-url') || '/dashboard/credits/balance';
         lastKnownBalance = readInitial();
-        document.addEventListener('credits:request-refresh', function () {
-            refresh();
-        });
+        
+        var handler = function () { refresh(); };
+        document.addEventListener('credits:request-refresh', handler);
+        window.addEventListener('credits:request-refresh', handler);
+        
+        var updateHandler = function (e) {
+            if (e.detail && typeof e.detail.balance !== 'undefined') {
+                updateAll(e.detail.balance);
+            }
+        };
+        document.addEventListener('credits:update', updateHandler);
+        window.addEventListener('credits:update', updateHandler);
     }
 
     /**
@@ -168,13 +182,14 @@
      * deduct anything), we fall back to /dashboard/credits/balance.
      */
     function apply(data) {
-        if (data && typeof data === 'object'
-            && typeof data.balance !== 'undefined'
-            && data.balance !== null) {
-            var n = Number(data.balance);
-            if (!isNaN(n) && n >= 0) {
-                updateAll(n);
-                return Promise.resolve(n);
+        if (data && typeof data === 'object') {
+            var bal = (typeof data.balance !== 'undefined' && data.balance !== null) ? data.balance : data.credits_balance;
+            if (typeof bal !== 'undefined' && bal !== null) {
+                var n = Number(bal);
+                if (!isNaN(n) && n >= 0) {
+                    updateAll(n);
+                    return Promise.resolve(n);
+                }
             }
         }
         return refresh();

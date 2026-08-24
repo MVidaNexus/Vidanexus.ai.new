@@ -167,12 +167,13 @@ class ArticleWriterController extends Controller
                 'status' => 'success',
             ]);
 
-            $user->load('wallet');
+            $freshBalance = (float) ($user->wallet()->value('balance_credits') ?? 0);
             $history->makeHidden(['model']);
 
             return AIResponse::success([
                 'article' => $history,
-                'balance' => (float) ($user->wallet->balance_credits ?? 0),
+                'balance' => $freshBalance,
+                'credits_balance' => $freshBalance,
                 'provider_used' => $result['provider_used'] ?? ($result['provider'] ?? 'unknown'),
                 'fallback_applied' => (bool) ($result['fallback_applied'] ?? false),
             ]);
