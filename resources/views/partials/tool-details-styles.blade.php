@@ -287,4 +287,128 @@
                 padding: 1.5rem 1rem;
             }
         }
+
+        /* Sticky Floating CTA Bar (E-Commerce Style) */
+        .sticky-tool-bar {
+            position: fixed;
+            bottom: 1.5rem;
+            left: 50%;
+            transform: translate(-50%, 120px);
+            opacity: 0;
+            pointer-events: none;
+            z-index: 999;
+            width: 90%;
+            max-width: 680px;
+            background: rgba(11, 15, 25, 0.88);
+            backdrop-filter: blur(20px) saturate(180%);
+            -webkit-backdrop-filter: blur(20px) saturate(180%);
+            border: 1px solid rgba(0, 168, 230, 0.25);
+            border-radius: 20px;
+            padding: 0.75rem 1.25rem;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 1.25rem;
+            box-shadow: 0 15px 45px rgba(0, 0, 0, 0.6), 0 0 25px rgba(0, 168, 230, 0.12);
+            transition: transform 0.4s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.4s ease;
+        }
+
+        [data-theme="light"] .sticky-tool-bar {
+            background: rgba(255, 255, 255, 0.92);
+            border: 1px solid rgba(0, 168, 230, 0.2);
+            box-shadow: 0 10px 40px rgba(15, 23, 42, 0.15), 0 0 20px rgba(0, 168, 230, 0.1);
+        }
+
+        .sticky-tool-bar.visible {
+            transform: translate(-50%, 0);
+            opacity: 1;
+            pointer-events: auto;
+        }
+
+        .sticky-tool-info {
+            display: flex;
+            align-items: center;
+            gap: 0.9rem;
+            min-width: 0;
+        }
+
+        .sticky-tool-icon {
+            width: 44px;
+            height: 44px;
+            border-radius: 12px;
+            border: 1px solid;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.25rem;
+            flex-shrink: 0;
+        }
+
+        .sticky-tool-texts {
+            display: flex;
+            flex-direction: column;
+            min-width: 0;
+            text-align: left;
+        }
+
+        .sticky-tool-name {
+            font-size: 0.95rem;
+            font-weight: 800;
+            color: var(--text-main);
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            line-height: 1.2;
+        }
+
+        .sticky-tool-tagline {
+            font-size: 0.75rem;
+            color: var(--text-muted);
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            margin-top: 2px;
+        }
+
+        .sticky-btn {
+            padding: 0.65rem 1.4rem !important;
+            font-size: 0.85rem !important;
+            font-weight: 800 !important;
+            border-radius: 12px !important;
+            white-space: nowrap;
+            box-shadow: 0 4px 15px rgba(0, 168, 230, 0.35) !important;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            text-decoration: none;
+        }
+
+        .sticky-locked-badge {
+            padding: 0.5rem 1rem;
+            border-radius: 10px;
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid var(--glass-border);
+            font-size: 0.75rem;
+            font-weight: 700;
+            color: var(--text-muted);
+            display: flex;
+            align-items: center;
+            gap: 0.4rem;
+        }
+
+        @media (max-width: 640px) {
+            .sticky-tool-bar {
+                bottom: 0.75rem;
+                width: 94%;
+                padding: 0.6rem 0.9rem;
+                gap: 0.75rem;
+            }
+            .sticky-tool-tagline {
+                display: none;
+            }
+            .sticky-btn {
+                padding: 0.55rem 1rem !important;
+                font-size: 0.8rem !important;
+            }
+        }
 </style>

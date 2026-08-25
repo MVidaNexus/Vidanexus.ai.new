@@ -163,10 +163,6 @@
 
     </div>
 
-    <a href="https://wa.me/201019944589" target="_blank" rel="noopener noreferrer" class="whatsapp-float" aria-label="Contact us on WhatsApp" id="whatsappFloat">
-        <i class="fab fa-whatsapp"></i>
-    </a>
-
     <script src="{{ asset('script.js?v=14') }}"></script>
     <script>
         document.getElementById('email-form').addEventListener('submit', async function(e) {

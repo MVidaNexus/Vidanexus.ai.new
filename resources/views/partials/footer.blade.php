@@ -39,15 +39,23 @@
             </div>
             
             <div class="footer-col">
-                <h4>Contact</h4>
+                <h4>Contact & Operations</h4>
                 <ul class="footer-contact">
                     <li>
                         <div class="contact-icon"><i class="fas fa-envelope"></i></div>
-                        <span>info@vidanexus.net</span>
+                        <a href="mailto:info@vidanexus.net" style="color: inherit; text-decoration: none;">info@vidanexus.net</a>
                     </li>
                     <li>
                         <div class="contact-icon"><i class="fas fa-phone"></i></div>
                         <a href="tel:+201019944589" style="color: inherit; text-decoration: none;">+20 1019944589</a>
+                    </li>
+                    <li>
+                        <div class="contact-icon"><i class="fas fa-map-marker-alt"></i></div>
+                        <span>VidaNexus Hub — Egypt</span>
+                    </li>
+                    <li>
+                        <div class="contact-icon"><i class="fas fa-headset"></i></div>
+                        <a href="mailto:technical@vidanexus.net" style="color: inherit; text-decoration: none;">technical@vidanexus.net</a>
                     </li>
                 </ul>
             </div>
@@ -64,7 +72,7 @@
     </div>
 </footer>
 
-{{-- Floating Action Buttons --}}
+{{-- Floating Action Buttons (Back to Top Only) --}}
 <div id="floating-actions" style="
     position: fixed;
     bottom: 1.5rem;
@@ -93,33 +101,9 @@
     ">
         <i class="fas fa-chevron-up" style="font-size: 1rem;"></i>
     </button>
-
-    {{-- WhatsApp --}}
-    <a href="https://wa.me/201019944589" target="_blank" rel="noopener noreferrer" aria-label="WhatsApp" id="btn-whatsapp" style="
-        width: 56px; height: 56px;
-        border-radius: 50%;
-        background: linear-gradient(135deg, #25D366, #128C7E);
-        color: #fff;
-        display: flex; align-items: center; justify-content: center;
-        text-decoration: none;
-        cursor: pointer;
-        transition: all 0.35s cubic-bezier(.4,0,.2,1);
-        box-shadow: 0 4px 20px rgba(37,211,102,0.35), 0 0 25px rgba(37,211,102,0.15);
-        animation: wa-pulse 2.5s infinite;
-    ">
-        <i class="fab fa-whatsapp" style="font-size: 1.6rem;"></i>
-    </a>
 </div>
 
 <style>
-    @keyframes wa-pulse {
-        0%, 100% { box-shadow: 0 4px 20px rgba(37,211,102,0.35), 0 0 25px rgba(37,211,102,0.15); }
-        50% { box-shadow: 0 4px 25px rgba(37,211,102,0.5), 0 0 40px rgba(37,211,102,0.25); }
-    }
-    #btn-whatsapp:hover {
-        transform: scale(1.12) !important;
-        box-shadow: 0 6px 30px rgba(37,211,102,0.5), 0 0 40px rgba(37,211,102,0.3) !important;
-    }
     #btn-scroll-top:hover {
         background: rgba(0, 168, 230,0.15) !important;
         border-color: rgba(0, 168, 230,0.5) !important;
@@ -132,8 +116,6 @@
     }
     @media (max-width: 640px) {
         #floating-actions { bottom: 1rem; right: 1rem; }
-        #btn-whatsapp { width: 50px; height: 50px; }
-        #btn-whatsapp i { font-size: 1.4rem; }
         #btn-scroll-top { width: 42px; height: 42px; }
     }
 </style>
