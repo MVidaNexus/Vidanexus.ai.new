@@ -69,7 +69,7 @@ class KeywordPayload
     /** Max seconds a sync lock may live before we treat it as stale (crashed worker). */
     public static function syncLockStaleSeconds(): int
     {
-        return 300;
+        return 120;
     }
 
     public static function acquireSyncLock(int $userId, string $lang, ?string $boxId = null): void

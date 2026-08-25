@@ -239,7 +239,16 @@ function keywordRadar() {
         },
 
         async _recoverActiveSyncOnLoad() {
-            // Silent recovery — never block the user's view on page load
+            // Check active sync state silently for AR and EN so mobile users see progress if already running
+            try {
+                const res = await fetch(`{{ route('dashboard.ai-keyword-radar.get-keywords') }}?lang=ar`, { headers: { 'X-Requested-With': 'XMLHttpRequest' } });
+                const data = await res.json();
+                if (data && data.sync_running) {
+                    this._startSyncPolling('syncing_ar', 'ar', null, (data.keywords || []).length);
+                }
+            } catch (e) {
+                // Ignore silent recovery errors
+            }
         },
 
         _waitForActiveSync(prop, lang, boxId, timeFilter) {
@@ -503,19 +512,52 @@ function keywordRadar() {
                 const pollBoxId = data.box_id || boxId;
                 this._startSyncPolling(prop, pollLang, pollBoxId, initialCount);
             })
-            .catch(error => {
+            .catch(async error => {
                 clearTimeout(syncTimeout);
+                console.warn('[Sync Disconnect/Timeout]', error);
+
+                // Mobile resilience check: verify if background sync is actively running or completed on server
+                try {
+                    const checkUrl = `{{ route('dashboard.ai-keyword-radar.get-keywords') }}?lang=${lang}${boxId ? '&box_id='+boxId : ''}`;
+                    const res = await fetch(checkUrl, { headers: { 'X-Requested-With': 'XMLHttpRequest' } });
+                    const checkData = await res.json();
+
+                    if (checkData && checkData.sync_running) {
+                        Swal.fire({
+                            title: '📡 Radar Scanning',
+                            text: lang === 'ar' ? 'الرادار يواصل المسح الذكي في الخلفية...' : 'Radar is scanning in background...',
+                            icon: 'info',
+                            toast: true,
+                            position: 'top-end',
+                            showConfirmButton: false,
+                            timer: 6000,
+                            timerProgressBar: true,
+                            background: '#0f172a',
+                            color: '#fff',
+                        });
+                        this._waitForActiveSync(prop, lang, boxId, timeFilter);
+                        return;
+                    }
+
+                    if (checkData && checkData.success && (checkData.keywords || []).length > 0) {
+                        this._finishSyncLoading(prop);
+                        window.location.reload();
+                        return;
+                    }
+                } catch (recoveryErr) {
+                    console.warn('[Recovery Check Failed]', recoveryErr);
+                }
+
                 this._finishSyncLoading(prop);
-                console.error('[Sync Error]', error);
                 const code = error.name === 'AbortError' ? 'NETWORK_ERROR' : (error.message || 'FETCH_FAILED');
                 const msg = this.resolveSyncError({ error_code: code }, error.name === 'AbortError' ? 408 : 500);
                 Swal.fire({
-                    title: 'Radar Error',
+                    title: 'Radar Status',
                     text: msg,
-                    icon: 'error',
+                    icon: 'warning',
                     background: '#0f172a',
                     color: '#fff',
-                    confirmButtonColor: '#ef4444',
+                    confirmButtonColor: '#0ea5e9',
                 });
             });
         },
