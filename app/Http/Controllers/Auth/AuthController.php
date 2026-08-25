@@ -33,6 +33,10 @@ class AuthController extends Controller
 
     public function register(RegisterUserRequest $request, UserRegistrationService $registration): \Illuminate\Http\RedirectResponse
     {
+        if (! (bool) \App\Models\Setting::get('allow_registration', true)) {
+            return redirect()->route('register')->with('error', 'New user registrations are currently closed. Please check back soon.');
+        }
+
         return $registration->register($request);
     }
 

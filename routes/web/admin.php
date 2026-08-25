@@ -48,6 +48,7 @@ Route::middleware(['auth', 'admin'])->prefix('horizon-admin')->group(function ()
     Route::post('/users/{user}/impersonate', [UserController::class, 'impersonate'])->name('admin.users.impersonate');
     Route::delete('/users/{user}', [UserController::class, 'delete'])->name('admin.users.delete');
     Route::post('/users/toggle-verification', [UserController::class, 'toggleVerification'])->name('admin.users.toggle-verification');
+    Route::post('/users/toggle-registration', [UserController::class, 'toggleRegistration'])->name('admin.users.toggle-registration');
 
     // Coupons
     Route::post('/coupons', [CouponController::class, 'store'])->middleware('permission:manage_coupons')->name('admin.coupons.store');

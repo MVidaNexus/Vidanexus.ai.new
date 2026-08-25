@@ -1,4 +1,4 @@
-﻿        <main class="hero" style="padding-top: 2rem;">
+        <main class="hero" style="padding-top: 2rem;">
             <div class="reg-container">
                 
                 {{-- Left: Marketing Panel --}}
@@ -30,7 +30,36 @@
                     </div>
                 </div>
 
-                {{-- Right: Form Panel --}}
+                {{-- Right: Form Panel or Registration Closed Card --}}
+                @if(! (bool) \App\Models\Setting::get('allow_registration', true))
+                    <div class="glass-panel" style="padding: 3.5rem 2.5rem; width: 100%; text-align: center;">
+                        <div style="width: 76px; height: 76px; border-radius: 22px; background: rgba(239, 68, 68, 0.1); border: 1px solid rgba(239, 68, 68, 0.25); color: #ef4444; display: flex; align-items: center; justify-content: center; font-size: 2.2rem; margin: 0 auto 1.75rem auto; box-shadow: 0 0 35px rgba(239, 68, 68, 0.15);">
+                            <i class="fas fa-user-lock"></i>
+                        </div>
+                        
+                        <div style="display: inline-block; padding: 6px 16px; border-radius: 30px; background: rgba(239, 68, 68, 0.12); border: 1px solid rgba(239, 68, 68, 0.25); font-size: 0.75rem; font-weight: 800; color: #f87171; letter-spacing: 1.5px; text-transform: uppercase; margin-bottom: 1.25rem;">
+                            Registration Paused
+                        </div>
+                        
+                        <h2 style="font-size: 1.85rem; font-weight: 800; color: #ffffff; margin: 0 0 1rem 0; line-height: 1.3;">
+                            New Signups Are Temporarily Closed
+                        </h2>
+                        
+                        <p style="font-size: 0.95rem; line-height: 1.75; color: var(--text-muted); max-width: 440px; margin: 0 auto 2.25rem auto;">
+                            We are currently limiting new member onboarding while we upgrade server infrastructure and optimize platform resources. New invitations will open soon!
+                        </p>
+
+                        <div style="display: flex; flex-direction: column; gap: 0.85rem; max-width: 320px; margin: 0 auto;">
+                            <a href="/login" class="notify-btn" style="width: 100%; justify-content: center; text-decoration: none; padding: 0.9rem 1.5rem; font-weight: 800; border-radius: 14px;">
+                                <span>Sign In to Existing Account</span>
+                                <i class="fas fa-sign-in-alt"></i>
+                            </a>
+                            <a href="/" style="padding: 0.8rem 1.5rem; font-weight: 700; font-size: 0.9rem; border-radius: 14px; text-decoration: none; color: var(--text-muted); display: flex; align-items: center; justify-content: center; gap: 0.5rem; border: 1px solid rgba(255,255,255,0.08); background: rgba(255,255,255,0.02); transition: all 0.2s;">
+                                <i class="fas fa-arrow-left"></i> Back to Homepage
+                            </a>
+                        </div>
+                    </div>
+                @else
                 <div class="glass-panel" style="padding: 2.5rem; width: 100%;">
                     
                     {{-- Progress (Simplified) --}}
@@ -361,5 +390,6 @@
                         Already have an account? <a href="/login" style="color: var(--primary-cyan); text-decoration: none; font-weight: 600;">Secure Login</a>
                     </div>
                 </div>
+                @endif
             </div>
         </main>

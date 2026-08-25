@@ -324,31 +324,54 @@
 
 @php
     $isVerificationEnabled = (bool) \App\Models\Setting::get('global_email_verification', true);
+    $isRegistrationOpen = (bool) \App\Models\Setting::get('allow_registration', true);
 @endphp
 
-<div style="display: flex; justify-content: space-between; align-items: flex-end; margin-bottom: 2rem; gap: 2rem; flex-wrap: wrap;">
-    <!-- Security Matrix Quick-Toggle -->
-    <div style="background: var(--horizon-card); border: 1px solid {{ $isVerificationEnabled ? 'rgba(16, 185, 129, 0.2)' : 'rgba(239, 68, 68, 0.2)' }}; padding: 1.25rem; border-radius: 20px; display: flex; align-items: center; gap: 1.5rem; transition: all 0.3s ease; flex: 1; min-width: 300px;">
+<div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: 1.25rem; margin-bottom: 2rem;">
+    <!-- 1. Security Matrix Quick-Toggle (Email Verification) -->
+    <div style="background: var(--horizon-card); border: 1px solid {{ $isVerificationEnabled ? 'rgba(16, 185, 129, 0.2)' : 'rgba(239, 68, 68, 0.2)' }}; padding: 1.25rem; border-radius: 20px; display: flex; align-items: center; gap: 1.25rem; transition: all 0.3s ease;">
         <div style="width: 48px; height: 48px; border-radius: 12px; background: {{ $isVerificationEnabled ? 'rgba(16, 185, 129, 0.1)' : 'rgba(239, 68, 68, 0.1)' }}; display: flex; align-items: center; justify-content: center; color: {{ $isVerificationEnabled ? '#00A58B' : '#ef4444' }}; font-size: 1.25rem;">
             <i class="fas {{ $isVerificationEnabled ? 'fa-shield-check' : 'fa-shield-exclamation' }}"></i>
         </div>
         <div style="flex: 1;">
-            <div style="font-weight: 800; color: var(--text-main); font-size: 0.9rem; letter-spacing: 0.5px;">SYSTEM-WIDE VERIFICATION</div>
+            <div style="font-weight: 800; color: var(--text-main); font-size: 0.85rem; letter-spacing: 0.5px;">SYSTEM-WIDE VERIFICATION</div>
             <div style="font-size: 0.75rem; color: var(--text-muted); margin-top: 0.1rem;">
                 Status: <strong style="color: {{ $isVerificationEnabled ? '#00A58B' : '#ef4444' }}; text-transform: uppercase;">{{ $isVerificationEnabled ? 'Active' : 'Bypassed' }}</strong>
             </div>
         </div>
         <form action="{{ route('admin.users.toggle-verification') }}" method="POST" style="margin: 0;">
             @csrf
-            <button type="submit" class="vn-btn {{ $isVerificationEnabled ? 'vn-btn-primary' : 'vn-btn-outline' }}" style="padding: 0.6rem 1.25rem; font-size: 0.8rem; border-radius: 12px; {{ !$isVerificationEnabled ? 'border-color: #ef4444; color: #ef4444;' : '' }}">
-                <i class="fas {{ $isVerificationEnabled ? 'fa-toggle-on' : 'fa-toggle-off' }} mr-2"></i>
-                {{ $isVerificationEnabled ? 'Disable Verification' : 'Enable Verification' }}
+            <button type="submit" class="vn-btn {{ $isVerificationEnabled ? 'vn-btn-primary' : 'vn-btn-outline' }}" style="padding: 0.55rem 1rem; font-size: 0.75rem; border-radius: 10px; {{ !$isVerificationEnabled ? 'border-color: #ef4444; color: #ef4444;' : '' }}">
+                <i class="fas {{ $isVerificationEnabled ? 'fa-toggle-on' : 'fa-toggle-off' }} mr-1"></i>
+                {{ $isVerificationEnabled ? 'Disable' : 'Enable' }}
             </button>
         </form>
     </div>
 
+    <!-- 2. Public Registration Control Quick-Toggle -->
+    <div style="background: var(--horizon-card); border: 1px solid {{ $isRegistrationOpen ? 'rgba(14, 165, 233, 0.25)' : 'rgba(239, 68, 68, 0.25)' }}; padding: 1.25rem; border-radius: 20px; display: flex; align-items: center; gap: 1.25rem; transition: all 0.3s ease;">
+        <div style="width: 48px; height: 48px; border-radius: 12px; background: {{ $isRegistrationOpen ? 'rgba(14, 165, 233, 0.1)' : 'rgba(239, 68, 68, 0.1)' }}; display: flex; align-items: center; justify-content: center; color: {{ $isRegistrationOpen ? '#0ea5e9' : '#ef4444' }}; font-size: 1.25rem;">
+            <i class="fas {{ $isRegistrationOpen ? 'fa-user-plus' : 'fa-user-lock' }}"></i>
+        </div>
+        <div style="flex: 1;">
+            <div style="font-weight: 800; color: var(--text-main); font-size: 0.85rem; letter-spacing: 0.5px;">USER REGISTRATION</div>
+            <div style="font-size: 0.75rem; color: var(--text-muted); margin-top: 0.1rem;">
+                Status: <strong style="color: {{ $isRegistrationOpen ? '#0ea5e9' : '#ef4444' }}; text-transform: uppercase;">{{ $isRegistrationOpen ? 'Open (Public)' : 'Closed (Paused)' }}</strong>
+            </div>
+        </div>
+        <form action="{{ route('admin.users.toggle-registration') }}" method="POST" style="margin: 0;">
+            @csrf
+            <button type="submit" class="vn-btn {{ $isRegistrationOpen ? 'vn-btn-outline' : 'vn-btn-primary' }}" style="padding: 0.55rem 1rem; font-size: 0.75rem; border-radius: 10px; {{ $isRegistrationOpen ? 'border-color: #ef4444; color: #ef4444;' : 'background: #0ea5e9;' }}">
+                <i class="fas {{ $isRegistrationOpen ? 'fa-lock' : 'fa-lock-open' }} mr-1"></i>
+                {{ $isRegistrationOpen ? 'Close Registration' : 'Open Registration' }}
+            </button>
+        </form>
+    </div>
+</div>
+
+<div style="margin-bottom: 2rem;">
     <!-- Search Box Premium -->
-    <div class="search-box-premium" style="flex: 1; min-width: 300px; margin-bottom: 0;">
+    <div class="search-box-premium" style="width: 100%; margin-bottom: 0;">
         <i class="fas fa-search" style="color: var(--primary-cyan);"></i>
         <input type="text" id="userFilterInput" placeholder="Hunt by name, email, or identity token..." class="search-input">
         <div style="font-size: 0.7rem; color: var(--text-muted); font-weight: 700; text-transform: uppercase;">Press / to focus</div>

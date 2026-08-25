@@ -17,7 +17,10 @@ class UserController extends Controller
     public function index()
     {
         $users = User::with('wallet')->orderBy('created_at', 'desc')->paginate(20);
-        return view('admin.users.index', compact('users'));
+        $isVerificationEnabled = (bool) Setting::get('global_email_verification', true);
+        $isRegistrationOpen = (bool) Setting::get('allow_registration', true);
+
+        return view('admin.users.index', compact('users', 'isVerificationEnabled', 'isRegistrationOpen'));
     }
 
     /**
@@ -220,5 +223,14 @@ class UserController extends Controller
         
         $status = !$current ? 'ENABLED' : 'DISABLED';
         return back()->with('success', "Email Verification has been $status globally.");
+    }
+
+    public function toggleRegistration()
+    {
+        $current = (bool) \App\Models\Setting::get('allow_registration', true);
+        \App\Models\Setting::set('allow_registration', !$current, 'boolean', 'security');
+        
+        $status = !$current ? 'OPENED' : 'CLOSED';
+        return back()->with('success', "New user registration has been $status globally.");
     }
 }
