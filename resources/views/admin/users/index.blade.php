@@ -327,7 +327,7 @@
     $isRegistrationOpen = (bool) \App\Models\Setting::get('allow_registration', true);
 @endphp
 
-<div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: 1.25rem; margin-bottom: 2rem;">
+<div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 280px), 1fr)); gap: 1.25rem; margin-bottom: 2rem;">
     <!-- 1. Security Matrix Quick-Toggle (Email Verification) -->
     <div style="background: var(--horizon-card); border: 1px solid {{ $isVerificationEnabled ? 'rgba(16, 185, 129, 0.2)' : 'rgba(239, 68, 68, 0.2)' }}; padding: 1.25rem; border-radius: 20px; display: flex; align-items: center; gap: 1.25rem; transition: all 0.3s ease;">
         <div style="width: 48px; height: 48px; border-radius: 12px; background: {{ $isVerificationEnabled ? 'rgba(16, 185, 129, 0.1)' : 'rgba(239, 68, 68, 0.1)' }}; display: flex; align-items: center; justify-content: center; color: {{ $isVerificationEnabled ? '#00A58B' : '#ef4444' }}; font-size: 1.25rem;">

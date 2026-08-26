@@ -1,4 +1,4 @@
-﻿<style>
+<style>
         .page-header {
             padding: 8rem 2rem 4rem;
             text-align: center;
@@ -81,8 +81,15 @@
         }
         
         @media (max-width: 768px) {
+            .page-header {
+                padding: 6rem 1rem 2rem;
+            }
+            .content-container {
+                padding: 0 1rem 3rem;
+            }
             .legal-content {
-                padding: 1.5rem;
+                padding: 1.5rem 1.25rem;
+                border-radius: 16px;
             }
         }
 </style>

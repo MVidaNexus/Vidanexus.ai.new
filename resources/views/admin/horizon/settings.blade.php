@@ -50,7 +50,7 @@
                     <i class="fas fa-info-circle mr-2"></i> <strong>Note:</strong> Since you are an <strong>Admin</strong>, all tools will appear active to you on the homepage. Use an <strong>Incognito Window</strong> or <strong>Logout</strong> to see how regular users see the "Coming Soon" states.
                 </div>
 
-                <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); gap: 1rem;">
+                <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, 280px), 1fr)); gap: 1rem;">
                     @foreach($tools as $tool)
                         @php
                             $availKey = "tool_available_{$tool['slug']}";
@@ -90,7 +90,7 @@
                     Centralized control for tool activation costs (Credits) and the strategic marketplace bonuses granted upon first acquisition.
                 </p>
 
-                <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(380px, 1fr)); gap: 1.25rem;">
+                <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, 300px), 1fr)); gap: 1.25rem;">
                     @foreach($tools as $tool)
                         @php
                             $priceKey = "tool_unlock_price_{$tool['slug']}";
@@ -165,7 +165,7 @@
                     </div>
                 </div>
 
-                <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(360px, 1fr)); gap: 1rem;">
+                <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, 300px), 1fr)); gap: 1rem;">
                     @foreach($tools as $tool)
                         @php
                             $creditKey = "tool_credit_cost_{$tool['slug']}";
@@ -371,7 +371,7 @@
                     $packages = is_string($savedPackagesJson) ? json_decode($savedPackagesJson, true) : ($savedPackagesJson ?: $defaultPackages);
                 @endphp
 
-                <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(350px, 1fr)); gap: 1.5rem;">
+                <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, 300px), 1fr)); gap: 1.5rem;">
                     @foreach(['lite', 'standard', 'pro', 'enterprise'] as $pkgKey)
                         @php $pkg = $packages[$pkgKey] ?? $defaultPackages[$pkgKey]; @endphp
                         <div style="background: var(--horizon-nav-hover); border: 1px solid var(--horizon-border); border-radius: 16px; padding: 1.5rem;">
@@ -435,7 +435,7 @@
                     </div>
                 </div>
 
-                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(450px, 1fr)); gap: 2rem;">
+                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 320px), 1fr)); gap: 2rem;">
                     <!-- Connection Settings -->
                     <div style="background: rgba(255,255,255,0.02); border: 1px solid var(--horizon-border); border-radius: 20px; padding: 1.5rem;">
                         <h4 style="color: var(--text-main); font-size: 0.9rem; margin-bottom: 1.5rem; display: flex; align-items: center; gap: 0.6rem; font-weight: 800; border-bottom: 1px solid rgba(255,255,255,0.05); padding-bottom: 0.75rem;">
@@ -685,7 +685,7 @@
                     <span style="background: rgba(16, 185, 129, 0.1); color: #00A58B; border: 1px solid rgba(16, 185, 129, 0.2); padding: 4px 12px; border-radius: 20px; font-size: 0.75rem; font-weight: 700;">STABLE</span>
                 </div>
                 
-                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(350px, 1fr)); gap: 2rem;">
+                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 300px), 1fr)); gap: 2rem;">
                     <div style="background: rgba(255,255,255,0.02); border: 1px solid var(--horizon-border); border-radius: 20px; padding: 2rem;">
                         <h4 style="margin-bottom: 1.5rem; color: var(--primary-cyan); font-size: 1rem; display: flex; align-items: center; gap: 0.75rem;">
                             <i class="fas fa-microchip"></i> System Environment
@@ -823,7 +823,7 @@
                     </div>
                 </div>
 
-                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(450px, 1fr)); gap: 2rem;">
+                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 320px), 1fr)); gap: 2rem;">
                     <!-- Bot Identification -->
                     <div style="background: rgba(255,255,255,0.02); border: 1px solid var(--horizon-border); border-radius: 20px; padding: 1.5rem;">
                         <h4 style="color: var(--text-main); font-size: 0.9rem; margin-bottom: 1rem; display: flex; align-items: center; gap: 0.6rem; font-weight: 800;">

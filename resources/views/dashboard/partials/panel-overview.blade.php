@@ -2,7 +2,7 @@
                     <div class="panel-header">
                         <h2 class="panel-title"><i class="fas fa-id-card"></i> Account Details</h2>
                     </div>
-                    <div class="profile-info" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 1.5rem;">
+                    <div class="profile-info" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 260px), 1fr)); gap: 1.25rem;">
                         <div class="info-group premium-info-group">
                             <label style="color: var(--text-muted); font-size: 0.75rem; text-transform: uppercase; letter-spacing: 1px; font-weight: 700; margin-bottom: 0;"><i class="fas fa-user" style="margin-right: 0.5rem; opacity: 0.5;"></i>Full Name</label>
                             <p style="font-size: 1.2rem; font-weight: 600; color: var(--text-main); margin: 0;">{{ $user->name }}</p>

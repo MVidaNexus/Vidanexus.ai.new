@@ -39,7 +39,7 @@
 @endphp
 
 
-<div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 2rem; width: 100%;">
+<div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 260px), 1fr)); gap: 1.5rem; width: 100%; max-width: 100%;">
     @foreach($packages as $id => $pkg)
         <div class="pricing-card {{ !empty($pkg['popular']) ? 'popular-card' : '' }}" style="
             background: var(--glass-bg);
