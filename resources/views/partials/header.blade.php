@@ -78,9 +78,15 @@
                 </a>
             @endif
             
-            <a href="/dashboard" style="color: var(--text-main); text-decoration: none; font-size: 0.9rem; font-weight: 600; display: flex; align-items: center; gap: 0.5rem; text-shadow: 0 0 10px var(--title-glow);">
-                <i class="fas fa-layer-group"></i>
-                <span>My Dashboard</span>
+            <a href="/dashboard" style="color: var(--text-main); text-decoration: none; font-size: 0.9rem; font-weight: 600; display: flex; align-items: center; gap: 0.6rem;">
+                @if(auth()->user()->avatar_url)
+                    <img src="{{ auth()->user()->avatar_url }}" alt="{{ auth()->user()->name }}" style="width: 28px; height: 28px; border-radius: 50%; object-fit: cover; border: 1.5px solid var(--primary-cyan);">
+                @else
+                    <span style="width: 28px; height: 28px; border-radius: 50%; background: linear-gradient(135deg, var(--primary-cyan), #0070e0); color: #000; font-weight: 800; font-size: 0.8rem; display: inline-flex; align-items: center; justify-content: center; text-transform: uppercase;">
+                        {{ substr(auth()->user()->name, 0, 1) }}
+                    </span>
+                @endif
+                <span>{{ \Illuminate\Support\Str::limit(auth()->user()->name, 14) }}</span>
             </a>
 
             <div class="feature-chip" style="background: rgba(0, 168, 230, 0.05); border-color: var(--primary-cyan); margin: 0; padding: 0.5rem 1rem;">
@@ -135,8 +141,6 @@
 </script>
 @endif
 
-
-
 <!-- Mobile Sidebar Navigation -->
 <div class="mobile-overlay" id="mobileOverlay" onclick="closeMobileMenu()"></div>
 <div class="mobile-sidebar" id="mobileSidebar" dir="ltr">
@@ -148,6 +152,22 @@
             <i class="fas fa-times"></i>
         </button>
     </div>
+
+    @auth
+        <div style="display: flex; align-items: center; gap: 0.75rem; padding: 1rem 0; border-bottom: 1px solid var(--header-border);">
+            @if(auth()->user()->avatar_url)
+                <img src="{{ auth()->user()->avatar_url }}" alt="{{ auth()->user()->name }}" style="width: 42px; height: 42px; border-radius: 50%; object-fit: cover; border: 2px solid var(--primary-cyan); flex-shrink: 0;">
+            @else
+                <span style="width: 42px; height: 42px; border-radius: 50%; background: linear-gradient(135deg, var(--primary-cyan), #0070e0); color: #000; font-weight: 800; font-size: 1.2rem; display: inline-flex; align-items: center; justify-content: center; text-transform: uppercase; flex-shrink: 0;">
+                    {{ substr(auth()->user()->name, 0, 1) }}
+                </span>
+            @endif
+            <div style="overflow: hidden;">
+                <div style="color: var(--text-main); font-weight: 700; font-size: 0.95rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">{{ auth()->user()->name }}</div>
+                <div style="color: var(--text-muted); font-size: 0.78rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">{{ auth()->user()->email }}</div>
+            </div>
+        </div>
+    @endauth
 
     <a href="/" onclick="closeMobileMenu()"><i class="fas fa-home" style="width: 25px;"></i> Home</a>
     <a href="/#tools" onclick="closeMobileMenu()"><i class="fas fa-layer-group" style="width: 25px;"></i> Tools</a>
@@ -174,17 +194,16 @@
 
     @auth
         <meta name="credits-balance-url" content="{{ route('dashboard.credits.balance') }}">
-        <div style="border-top: 1px solid var(--glass-border); padding-top: 1.5rem; margin-top: 1.5rem;">
-            <div style="padding: 0 1rem 0.5rem; color: var(--text-muted); font-size: 0.9rem;">My Dashboard</div>
+        <div style="border-top: 1px solid var(--glass-border); padding-top: 1rem; margin-top: 1rem;">
             @if(auth()->user()->isAdmin())
                 <a href="{{ route('admin.horizon.index') }}" onclick="closeMobileMenu()" style="color: var(--primary-cyan);"><i class="fas fa-user-shield" style="width: 25px;"></i> Admin Control</a>
             @endif
             <a href="/dashboard" onclick="closeMobileMenu()" style="color: var(--text-main); text-decoration: none;"><i class="fas fa-desktop" style="width: 25px;"></i> Dashboard</a>
-            <div style="padding: 1rem; color: var(--primary-cyan); font-weight: bold; font-family: var(--font-heading);"><i class="fas fa-wallet" style="width: 25px;"></i> <span class="js-credit-balance" data-credit-value="{{ (float) (auth()->user()->wallet->balance_credits ?? 0) }}" data-decimals="2" data-suffix=" Credits">{{ number_format(auth()->user()->wallet->balance_credits ?? 0, 2) }} Credits</span></div>
+            <div style="padding: 0.75rem 1rem; color: var(--primary-cyan); font-weight: bold; font-family: var(--font-heading);"><i class="fas fa-wallet" style="width: 25px;"></i> <span class="js-credit-balance" data-credit-value="{{ (float) (auth()->user()->wallet->balance_credits ?? 0) }}" data-decimals="2" data-suffix=" Credits">{{ number_format(auth()->user()->wallet->balance_credits ?? 0, 2) }} Credits</span></div>
             
             <form action="/logout" method="POST" style="margin: 0; padding: 0; width: 100%;">
                 @csrf
-                <button type="submit" style="color: #ff4b4b; display: flex; align-items: center; gap: 0.5rem; background: none; border: none; font-size: 1.2rem; cursor: pointer; padding: 1rem; text-align: left; width: 100%;">
+                <button type="submit" style="color: #ff4b4b; display: flex; align-items: center; gap: 0.5rem; background: none; border: none; font-size: 1.1rem; cursor: pointer; padding: 0.75rem 1rem; text-align: left; width: 100%;">
                     <i class="fas fa-sign-out-alt" style="width: 25px;"></i> Sign Out
                 </button>
             </form>

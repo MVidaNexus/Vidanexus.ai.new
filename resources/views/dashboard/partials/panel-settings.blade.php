@@ -3,7 +3,7 @@
                         <h2 class="panel-title"><i class="fas fa-cog"></i> Account Settings</h2>
                     </div>
 
-                    <form action="/dashboard/settings" method="POST" style="max-width: 600px;" onsubmit="return combinePhoneNumber()">
+                    <form action="/dashboard/settings" method="POST" enctype="multipart/form-data" style="max-width: 600px;" onsubmit="return combinePhoneNumber()">
                         @csrf
                         <input type="hidden" name="dial_code" id="dialCodeHidden" value="">
                         
@@ -16,6 +16,70 @@
                                 </ul>
                             </div>
                         @endif
+
+                        <!-- Profile Picture Upload Section -->
+                        <div style="margin-bottom: 2rem; padding: 1.5rem; background: rgba(255, 255, 255, 0.03); border: 1px solid var(--glass-border); border-radius: 14px; display: flex; align-items: center; gap: 1.5rem; flex-wrap: wrap;">
+                            <div style="position: relative;">
+                                <div id="avatarPreviewContainer" style="width: 80px; height: 80px; border-radius: 50%; overflow: hidden; border: 2.5px solid var(--primary-cyan); background: linear-gradient(135deg, var(--primary-cyan), #0070e0); display: flex; align-items: center; justify-content: center; font-size: 2.2rem; font-family: var(--font-heading); font-weight: 800; color: #000; box-shadow: 0 0 15px rgba(0, 168, 230, 0.25);">
+                                    @if($user->avatar_url)
+                                        <img id="avatarPreviewImg" src="{{ $user->avatar_url }}" alt="{{ $user->name }}" style="width: 100%; height: 100%; object-fit: cover;">
+                                    @else
+                                        <span id="avatarPreviewInitial">{{ substr($user->name, 0, 1) }}</span>
+                                        <img id="avatarPreviewImg" src="" alt="Preview" style="display: none; width: 100%; height: 100%; object-fit: cover;">
+                                    @endif
+                                </div>
+                            </div>
+                            <div style="flex: 1; min-width: 200px;">
+                                <label style="display: block; color: var(--text-main); font-weight: 700; font-size: 0.95rem; margin-bottom: 0.25rem;">Profile Picture</label>
+                                <p style="color: var(--text-muted); font-size: 0.8rem; margin-bottom: 0.8rem;">Upload a custom avatar (JPG, PNG, or WEBP - Max 3MB).</p>
+                                
+                                <div style="display: flex; gap: 0.75rem; align-items: center; flex-wrap: wrap;">
+                                    <label for="avatarInput" style="display: inline-flex; align-items: center; gap: 0.5rem; background: var(--primary-cyan); color: #000; padding: 0.5rem 1rem; border-radius: 8px; font-size: 0.82rem; font-weight: 700; cursor: pointer; transition: all 0.2s;">
+                                        <i class="fas fa-camera"></i>
+                                        <span>Change Photo</span>
+                                    </label>
+                                    <input type="file" name="avatar" id="avatarInput" accept="image/png, image/jpeg, image/webp" style="display: none;" onchange="handleAvatarPreview(this)">
+                                    
+                                    @if($user->avatar_url)
+                                        <label style="display: inline-flex; align-items: center; gap: 0.4rem; color: #ff6b6b; font-size: 0.82rem; font-weight: 600; cursor: pointer; padding: 0.5rem 0.75rem; background: rgba(255, 107, 107, 0.1); border-radius: 8px;">
+                                            <input type="checkbox" name="remove_avatar" value="1" id="removeAvatarCheck" onchange="toggleRemoveAvatar(this)">
+                                            <i class="fas fa-trash-alt"></i>
+                                            <span>Remove</span>
+                                        </label>
+                                    @endif
+                                </div>
+                            </div>
+                        </div>
+
+                        <script>
+                        function handleAvatarPreview(input) {
+                            if (input.files && input.files[0]) {
+                                const reader = new FileReader();
+                                reader.onload = function(e) {
+                                    const img = document.getElementById('avatarPreviewImg');
+                                    const initial = document.getElementById('avatarPreviewInitial');
+                                    if (img) {
+                                        img.src = e.target.result;
+                                        img.style.display = 'block';
+                                    }
+                                    if (initial) {
+                                        initial.style.display = 'none';
+                                    }
+                                };
+                                reader.readAsDataURL(input.files[0]);
+                            }
+                        }
+
+                        function toggleRemoveAvatar(checkbox) {
+                            const img = document.getElementById('avatarPreviewImg');
+                            const initial = document.getElementById('avatarPreviewInitial');
+                            if (checkbox.checked) {
+                                if (img) img.style.opacity = '0.3';
+                            } else {
+                                if (img) img.style.opacity = '1';
+                            }
+                        }
+                        </script>
 
                         <div style="margin-bottom: 1.5rem;">
                             <label style="display: block; color: var(--text-muted); margin-bottom: 0.5rem; font-size: 0.9rem;">Full Name</label>

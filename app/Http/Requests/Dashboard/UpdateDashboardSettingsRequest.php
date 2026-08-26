@@ -39,6 +39,8 @@ class UpdateDashboardSettingsRequest extends FormRequest
             'name' => 'required|string|max:255',
             'phone' => $phoneRules,
             'country' => 'required|string|max:100',
+            'avatar' => 'nullable|file|image|mimes:jpeg,png,jpg,webp|max:3072',
+            'remove_avatar' => 'nullable|boolean',
             'current_password' => 'nullable|string',
             'password' => 'nullable|string|min:8|confirmed',
         ];
