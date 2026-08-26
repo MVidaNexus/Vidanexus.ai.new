@@ -5,35 +5,52 @@
 @push('meta')
     <meta name="description" content="Review the Terms of Service for using the VidaNexus AI platform, services, APIs, and credit-based tools.">
     <link rel="canonical" href="https://vidanexus.ai/terms">
-    <meta property="og:type" content="website">
+    <meta property="og:type" content="article">
     <meta property="og:url" content="https://vidanexus.ai/terms">
     <meta property="og:title" content="Terms of Service | VidaNexus AI">
     <meta property="og:description" content="Review the Terms of Service for using the VidaNexus AI platform, services, APIs, and credit-based tools.">
     <meta property="og:image" content="{{ asset('assets/social-preview.png?v=2') }}">
-    <meta property="twitter:card" content="summary_large_image">
-    <meta property="twitter:url" content="https://vidanexus.ai/terms">
-    <meta property="twitter:title" content="Terms of Service | VidaNexus AI">
-    <meta property="twitter:description" content="Review the Terms of Service for using the VidaNexus AI platform, services, APIs, and credit-based tools.">
-    <meta property="twitter:image" content="{{ asset('assets/social-preview.png?v=2') }}">
+    <meta property="article:published_time" content="2026-01-01T00:00:00+00:00">
+    <meta property="article:modified_time" content="{{ date('c') }}">
+    <meta property="og:updated_time" content="{{ date('c') }}">
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:site" content="@vidanexus_ai">
+    <meta name="twitter:creator" content="@vidanexus_ai">
+    <meta name="twitter:url" content="https://vidanexus.ai/terms">
+    <meta name="twitter:title" content="Terms of Service | VidaNexus AI">
+    <meta name="twitter:description" content="Review the Terms of Service for using the VidaNexus AI platform, services, APIs, and credit-based tools.">
+    <meta name="twitter:image" content="{{ asset('assets/social-preview.png?v=2') }}">
 @endpush
 
 @push('schema')
     <script type="application/ld+json">
     {
       "@context": "https://schema.org",
-      "@type": "BreadcrumbList",
-      "itemListElement": [
+      "@graph": [
         {
-          "@type": "ListItem",
-          "position": 1,
-          "name": "Home",
-          "item": "https://vidanexus.ai/"
+          "@type": "WebPage",
+          "name": "Terms of Service | VidaNexus AI",
+          "url": "https://vidanexus.ai/terms",
+          "datePublished": "2026-01-01T00:00:00+00:00",
+          "dateModified": "{{ date('c') }}",
+          "description": "Review the Terms of Service for using the VidaNexus AI platform, services, APIs, and credit-based tools."
         },
         {
-          "@type": "ListItem",
-          "position": 2,
-          "name": "Terms of Service",
-          "item": "https://vidanexus.ai/terms"
+          "@type": "BreadcrumbList",
+          "itemListElement": [
+            {
+              "@type": "ListItem",
+              "position": 1,
+              "name": "Home",
+              "item": "https://vidanexus.ai/"
+            },
+            {
+              "@type": "ListItem",
+              "position": 2,
+              "name": "Terms of Service",
+              "item": "https://vidanexus.ai/terms"
+            }
+          ]
         }
       ]
     }

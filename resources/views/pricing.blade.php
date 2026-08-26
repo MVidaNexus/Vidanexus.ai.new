@@ -10,11 +10,16 @@
     <meta property="og:title" content="Simple, Transparent Pricing | VidaNexus AI">
     <meta property="og:description" content="Flexible credit packages for content creators and SEO professionals. Top up your wallet anytime to unlock tools and generate articles.">
     <meta property="og:image" content="{{ asset('assets/social-preview.png?v=2') }}">
-    <meta property="twitter:card" content="summary_large_image">
-    <meta property="twitter:url" content="https://vidanexus.ai/pricing">
-    <meta property="twitter:title" content="Simple, Transparent Pricing | VidaNexus AI">
-    <meta property="twitter:description" content="Flexible credit packages for content creators and SEO professionals. Top up your wallet anytime to unlock tools and generate articles.">
-    <meta property="twitter:image" content="{{ asset('assets/social-preview.png?v=2') }}">
+    <meta property="article:published_time" content="2026-01-01T00:00:00+00:00">
+    <meta property="article:modified_time" content="{{ date('c') }}">
+    <meta property="og:updated_time" content="{{ date('c') }}">
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:site" content="@vidanexus_ai">
+    <meta name="twitter:creator" content="@vidanexus_ai">
+    <meta name="twitter:url" content="https://vidanexus.ai/pricing">
+    <meta name="twitter:title" content="Simple, Transparent Pricing | VidaNexus AI">
+    <meta name="twitter:description" content="Flexible credit packages for content creators and SEO professionals. Top up your wallet anytime to unlock tools and generate articles.">
+    <meta name="twitter:image" content="{{ asset('assets/social-preview.png?v=2') }}">
 @endpush
 
 @push('schema')
@@ -26,6 +31,8 @@
           "@type": "Product",
           "name": "VidaNexus AI Credit Packages",
           "description": "Flexible credit packages for content creators and SEO professionals.",
+          "datePublished": "2026-01-01T00:00:00+00:00",
+          "dateModified": "{{ date('c') }}",
           "brand": {
             "@type": "Brand",
             "name": "VidaNexus AI"

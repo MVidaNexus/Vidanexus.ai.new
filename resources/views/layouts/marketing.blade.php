@@ -7,6 +7,9 @@
     <meta name="robots" content="index, follow, max-image-preview:large, max-snippet:-1, max-video-preview:-1">
     <meta property="og:site_name" content="VidaNexus AI">
     <meta property="og:locale" content="en_US">
+    <meta property="og:updated_time" content="{{ date('c') }}">
+    <meta name="twitter:site" content="@vidanexus_ai">
+    <meta name="twitter:creator" content="@vidanexus_ai">
     @stack('meta')
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>

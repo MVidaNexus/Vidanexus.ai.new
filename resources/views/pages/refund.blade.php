@@ -5,35 +5,52 @@
 @push('meta')
     <meta name="description" content="Understand the refund terms and eligibility criteria for digital credit packages on VidaNexus AI.">
     <link rel="canonical" href="https://vidanexus.ai/refund">
-    <meta property="og:type" content="website">
+    <meta property="og:type" content="article">
     <meta property="og:url" content="https://vidanexus.ai/refund">
     <meta property="og:title" content="Refund Policy | VidaNexus AI">
     <meta property="og:description" content="Understand the refund terms and eligibility criteria for digital credit packages on VidaNexus AI.">
     <meta property="og:image" content="{{ asset('assets/social-preview.png?v=2') }}">
-    <meta property="twitter:card" content="summary_large_image">
-    <meta property="twitter:url" content="https://vidanexus.ai/refund">
-    <meta property="twitter:title" content="Refund Policy | VidaNexus AI">
-    <meta property="twitter:description" content="Understand the refund terms and eligibility criteria for digital credit packages on VidaNexus AI.">
-    <meta property="twitter:image" content="{{ asset('assets/social-preview.png?v=2') }}">
+    <meta property="article:published_time" content="2026-01-01T00:00:00+00:00">
+    <meta property="article:modified_time" content="{{ date('c') }}">
+    <meta property="og:updated_time" content="{{ date('c') }}">
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:site" content="@vidanexus_ai">
+    <meta name="twitter:creator" content="@vidanexus_ai">
+    <meta name="twitter:url" content="https://vidanexus.ai/refund">
+    <meta name="twitter:title" content="Refund Policy | VidaNexus AI">
+    <meta name="twitter:description" content="Understand the refund terms and eligibility criteria for digital credit packages on VidaNexus AI.">
+    <meta name="twitter:image" content="{{ asset('assets/social-preview.png?v=2') }}">
 @endpush
 
 @push('schema')
     <script type="application/ld+json">
     {
       "@context": "https://schema.org",
-      "@type": "BreadcrumbList",
-      "itemListElement": [
+      "@graph": [
         {
-          "@type": "ListItem",
-          "position": 1,
-          "name": "Home",
-          "item": "https://vidanexus.ai/"
+          "@type": "WebPage",
+          "name": "Refund Policy | VidaNexus AI",
+          "url": "https://vidanexus.ai/refund",
+          "datePublished": "2026-01-01T00:00:00+00:00",
+          "dateModified": "{{ date('c') }}",
+          "description": "Understand the refund terms and eligibility criteria for digital credit packages on VidaNexus AI."
         },
         {
-          "@type": "ListItem",
-          "position": 2,
-          "name": "Refund Policy",
-          "item": "https://vidanexus.ai/refund"
+          "@type": "BreadcrumbList",
+          "itemListElement": [
+            {
+              "@type": "ListItem",
+              "position": 1,
+              "name": "Home",
+              "item": "https://vidanexus.ai/"
+            },
+            {
+              "@type": "ListItem",
+              "position": 2,
+              "name": "Refund Policy",
+              "item": "https://vidanexus.ai/refund"
+            }
+          ]
         }
       ]
     }

@@ -4,17 +4,22 @@
 
 @push('meta')
     <meta name="description" content="{{ $tool['meta_desc'] }}">
-    <link rel="canonical" href="{{ url('/tools/' . $tool['slug']) }}">
-    <meta property="og:type" content="website">
-    <meta property="og:url" content="{{ url('/tools/' . $tool['slug']) }}">
+    <link rel="canonical" href="https://vidanexus.ai/tools/{{ $tool['slug'] }}">
+    <meta property="og:type" content="article">
+    <meta property="og:url" content="https://vidanexus.ai/tools/{{ $tool['slug'] }}">
     <meta property="og:title" content="{{ $tool['meta_title'] }}">
     <meta property="og:description" content="{{ $tool['meta_desc'] }}">
     <meta property="og:image" content="{{ asset('assets/social-preview.png?v=2') }}">
-    <meta property="twitter:card" content="summary_large_image">
-    <meta property="twitter:url" content="{{ url('/tools/' . $tool['slug']) }}">
-    <meta property="twitter:title" content="{{ $tool['meta_title'] }}">
-    <meta property="twitter:description" content="{{ $tool['meta_desc'] }}">
-    <meta property="twitter:image" content="{{ asset('assets/social-preview.png?v=2') }}">
+    <meta property="article:published_time" content="2026-01-01T00:00:00+00:00">
+    <meta property="article:modified_time" content="{{ date('c') }}">
+    <meta property="og:updated_time" content="{{ date('c') }}">
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:site" content="@vidanexus_ai">
+    <meta name="twitter:creator" content="@vidanexus_ai">
+    <meta name="twitter:url" content="https://vidanexus.ai/tools/{{ $tool['slug'] }}">
+    <meta name="twitter:title" content="{{ $tool['meta_title'] }}">
+    <meta name="twitter:description" content="{{ $tool['meta_desc'] }}">
+    <meta name="twitter:image" content="{{ asset('assets/social-preview.png?v=2') }}">
 @endpush
 
 @push('schema')
@@ -27,7 +32,9 @@
           "name": "{{ addslashes($tool['name']) }}",
           "applicationCategory": "BusinessApplication",
           "operatingSystem": "Web Browser",
-          "url": "{{ url('/tools/' . $tool['slug']) }}",
+          "url": "https://vidanexus.ai/tools/{{ $tool['slug'] }}",
+          "datePublished": "2026-01-01T00:00:00+00:00",
+          "dateModified": "{{ date('c') }}",
           "description": "{{ addslashes($tool['meta_desc'] ?? $tool['description'] ?? '') }}",
           "offers": {
             "@type": "Offer",

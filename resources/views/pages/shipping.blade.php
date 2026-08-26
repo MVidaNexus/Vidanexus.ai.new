@@ -5,35 +5,52 @@
 @push('meta')
     <meta name="description" content="Information on instant digital fulfillment, access delivery, and account credit activation on VidaNexus AI.">
     <link rel="canonical" href="https://vidanexus.ai/shipping">
-    <meta property="og:type" content="website">
+    <meta property="og:type" content="article">
     <meta property="og:url" content="https://vidanexus.ai/shipping">
     <meta property="og:title" content="Digital Delivery Policy | VidaNexus AI">
     <meta property="og:description" content="Information on instant digital fulfillment, access delivery, and account credit activation on VidaNexus AI.">
     <meta property="og:image" content="{{ asset('assets/social-preview.png?v=2') }}">
-    <meta property="twitter:card" content="summary_large_image">
-    <meta property="twitter:url" content="https://vidanexus.ai/shipping">
-    <meta property="twitter:title" content="Digital Delivery Policy | VidaNexus AI">
-    <meta property="twitter:description" content="Information on instant digital fulfillment, access delivery, and account credit activation on VidaNexus AI.">
-    <meta property="twitter:image" content="{{ asset('assets/social-preview.png?v=2') }}">
+    <meta property="article:published_time" content="2026-01-01T00:00:00+00:00">
+    <meta property="article:modified_time" content="{{ date('c') }}">
+    <meta property="og:updated_time" content="{{ date('c') }}">
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:site" content="@vidanexus_ai">
+    <meta name="twitter:creator" content="@vidanexus_ai">
+    <meta name="twitter:url" content="https://vidanexus.ai/shipping">
+    <meta name="twitter:title" content="Digital Delivery Policy | VidaNexus AI">
+    <meta name="twitter:description" content="Information on instant digital fulfillment, access delivery, and account credit activation on VidaNexus AI.">
+    <meta name="twitter:image" content="{{ asset('assets/social-preview.png?v=2') }}">
 @endpush
 
 @push('schema')
     <script type="application/ld+json">
     {
       "@context": "https://schema.org",
-      "@type": "BreadcrumbList",
-      "itemListElement": [
+      "@graph": [
         {
-          "@type": "ListItem",
-          "position": 1,
-          "name": "Home",
-          "item": "https://vidanexus.ai/"
+          "@type": "WebPage",
+          "name": "Digital Delivery Policy | VidaNexus AI",
+          "url": "https://vidanexus.ai/shipping",
+          "datePublished": "2026-01-01T00:00:00+00:00",
+          "dateModified": "{{ date('c') }}",
+          "description": "Information on instant digital fulfillment, access delivery, and account credit activation on VidaNexus AI."
         },
         {
-          "@type": "ListItem",
-          "position": 2,
-          "name": "Digital Delivery Policy",
-          "item": "https://vidanexus.ai/shipping"
+          "@type": "BreadcrumbList",
+          "itemListElement": [
+            {
+              "@type": "ListItem",
+              "position": 1,
+              "name": "Home",
+              "item": "https://vidanexus.ai/"
+            },
+            {
+              "@type": "ListItem",
+              "position": 2,
+              "name": "Digital Delivery Policy",
+              "item": "https://vidanexus.ai/shipping"
+            }
+          ]
         }
       ]
     }
