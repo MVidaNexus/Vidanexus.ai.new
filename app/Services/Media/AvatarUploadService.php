@@ -10,14 +10,16 @@ use Illuminate\Support\Str;
 
 class AvatarUploadService
 {
-    protected string $storageDir;
+    protected string $publicStorageDir;
+    protected string $rootStorageDir;
     protected string $publicUrlPrefix;
 
     public function __construct()
     {
-        $this->storageDir = public_path('uploads/avatars');
+        $this->publicStorageDir = public_path('uploads/avatars');
+        $this->rootStorageDir = base_path('uploads/avatars');
         $this->publicUrlPrefix = '/uploads/avatars';
-        $this->ensureSecureStorageDirectory();
+        $this->ensureSecureStorageDirectories();
     }
 
     /**
@@ -87,26 +89,35 @@ class AvatarUploadService
 
         // 4. Generate random secure filename
         $filename = 'avatar_' . $user->id . '_' . Str::random(16) . '.webp';
-        $destinationPath = $this->storageDir . DIRECTORY_SEPARATOR . $filename;
+        $publicDest = $this->publicStorageDir . DIRECTORY_SEPARATOR . $filename;
+        $rootDest = $this->rootStorageDir . DIRECTORY_SEPARATOR . $filename;
 
         // 5. Delete previous avatar if locally stored
         $this->deleteOldAvatar($user->avatar_url);
 
-        // 6. Save re-encoded sanitized WebP
+        // 6. Save re-encoded sanitized WebP to both public and root locations for LiteSpeed compatibility
         if (function_exists('imagewebp')) {
-            imagewebp($targetImage, $destinationPath, 88);
+            imagewebp($targetImage, $publicDest, 88);
+            if ($this->rootStorageDir !== $this->publicStorageDir) {
+                @copy($publicDest, $rootDest);
+            }
         } else {
             // Fallback to JPEG if WebP is unsupported
             $filename = 'avatar_' . $user->id . '_' . Str::random(16) . '.jpg';
-            $destinationPath = $this->storageDir . DIRECTORY_SEPARATOR . $filename;
-            imagejpeg($targetImage, $destinationPath, 90);
+            $publicDest = $this->publicStorageDir . DIRECTORY_SEPARATOR . $filename;
+            $rootDest = $this->rootStorageDir . DIRECTORY_SEPARATOR . $filename;
+            imagejpeg($targetImage, $publicDest, 90);
+            if ($this->rootStorageDir !== $this->publicStorageDir) {
+                @copy($publicDest, $rootDest);
+            }
         }
 
         imagedestroy($sourceImage);
         imagedestroy($targetImage);
 
         // Set safe file permissions (read-only for web server)
-        @chmod($destinationPath, 0644);
+        @chmod($publicDest, 0644);
+        @chmod($rootDest, 0644);
 
         $avatarUrl = $this->publicUrlPrefix . '/' . $filename;
         $user->avatar_url = $avatarUrl;
@@ -128,7 +139,7 @@ class AvatarUploadService
     }
 
     /**
-     * Delete existing custom avatar file safely.
+     * Delete existing custom avatar file safely from both directories.
      */
     protected function deleteOldAvatar(?string $avatarUrl): void
     {
@@ -142,24 +153,32 @@ class AvatarUploadService
             return;
         }
 
-        $filePath = $this->storageDir . DIRECTORY_SEPARATOR . $basename;
-        if (File::exists($filePath)) {
-            File::delete($filePath);
+        $publicFile = $this->publicStorageDir . DIRECTORY_SEPARATOR . $basename;
+        $rootFile = $this->rootStorageDir . DIRECTORY_SEPARATOR . $basename;
+
+        if (File::exists($publicFile)) {
+            File::delete($publicFile);
+        }
+        if (File::exists($rootFile)) {
+            File::delete($rootFile);
         }
     }
 
     /**
-     * Ensure avatars upload directory exists and has .htaccess blocking script execution.
+     * Ensure avatars upload directories exist and have .htaccess blocking script execution.
      */
-    protected function ensureSecureStorageDirectory(): void
+    protected function ensureSecureStorageDirectories(): void
     {
-        if (!File::isDirectory($this->storageDir)) {
-            File::makeDirectory($this->storageDir, 0755, true);
-        }
+        $dirs = [$this->publicStorageDir, $this->rootStorageDir];
 
-        $htaccessPath = $this->storageDir . DIRECTORY_SEPARATOR . '.htaccess';
-        if (!File::exists($htaccessPath)) {
-            $htaccessContent = <<<HTACCESS
+        foreach ($dirs as $dir) {
+            if (!File::isDirectory($dir)) {
+                File::makeDirectory($dir, 0755, true);
+            }
+
+            $htaccessPath = $dir . DIRECTORY_SEPARATOR . '.htaccess';
+            if (!File::exists($htaccessPath)) {
+                $htaccessContent = <<<HTACCESS
 # Block PHP and script execution in upload directory
 <FilesMatch "(?i)\.(php|phtml|php3|php4|php5|php7|phps|pl|py|jsp|asp|htm|html|shtml|sh|cgi|exe)$">
     Order Deny,Allow
@@ -167,7 +186,8 @@ class AvatarUploadService
 </FilesMatch>
 Options -ExecCGI -Indexes
 HTACCESS;
-            File::put($htaccessPath, $htaccessContent);
+                File::put($htaccessPath, $htaccessContent);
+            }
         }
     }
 }

@@ -87,7 +87,7 @@
                         </div>
 
                         <div style="margin-bottom: 1.5rem;">
-                            <label style="display: block; color: var(--text-muted); margin-bottom: 0.5rem; font-size: 0.9rem;">Country <span style="color: #ff4b4b;">*</span></label>
+                            <label style="display: block; color: var(--text-muted); margin-bottom: 0.5rem; font-size: 0.9rem;">Country</label>
                             <div style="display: flex; align-items: center; background: rgba(255,255,255,0.05); border: 1px solid {{ $user->country ? 'var(--glass-border)' : 'rgba(255, 170, 0, 0.5)' }}; border-radius: 8px; overflow: hidden;">
                                 <span style="padding: 1rem; color: var(--primary-cyan); font-size: 1rem;"><i class="fas fa-globe"></i></span>
                                 <select name="country" id="countrySelect" required onchange="updatePhonePrefix()" style="flex: 1; background: transparent; border: none; color: var(--text-main); padding: 1rem 1rem 1rem 0; font-family: inherit; outline: none; font-size: 1rem; cursor: pointer; -webkit-appearance: none; appearance: none;">
@@ -129,15 +129,36 @@
                             </div>
                         </div>
 
+                        @php
+                            $rawPhone = (string) old('phone', $user->phone ?? '');
+                            $localPhone = $rawPhone;
+                            $countryDialMap = [
+                                'Egypt' => '+20', 'Saudi Arabia' => '+966', 'United Arab Emirates' => '+971',
+                                'Kuwait' => '+965', 'Qatar' => '+974', 'Bahrain' => '+973', 'Oman' => '+968',
+                                'Jordan' => '+962', 'Iraq' => '+964', 'Lebanon' => '+961', 'Palestine' => '+970',
+                                'Syria' => '+963', 'Libya' => '+218', 'Tunisia' => '+216', 'Algeria' => '+213',
+                                'Morocco' => '+212', 'Sudan' => '+249', 'Yemen' => '+967', 'Turkey' => '+90',
+                                'United States' => '+1', 'United Kingdom' => '+44', 'Germany' => '+49',
+                                'France' => '+33', 'India' => '+91', 'Pakistan' => '+92', 'Nigeria' => '+234',
+                                'South Africa' => '+27', 'Brazil' => '+55', 'Canada' => '+1', 'Australia' => '+61',
+                                'Malaysia' => '+60', 'Indonesia' => '+62',
+                            ];
+                            $selectedCountry = old('country', $user->country ?? 'Egypt');
+                            $currentDial = $countryDialMap[$selectedCountry] ?? '';
+                            if ($currentDial && str_starts_with($localPhone, $currentDial)) {
+                                $localPhone = substr($localPhone, strlen($currentDial));
+                            }
+                        @endphp
+
                         <div style="margin-bottom: 1.5rem;">
-                            <label style="display: block; color: var(--text-muted); margin-bottom: 0.5rem; font-size: 0.9rem;">Phone Number <span style="color: #ff4b4b;">*</span></label>
+                            <label style="display: block; color: var(--text-muted); margin-bottom: 0.5rem; font-size: 0.9rem;">Phone Number</label>
                             <div style="display: flex; align-items: center; background: rgba(255,255,255,0.05); border: 1px solid {{ $user->phone ? 'var(--glass-border)' : 'rgba(255, 170, 0, 0.5)' }}; border-radius: 8px; overflow: hidden;">
                                 <span id="phonePrefix" style="padding: 0.75rem 0.5rem 0.75rem 1rem; color: var(--text-main); font-size: 1.1rem; white-space: nowrap; display: flex; align-items: center; gap: 0.5rem; font-weight: 600; min-width: 100px;">
                                     <span id="phoneFlagEmoji" style="font-size: 1.3rem;">🌍</span>
                                     <span id="phoneDialCode" style="color: var(--primary-cyan);">+00</span>
                                 </span>
                                 <div style="width: 1px; height: 28px; background: var(--glass-border);"></div>
-                                <input type="tel" name="phone" id="phoneInput" value="{{ old('phone', $user->phone) }}" required placeholder="1234567890" style="flex: 1; background: none; border: none; color: var(--text-main); padding: 1rem; font-family: inherit; outline: none; font-size: 1rem; letter-spacing: 0.5px;">
+                                <input type="tel" name="phone" id="phoneInput" value="{{ $localPhone }}" required placeholder="1012345678" style="flex: 1; background: none; border: none; color: var(--text-main); padding: 1rem; font-family: inherit; outline: none; font-size: 1rem; letter-spacing: 0.5px;">
                             </div>
                             <small style="color: var(--text-muted); font-size: 0.8rem; margin-top: 0.3rem; display: block;">Enter your local number without the country code</small>
                         </div>

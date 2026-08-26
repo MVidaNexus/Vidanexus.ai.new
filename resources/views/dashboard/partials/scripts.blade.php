@@ -1,4 +1,4 @@
-﻿    <script>
+    <script>
         document.addEventListener('DOMContentLoaded', function() {
             const navItems = document.querySelectorAll('.dash-nav-item');
             const panels = {
@@ -94,25 +94,28 @@
             const dialHidden = document.getElementById('dialCodeHidden');
             const phoneInput = document.getElementById('phoneInput');
             
-            if (dialHidden && phoneInput && dialHidden.value) {
+            if (dialHidden && phoneInput) {
                 let local = phoneInput.value.trim();
-                // Remove leading zero if present
-                if (local.startsWith('0')) local = local.substring(1);
+                const dial = dialHidden.value || '+20';
                 
-                // Validate Length
-                const dial = dialHidden.value;
-                const lengths = { '+20': 10, '+966': 9, '+971': 9, '+965': 8 };
-                if (lengths[dial] && local.length !== lengths[dial]) {
-                    alert(`Please enter a valid ${lengths[dial]}-digit number for ${select.value}.`);
-                    return false;
+                if (local.startsWith('+')) {
+                    return true;
+                }
+                
+                // Remove leading zero if present
+                if (local.startsWith('0')) {
+                    local = local.substring(1);
+                }
+                
+                const codeNoPlus = dial.replace('+', '');
+                if (local.startsWith(codeNoPlus)) {
+                    phoneInput.value = '+' + local;
+                    return true;
                 }
 
-                // Only prepend if not already starts with the dial code
-                if (!local.startsWith(dial)) {
-                    phoneInput.value = dial + local;
-                }
+                phoneInput.value = dial + local;
             }
-            return true; // Allow form submission
+            return true;
         }
 
         // Initialize phone prefix on page load if country is already set
