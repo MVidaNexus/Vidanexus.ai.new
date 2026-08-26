@@ -151,82 +151,129 @@ class EmailCampaignController extends Controller
                 }
             }
         } elseif ($audienceType === 'custom_list') {
-            $textEmails = $this->parseCustomEmailInput($validated['custom_emails'] ?? '');
+            $parsedText = $this->parseCustomEmailInputDetailed($validated['custom_emails'] ?? '');
+            $allCandidates = $parsedText['recipients'];
+            $totalRawCount = $parsedText['total_raw'];
 
             if ($request->hasFile('csv_file')) {
                 $fileContent = file_get_contents($request->file('csv_file')->getRealPath());
-                $fileEmails = $this->parseCustomEmailInput($fileContent);
-                $textEmails = array_merge($textEmails, $fileEmails);
+                $parsedFile = $this->parseCustomEmailInputDetailed($fileContent);
+                $allCandidates = array_merge($allCandidates, $parsedFile['recipients']);
+                $totalRawCount += $parsedFile['total_raw'];
             }
 
             // Deduplicate by email
             $seen = [];
-            foreach ($textEmails as $r) {
+            foreach ($allCandidates as $r) {
                 $em = strtolower($r['email']);
                 if (!isset($seen[$em])) {
                     $seen[$em] = true;
                     $recipients[] = $r;
                 }
             }
+
+            $duplicatesCount = $totalRawCount - count($recipients);
+            if ($duplicatesCount > 0) {
+                $statsNote = " ({$duplicatesCount} duplicate entries automatically merged)";
+            }
         }
 
         if (empty($recipients)) {
-            return back()->withErrors(['audience' => 'No valid recipients were found matching the selected audience criteria.'])->withInput();
+            return back()->withErrors(['audience' => 'No valid email addresses were found in the provided list.'])->withInput();
         }
 
         $totalRecipients = count($recipients);
 
-        // For small lists (<= 15 recipients), process immediately for instant delivery feedback
-        if ($totalRecipients <= 15) {
+        // For lists <= 30 recipients, send synchronously for instant confirmation
+        if ($totalRecipients <= 30) {
             foreach ($recipients as $recipient) {
                 SendMassEmailCampaignJob::dispatchSync([$recipient], $validated['subject'], $validated['content']);
             }
             return redirect()->route('admin.horizon.email-campaigns.index')
-                ->with('success', "Campaign sent successfully! {$totalRecipients} emails delivered immediately.");
+                ->with('success', "Campaign sent successfully! {$totalRecipients} emails delivered immediately{$statsNote}.");
         }
 
-        // Chunk larger campaigns into batches of 30 to avoid memory / timeout issues
-        $chunks = array_chunk($recipients, 30);
+        // For larger lists, send first batch (25 emails) immediately and queue remaining batches in background
+        $firstBatch = array_slice($recipients, 0, 25);
+        $remaining = array_slice($recipients, 25);
+
+        SendMassEmailCampaignJob::dispatchSync($firstBatch, $validated['subject'], $validated['content']);
+
+        $chunks = array_chunk($remaining, 25);
         foreach ($chunks as $chunk) {
             SendMassEmailCampaignJob::dispatch($chunk, $validated['subject'], $validated['content']);
         }
 
         return redirect()->route('admin.horizon.email-campaigns.index')
-            ->with('success', "Campaign queued successfully! {$totalRecipients} emails are currently being dispatched in the background.");
+            ->with('success', "Campaign started! {$totalRecipients} unique recipients queued{$statsNote}. (First 25 delivered immediately, remaining being dispatched in batches).");
     }
 
     private function parseCustomEmailInput(string $input): array
     {
-        $lines = preg_split('/[\r\n,;]+/', $input);
-        $results = [];
+        return $this->parseCustomEmailInputDetailed($input)['recipients'];
+    }
+
+    /**
+     * Advanced sanitizer handling CSV lines, RTL Unicode marks, accidental spaces, trailing dots, etc.
+     */
+    private function parseCustomEmailInputDetailed(string $input): array
+    {
+        // Split by newlines first
+        $lines = preg_split('/[\r\n]+/', $input);
+        $recipients = [];
+        $seen = [];
+        $totalRaw = 0;
 
         foreach ($lines as $line) {
-            $line = trim($line);
-            if (empty($line)) continue;
+            // Split further if multiple emails exist per line separated by commas or semicolons
+            $tokens = preg_split('/[,;]+/', $line);
 
-            // Check if format is "Name <email>" or "email,name"
-            if (preg_match('/^(.*?)\s*<([^>]+)>$/', $line, $m)) {
-                $name = trim($m[1], " \"'");
-                $email = trim($m[2]);
-            } elseif (str_contains($line, ',')) {
-                $parts = explode(',', $line, 2);
-                $email = trim($parts[0]);
-                $name = trim($parts[1] ?? 'User');
-            } else {
-                $email = $line;
-                $name = 'User';
-            }
+            foreach ($tokens as $token) {
+                // Strip invisible unicode marks (LTR/RTL \u200e \u200f, Zero-width space \u200b, BOM \ufeff, Non-breaking space \u00a0)
+                $clean = preg_replace('/[\x{200B}-\x{200D}\x{FEFF}\x{200E}\x{200F}\x{00A0}]/u', '', $token);
+                $clean = trim($clean, " \t\n\r\0\x0B,.'\"<>");
 
-            if (filter_var($email, FILTER_VALIDATE_EMAIL)) {
-                $results[] = [
-                    'email' => $email,
-                    'name' => $name,
-                    'balance' => 0,
-                ];
+                // Fix accidental spaces around '@' (e.g. 'user @gmail.com' or 'user@ gmail.com')
+                $clean = preg_replace('/\s*@\s*/', '@', $clean);
+                // Strip trailing dots
+                $clean = rtrim($clean, '.');
+
+                if (empty($clean)) {
+                    continue;
+                }
+
+                $totalRaw++;
+
+                // Check for "Name <email>" format
+                if (preg_match('/^(.*?)\s*<([^>]+)>$/', $clean, $m)) {
+                    $name = trim($m[1], " \"'");
+                    $email = trim($m[2]);
+                } else {
+                    $email = $clean;
+                    $name = 'User';
+                }
+
+                $email = trim($email, " \t\n\r\0\x0B,.'\"<>");
+                $email = rtrim($email, '.');
+
+                if (filter_var($email, FILTER_VALIDATE_EMAIL)) {
+                    $lower = strtolower($email);
+                    if (!isset($seen[$lower])) {
+                        $seen[$lower] = true;
+                        $recipients[] = [
+                            'email' => $email,
+                            'name' => $name,
+                            'balance' => 0,
+                        ];
+                    }
+                }
             }
         }
 
-        return $results;
+        return [
+            'recipients' => $recipients,
+            'total_raw' => $totalRaw,
+        ];
     }
 
     private function getDefaultCampaignTemplates(): array
