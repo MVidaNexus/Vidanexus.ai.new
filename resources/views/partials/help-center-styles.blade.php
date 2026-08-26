@@ -1,4 +1,4 @@
-﻿<style>
+<style>
         .page-header {
             padding: 8rem 2rem 4rem;
             text-align: center;
@@ -163,29 +163,28 @@
             margin-bottom: 1rem;
         }
 
-        .cta-button {
-            background: linear-gradient(135deg, var(--primary-cyan) 0%, var(--accent) 100%);
-            color: #000;
-            padding: 1rem 2.5rem;
-            border-radius: 14px;
-            font-weight: 700;
-            text-decoration: none;
-            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-            display: inline-flex;
-            align-items: center;
-            gap: 0.8rem;
-            box-shadow: 0 10px 20px rgba(0, 168, 230, 0.2);
-            border: none;
-            cursor: pointer;
+        .contact-support-btn {
+            display: inline-flex !important;
+            align-items: center !important;
+            justify-content: center !important;
+            gap: 0.75rem !important;
+            padding: 0.9rem 2.25rem !important;
+            font-size: 1rem !important;
+            font-weight: 700 !important;
+            border-radius: 14px !important;
+            background: linear-gradient(135deg, var(--primary-cyan) 0%, #0070e0 100%) !important;
+            color: #ffffff !important;
+            text-decoration: none !important;
+            border: 1px solid rgba(0, 168, 230, 0.4) !important;
+            box-shadow: 0 10px 25px rgba(0, 168, 230, 0.35) !important;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1) !important;
+            cursor: pointer !important;
         }
 
-        .cta-button:hover {
-            transform: translateY(-3px) scale(1.02);
-            box-shadow: 0 15px 30px rgba(0, 168, 230, 0.4);
-            filter: brightness(1.1);
-        }
-
-        .cta-button i {
-            font-size: 1.1rem;
+        .contact-support-btn:hover {
+            transform: translateY(-3px) !important;
+            box-shadow: 0 15px 35px rgba(0, 168, 230, 0.5) !important;
+            filter: brightness(1.1) !important;
+            color: #ffffff !important;
         }
 </style>

@@ -30,7 +30,7 @@
 
                 <h2>6. Contact For Refunds</h2>
                 <p>To request a refund, please contact us at:</p>
-                <p><strong>Email:</strong> support@vidanexus.net</p>
+                <p><strong>Email:</strong> <a href="mailto:info@vidanexus.net" style="color: var(--primary-cyan); text-decoration: none;">info@vidanexus.net</a></p>
                 <p>Please include your order reference number and the email associated with your account.</p>
             </div>
         </div>

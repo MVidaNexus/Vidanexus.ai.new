@@ -30,7 +30,7 @@
 
                 <h2>5. Contact Support</h2>
                 <p>For any questions regarding your access or digital delivery, please contact us at:</p>
-                <p><strong>Email:</strong> technical@vidanexus.net</p>
+                <p><strong>Email:</strong> <a href="mailto:info@vidanexus.net" style="color: var(--primary-cyan); text-decoration: none;">info@vidanexus.net</a></p>
             </div>
         </div>
 @endsection

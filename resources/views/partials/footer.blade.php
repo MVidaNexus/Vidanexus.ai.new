@@ -15,7 +15,7 @@
                     </div>
                 </a>
                 <p class="footer-bio">
-                    VidaNexus empowers content creators, publishers, and SEO professionals with practical AI tools for competitor keyword discovery, real-time trend tracking, and research-backed writing.
+                    VidaNexus is a modern AI workspace designed for creators, publishers, and growth-focused businesses. We build practical tools that turn real-time data, search trends, and research into high-performing content.
                 </p>
             </div>
             

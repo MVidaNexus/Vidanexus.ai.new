@@ -62,9 +62,12 @@
 
             <div class="contact-box">
                 <h3>Still need assistance?</h3>
-                <p style="color: var(--text-muted); margin-bottom: 2rem;">Our enterprise support team is available 24/7 to solve your technical and billing queries.</p>
-                <a href="mailto:info@vidanexus.net" class="cta-button">
-                    <i class="fas fa-envelope"></i> Contact Support
+                <p style="color: var(--text-muted); margin-bottom: 2rem; max-width: 600px; margin-left: auto; margin-right: auto; line-height: 1.6;">
+                    Have questions about tools, credits, or account access? Our team is always ready to help. Reach out directly at <strong>info@vidanexus.net</strong>.
+                </p>
+                <a href="mailto:info@vidanexus.net" class="vn-btn vn-btn-primary contact-support-btn">
+                    <i class="fas fa-envelope"></i>
+                    <span>Contact Support</span>
                 </a>
             </div>
         </div>

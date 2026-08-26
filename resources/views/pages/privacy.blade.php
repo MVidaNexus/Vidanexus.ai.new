@@ -44,11 +44,11 @@
                 <p>VidaNexus integrates with specialized APIs (e.g., AI Engine Providers, Google Trends, Fawaterk) to deliver our services. Data shared with these sub-processors is limited to what is strictly necessary for the operation requested.</p>
 
                 <h2>6. Your Rights</h2>
-                <p>You have the right to access, correct, or request deletion of your personal data. You may also export your usage data or withdraw consent where processing is consent-based. Contact our DPO at policy@vidanexus.net for assistance.</p>
+                <p>You have the right to access, correct, or request deletion of your personal data. You may also export your usage data or withdraw consent where processing is consent-based. Contact us at <a href="mailto:info@vidanexus.net" style="color: var(--primary-cyan); text-decoration: none;">info@vidanexus.net</a> for assistance.</p>
 
                 <h2>7. Contact Us</h2>
-                <p>If you have any questions about this Privacy Policy, please contact us at:</p>
-                <p><strong>Email:</strong> info@vidanexus.net</p>
+                <p>For any privacy-related questions or concerns, please contact:</p>
+                <p><strong>Email:</strong> <a href="mailto:info@vidanexus.net" style="color: var(--primary-cyan); text-decoration: none;">info@vidanexus.net</a></p>
             </div>
         </div>
 @endsection
