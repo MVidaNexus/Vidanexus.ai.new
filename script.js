@@ -136,34 +136,42 @@ document.addEventListener('DOMContentLoaded', () => {
 });
 
 // Mobile Sidebar Logic (Restored)
-const hamburger = document.querySelector('.hamburger');
-const mobileSidebar = document.getElementById('mobileSidebar');
-const mobileOverlay = document.getElementById('mobileOverlay');
+// Mobile Sidebar Logic
+function closeMobileMenu() {
+    const mobileSidebar = document.getElementById('mobileSidebar');
+    const mobileOverlay = document.getElementById('mobileOverlay');
+    const hamburger = document.querySelector('.hamburger');
+    if (mobileSidebar) mobileSidebar.classList.remove('active');
+    if (mobileOverlay) mobileOverlay.classList.remove('active');
+    if (hamburger) hamburger.innerHTML = '<i class="fas fa-bars"></i>';
+    document.body.style.overflow = '';
+}
 
 function toggleMobileMenu() {
+    const mobileSidebar = document.getElementById('mobileSidebar');
+    const mobileOverlay = document.getElementById('mobileOverlay');
+    const hamburger = document.querySelector('.hamburger');
     if (mobileSidebar && mobileOverlay) {
         const isActive = mobileSidebar.classList.contains('active');
-        
         if (isActive) {
-            mobileSidebar.classList.remove('active');
-            mobileOverlay.classList.remove('active');
-            if(hamburger) hamburger.innerHTML = '<i class="fas fa-bars"></i>';
-            document.body.style.overflow = ''; // Restore scrolling
+            closeMobileMenu();
         } else {
             mobileSidebar.classList.add('active');
             mobileOverlay.classList.add('active');
-            if(hamburger) hamburger.innerHTML = '<i class="fas fa-times"></i>';
-            document.body.style.overflow = 'hidden'; // Prevent background scrolling
+            if (hamburger) hamburger.innerHTML = '<i class="fas fa-times"></i>';
+            document.body.style.overflow = 'hidden';
         }
     }
 }
 
-if (hamburger) {
-    hamburger.addEventListener('click', toggleMobileMenu);
+const hamburgerBtn = document.querySelector('.hamburger');
+if (hamburgerBtn) {
+    hamburgerBtn.addEventListener('click', toggleMobileMenu);
 }
 
-if (mobileOverlay) {
-    mobileOverlay.addEventListener('click', toggleMobileMenu);
+const mobileOverlayEl = document.getElementById('mobileOverlay');
+if (mobileOverlayEl) {
+    mobileOverlayEl.addEventListener('click', closeMobileMenu);
 }
 
 // Global Alert Helpers

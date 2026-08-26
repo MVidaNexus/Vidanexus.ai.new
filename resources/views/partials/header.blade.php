@@ -118,16 +118,20 @@
 
 
 <!-- Mobile Sidebar Navigation -->
-<div class="mobile-overlay" id="mobileOverlay"></div>
+<div class="mobile-overlay" id="mobileOverlay" onclick="closeMobileMenu()"></div>
 <div class="mobile-sidebar" id="mobileSidebar" dir="ltr">
-    <a href="/">
-        <div class="logo-container" style="padding-bottom: 1.5rem; border-bottom: 1px solid var(--header-border);">
-            <img src="{{ asset('assets/brand-logo.png?v=2026_2') }}" alt="VidaNexus" class="logo-img" style="height: 44px; width: auto; object-fit: contain;">
-        </div>
-    </a>
-    <a href="/"><i class="fas fa-home" style="width: 25px;"></i> Home</a>
-    <a href="/#tools"><i class="fas fa-layer-group" style="width: 25px;"></i> Tools</a>
-    <a href="/pricing"><i class="fas fa-tags" style="width: 25px;"></i> Pricing</a>
+    <div style="display: flex; align-items: center; justify-content: space-between; padding-bottom: 1.25rem; border-bottom: 1px solid var(--header-border);">
+        <a href="/" onclick="closeMobileMenu()" style="padding: 0; background: none; border: none;">
+            <img src="{{ asset('assets/brand-logo.png?v=2026_2') }}" alt="VidaNexus" class="logo-img" style="height: 40px; width: auto; object-fit: contain;">
+        </a>
+        <button onclick="closeMobileMenu()" aria-label="Close Menu" style="background: rgba(255,255,255,0.06); border: 1px solid var(--glass-border); color: var(--text-main); width: 36px; height: 36px; border-radius: 10px; display: flex; align-items: center; justify-content: center; cursor: pointer; font-size: 1.1rem; transition: all 0.2s;">
+            <i class="fas fa-times"></i>
+        </button>
+    </div>
+
+    <a href="/" onclick="closeMobileMenu()"><i class="fas fa-home" style="width: 25px;"></i> Home</a>
+    <a href="/#tools" onclick="closeMobileMenu()"><i class="fas fa-layer-group" style="width: 25px;"></i> Tools</a>
+    <a href="/pricing" onclick="closeMobileMenu()"><i class="fas fa-tags" style="width: 25px;"></i> Pricing</a>
     
     <label class="theme-switch-dribbble" style="margin: 1rem 0;">
         <input type="checkbox" checked onchange="handleThemeChange(event)">
@@ -144,8 +148,8 @@
     </label>
 
     @guest
-        <a href="/login" style="margin-top: 2rem;"><i class="fas fa-sign-in-alt" style="width: 25px;"></i> Login</a>
-        <a href="/register" style="color: var(--primary-cyan); border: 1px solid var(--primary-cyan);"><i class="fas fa-user-plus" style="width: 25px;"></i> Get Started</a>
+        <a href="/login" onclick="closeMobileMenu()" style="margin-top: 2rem;"><i class="fas fa-sign-in-alt" style="width: 25px;"></i> Login</a>
+        <a href="/register" onclick="closeMobileMenu()" style="color: var(--primary-cyan); border: 1px solid var(--primary-cyan);"><i class="fas fa-user-plus" style="width: 25px;"></i> Get Started</a>
     @endguest
 
     @auth
@@ -153,9 +157,9 @@
         <div style="border-top: 1px solid var(--glass-border); padding-top: 1.5rem; margin-top: 1.5rem;">
             <div style="padding: 0 1rem 0.5rem; color: var(--text-muted); font-size: 0.9rem;">My Dashboard</div>
             @if(auth()->user()->isAdmin())
-                <a href="{{ route('admin.horizon.index') }}" style="color: var(--primary-cyan);"><i class="fas fa-user-shield" style="width: 25px;"></i> Admin Control</a>
+                <a href="{{ route('admin.horizon.index') }}" onclick="closeMobileMenu()" style="color: var(--primary-cyan);"><i class="fas fa-user-shield" style="width: 25px;"></i> Admin Control</a>
             @endif
-            <a href="/dashboard" style="color: var(--text-main); text-decoration: none;"><i class="fas fa-desktop" style="width: 25px;"></i> Dashboard</a>
+            <a href="/dashboard" onclick="closeMobileMenu()" style="color: var(--text-main); text-decoration: none;"><i class="fas fa-desktop" style="width: 25px;"></i> Dashboard</a>
             <div style="padding: 1rem; color: var(--primary-cyan); font-weight: bold; font-family: var(--font-heading);"><i class="fas fa-wallet" style="width: 25px;"></i> <span class="js-credit-balance" data-credit-value="{{ (float) (auth()->user()->wallet->balance_credits ?? 0) }}" data-decimals="2" data-suffix=" Credits">{{ number_format(auth()->user()->wallet->balance_credits ?? 0, 2) }} Credits</span></div>
             
             <form action="/logout" method="POST" style="margin: 0; padding: 0; width: 100%;">
@@ -167,6 +171,35 @@
         </div>
     @endauth
 </div>
+
+<script>
+function closeMobileMenu() {
+    const mobileSidebar = document.getElementById('mobileSidebar');
+    const mobileOverlay = document.getElementById('mobileOverlay');
+    const hamburger = document.querySelector('.hamburger');
+    if (mobileSidebar) mobileSidebar.classList.remove('active');
+    if (mobileOverlay) mobileOverlay.classList.remove('active');
+    if (hamburger) hamburger.innerHTML = '<i class="fas fa-bars"></i>';
+    document.body.style.overflow = '';
+}
+
+function toggleMobileMenu() {
+    const mobileSidebar = document.getElementById('mobileSidebar');
+    const mobileOverlay = document.getElementById('mobileOverlay');
+    const hamburger = document.querySelector('.hamburger');
+    if (mobileSidebar && mobileOverlay) {
+        const isActive = mobileSidebar.classList.contains('active');
+        if (isActive) {
+            closeMobileMenu();
+        } else {
+            mobileSidebar.classList.add('active');
+            mobileOverlay.classList.add('active');
+            if (hamburger) hamburger.innerHTML = '<i class="fas fa-times"></i>';
+            document.body.style.overflow = 'hidden';
+        }
+    }
+}
+</script>
 
 @auth
     <style>
