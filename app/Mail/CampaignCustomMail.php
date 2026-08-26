@@ -9,7 +9,7 @@ use Illuminate\Mail\Mailables\Content;
 use Illuminate\Mail\Mailables\Envelope;
 use Illuminate\Queue\SerializesModels;
 
-class CampaignCustomMail extends Mailable implements ShouldQueue
+class CampaignCustomMail extends Mailable
 {
     use Queueable, SerializesModels;
 
@@ -24,6 +24,10 @@ class CampaignCustomMail extends Mailable implements ShouldQueue
     public function envelope(): Envelope
     {
         return new Envelope(
+            from: new \Illuminate\Mail\Mailables\Address(
+                config('mail.from.address', 'no.reply@vidanexus.net'),
+                config('mail.from.name', 'VidaNexus AI')
+            ),
             subject: $this->campaignSubject,
         );
     }
