@@ -15,7 +15,7 @@
                     </div>
                 </a>
                 <p class="footer-bio">
-                    VidaNexus is a high-performance, modular AI ecosystem designed for long-term scalability. We are building the backbone of next-generation intelligent automation.
+                    VidaNexus empowers content creators, publishers, and SEO professionals with practical AI tools for competitor keyword discovery, real-time trend tracking, and research-backed writing.
                 </p>
             </div>
             

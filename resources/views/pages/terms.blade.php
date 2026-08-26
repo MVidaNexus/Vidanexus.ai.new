@@ -17,23 +17,23 @@
                 <span class="last-updated">Last Updated: March 2026</span>
 
                 <h2>1. Acceptance of Terms</h2>
-                <p>By accessing or using the VidaNexus AI ecosystem, APIs, and associated infrastructure, you agree to be bound by these Terms of Service. If you do not agree to these terms, you must disconnect from our services immediately.</p>
+                <p>By accessing or using the VidaNexus AI platform and services, you agree to be bound by these Terms of Service. If you do not agree to these terms, you must cease using our services.</p>
 
                 <h2>2. Description of Service</h2>
-                <p>VidaNexus provides modular artificial intelligence tools, including but not limited to, SEO analysis, article generation, viral trend monitoring, and data visualization. These services are delivered "as-is", and availability may vary based on your active subscription plan.</p>
+                <p>VidaNexus provides artificial intelligence tools for creators, including SEO analysis, article generation, viral trend monitoring, and headline discovery. These services are delivered on a credit and subscription basis.</p>
 
                 <h2>3. Credits, Marketplace, and Billing</h2>
-                <p>Our services operate on a Marketplace Credit model (CRS):</p>
+                <p>Our services operate on a flexible Credit model:</p>
                 <ul>
-                    <li>Credits (CRS) are purchased as one-time packages and have no expiration date unless the account is terminated.</li>
-                    <li>Individual tools are unlocked via credits or granted as part of specific marketplace bundles.</li>
-                    <li>Credits are consumed per tool execution according to the specific "Action Cost" documented for each tool.</li>
-                    <li>Payments are processed securely via third-party providers (e.g., Fawaterk) and are non-refundable once consumption begins.</li>
-                    <li>Account sharing or API key sharing is strictly prohibited and will result in immediate termination.</li>
+                    <li>Credits are purchased as packages to use across our tools.</li>
+                    <li>Individual tools can be unlocked or accessed according to your plan and credit balance.</li>
+                    <li>Credits are consumed per tool execution according to the specific action cost listed for each tool.</li>
+                    <li>Payments are processed securely via verified third-party payment gateways (e.g., Fawaterk).</li>
+                    <li>Account sharing or unauthorized credential distribution is strictly prohibited.</li>
                 </ul>
 
                 <h2>4. Acceptable Use Policy</h2>
-                <p>You agree not to misuse our ecosystem. Prohibited activities include:</p>
+                <p>You agree not to misuse our platform. Prohibited activities include:</p>
                 <ul>
                     <li>Attempting to reverse-engineer, decompile, or bypass the security of our platform or APIs.</li>
                     <li>Using our AI generation tools to produce illegal, abusive, or explicitly harmful content.</li>

@@ -1,5 +1,5 @@
         <main class="hero" style="text-align: center; display: flex; flex-direction: column; align-items: center; justify-content: center; min-height: 80vh;">
-            <p class="hero-pretitle" style="color: var(--primary-cyan); font-weight: 800; letter-spacing: 4px; text-transform: uppercase; font-size: 0.8rem; margin-bottom: 1rem; text-shadow: 0 0 15px var(--primary-cyan);">The Era of Intelligence</p>
+            <p class="hero-pretitle" style="color: var(--primary-cyan); font-weight: 800; letter-spacing: 4px; text-transform: uppercase; font-size: 0.8rem; margin-bottom: 1rem; text-shadow: 0 0 15px var(--primary-cyan);">AI Tools For Content & SEO Growth</p>
             <h1 class="hero-title" style="margin: 0 auto 2rem;">
                 <span class="line-1">The Future is</span>
                 <span class="line-2">
@@ -8,14 +8,12 @@
                 </span>
             </h1>
             <p class="hero-subtitle" style="margin: 0 auto 3rem; max-width: 800px; font-weight: 400; line-height: 1.8; font-size: clamp(0.95rem, 2vw, 1.25rem);">
-                Experience the pinnacle of AI-driven automation. 
-                <span style="color: var(--text-main); font-weight: 600;">One Subscription.</span>
-                A singular ecosystem for absolute scalability. 
-                <span style="color: var(--primary-cyan); font-weight: 700; text-shadow: 0 0 20px var(--primary-cyan);">Unlimited Potential.</span>
+                Supercharge your publishing workflow with specialized AI tools for keyword discovery, trend tracking, and high-ranking article generation. 
+                <span style="color: var(--text-main); font-weight: 600;">Built for SEO growth.</span>
+                <span style="color: var(--primary-cyan); font-weight: 700; text-shadow: 0 0 20px var(--primary-cyan);">Fast, accurate, and actionable.</span>
             </p>
 
-            <!-- About The Platform Section: The Vida Nexus Advantage (3D High-Fidelity) -->
-            <!-- About The Platform Section: The Vida Nexus Advantage (Precision Minimalist) -->
+            <!-- About The Platform Section: The Vida Nexus Advantage -->
             <div id="ecosystem" class="mb-16 w-full max-w-7xl mx-auto px-6">
                 <style>
                     .vna-container {
@@ -149,44 +147,44 @@
                         SOFTWARE HOUSE
                     </div>
                     <h2 class="vna-title">The Vida Nexus <span style="background: linear-gradient(to right, #38bdf8, #818cf8); -webkit-background-clip: text; -webkit-text-fill-color: transparent;">Advantage</span></h2>
-                    <p class="vna-subtitle">The Digital Backbone of Tomorrow's AI Ecosystem</p>
+                    <p class="vna-subtitle">Tailored AI tools designed to help creators and publishers grow search traffic.</p>
                 </div>
 
                 <div class="vna-grid">
-                    <!-- Feature 1: Infinite AI Arsenal -->
+                    <!-- Feature 1: Specialized SEO & Content Tools -->
                     <div class="vna-card" style="--vna-accent: #a855f7;">
                         <div class="vna-icon-main" style="color: var(--vna-accent);">
                             <i class="fas fa-microchip"></i>
                         </div>
                         <h3 class="vna-card-title">
                             <span class="vna-dot"></span>
-                            Infinite AI Arsenal
+                            Specialized SEO Tools
                         </h3>
-                        <p class="vna-card-desc">Access a precision-engineered marketplace of specialized AI tools designed to conquer digital complexity with modular efficiency.</p>
+                        <p class="vna-card-desc">From real-time keyword radars to headline analyzers and article writers, access tools built for real-world publishing workflows.</p>
                     </div>
 
-                    <!-- Feature 2: Smart Credits -->
+                    <!-- Feature 2: Pay-As-You-Go Credits -->
                     <div class="vna-card" style="--vna-accent: #00A8E6;">
                         <div class="vna-icon-main" style="color: var(--vna-accent);">
                             <i class="fas fa-coins"></i>
                         </div>
                         <h3 class="vna-card-title">
                             <span class="vna-dot"></span>
-                            Transparent Credits
+                            Pay-As-You-Go Credits
                         </h3>
-                        <p class="vna-card-desc">High-precision credit logic that aligns computing investment directly with operational value, ensuring zero resource waste.</p>
+                        <p class="vna-card-desc">Only pay for what you actually use. Top up your wallet with transparent credit pricing, zero waste, and complete budget control.</p>
                     </div>
 
-                    <!-- Feature 3: Planetary Reliability -->
+                    <!-- Feature 3: Fast & Reliable -->
                     <div class="vna-card" style="--vna-accent: #00A58B;">
                         <div class="vna-icon-main" style="color: var(--vna-accent);">
                             <i class="fas fa-globe-americas"></i>
                         </div>
                         <h3 class="vna-card-title">
                             <span class="vna-dot"></span>
-                            Core Availability
+                            Fast & Reliable
                         </h3>
-                        <p class="vna-card-desc">Redundant global infrastructure guaranteeing 99.99% uptime for mission-critical automation at any planetary scale.</p>
+                        <p class="vna-card-desc">Built on high-speed cloud infrastructure to deliver real-time news scans, deep competitor insights, and rapid generation 24/7.</p>
                     </div>
                 </div>
             </div>

@@ -1,9 +1,9 @@
 @extends('layouts.marketing')
 
-@section('title', 'VidaNexus AI — Join the Future')
+@section('title', 'Create Account | VidaNexus AI')
 
 @push('meta')
-    <meta name="description" content="Join the future of intelligent automation. Register for VidaNexus AI.">
+    <meta name="description" content="Create your free VidaNexus AI account to start discovering keywords, monitoring trends, and writing high-ranking content.">
 @endpush
 
 @push('head')

@@ -1,12 +1,12 @@
 @extends('layouts.marketing')
 
-@section('title', 'Pricing & Subscriptions | VidaNexus AI')
+@section('title', 'Simple, Transparent Pricing | VidaNexus AI')
 
 @push('meta')
-    <meta name="description" content="Select your VidaNexus AI tier. Access our suite of 12 powerful AI tools with tailored limits for Pro and Ultimate.">
+    <meta name="description" content="Flexible credit packages for content creators and SEO professionals. Top up your wallet anytime to unlock tools and generate articles.">
     <meta property="og:type" content="website">
-    <meta property="og:title" content="Pricing & Subscriptions | VidaNexus AI">
-    <meta property="og:description" content="Select your VidaNexus AI tier. Access our suite of 12 powerful AI tools with tailored limits for Pro and Ultimate.">
+    <meta property="og:title" content="Simple, Transparent Pricing | VidaNexus AI">
+    <meta property="og:description" content="Flexible credit packages for content creators and SEO professionals. Top up your wallet anytime to unlock tools and generate articles.">
     <meta property="og:image" content="{{ asset('assets/social-preview.png?v=2') }}">
 @endpush
 
@@ -17,8 +17,8 @@
 @section('content')
         <main>
             <div class="pricing-hero">
-                <h1 class="pricing-title">Fuel Your <span class="gradient-text">Intelligence</span></h1>
-                <p class="pricing-subtitle">Purchase credit packages to unlock tools and generate content. Experience institutional-grade performance on demand.</p>
+                <h1 class="pricing-title">Simple, Transparent <span class="gradient-text">Pricing</span></h1>
+                <p class="pricing-subtitle">Purchase flexible credit packages to unlock specialized tools and generate content. Pay only for what you need with zero subscription traps.</p>
             </div>
 
             <div style="max-width: 1400px; margin: 0 auto 6rem; padding: 0 1rem;">

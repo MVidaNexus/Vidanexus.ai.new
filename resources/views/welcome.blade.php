@@ -1,21 +1,21 @@
 @extends('layouts.marketing')
 
-@section('title', 'VidaNexus AI | The Future of Intelligent Automation')
+@section('title', 'VidaNexus AI | Intelligent SEO & Content Tools for Creators')
 
 @push('meta')
-    <meta name="description" content="VidaNexus is a high-performance, modular AI ecosystem designed for long-term scalability. Access a growing suite of intelligent tools from article writers to real-time trend monitors.">
+    <meta name="description" content="VidaNexus gives content creators and publishers AI-powered tools to discover competitor keywords, monitor viral trends, craft engaging headlines, and write high-ranking articles.">
     <meta name="keywords" content="AI, Artificial Intelligence, Content Automation, SEO Tools, Article Writer, Keyword Trends, Google Discover, VidaNexus">
     <meta name="author" content="VidaNexus">
     <link rel="canonical" href="https://vidanexus.ai">
     <meta property="og:type" content="website">
     <meta property="og:url" content="https://vidanexus.ai/">
-    <meta property="og:title" content="VidaNexus AI | The Future of Intelligent Automation">
-    <meta property="og:description" content="A modular, high-performance AI ecosystem designed for planetary-scale automation and content intelligence.">
+    <meta property="og:title" content="VidaNexus AI | Intelligent SEO & Content Tools for Creators">
+    <meta property="og:description" content="AI-powered tools to discover competitor keywords, monitor viral trends, craft engaging headlines, and write high-ranking articles.">
     <meta property="og:image" content="{{ asset('assets/social-preview.png?v=2') }}">
     <meta property="twitter:card" content="summary_large_image">
     <meta property="twitter:url" content="https://vidanexus.ai/">
-    <meta property="twitter:title" content="VidaNexus AI | The Future of Intelligent Automation">
-    <meta property="twitter:description" content="A modular, high-performance AI ecosystem designed for planetary-scale automation and content intelligence.">
+    <meta property="twitter:title" content="VidaNexus AI | Intelligent SEO & Content Tools for Creators">
+    <meta property="twitter:description" content="AI-powered tools to discover competitor keywords, monitor viral trends, craft engaging headlines, and write high-ranking articles.">
     <meta property="twitter:image" content="{{ asset('assets/social-preview.png?v=2') }}">
 @endpush
 

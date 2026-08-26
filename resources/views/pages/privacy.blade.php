@@ -9,7 +9,7 @@
 @section('content')
         <div class="page-header">
             <h1 class="page-title">Privacy Policy</h1>
-            <p class="page-subtitle">How we collect, use, and protect your data across the VidaNexus ecosystem.</p>
+            <p class="page-subtitle">How we collect, use, and protect your data across the VidaNexus platform.</p>
         </div>
 
         <div class="content-container">
@@ -17,7 +17,7 @@
                 <span class="last-updated">Last Updated: March 2026</span>
 
                 <h2>1. Introduction</h2>
-                <p>Welcome to VidaNexus AI. We are committed to protecting your personal data and respecting your privacy. This policy outlines our data processing practices when you use our core automation tools, APIs, and broader ecosystem.</p>
+                <p>Welcome to VidaNexus AI. We are committed to protecting your personal data and respecting your privacy. This policy outlines our data processing practices when you use our tools and associated services.</p>
 
                 <h2>2. Data We Collect</h2>
                 <p>To provide you with our high-performance AI services, we collect the following types of information:</p>

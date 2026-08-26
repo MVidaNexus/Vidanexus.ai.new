@@ -1,12 +1,12 @@
 @extends('layouts.marketing')
 
-@section('title', 'VidaNexus AI — Secure Login')
+@section('title', 'Sign In | VidaNexus AI')
 
 @push('meta')
-    <meta name="description" content="Access your VidaNexus AI dashboard. Secure, planetary-scale intelligent automation at your fingertips.">
+    <meta name="description" content="Sign in to your VidaNexus AI account to access your tools, credits, and live radars.">
     <meta property="og:type" content="website">
-    <meta property="og:title" content="VidaNexus AI — Secure Login">
-    <meta property="og:description" content="Access your VidaNexus AI dashboard. Secure, planetary-scale intelligent automation at your fingertips.">
+    <meta property="og:title" content="Sign In | VidaNexus AI">
+    <meta property="og:description" content="Sign in to your VidaNexus AI account to access your tools, credits, and live radars.">
     <meta property="og:image" content="{{ asset('assets/social-preview.png?v=2') }}">
 @endpush
 
@@ -14,7 +14,7 @@
         <main class="hero">
 
             <div class="glass-panel" style="max-width: 450px; padding: 3rem;">
-                <h2 style="font-family: var(--font-heading); font-size: 2rem; margin-bottom: 2rem; color: var(--text-main);">Authorized Access</h2>
+                <h2 style="font-family: var(--font-heading); font-size: 2rem; margin-bottom: 2rem; color: var(--text-main);">Welcome Back</h2>
 
                 @if(session('status'))
                     <div style="background: rgba(16, 185, 129, 0.1); border: 1px solid rgba(16, 185, 129, 0.3); color: #00A58B; padding: 0.85rem 1rem; border-radius: 10px; margin-bottom: 1.25rem; font-size: 0.9rem;">
