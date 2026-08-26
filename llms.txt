@@ -1,0 +1,25 @@
+# VidaNexus AI
+
+> VidaNexus is a modern AI workspace designed for creators, publishers, and growth-focused businesses. We build practical tools that turn real-time data, search trends, and research into high-performing content.
+
+## Core Platform Capabilities
+
+- **AI Keyword Spy Radar**: Continuous competitor search monitoring, zero-day trend discovery, and topical authority mapping.
+- **Discover Headlines Intelligence**: High-CTR semantic title generation optimized for Google Discover, Google News, and social feeds.
+- **Pro AI Article Writer**: Long-form, research-grounded article generation with live Google News fact integration and custom persona control.
+- **Trending Search Monitor**: 24/7 global agency and search trend monitoring with real-time virality scoring.
+
+## Public Resources
+
+- [Home](https://vidanexus.ai/)
+- [Pricing](https://vidanexus.ai/pricing)
+- [Tools Overview](https://vidanexus.ai/#tools)
+- [Help Center & FAQ](https://vidanexus.ai/help-center)
+- [Terms of Service](https://vidanexus.ai/terms)
+- [Privacy Policy](https://vidanexus.ai/privacy)
+
+## Contact Information
+
+- **Website**: https://vidanexus.ai/
+- **Official Email**: info@vidanexus.net
+- **Location**: VidaNexus Hub — Egypt

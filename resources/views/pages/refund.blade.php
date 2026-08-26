@@ -1,6 +1,44 @@
 @extends('layouts.marketing')
 
-@section('title', 'Refund Policy | Vida Nexus AI')
+@section('title', 'Refund Policy | VidaNexus AI')
+
+@push('meta')
+    <meta name="description" content="Understand the refund terms and eligibility criteria for digital credit packages on VidaNexus AI.">
+    <link rel="canonical" href="https://vidanexus.ai/refund">
+    <meta property="og:type" content="website">
+    <meta property="og:url" content="https://vidanexus.ai/refund">
+    <meta property="og:title" content="Refund Policy | VidaNexus AI">
+    <meta property="og:description" content="Understand the refund terms and eligibility criteria for digital credit packages on VidaNexus AI.">
+    <meta property="og:image" content="{{ asset('assets/social-preview.png?v=2') }}">
+    <meta property="twitter:card" content="summary_large_image">
+    <meta property="twitter:url" content="https://vidanexus.ai/refund">
+    <meta property="twitter:title" content="Refund Policy | VidaNexus AI">
+    <meta property="twitter:description" content="Understand the refund terms and eligibility criteria for digital credit packages on VidaNexus AI.">
+    <meta property="twitter:image" content="{{ asset('assets/social-preview.png?v=2') }}">
+@endpush
+
+@push('schema')
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "BreadcrumbList",
+      "itemListElement": [
+        {
+          "@type": "ListItem",
+          "position": 1,
+          "name": "Home",
+          "item": "https://vidanexus.ai/"
+        },
+        {
+          "@type": "ListItem",
+          "position": 2,
+          "name": "Refund Policy",
+          "item": "https://vidanexus.ai/refund"
+        }
+      ]
+    }
+    </script>
+@endpush
 
 @push('styles')
     @include('partials.legal-page-styles')

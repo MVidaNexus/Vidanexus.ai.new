@@ -1,6 +1,44 @@
 @extends('layouts.marketing')
 
-@section('title', 'Digital Delivery Policy | Vida Nexus AI')
+@section('title', 'Digital Delivery Policy | VidaNexus AI')
+
+@push('meta')
+    <meta name="description" content="Information on instant digital fulfillment, access delivery, and account credit activation on VidaNexus AI.">
+    <link rel="canonical" href="https://vidanexus.ai/shipping">
+    <meta property="og:type" content="website">
+    <meta property="og:url" content="https://vidanexus.ai/shipping">
+    <meta property="og:title" content="Digital Delivery Policy | VidaNexus AI">
+    <meta property="og:description" content="Information on instant digital fulfillment, access delivery, and account credit activation on VidaNexus AI.">
+    <meta property="og:image" content="{{ asset('assets/social-preview.png?v=2') }}">
+    <meta property="twitter:card" content="summary_large_image">
+    <meta property="twitter:url" content="https://vidanexus.ai/shipping">
+    <meta property="twitter:title" content="Digital Delivery Policy | VidaNexus AI">
+    <meta property="twitter:description" content="Information on instant digital fulfillment, access delivery, and account credit activation on VidaNexus AI.">
+    <meta property="twitter:image" content="{{ asset('assets/social-preview.png?v=2') }}">
+@endpush
+
+@push('schema')
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "BreadcrumbList",
+      "itemListElement": [
+        {
+          "@type": "ListItem",
+          "position": 1,
+          "name": "Home",
+          "item": "https://vidanexus.ai/"
+        },
+        {
+          "@type": "ListItem",
+          "position": 2,
+          "name": "Digital Delivery Policy",
+          "item": "https://vidanexus.ai/shipping"
+        }
+      ]
+    }
+    </script>
+@endpush
 
 @push('styles')
     @include('partials.legal-page-styles')

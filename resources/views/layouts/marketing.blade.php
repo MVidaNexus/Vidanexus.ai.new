@@ -4,6 +4,9 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>@yield('title', 'VidaNexus AI')</title>
+    <meta name="robots" content="index, follow, max-image-preview:large, max-snippet:-1, max-video-preview:-1">
+    <meta property="og:site_name" content="VidaNexus AI">
+    <meta property="og:locale" content="en_US">
     @stack('meta')
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -13,6 +16,7 @@
     @include('partials.favicons')
     @include('partials.theme-init')
     @stack('head')
+    @stack('schema')
     @stack('styles')
 </head>
 <body>

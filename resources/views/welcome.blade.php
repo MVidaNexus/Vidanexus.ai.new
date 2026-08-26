@@ -17,6 +17,65 @@
     <meta property="twitter:title" content="VidaNexus AI | Intelligent SEO & Content Tools for Creators">
     <meta property="twitter:description" content="AI-powered tools to discover competitor keywords, monitor viral trends, craft engaging headlines, and write high-ranking articles.">
     <meta property="twitter:image" content="{{ asset('assets/social-preview.png?v=2') }}">
+@push('schema')
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@graph": [
+        {
+          "@type": "Organization",
+          "@id": "https://vidanexus.ai/#organization",
+          "name": "VidaNexus AI",
+          "url": "https://vidanexus.ai/",
+          "logo": {
+            "@type": "ImageObject",
+            "url": "https://vidanexus.ai/brand-icon.png",
+            "caption": "VidaNexus AI Logo"
+          },
+          "description": "VidaNexus is a modern AI workspace designed for creators, publishers, and growth-focused businesses.",
+          "contactPoint": {
+            "@type": "ContactPoint",
+            "email": "info@vidanexus.net",
+            "telephone": "+201019944589",
+            "contactType": "customer service",
+            "areaServed": "Global",
+            "availableLanguage": ["English", "Arabic"]
+          },
+          "sameAs": [
+            "https://www.facebook.com/VidaNexusAi/",
+            "https://www.linkedin.com/company/vida-nexus-ai/"
+          ]
+        },
+        {
+          "@type": "WebSite",
+          "@id": "https://vidanexus.ai/#website",
+          "url": "https://vidanexus.ai/",
+          "name": "VidaNexus AI",
+          "publisher": {
+            "@id": "https://vidanexus.ai/#organization"
+          },
+          "inLanguage": "en-US"
+        },
+        {
+          "@type": "SoftwareApplication",
+          "name": "VidaNexus AI Workspace",
+          "applicationCategory": "BusinessApplication",
+          "operatingSystem": "Web Browser",
+          "url": "https://vidanexus.ai/",
+          "provider": {
+            "@id": "https://vidanexus.ai/#organization"
+          },
+          "offers": {
+            "@type": "AggregateOffer",
+            "priceCurrency": "EGP",
+            "lowPrice": "35",
+            "highPrice": "2250",
+            "offerCount": "4"
+          }
+        }
+      ]
+    }
+    </script>
 @endpush
 
 @push('head')

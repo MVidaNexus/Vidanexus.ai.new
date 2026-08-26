@@ -4,10 +4,60 @@
 
 @push('meta')
     <meta name="description" content="Flexible credit packages for content creators and SEO professionals. Top up your wallet anytime to unlock tools and generate articles.">
+    <link rel="canonical" href="https://vidanexus.ai/pricing">
     <meta property="og:type" content="website">
+    <meta property="og:url" content="https://vidanexus.ai/pricing">
     <meta property="og:title" content="Simple, Transparent Pricing | VidaNexus AI">
     <meta property="og:description" content="Flexible credit packages for content creators and SEO professionals. Top up your wallet anytime to unlock tools and generate articles.">
     <meta property="og:image" content="{{ asset('assets/social-preview.png?v=2') }}">
+    <meta property="twitter:card" content="summary_large_image">
+    <meta property="twitter:url" content="https://vidanexus.ai/pricing">
+    <meta property="twitter:title" content="Simple, Transparent Pricing | VidaNexus AI">
+    <meta property="twitter:description" content="Flexible credit packages for content creators and SEO professionals. Top up your wallet anytime to unlock tools and generate articles.">
+    <meta property="twitter:image" content="{{ asset('assets/social-preview.png?v=2') }}">
+@endpush
+
+@push('schema')
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@graph": [
+        {
+          "@type": "Product",
+          "name": "VidaNexus AI Credit Packages",
+          "description": "Flexible credit packages for content creators and SEO professionals.",
+          "brand": {
+            "@type": "Brand",
+            "name": "VidaNexus AI"
+          },
+          "offers": {
+            "@type": "AggregateOffer",
+            "priceCurrency": "EGP",
+            "lowPrice": "35",
+            "highPrice": "2250",
+            "offerCount": "4"
+          }
+        },
+        {
+          "@type": "BreadcrumbList",
+          "itemListElement": [
+            {
+              "@type": "ListItem",
+              "position": 1,
+              "name": "Home",
+              "item": "https://vidanexus.ai/"
+            },
+            {
+              "@type": "ListItem",
+              "position": 2,
+              "name": "Pricing",
+              "item": "https://vidanexus.ai/pricing"
+            }
+          ]
+        }
+      ]
+    }
+    </script>
 @endpush
 
 @push('styles')

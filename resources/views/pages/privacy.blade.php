@@ -1,6 +1,44 @@
 @extends('layouts.marketing')
 
-@section('title', 'Privacy Policy | Vida Nexus AI')
+@section('title', 'Privacy Policy | VidaNexus AI')
+
+@push('meta')
+    <meta name="description" content="Learn how VidaNexus AI collects, uses, and safeguards your personal information, API usage data, and privacy rights.">
+    <link rel="canonical" href="https://vidanexus.ai/privacy">
+    <meta property="og:type" content="website">
+    <meta property="og:url" content="https://vidanexus.ai/privacy">
+    <meta property="og:title" content="Privacy Policy | VidaNexus AI">
+    <meta property="og:description" content="Learn how VidaNexus AI collects, uses, and safeguards your personal information, API usage data, and privacy rights.">
+    <meta property="og:image" content="{{ asset('assets/social-preview.png?v=2') }}">
+    <meta property="twitter:card" content="summary_large_image">
+    <meta property="twitter:url" content="https://vidanexus.ai/privacy">
+    <meta property="twitter:title" content="Privacy Policy | VidaNexus AI">
+    <meta property="twitter:description" content="Learn how VidaNexus AI collects, uses, and safeguards your personal information, API usage data, and privacy rights.">
+    <meta property="twitter:image" content="{{ asset('assets/social-preview.png?v=2') }}">
+@endpush
+
+@push('schema')
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "BreadcrumbList",
+      "itemListElement": [
+        {
+          "@type": "ListItem",
+          "position": 1,
+          "name": "Home",
+          "item": "https://vidanexus.ai/"
+        },
+        {
+          "@type": "ListItem",
+          "position": 2,
+          "name": "Privacy Policy",
+          "item": "https://vidanexus.ai/privacy"
+        }
+      ]
+    }
+    </script>
+@endpush
 
 @push('styles')
     @include('partials.legal-page-styles')

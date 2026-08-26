@@ -38,7 +38,7 @@
     </style>
     <a href="/" style="text-decoration: none;" class="header-logo-link flex items-center">
         <div class="logo-container">
-            <img src="{{ asset('assets/brand-logo.png?v=2026_2') }}" alt="VidaNexus" class="logo-img" style="height: 52px; width: auto; object-fit: contain;">
+            <img src="{{ asset('assets/brand-logo.png?v=2026_2') }}" alt="VidaNexus AI - Intelligent Tools for Content Creators & Publishers" class="logo-img" fetchpriority="high" style="height: 52px; width: auto; object-fit: contain;">
         </div>
     </a>
 
@@ -142,7 +142,7 @@
 <div class="mobile-sidebar" id="mobileSidebar" dir="ltr">
     <div style="display: flex; align-items: center; justify-content: space-between; padding-bottom: 1.25rem; border-bottom: 1px solid var(--header-border);">
         <a href="/" onclick="closeMobileMenu()" style="padding: 0; background: none; border: none;">
-            <img src="{{ asset('assets/brand-logo.png?v=2026_2') }}" alt="VidaNexus" class="logo-img" style="height: 40px; width: auto; object-fit: contain;">
+            <img src="{{ asset('assets/brand-logo.png?v=2026_2') }}" alt="VidaNexus AI - Intelligent Tools for Content Creators & Publishers" class="logo-img" loading="lazy" style="height: 40px; width: auto; object-fit: contain;">
         </a>
         <button onclick="closeMobileMenu()" aria-label="Close Menu" style="background: rgba(255,255,255,0.06); border: 1px solid var(--glass-border); color: var(--text-main); width: 36px; height: 36px; border-radius: 10px; display: flex; align-items: center; justify-content: center; cursor: pointer; font-size: 1.1rem; transition: all 0.2s;">
             <i class="fas fa-times"></i>

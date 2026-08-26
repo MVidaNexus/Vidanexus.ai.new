@@ -1,9 +1,76 @@
 @extends('layouts.marketing')
 
-@section('title', 'Help Center & Support | Vida Nexus AI')
+@section('title', 'Help Center & Support | VidaNexus AI')
 
-@push('styles')
-    @include('partials.help-center-styles')
+@push('meta')
+    <meta name="description" content="Find answers to frequently asked questions about VidaNexus AI tools, credits, billing, and account management.">
+    <link rel="canonical" href="https://vidanexus.ai/help-center">
+    <meta property="og:type" content="website">
+    <meta property="og:url" content="https://vidanexus.ai/help-center">
+    <meta property="og:title" content="Help Center & Support | VidaNexus AI">
+    <meta property="og:description" content="Find answers to frequently asked questions about VidaNexus AI tools, credits, billing, and account management.">
+    <meta property="og:image" content="{{ asset('assets/social-preview.png?v=2') }}">
+    <meta property="twitter:card" content="summary_large_image">
+    <meta property="twitter:url" content="https://vidanexus.ai/help-center">
+    <meta property="twitter:title" content="Help Center & Support | VidaNexus AI">
+    <meta property="twitter:description" content="Find answers to frequently asked questions about VidaNexus AI tools, credits, billing, and account management.">
+    <meta property="twitter:image" content="{{ asset('assets/social-preview.png?v=2') }}">
+@endpush
+
+@push('schema')
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@graph": [
+        {
+          "@type": "FAQPage",
+          "mainEntity": [
+            {
+              "@type": "Question",
+              "name": "What are credits and how are they used?",
+              "acceptedAnswer": {
+                "@type": "Answer",
+                "text": "Credits are the usage metric for VidaNexus AI tools. Each tool execution consumes a specific amount of credits based on complexity with transparent pay-as-you-go pricing."
+              }
+            },
+            {
+              "@type": "Question",
+              "name": "How does the Keyword Spy Radar work?",
+              "acceptedAnswer": {
+                "@type": "Answer",
+                "text": "Keyword Spy Radar performs automated competitor searches and trend scans to extract high-value ranking keywords before they saturate."
+              }
+            },
+            {
+              "@type": "Question",
+              "name": "Can I upgrade or top up my credit wallet anytime?",
+              "acceptedAnswer": {
+                "@type": "Answer",
+                "text": "Yes, you can top up your wallet with credit packages at any time with zero expiration dates and instant digital activation."
+              }
+            }
+          ]
+        },
+        {
+          "@type": "BreadcrumbList",
+          "itemListElement": [
+            {
+              "@type": "ListItem",
+              "position": 1,
+              "name": "Home",
+              "item": "https://vidanexus.ai/"
+            },
+            {
+              "@type": "ListItem",
+              "position": 2,
+              "name": "Help Center",
+              "item": "https://vidanexus.ai/help-center"
+            }
+          ]
+        }
+      ]
+    }
+    </script>
 @endpush
 
 @section('content')
