@@ -53,20 +53,16 @@
                         <div class="contact-icon"><i class="fas fa-map-marker-alt"></i></div>
                         <span>VidaNexus Hub — Egypt</span>
                     </li>
-                    <li>
-                        <div class="contact-icon"><i class="fas fa-headset"></i></div>
-                        <a href="mailto:technical@vidanexus.net" style="color: inherit; text-decoration: none;">technical@vidanexus.net</a>
-                    </li>
                 </ul>
             </div>
         </div>
         
         <div class="footer-bottom">
-            <p>&copy; {{ date('Y') }} <a href="https://vidanexus.net/" style="color: inherit; text-decoration: none;">Vida Nexus</a> AI. All rights reserved.</p>
+            <p>&copy; {{ date('Y') }} <a href="https://vidanexus.ai/" style="color: inherit; text-decoration: none;">Vida Nexus</a> AI. All rights reserved.</p>
             <div class="footer-social">
-                <a href="https://www.facebook.com/VidaNexus" aria-label="Facebook" target="_blank" rel="noopener noreferrer"><i class="fab fa-facebook-f"></i></a>
+                <a href="https://www.facebook.com/VidaNexusAi/" aria-label="Facebook" target="_blank" rel="noopener noreferrer"><i class="fab fa-facebook-f"></i></a>
                 <a href="mailto:info@vidanexus.net" aria-label="Email"><i class="fas fa-envelope"></i></a>
-                <a href="https://www.linkedin.com/company/vida-nexus/" aria-label="LinkedIn" target="_blank" rel="noopener noreferrer"><i class="fab fa-linkedin-in"></i></a>
+                <a href="https://www.linkedin.com/company/vida-nexus-ai/" aria-label="LinkedIn" target="_blank" rel="noopener noreferrer"><i class="fab fa-linkedin-in"></i></a>
             </div>
         </div>
     </div>

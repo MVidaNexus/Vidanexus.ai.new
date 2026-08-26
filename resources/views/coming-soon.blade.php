@@ -47,8 +47,8 @@
         "addressCountry": "Egypt"
       },
       "sameAs": [
-        "https://www.facebook.com/VidaNexus",
-        "https://www.linkedin.com/company/vida-nexus/"
+        "https://www.facebook.com/VidaNexusAi/",
+        "https://www.linkedin.com/company/vida-nexus-ai/"
       ]
     }
     </script>
