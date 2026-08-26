@@ -10,13 +10,33 @@
 <!-- Reusable Platform Header (Exact Match with Home Page) -->
 <header id="site-header" dir="ltr" style="position: fixed; top: {{ session('impersonate_admin_id') ? '40px' : '0' }}; left: 0; right: 0; z-index: 1000; display: flex; justify-content: space-between; align-items: center; padding: 1rem 5%; width: 100%; box-sizing: border-box; backdrop-filter: blur(15px); background: var(--header-bg); border-bottom: 1px solid var(--header-border); transition: top 0.3s;">
     <style>
-        @media (max-width: 768px) {
-            #site-header { padding: 1rem 1rem !important; min-height: 65px; }
+        @media (max-width: 992px) {
+            #site-header {
+                padding: 0.75rem 1rem !important;
+                min-height: 65px;
+                display: flex !important;
+                justify-content: center !important;
+                align-items: center !important;
+                position: fixed !important;
+            }
+            .header-logo-link {
+                margin: 0 auto !important;
+                display: flex !important;
+                align-items: center !important;
+                justify-content: center !important;
+            }
             .logo-text { font-size: 1.1rem !important; }
-            .logo-img { height: 38px !important; }
+            .logo-img { height: 42px !important; }
+            .hamburger {
+                position: absolute !important;
+                right: 1.25rem !important;
+                top: 50% !important;
+                transform: translateY(-50%) !important;
+                margin: 0 !important;
+            }
         }
     </style>
-    <a href="/" style="text-decoration: none;" class="flex items-center">
+    <a href="/" style="text-decoration: none;" class="header-logo-link flex items-center">
         <div class="logo-container">
             <img src="{{ asset('assets/brand-logo.png?v=2026_2') }}" alt="VidaNexus" class="logo-img" style="height: 52px; width: auto; object-fit: contain;">
         </div>
