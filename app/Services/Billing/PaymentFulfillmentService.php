@@ -45,6 +45,12 @@ class PaymentFulfillmentService
         session()->forget('pending_registration');
         $this->auditLogService->log($user->id, 'user.create_paid_signup', User::class, $user->id, null, $user->toArray());
 
+        try {
+            \Illuminate\Support\Facades\Mail::to($user->email)->send(new \App\Mail\WelcomeNewUserMail($user, 0.0));
+        } catch (\Throwable $e) {
+            Log::warning('Failed sending welcome email on paid signup: ' . $e->getMessage());
+        }
+
         return $user;
     }
 
@@ -100,6 +106,19 @@ class PaymentFulfillmentService
             null,
             ['tool_slug' => $toolSlug, 'ref' => $ref, 'unlock_price' => $unlockPrice, 'bonus_credits' => $bonusCredits]
         );
+
+        // Send payment receipt email
+        try {
+            \Illuminate\Support\Facades\Mail::to($user->email)->send(new \App\Mail\PaymentReceiptMail($user, [
+                'item_name' => 'Tool Subscription: ' . ($toolConfig['name'] ?? $toolSlug),
+                'amount' => $unlockPrice,
+                'credits_added' => $bonusCredits,
+                'new_balance' => (float) ($user->wallet->balance_credits ?? 0),
+                'reference' => $ref ?? ('TOOL_' . strtoupper($toolSlug)),
+            ]));
+        } catch (\Throwable $e) {
+            Log::warning('Failed sending payment receipt email: ' . $e->getMessage());
+        }
 
         return redirect('/dashboard')->with('success', '🎉 Successfully subscribed to "'.$toolConfig['name'].'" for 1 month! '.$bonusCredits.' bonus CRS have been added to your wallet.');
     }
@@ -158,6 +177,19 @@ class PaymentFulfillmentService
                 null,
                 ['package_id' => $packageId, 'credits_num' => $packageInfo['credits_num'], 'ref' => $ref]
             );
+
+            // Send payment receipt email
+            try {
+                \Illuminate\Support\Facades\Mail::to($user->email)->send(new \App\Mail\PaymentReceiptMail($user, [
+                    'item_name' => 'Credit Package: ' . ($packageInfo['name'] ?? 'Custom'),
+                    'amount' => (float) $packageInfo['final_price'],
+                    'credits_added' => (float) $packageInfo['credits_num'],
+                    'new_balance' => (float) $user->wallet->balance_credits,
+                    'reference' => $ref ?? ('PKG_' . strtoupper($packageId)),
+                ]));
+            } catch (\Throwable $e) {
+                Log::warning('Failed sending credit purchase receipt email: ' . $e->getMessage());
+            }
         }
 
         return redirect('/dashboard#billing')->with('success', '🎉 Successfully purchased '.number_format($packageInfo['credits_num']).' CRS! Credits added to your wallet.');

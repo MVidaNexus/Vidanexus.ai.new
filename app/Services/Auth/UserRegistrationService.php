@@ -75,6 +75,13 @@ class UserRegistrationService
         // Auto-grant any trial tools configured by the admin
         $this->grantTrialTools($user);
 
+        // Send automated transactional Welcome Email
+        try {
+            \Illuminate\Support\Facades\Mail::to($user->email)->send(new \App\Mail\WelcomeNewUserMail($user, $beginnerCredits));
+        } catch (\Throwable $e) {
+            Log::warning('Failed sending welcome email: ' . $e->getMessage(), ['user_id' => $user->id]);
+        }
+
         $isVerificationEnabled = (bool) Setting::get('global_email_verification', true);
 
         if ($isVerificationEnabled) {

@@ -157,6 +157,20 @@ class ToolCreditConsumptionService
                     ]
                 );
 
+                // Automated Transactional Alert: Low Credit Balance (< 3.0 credits) with 5-day cooldown
+                $newWalletBal = (float) $wallet->balance_credits;
+                if ($newWalletBal < 3.0 && !$user->isAdmin()) {
+                    $cacheKey = 'low_credit_alert_user_' . $user->id;
+                    if (!\Illuminate\Support\Facades\Cache::has($cacheKey)) {
+                        \Illuminate\Support\Facades\Cache::put($cacheKey, true, now()->addDays(5));
+                        try {
+                            \Illuminate\Support\Facades\Mail::to($user->email)->send(new \App\Mail\LowCreditBalanceMail($user, $newWalletBal));
+                        } catch (\Throwable $e) {
+                            Log::warning('Failed sending low balance alert email: ' . $e->getMessage(), ['user_id' => $user->id]);
+                        }
+                    }
+                }
+
                 return true;
             });
         } catch (\Throwable $e) {
