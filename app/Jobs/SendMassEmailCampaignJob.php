@@ -26,7 +26,7 @@ class SendMassEmailCampaignJob implements ShouldQueue
         public string $subject,
         public string $templateHtml
     ) {
-        $this->onQueue('emails');
+        $this->onQueue('default');
     }
 
     public function handle(): void
@@ -61,7 +61,7 @@ class SendMassEmailCampaignJob implements ShouldQueue
                 // Small sleep to ensure provider rate limits are respected
                 usleep(50000); // 50ms pause
             } catch (\Throwable $e) {
-                Log::channel('mail')->error("Failed sending campaign email to {$email}: " . $e->getMessage(), [
+                Log::error("Failed sending campaign email to {$email}: " . $e->getMessage(), [
                     'recipient' => $recipient,
                 ]);
             }

@@ -174,13 +174,23 @@ class EmailCampaignController extends Controller
             return back()->withErrors(['audience' => 'No valid recipients were found matching the selected audience criteria.'])->withInput();
         }
 
-        // Chunk into batches of 40 to avoid high memory usage and queue timeouts
-        $chunks = array_chunk($recipients, 40);
+        $totalRecipients = count($recipients);
+
+        // For small lists (<= 15 recipients), process immediately for instant delivery feedback
+        if ($totalRecipients <= 15) {
+            foreach ($recipients as $recipient) {
+                SendMassEmailCampaignJob::dispatchSync([$recipient], $validated['subject'], $validated['content']);
+            }
+            return redirect()->route('admin.horizon.email-campaigns.index')
+                ->with('success', "Campaign sent successfully! {$totalRecipients} emails delivered immediately.");
+        }
+
+        // Chunk larger campaigns into batches of 30 to avoid memory / timeout issues
+        $chunks = array_chunk($recipients, 30);
         foreach ($chunks as $chunk) {
             SendMassEmailCampaignJob::dispatch($chunk, $validated['subject'], $validated['content']);
         }
 
-        $totalRecipients = count($recipients);
         return redirect()->route('admin.horizon.email-campaigns.index')
             ->with('success', "Campaign queued successfully! {$totalRecipients} emails are currently being dispatched in the background.");
     }
