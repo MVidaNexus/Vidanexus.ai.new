@@ -75,7 +75,7 @@
 {{-- Floating Action Buttons (Back to Top Only) --}}
 <div id="floating-actions" style="
     position: fixed;
-    bottom: 1.5rem;
+    bottom: 5rem;
     right: 1.5rem;
     display: flex;
     flex-direction: column;
@@ -85,7 +85,7 @@
 ">
     {{-- Back to Top --}}
     <button id="btn-scroll-top" onclick="window.scrollTo({top:0,behavior:'smooth'})" aria-label="Back to top" style="
-        width: 48px; height: 48px;
+        width: 46px; height: 46px;
         border-radius: 50%;
         border: 1px solid var(--glass-border, rgba(0, 168, 230,0.25));
         background: var(--card-bg, rgba(10,15,30,0.85));
@@ -115,8 +115,8 @@
         pointer-events: auto !important;
     }
     @media (max-width: 640px) {
-        #floating-actions { bottom: 1rem; right: 1rem; }
-        #btn-scroll-top { width: 42px; height: 42px; }
+        #floating-actions { bottom: 5.2rem !important; right: 1rem !important; }
+        #btn-scroll-top { width: 40px !important; height: 40px !important; }
     }
 </style>
 

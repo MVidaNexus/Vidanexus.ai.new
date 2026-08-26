@@ -31,7 +31,7 @@ return [
                     Stop guessing. The <strong>Keyword Spy Radar</strong> performs deep-content scans on rival domains to extract the exact high-value keywords they are using to siphon your traffic.
                 </p>
 
-                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 24px; margin-bottom: 40px;">
+                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 250px), 1fr)); gap: 24px; margin-bottom: 40px;">
                     <div class="marketing-card" style="border-color: rgba(14, 165, 233, 0.2);">
                         <div class="marketing-card-accent" style="background: #0ea5e9;"></div>
                         <h4 class="marketing-card-title">
@@ -118,7 +118,7 @@ return [
                     Stop fighting the algorithm and start mastering it. <strong>Discover Headlines</strong> is a semantic powerhouse that fuses high-level psychology with Google’s Knowledge Graph to ensure your content dominates Google Discover, News, and Search.
                 </p>
 
-                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 24px; margin-bottom: 40px;">
+                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 250px), 1fr)); gap: 24px; margin-bottom: 40px;">
                     <div style="background: rgba(15, 23, 42, 0.6); border: 1px solid rgba(245, 158, 11, 0.2); padding: 28px; border-radius: 16px; position: relative; overflow: hidden;">
                         <div style="position: absolute; top: 0; left: 0; width: 4px; height: 100%; background: #f59e0b;"></div>
                         <h4 style="color: #fff; font-size: 1.3rem; margin-bottom: 12px; display: flex; align-items: center; gap: 10px; font-weight: 900;">
@@ -179,7 +179,7 @@ return [
                     In the high-stakes world of content publishing, speed isn’t just an advantage—it’s the only currency that matters. With <strong>News Intelligence</strong>, you stop following the news and start outrunning it. Our AI engine scans thousands of global sources in seconds to reveal hidden opportunities.
                 </p>
 
-                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 24px; margin-bottom: 40px;">
+                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 250px), 1fr)); gap: 24px; margin-bottom: 40px;">
                     <div style="background: rgba(15, 23, 42, 0.6); border: 1px solid rgba(14, 165, 233, 0.2); padding: 28px; border-radius: 20px; position: relative; overflow: hidden; backdrop-filter: blur(10px);">
                         <div style="position: absolute; top: 0; left: 0; width: 4px; height: 100%; background: #0ea5e9;"></div>
                         <h4 style="color: #fff; font-size: 1.4rem; margin-bottom: 12px; display: flex; align-items: center; gap: 12px; font-weight: 800;">
@@ -291,7 +291,7 @@ return [
                     Stop publishing static, hallucination-prone AI text. The <strong>Pro AI Article Writer</strong> is a state-of-the-art content engine that fuses cutting-edge LLMs with <strong>Live Research Grounding</strong>. Every article is built on real-time facts, tailored to your specific audience, and optimized for 2026 search algorithms.
                 </p>
 
-                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 24px; margin-bottom: 40px;">
+                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 250px), 1fr)); gap: 24px; margin-bottom: 40px;">
                     <div style="background: rgba(15, 23, 42, 0.6); border: 1px solid rgba(20, 184, 166, 0.2); padding: 28px; border-radius: 20px; position: relative; overflow: hidden; backdrop-filter: blur(10px);">
                         <div style="position: absolute; top: 0; left: 0; width: 4px; height: 100%; background: #14b8a6;"></div>
                         <h4 style="color: #fff; font-size: 1.4rem; margin-bottom: 12px; display: flex; align-items: center; gap: 12px; font-weight: 800;">

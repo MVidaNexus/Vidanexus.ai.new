@@ -266,25 +266,69 @@
             background: linear-gradient(135deg, rgba(0, 168, 230, 0.02), rgba(168, 85, 247, 0.02));
         }
 
+        #bg-layer {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            overflow: hidden;
+            pointer-events: none;
+            z-index: 0;
+        }
+
+        .tool-description {
+            box-sizing: border-box;
+            max-width: 900px;
+            width: 100%;
+            overflow-wrap: break-word;
+            word-wrap: break-word;
+        }
+
+        .tool-description * {
+            max-width: 100% !important;
+            box-sizing: border-box !important;
+        }
+
         @media (max-width: 768px) {
+            .main-container {
+                padding: 1rem 0.75rem !important;
+                max-width: 100vw !important;
+                overflow-x: hidden !important;
+            }
             .tool-cta-btn {
                 font-size: 1.1rem !important;
-                padding: 1rem 2rem !important;
+                padding: 1rem 1.5rem !important;
                 min-width: 100% !important;
             }
-            /* CTA buttons now use global responsive classes */
             .tool-icon-large {
                 font-size: 3rem;
                 margin-bottom: 1rem;
             }
             .tool-hero {
-                padding-top: 2rem;
+                padding: 4.5rem 0.5rem 1.5rem !important;
+                max-width: 100% !important;
+                overflow-x: hidden !important;
             }
             .feature-item {
-                padding: 1.5rem;
+                padding: 1.5rem 1.25rem;
+            }
+            .features-grid {
+                padding: 0 0.5rem !important;
+                gap: 1rem !important;
             }
             .tool-description {
-                padding: 1.5rem 1rem;
+                padding: 1.25rem 1rem !important;
+                max-width: 100% !important;
+                overflow-x: hidden !important;
+                border-radius: 16px !important;
+            }
+            .tool-description [style*="grid-template-columns"],
+            .tool-description [style*="display: grid"],
+            .tool-description [style*="display:grid"] {
+                grid-template-columns: 1fr !important;
+                gap: 1rem !important;
+                max-width: 100% !important;
             }
         }
 
@@ -399,15 +443,17 @@
         @media (max-width: 640px) {
             .sticky-tool-bar {
                 bottom: 0.75rem;
-                width: 94%;
-                padding: 0.6rem 0.9rem;
+                width: calc(100% - 1.5rem);
+                max-width: calc(100% - 1.5rem);
+                padding: 0.6rem 0.85rem;
                 gap: 0.75rem;
+                z-index: 900;
             }
             .sticky-tool-tagline {
                 display: none;
             }
             .sticky-btn {
-                padding: 0.55rem 1rem !important;
+                padding: 0.55rem 0.9rem !important;
                 font-size: 0.8rem !important;
             }
         }
