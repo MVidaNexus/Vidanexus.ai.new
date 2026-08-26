@@ -77,45 +77,11 @@
             const selected = select.options[select.selectedIndex];
             if (selected && selected.value) {
                 const flag = selected.getAttribute('data-flag') || '🌍';
-                const dial = selected.getAttribute('data-dial') || '+00';
+                const dial = selected.getAttribute('data-dial') || '+20';
                 flagEl.textContent = flag;
                 dialEl.textContent = dial;
                 if (dialHidden) dialHidden.value = dial;
-            } else {
-                flagEl.textContent = '🌍';
-                dialEl.textContent = '+00';
-                if (dialHidden) dialHidden.value = '';
             }
-        }
-
-        // Combine dial code + local number before form submission
-        function combinePhoneNumber() {
-            const select = document.getElementById('countrySelect');
-            const dialHidden = document.getElementById('dialCodeHidden');
-            const phoneInput = document.getElementById('phoneInput');
-            
-            if (dialHidden && phoneInput) {
-                let local = phoneInput.value.trim();
-                const dial = dialHidden.value || '+20';
-                
-                if (local.startsWith('+')) {
-                    return true;
-                }
-                
-                // Remove leading zero if present
-                if (local.startsWith('0')) {
-                    local = local.substring(1);
-                }
-                
-                const codeNoPlus = dial.replace('+', '');
-                if (local.startsWith(codeNoPlus)) {
-                    phoneInput.value = '+' + local;
-                    return true;
-                }
-
-                phoneInput.value = dial + local;
-            }
-            return true;
         }
 
         // Initialize phone prefix on page load if country is already set

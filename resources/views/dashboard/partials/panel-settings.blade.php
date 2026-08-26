@@ -3,9 +3,30 @@
                         <h2 class="panel-title"><i class="fas fa-cog"></i> Account Settings</h2>
                     </div>
 
-                    <form action="/dashboard/settings" method="POST" enctype="multipart/form-data" style="max-width: 600px;" onsubmit="return combinePhoneNumber()">
+                    @php
+                        $countryDialMap = [
+                            'Egypt' => '+20', 'Saudi Arabia' => '+966', 'United Arab Emirates' => '+971',
+                            'Kuwait' => '+965', 'Qatar' => '+974', 'Bahrain' => '+973', 'Oman' => '+968',
+                            'Jordan' => '+962', 'Iraq' => '+964', 'Lebanon' => '+961', 'Palestine' => '+970',
+                            'Syria' => '+963', 'Libya' => '+218', 'Tunisia' => '+216', 'Algeria' => '+213',
+                            'Morocco' => '+212', 'Sudan' => '+249', 'Yemen' => '+967', 'Turkey' => '+90',
+                            'United States' => '+1', 'United Kingdom' => '+44', 'Germany' => '+49',
+                            'France' => '+33', 'India' => '+91', 'Pakistan' => '+92', 'Nigeria' => '+234',
+                            'South Africa' => '+27', 'Brazil' => '+55', 'Canada' => '+1', 'Australia' => '+61',
+                            'Malaysia' => '+60', 'Indonesia' => '+62',
+                        ];
+                        $selectedCountry = old('country', $user->country ?? 'Egypt');
+                        $currentDial = $countryDialMap[$selectedCountry] ?? '+20';
+                        $rawPhone = (string) old('phone', $user->phone ?? '');
+                        $localPhone = $rawPhone;
+                        if ($currentDial && str_starts_with($localPhone, $currentDial)) {
+                            $localPhone = substr($localPhone, strlen($currentDial));
+                        }
+                    @endphp
+
+                    <form action="/dashboard/settings" method="POST" enctype="multipart/form-data" style="max-width: 600px;">
                         @csrf
-                        <input type="hidden" name="dial_code" id="dialCodeHidden" value="">
+                        <input type="hidden" name="dial_code" id="dialCodeHidden" value="{{ $currentDial }}">
                         
                         @if($errors->any())
                             <div style="background: rgba(255, 70, 70, 0.1); border: 1px solid #ff4646; color: #ff4646; padding: 1rem; border-radius: 8px; margin-bottom: 1.5rem; font-size: 0.9rem;">
@@ -92,70 +113,49 @@
                                 <span style="padding: 1rem; color: var(--primary-cyan); font-size: 1rem;"><i class="fas fa-globe"></i></span>
                                 <select name="country" id="countrySelect" required onchange="updatePhonePrefix()" style="flex: 1; background: transparent; border: none; color: var(--text-main); padding: 1rem 1rem 1rem 0; font-family: inherit; outline: none; font-size: 1rem; cursor: pointer; -webkit-appearance: none; appearance: none;">
                                     <option value="" style="background: #1a1a2e;">-- Select Country --</option>
-                                    <option value="Egypt" data-dial="+20" data-flag="🇪🇬" {{ (old('country', $user->country) == 'Egypt' || empty(old('country', $user->country))) ? 'selected' : '' }} style="background: #1a1a2e;">🇪🇬 Egypt</option>
-                                    <option value="Saudi Arabia" data-dial="+966" data-flag="🇸🇦" {{ old('country', $user->country) == 'Saudi Arabia' ? 'selected' : '' }} style="background: #1a1a2e;">🇸🇦 Saudi Arabia</option>
-                                    <option value="United Arab Emirates" data-dial="+971" data-flag="🇦🇪" {{ old('country', $user->country) == 'United Arab Emirates' ? 'selected' : '' }} style="background: #1a1a2e;">🇦🇪 United Arab Emirates</option>
-                                    <option value="Kuwait" data-dial="+965" data-flag="🇰🇼" {{ old('country', $user->country) == 'Kuwait' ? 'selected' : '' }} style="background: #1a1a2e;">🇰🇼 Kuwait</option>
-                                    <option value="Qatar" data-dial="+974" data-flag="🇶🇦" {{ old('country', $user->country) == 'Qatar' ? 'selected' : '' }} style="background: #1a1a2e;">🇶🇦 Qatar</option>
-                                    <option value="Bahrain" data-dial="+973" data-flag="🇧🇭" {{ old('country', $user->country) == 'Bahrain' ? 'selected' : '' }} style="background: #1a1a2e;">🇧🇭 Bahrain</option>
-                                    <option value="Oman" data-dial="+968" data-flag="🇴🇲" {{ old('country', $user->country) == 'Oman' ? 'selected' : '' }} style="background: #1a1a2e;">🇴🇲 Oman</option>
-                                    <option value="Jordan" data-dial="+962" data-flag="🇯🇴" {{ old('country', $user->country) == 'Jordan' ? 'selected' : '' }} style="background: #1a1a2e;">🇯🇴 Jordan</option>
-                                    <option value="Iraq" data-dial="+964" data-flag="🇮🇶" {{ old('country', $user->country) == 'Iraq' ? 'selected' : '' }} style="background: #1a1a2e;">🇮🇶 Iraq</option>
-                                    <option value="Lebanon" data-dial="+961" data-flag="🇱🇧" {{ old('country', $user->country) == 'Lebanon' ? 'selected' : '' }} style="background: #1a1a2e;">🇱🇧 Lebanon</option>
-                                    <option value="Palestine" data-dial="+970" data-flag="🇵🇸" {{ old('country', $user->country) == 'Palestine' ? 'selected' : '' }} style="background: #1a1a2e;">🇵🇸 Palestine</option>
-                                    <option value="Syria" data-dial="+963" data-flag="🇸🇾" {{ old('country', $user->country) == 'Syria' ? 'selected' : '' }} style="background: #1a1a2e;">🇸🇾 Syria</option>
-                                    <option value="Libya" data-dial="+218" data-flag="🇱🇾" {{ old('country', $user->country) == 'Libya' ? 'selected' : '' }} style="background: #1a1a2e;">🇱🇾 Libya</option>
-                                    <option value="Tunisia" data-dial="+216" data-flag="🇹🇳" {{ old('country', $user->country) == 'Tunisia' ? 'selected' : '' }} style="background: #1a1a2e;">🇹🇳 Tunisia</option>
-                                    <option value="Algeria" data-dial="+213" data-flag="🇩🇿" {{ old('country', $user->country) == 'Algeria' ? 'selected' : '' }} style="background: #1a1a2e;">🇩🇿 Algeria</option>
-                                    <option value="Morocco" data-dial="+212" data-flag="🇲🇦" {{ old('country', $user->country) == 'Morocco' ? 'selected' : '' }} style="background: #1a1a2e;">🇲🇦 Morocco</option>
-                                    <option value="Sudan" data-dial="+249" data-flag="🇸🇩" {{ old('country', $user->country) == 'Sudan' ? 'selected' : '' }} style="background: #1a1a2e;">🇸🇩 Sudan</option>
-                                    <option value="Yemen" data-dial="+967" data-flag="🇾🇪" {{ old('country', $user->country) == 'Yemen' ? 'selected' : '' }} style="background: #1a1a2e;">🇾🇪 Yemen</option>
-                                    <option value="Turkey" data-dial="+90" data-flag="🇹🇷" {{ old('country', $user->country) == 'Turkey' ? 'selected' : '' }} style="background: #1a1a2e;">🇹🇷 Turkey</option>
-                                    <option value="United States" data-dial="+1" data-flag="🇺🇸" {{ old('country', $user->country) == 'United States' ? 'selected' : '' }} style="background: #1a1a2e;">🇺🇸 United States</option>
-                                    <option value="United Kingdom" data-dial="+44" data-flag="🇬🇧" {{ old('country', $user->country) == 'United Kingdom' ? 'selected' : '' }} style="background: #1a1a2e;">🇬🇧 United Kingdom</option>
-                                    <option value="Germany" data-dial="+49" data-flag="🇩🇪" {{ old('country', $user->country) == 'Germany' ? 'selected' : '' }} style="background: #1a1a2e;">🇩🇪 Germany</option>
-                                    <option value="France" data-dial="+33" data-flag="🇫🇷" {{ old('country', $user->country) == 'France' ? 'selected' : '' }} style="background: #1a1a2e;">🇫🇷 France</option>
-                                    <option value="India" data-dial="+91" data-flag="🇮🇳" {{ old('country', $user->country) == 'India' ? 'selected' : '' }} style="background: #1a1a2e;">🇮🇳 India</option>
-                                    <option value="Pakistan" data-dial="+92" data-flag="🇵🇰" {{ old('country', $user->country) == 'Pakistan' ? 'selected' : '' }} style="background: #1a1a2e;">🇵🇰 Pakistan</option>
-                                    <option value="Nigeria" data-dial="+234" data-flag="🇳🇬" {{ old('country', $user->country) == 'Nigeria' ? 'selected' : '' }} style="background: #1a1a2e;">🇳🇬 Nigeria</option>
-                                    <option value="South Africa" data-dial="+27" data-flag="🇿🇦" {{ old('country', $user->country) == 'South Africa' ? 'selected' : '' }} style="background: #1a1a2e;">🇿🇦 South Africa</option>
-                                    <option value="Brazil" data-dial="+55" data-flag="🇧🇷" {{ old('country', $user->country) == 'Brazil' ? 'selected' : '' }} style="background: #1a1a2e;">🇧🇷 Brazil</option>
-                                    <option value="Canada" data-dial="+1" data-flag="🇨🇦" {{ old('country', $user->country) == 'Canada' ? 'selected' : '' }} style="background: #1a1a2e;">🇨🇦 Canada</option>
-                                    <option value="Australia" data-dial="+61" data-flag="🇦🇺" {{ old('country', $user->country) == 'Australia' ? 'selected' : '' }} style="background: #1a1a2e;">🇦🇺 Australia</option>
-                                    <option value="Malaysia" data-dial="+60" data-flag="🇲🇾" {{ old('country', $user->country) == 'Malaysia' ? 'selected' : '' }} style="background: #1a1a2e;">🇲🇾 Malaysia</option>
-                                    <option value="Indonesia" data-dial="+62" data-flag="🇮🇩" {{ old('country', $user->country) == 'Indonesia' ? 'selected' : '' }} style="background: #1a1a2e;">🇮🇩 Indonesia</option>
+                                    <option value="Egypt" data-dial="+20" data-flag="🇪🇬" {{ ($selectedCountry == 'Egypt' || empty($user->country)) ? 'selected' : '' }} style="background: #1a1a2e;">🇪🇬 Egypt</option>
+                                    <option value="Saudi Arabia" data-dial="+966" data-flag="🇸🇦" {{ $selectedCountry == 'Saudi Arabia' ? 'selected' : '' }} style="background: #1a1a2e;">🇸🇦 Saudi Arabia</option>
+                                    <option value="United Arab Emirates" data-dial="+971" data-flag="🇦🇪" {{ $selectedCountry == 'United Arab Emirates' ? 'selected' : '' }} style="background: #1a1a2e;">🇦🇪 United Arab Emirates</option>
+                                    <option value="Kuwait" data-dial="+965" data-flag="🇰🇼" {{ $selectedCountry == 'Kuwait' ? 'selected' : '' }} style="background: #1a1a2e;">🇰🇼 Kuwait</option>
+                                    <option value="Qatar" data-dial="+974" data-flag="🇶🇦" {{ $selectedCountry == 'Qatar' ? 'selected' : '' }} style="background: #1a1a2e;">🇶🇦 Qatar</option>
+                                    <option value="Bahrain" data-dial="+973" data-flag="🇧🇭" {{ $selectedCountry == 'Bahrain' ? 'selected' : '' }} style="background: #1a1a2e;">🇧🇭 Bahrain</option>
+                                    <option value="Oman" data-dial="+968" data-flag="🇴🇲" {{ $selectedCountry == 'Oman' ? 'selected' : '' }} style="background: #1a1a2e;">🇴🇲 Oman</option>
+                                    <option value="Jordan" data-dial="+962" data-flag="🇯🇴" {{ $selectedCountry == 'Jordan' ? 'selected' : '' }} style="background: #1a1a2e;">🇯🇴 Jordan</option>
+                                    <option value="Iraq" data-dial="+964" data-flag="🇮🇶" {{ $selectedCountry == 'Iraq' ? 'selected' : '' }} style="background: #1a1a2e;">🇮🇶 Iraq</option>
+                                    <option value="Lebanon" data-dial="+961" data-flag="🇱🇧" {{ $selectedCountry == 'Lebanon' ? 'selected' : '' }} style="background: #1a1a2e;">🇱🇧 Lebanon</option>
+                                    <option value="Palestine" data-dial="+970" data-flag="🇵🇸" {{ $selectedCountry == 'Palestine' ? 'selected' : '' }} style="background: #1a1a2e;">🇵🇸 Palestine</option>
+                                    <option value="Syria" data-dial="+963" data-flag="🇸🇾" {{ $selectedCountry == 'Syria' ? 'selected' : '' }} style="background: #1a1a2e;">🇸🇾 Syria</option>
+                                    <option value="Libya" data-dial="+218" data-flag="🇱🇾" {{ $selectedCountry == 'Libya' ? 'selected' : '' }} style="background: #1a1a2e;">🇱🇾 Libya</option>
+                                    <option value="Tunisia" data-dial="+216" data-flag="🇹🇳" {{ $selectedCountry == 'Tunisia' ? 'selected' : '' }} style="background: #1a1a2e;">🇹🇳 Tunisia</option>
+                                    <option value="Algeria" data-dial="+213" data-flag="🇩🇿" {{ $selectedCountry == 'Algeria' ? 'selected' : '' }} style="background: #1a1a2e;">🇩🇿 Algeria</option>
+                                    <option value="Morocco" data-dial="+212" data-flag="🇲🇦" {{ $selectedCountry == 'Morocco' ? 'selected' : '' }} style="background: #1a1a2e;">🇲🇦 Morocco</option>
+                                    <option value="Sudan" data-dial="+249" data-flag="🇸🇩" {{ $selectedCountry == 'Sudan' ? 'selected' : '' }} style="background: #1a1a2e;">🇸🇩 Sudan</option>
+                                    <option value="Yemen" data-dial="+967" data-flag="🇾🇪" {{ $selectedCountry == 'Yemen' ? 'selected' : '' }} style="background: #1a1a2e;">🇾🇪 Yemen</option>
+                                    <option value="Turkey" data-dial="+90" data-flag="🇹🇷" {{ $selectedCountry == 'Turkey' ? 'selected' : '' }} style="background: #1a1a2e;">🇹🇷 Turkey</option>
+                                    <option value="United States" data-dial="+1" data-flag="🇺🇸" {{ $selectedCountry == 'United States' ? 'selected' : '' }} style="background: #1a1a2e;">🇺🇸 United States</option>
+                                    <option value="United Kingdom" data-dial="+44" data-flag="🇬🇧" {{ $selectedCountry == 'United Kingdom' ? 'selected' : '' }} style="background: #1a1a2e;">🇬🇧 United Kingdom</option>
+                                    <option value="Germany" data-dial="+49" data-flag="🇩🇪" {{ $selectedCountry == 'Germany' ? 'selected' : '' }} style="background: #1a1a2e;">🇩🇪 Germany</option>
+                                    <option value="France" data-dial="+33" data-flag="🇫🇷" {{ $selectedCountry == 'France' ? 'selected' : '' }} style="background: #1a1a2e;">🇫🇷 France</option>
+                                    <option value="India" data-dial="+91" data-flag="🇮🇳" {{ $selectedCountry == 'India' ? 'selected' : '' }} style="background: #1a1a2e;">🇮🇳 India</option>
+                                    <option value="Pakistan" data-dial="+92" data-flag="🇵🇰" {{ $selectedCountry == 'Pakistan' ? 'selected' : '' }} style="background: #1a1a2e;">🇵🇰 Pakistan</option>
+                                    <option value="Nigeria" data-dial="+234" data-flag="🇳🇬" {{ $selectedCountry == 'Nigeria' ? 'selected' : '' }} style="background: #1a1a2e;">🇳🇬 Nigeria</option>
+                                    <option value="South Africa" data-dial="+27" data-flag="🇿🇦" {{ $selectedCountry == 'South Africa' ? 'selected' : '' }} style="background: #1a1a2e;">🇿🇦 South Africa</option>
+                                    <option value="Brazil" data-dial="+55" data-flag="🇧🇷" {{ $selectedCountry == 'Brazil' ? 'selected' : '' }} style="background: #1a1a2e;">🇧🇷 Brazil</option>
+                                    <option value="Canada" data-dial="+1" data-flag="🇨🇦" {{ $selectedCountry == 'Canada' ? 'selected' : '' }} style="background: #1a1a2e;">🇨🇦 Canada</option>
+                                    <option value="Australia" data-dial="+61" data-flag="🇦🇺" {{ $selectedCountry == 'Australia' ? 'selected' : '' }} style="background: #1a1a2e;">🇦🇺 Australia</option>
+                                    <option value="Malaysia" data-dial="+60" data-flag="🇲🇾" {{ $selectedCountry == 'Malaysia' ? 'selected' : '' }} style="background: #1a1a2e;">🇲🇾 Malaysia</option>
+                                    <option value="Indonesia" data-dial="+62" data-flag="🇮🇩" {{ $selectedCountry == 'Indonesia' ? 'selected' : '' }} style="background: #1a1a2e;">🇮🇩 Indonesia</option>
                                 </select>
                                 <i class="fas fa-chevron-down" style="padding-right: 1rem; color: var(--text-muted); font-size: 0.8rem;"></i>
                             </div>
                         </div>
 
-                        @php
-                            $rawPhone = (string) old('phone', $user->phone ?? '');
-                            $localPhone = $rawPhone;
-                            $countryDialMap = [
-                                'Egypt' => '+20', 'Saudi Arabia' => '+966', 'United Arab Emirates' => '+971',
-                                'Kuwait' => '+965', 'Qatar' => '+974', 'Bahrain' => '+973', 'Oman' => '+968',
-                                'Jordan' => '+962', 'Iraq' => '+964', 'Lebanon' => '+961', 'Palestine' => '+970',
-                                'Syria' => '+963', 'Libya' => '+218', 'Tunisia' => '+216', 'Algeria' => '+213',
-                                'Morocco' => '+212', 'Sudan' => '+249', 'Yemen' => '+967', 'Turkey' => '+90',
-                                'United States' => '+1', 'United Kingdom' => '+44', 'Germany' => '+49',
-                                'France' => '+33', 'India' => '+91', 'Pakistan' => '+92', 'Nigeria' => '+234',
-                                'South Africa' => '+27', 'Brazil' => '+55', 'Canada' => '+1', 'Australia' => '+61',
-                                'Malaysia' => '+60', 'Indonesia' => '+62',
-                            ];
-                            $selectedCountry = old('country', $user->country ?? 'Egypt');
-                            $currentDial = $countryDialMap[$selectedCountry] ?? '';
-                            if ($currentDial && str_starts_with($localPhone, $currentDial)) {
-                                $localPhone = substr($localPhone, strlen($currentDial));
-                            }
-                        @endphp
-
                         <div style="margin-bottom: 1.5rem;">
                             <label style="display: block; color: var(--text-muted); margin-bottom: 0.5rem; font-size: 0.9rem;">Phone Number</label>
                             <div style="display: flex; align-items: center; background: rgba(255,255,255,0.05); border: 1px solid {{ $user->phone ? 'var(--glass-border)' : 'rgba(255, 170, 0, 0.5)' }}; border-radius: 8px; overflow: hidden;">
                                 <span id="phonePrefix" style="padding: 0.75rem 0.5rem 0.75rem 1rem; color: var(--text-main); font-size: 1.1rem; white-space: nowrap; display: flex; align-items: center; gap: 0.5rem; font-weight: 600; min-width: 100px;">
-                                    <span id="phoneFlagEmoji" style="font-size: 1.3rem;">🌍</span>
-                                    <span id="phoneDialCode" style="color: var(--primary-cyan);">+00</span>
+                                    <span id="phoneFlagEmoji" style="font-size: 1.3rem;">🇪🇬</span>
+                                    <span id="phoneDialCode" style="color: var(--primary-cyan);">{{ $currentDial }}</span>
                                 </span>
                                 <div style="width: 1px; height: 28px; background: var(--glass-border);"></div>
                                 <input type="tel" name="phone" id="phoneInput" value="{{ $localPhone }}" required placeholder="1012345678" style="flex: 1; background: none; border: none; color: var(--text-main); padding: 1rem; font-family: inherit; outline: none; font-size: 1rem; letter-spacing: 0.5px;">
