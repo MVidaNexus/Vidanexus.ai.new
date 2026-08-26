@@ -1,4 +1,4 @@
-            <aside class="dash-sidebar" style="position: sticky; top: 100px; display: flex; flex-direction: column; gap: 2rem;">
+            <aside class="dash-sidebar">
                 <div class="user-profile-widget premium-profile-widget">
                     <div style="position: absolute; top: -50%; left: -50%; width: 200%; height: 200%; background: radial-gradient(circle, rgba(0, 168, 230,0.15) 0%, transparent 60%); pointer-events: none;"></div>
                     <div class="premium-profile-avatar" style="width: 70px; height: 70px; border-radius: 50%; background: linear-gradient(135deg, var(--primary-cyan), var(--primary)); display: flex; align-items: center; justify-content: center; font-size: 2rem; font-family: var(--font-heading); font-weight: 800; margin-bottom: 1rem; text-transform: uppercase;">

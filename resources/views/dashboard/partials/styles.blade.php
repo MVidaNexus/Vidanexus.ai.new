@@ -588,16 +588,16 @@
                 gap: 1.5rem;
             }
             .dash-sidebar {
-                position: sticky;
-                top: 75px;
-                z-index: 80;
+                position: static !important;
+                top: auto !important;
+                z-index: 10;
                 display: block;
                 padding: 0.5rem 0.75rem;
                 background: rgba(10, 14, 23, 0.95);
                 backdrop-filter: blur(20px);
                 border: 1px solid var(--glass-border);
                 border-radius: 16px;
-                box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+                box-shadow: 0 4px 15px rgba(0,0,0,0.2);
             }
             .dash-sidebar .user-profile-widget {
                 display: none;
@@ -649,10 +649,10 @@
             }
 
             .dash-sidebar {
-                position: relative;
-                top: 0;
+                position: static !important;
+                top: auto !important;
                 border-radius: 16px;
-                padding: 1rem;
+                padding: 0.75rem 1rem;
                 display: flex;
                 flex-direction: row;
                 overflow-x: auto;

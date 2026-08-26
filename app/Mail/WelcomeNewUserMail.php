@@ -2,6 +2,7 @@
 
 namespace App\Mail;
 
+use App\Models\Setting;
 use App\Models\User;
 use Illuminate\Bus\Queueable;
 use Illuminate\Mail\Mailable;
@@ -14,10 +15,16 @@ class WelcomeNewUserMail extends Mailable
 {
     use Queueable, SerializesModels;
 
+    public int $welcomeCredits;
+
     public function __construct(
         public User $user,
-        public float $welcomeCredits = 0.0
-    ) {}
+        ?float $welcomeCredits = null
+    ) {
+        $this->welcomeCredits = ($welcomeCredits !== null && $welcomeCredits > 0)
+            ? (int) round($welcomeCredits)
+            : (int) round((float) Setting::get('plan_credits_beginner', 100));
+    }
 
     public function envelope(): Envelope
     {

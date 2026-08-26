@@ -14,20 +14,23 @@ class LowCreditBalanceMail extends Mailable
 {
     use Queueable, SerializesModels;
 
+    public int $currentBalance;
+
     public function __construct(
         public User $user,
-        public float $currentBalance = 0.0
-    ) {}
+        float|int $currentBalance = 0
+    ) {
+        $this->currentBalance = (int) round((float) $currentBalance);
+    }
 
     public function envelope(): Envelope
     {
-        $formattedBalance = number_format($this->currentBalance, 2);
         return new Envelope(
             from: new Address(
                 config('mail.from.address', 'no.reply@vidanexus.net'),
                 config('mail.from.name', 'VidaNexus AI')
             ),
-            subject: "⚠️ Balance Reminder: {$formattedBalance} Credits Remaining on VidaNexus AI",
+            subject: "⚠️ Balance Reminder: {$this->currentBalance} Credits Remaining on VidaNexus AI",
         );
     }
 

@@ -19,18 +19,18 @@
             <td align="center" style="padding: 40px 15px;">
                 
                 <!-- Main Container -->
-                <table role="presentation" border="0" cellpadding="0" cellspacing="0" width="100%" style="max-width: 580px; background-color: #111827; border: 1px solid #1e293b; border-radius: 20px; overflow: hidden; box-shadow: 0 20px 40px rgba(0,0,0,0.5);">
+                <table role="presentation" border="0" cellpadding="0" cellspacing="0" width="100%" style="max-width: 580px; background-color: #111827; border: 1px solid #1e293b; border-radius: 16px; overflow: hidden;">
                     
                     <!-- Header Banner -->
                     <tr>
-                        <td align="center" style="padding: 35px 30px 25px; background: linear-gradient(135deg, #064e3b 0%, #0f172a 100%); border-bottom: 1px solid #064e3b;">
+                        <td align="center" style="padding: 30px 30px 20px; background-color: #0f172a; border-bottom: 1px solid #1e293b;">
                             <table role="presentation" border="0" cellpadding="0" cellspacing="0">
                                 <tr>
                                     <td align="center">
-                                        <div style="display: inline-block; padding: 8px 18px; background: rgba(16, 185, 129, 0.15); border: 1px solid rgba(16, 185, 129, 0.35); border-radius: 30px; margin-bottom: 12px;">
-                                            <span style="font-size: 13px; font-weight: 800; color: #34d399; letter-spacing: 1.5px; text-transform: uppercase;">✓ PAYMENT SUCCESSFUL</span>
+                                        <div style="display: inline-block; padding: 6px 14px; background-color: #1e293b; border-radius: 20px; margin-bottom: 10px;">
+                                            <span style="font-size: 12px; font-weight: 700; color: #34d399; letter-spacing: 1px; text-transform: uppercase;">PAYMENT CONFIRMED</span>
                                         </div>
-                                        <h1 style="margin: 0; font-size: 24px; font-weight: 800; color: #ffffff; letter-spacing: -0.5px;">Your Receipt & Confirmation</h1>
+                                        <h1 style="margin: 0; font-size: 22px; font-weight: 700; color: #ffffff; letter-spacing: -0.3px;">Your Payment Receipt</h1>
                                     </td>
                                 </tr>
                             </table>
@@ -39,24 +39,24 @@
 
                     <!-- Body Content -->
                     <tr>
-                        <td style="padding: 35px 35px 25px;">
-                            <p style="margin: 0 0 16px; font-size: 16px; line-height: 24px; color: #e2e8f0;">
+                        <td style="padding: 30px 30px 20px;">
+                            <p style="margin: 0 0 16px; font-size: 15px; line-height: 24px; color: #e2e8f0;">
                                 Hello <strong style="color: #38bdf8;">{{ $user->name ?? 'Customer' }}</strong>,
                             </p>
-                            <p style="margin: 0 0 20px; font-size: 15px; line-height: 24px; color: #94a3b8;">
-                                Thank you for your purchase! Your payment has been confirmed and the assets have been automatically activated in your account.
+                            <p style="margin: 0 0 20px; font-size: 14px; line-height: 22px; color: #94a3b8;">
+                                Thank you for your purchase! Your payment has been confirmed and the credits have been added directly to your account.
                             </p>
 
                             <!-- Invoice Details Table -->
-                            <div style="background: #1e293b; border-radius: 14px; padding: 22px; margin-bottom: 30px;">
+                            <div style="background-color: #1e293b; border-radius: 10px; padding: 20px; margin-bottom: 25px;">
                                 <table width="100%" cellpadding="0" cellspacing="0" style="font-size: 14px; line-height: 24px;">
                                     <tr>
                                         <td style="color: #94a3b8; padding-bottom: 10px;">Item / Plan:</td>
-                                        <td align="right" style="color: #f8fafc; font-weight: 700; padding-bottom: 10px;">{{ $details['item_name'] ?? 'Credit Package' }}</td>
+                                        <td align="right" style="color: #f8fafc; font-weight: 600; padding-bottom: 10px;">{{ $details['item_name'] ?? 'Credit Package' }}</td>
                                     </tr>
                                     <tr>
                                         <td style="color: #94a3b8; padding-bottom: 10px;">Amount Paid:</td>
-                                        <td align="right" style="color: #34d399; font-weight: 800; padding-bottom: 10px;">{{ number_format((float)($details['amount'] ?? 0), 2) }} EGP</td>
+                                        <td align="right" style="color: #34d399; font-weight: 700; padding-bottom: 10px;">{{ number_format((float)($details['amount'] ?? 0), 2) }} EGP</td>
                                     </tr>
                                     @if(isset($details['credits_added']) && $details['credits_added'] > 0)
                                     <tr>
@@ -67,7 +67,7 @@
                                     @if(isset($details['new_balance']))
                                     <tr>
                                         <td style="color: #94a3b8; padding-bottom: 10px;">Updated Balance:</td>
-                                        <td align="right" style="color: #ffffff; font-weight: 700; padding-bottom: 10px;">{{ number_format((float)$details['new_balance'], 2) }} Credits</td>
+                                        <td align="right" style="color: #ffffff; font-weight: 700; padding-bottom: 10px;">{{ number_format((float)$details['new_balance'], 0) }} Credits</td>
                                     </tr>
                                     @endif
                                     <tr style="border-top: 1px solid #334155;">
@@ -81,28 +81,28 @@
                                 </table>
                             </div>
 
-                            <!-- CTA Button -->
-                            <table role="presentation" border="0" cellpadding="0" cellspacing="0" width="100%" style="margin-bottom: 30px;">
+                            <!-- CTA Button (Solid, Flat, Linking to Tools Tab) -->
+                            <table role="presentation" border="0" cellpadding="0" cellspacing="0" width="100%" style="margin-bottom: 25px;">
                                 <tr>
                                     <td align="center">
-                                        <a href="{{ $dashboardUrl }}" target="_blank" style="display: inline-block; padding: 14px 36px; background: linear-gradient(135deg, #10b981 0%, #059669 100%); color: #ffffff; text-decoration: none; font-size: 15px; font-weight: 800; border-radius: 12px; letter-spacing: 0.5px; box-shadow: 0 6px 20px rgba(16, 185, 129, 0.35);">
-                                            Start Using Tools in Dashboard →
+                                        <a href="{{ $toolsUrl }}" target="_blank" style="display: inline-block; padding: 12px 32px; background-color: #059669; color: #ffffff; text-decoration: none; font-size: 14px; font-weight: 600; border-radius: 8px;">
+                                            Explore & Use Tools →
                                         </a>
                                     </td>
                                 </tr>
                             </table>
 
                             <p style="margin: 0; font-size: 13px; line-height: 20px; color: #64748b; text-align: center;">
-                                Need an official business invoice or tax document? Contact us at <a href="mailto:info@vidanexus.net" style="color: #38bdf8; text-decoration: none;">info@vidanexus.net</a>.
+                                Need an invoice for tax or accounting purposes? Email us at <a href="mailto:info@vidanexus.net" style="color: #38bdf8; text-decoration: none;">info@vidanexus.net</a>.
                             </p>
                         </td>
                     </tr>
 
                     <!-- Footer -->
                     <tr>
-                        <td align="center" style="padding: 20px 30px; background-color: #0d131f; border-top: 1px solid #1f2937;">
+                        <td align="center" style="padding: 16px 20px; background-color: #0d131f; border-top: 1px solid #1e293b;">
                             <p style="margin: 0; font-size: 12px; color: #475569;">
-                                &copy; {{ date('Y') }} VidaNexus AI Hub. All rights reserved.
+                                &copy; {{ date('Y') }} VidaNexus AI. All rights reserved.
                             </p>
                         </td>
                     </tr>

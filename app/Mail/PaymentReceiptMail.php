@@ -14,15 +14,25 @@ class PaymentReceiptMail extends Mailable
 {
     use Queueable, SerializesModels;
 
+    public array $cleanDetails;
+
     public function __construct(
         public User $user,
         public array $paymentDetails
-    ) {}
+    ) {
+        $this->cleanDetails = $paymentDetails;
+        if (isset($this->cleanDetails['credits_added'])) {
+            $this->cleanDetails['credits_added'] = (int) round((float) $this->cleanDetails['credits_added']);
+        }
+        if (isset($this->cleanDetails['new_balance'])) {
+            $this->cleanDetails['new_balance'] = (int) round((float) $this->cleanDetails['new_balance']);
+        }
+    }
 
     public function envelope(): Envelope
     {
-        $ref = $this->paymentDetails['reference'] ?? 'Receipt';
-        $itemName = $this->paymentDetails['item_name'] ?? 'Credit Package';
+        $ref = $this->cleanDetails['reference'] ?? 'Receipt';
+        $itemName = $this->cleanDetails['item_name'] ?? 'Credit Package';
         return new Envelope(
             from: new Address(
                 config('mail.from.address', 'no.reply@vidanexus.net'),
@@ -38,8 +48,8 @@ class PaymentReceiptMail extends Mailable
             html: 'emails.payment-receipt',
             with: [
                 'user' => $this->user,
-                'details' => $this->paymentDetails,
-                'dashboardUrl' => config('app.url', 'https://vidanexus.ai') . '/dashboard',
+                'details' => $this->cleanDetails,
+                'toolsUrl' => config('app.url', 'https://vidanexus.ai') . '/dashboard#subscriptions',
                 'siteUrl' => config('app.url', 'https://vidanexus.ai'),
             ],
         );
