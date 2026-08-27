@@ -100,6 +100,7 @@
                 modeOptions: [
                     { value: 'smart', label: '🎯 Smart Focus', title: 'Smart Focus (Filtered)', hint: 'Top viral & commercial keywords', icon: 'fas fa-bullseye', color: '#10b981' },
                     { value: 'deep', label: '🌐 Deep Coverage', title: 'Deep Coverage (All News)', hint: 'Process all headlines without filtering', icon: 'fas fa-globe', color: '#a855f7' },
+                    { value: 'max', label: '🚀 Max Unlimited', title: 'Max Unlimited (All Content)', hint: 'Extract all articles & products without limits', icon: 'fas fa-bolt', color: '#00A8E6' },
                 ],
                 selectMode(opt) {
                     this.modeValue = opt.value;

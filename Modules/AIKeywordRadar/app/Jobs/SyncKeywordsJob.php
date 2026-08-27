@@ -52,17 +52,19 @@ class SyncKeywordsJob implements ShouldQueue
     protected $syncCredits;
     protected $timeFilter;
     protected $boxId;
+    protected $mode;
 
     /**
      * Create a new job instance.
      */
-    public function __construct($userId, $lang = 'ar', $syncCredits = 1, $timeFilter = '60m', $boxId = null)
+    public function __construct($userId, $lang = 'ar', $syncCredits = 1, $timeFilter = '60m', $boxId = null, $mode = 'smart')
     {
         $this->userId = $userId;
         $this->lang = $lang;
         $this->syncCredits = $syncCredits;
         $this->timeFilter = $timeFilter;
         $this->boxId = $boxId;
+        $this->mode = $mode;
     }
 
     /**
@@ -77,6 +79,7 @@ class SyncKeywordsJob implements ShouldQueue
         $userId = $this->userId;
         $lang = $this->lang;
         $boxId = $this->boxId;
+        $mode = $this->mode ?? 'smart';
 
         // Ensure lock is released even if worker is terminated unexpectedly
         register_shutdown_function(function () use ($userId, $lang, $boxId) {
@@ -91,11 +94,11 @@ class SyncKeywordsJob implements ShouldQueue
         }
 
         $boxLabel = $this->boxId ? " [box:{$this->boxId}]" : '';
-        Log::info("[SyncKeywordsJob] Started for user #{$this->userId} ({$this->lang}){$boxLabel} - Filter: {$this->timeFilter}");
+        Log::info("[SyncKeywordsJob] Started for user #{$this->userId} ({$this->lang}){$boxLabel} - Filter: {$this->timeFilter} Mode: {$mode}");
 
         try {
             // Perform the sync — processes ALL competitors, no cap (but we pass 500 for consistency)
-            $result = $service->syncKeywords(500, $this->lang, $this->userId, $this->timeFilter, $this->boxId);
+            $result = $service->syncKeywords(500, $this->lang, $this->userId, $this->timeFilter, $this->boxId, $mode);
 
             // Ensure credits are ONLY deducted if actual keywords were generated and saved!
             if (isset($result['saved']) && $result['saved'] > 0) {

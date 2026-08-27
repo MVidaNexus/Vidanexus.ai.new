@@ -305,11 +305,13 @@ class AIKeywordRadarController extends Controller
                 ->where('payload', 'like', '%SyncKeywordsJob%')
                 ->delete();
 
+            $mode = $request->get('mode', 'smart');
+
             // Dispatch fresh job to a dedicated queue so --once always picks it up
-            \Modules\AIKeywordRadar\Jobs\SyncKeywordsJob::dispatch($user->id, $lang, $syncCredits, $timeFilter, $boxId)
+            \Modules\AIKeywordRadar\Jobs\SyncKeywordsJob::dispatch($user->id, $lang, $syncCredits, $timeFilter, $boxId, $mode)
                 ->onQueue('keyword-radar');
 
-            Log::info("[Keyword Radar Sync] Job dispatched for user #{$user->id} ({$lang}) Filter: {$timeFilter}");
+            Log::info("[Keyword Radar Sync] Job dispatched for user #{$user->id} ({$lang}) Filter: {$timeFilter} Mode: {$mode}");
 
             // Spawn queue worker targeting only the keyword-radar queue with 512M memory
             $php = PHP_BINARY;

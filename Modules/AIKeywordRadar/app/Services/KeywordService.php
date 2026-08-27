@@ -250,15 +250,16 @@ class KeywordService
     public function getTargetKeywordsFromCompetitors($lang = 'ar', $userId = null, $syncStart = null, string $timeFilter = '60m', ?string $boxId = null, string $mode = 'smart')
     {
         $syncStart = $syncStart ?? microtime(true);
-        $rawHeadlines = $this->fetchCompetitorsHeadlines($lang, $userId, $syncStart, $timeFilter, $boxId);
+        $rawHeadlines = $this->fetchCompetitorsHeadlines($lang, $userId, $syncStart, $timeFilter, $boxId, $mode);
         
         if (empty($rawHeadlines)) {
             return ['keywords' => [], 'headlines_count' => 0];
         }
 
-        // Mode determines how many candidates to process and whether to use deep coverage
-        $isDeep = ($mode === 'deep');
-        $maxCandidates = $isDeep ? 80 : 40;
+        // Mode determines how many candidates to process and whether to use deep / max coverage
+        $isMax = ($mode === 'max');
+        $isDeep = ($mode === 'deep' || $isMax);
+        $maxCandidates = $isMax ? 300 : ($isDeep ? 80 : 40);
 
         // === STEP 1: Algorithmic Pre-AI Heuristic Scoring & Clustering ===
         $headlines = $this->scoreAndClusterHeadlines($rawHeadlines, $lang, $maxCandidates, $isDeep);
@@ -270,8 +271,8 @@ class KeywordService
         // === STEP 2: AI Keyword Extraction — BATCHED for speed ===
         $allKeywords = [];
         $aiExtractionStart = microtime(true);
-        $batchSize = 10;
-        $timeBudgetSeconds = (int) \App\Models\Setting::get('ai-keyword-radar_ai_time_budget', 180);
+        $batchSize = $isMax ? 15 : 10;
+        $timeBudgetSeconds = $isMax ? 300 : (int) \App\Models\Setting::get('ai-keyword-radar_ai_time_budget', 180);
 
         $batches = array_chunk($headlines, $batchSize);
         Log::info("[Keyword Radar] AI extraction [Mode: {$mode}]: " . count($headlines) . ' prioritized candidates in ' . count($batches) . " batches.");
@@ -608,27 +609,23 @@ class KeywordService
                     }
                 }
 
-                // Standard sitemap URL-slug fallback — English-only. Arabic
-                // radar boxes were picking up slug titles like "premier league
-                // asia trophy" from /sitemap.xml when no news sitemap exists.
-                if (empty($items) && $lang === 'en') {
+                // Standard sitemap URL-slug fallback for blogs and e-commerce stores (Arabic & English)
+                if (empty($items)) {
                     $urls = $xml->xpath('//s:url');
                     foreach ($urls as $node) {
-                        // if (count($items) >= 200) break;
                         $lastmod = (string) $node->lastmod;
-                        if (empty($lastmod)) continue;
-                        
-                        // Only consider if lastmod is within some reasonable window (e.g. today)
-                        try {
-                            if (\Carbon\Carbon::parse($lastmod)->lt(now()->subHours(24))) continue;
-                        } catch (\Exception $e) { continue; }
-
                         $loc = (string) $node->loc;
-                        $title = str_replace(['-', '_', '.html', '.php'], ' ', basename(parse_url($loc, PHP_URL_PATH) ?? ''));
-                        if (mb_strlen($title) > 25) {
+                        if (empty($loc)) continue;
+
+                        $rawSlug = basename(parse_url($loc, PHP_URL_PATH) ?? '');
+                        $decodedSlug = urldecode($rawSlug);
+                        $title = trim(str_replace(['-', '_', '.html', '.php', '.htm'], ' ', $decodedSlug));
+                        $title = preg_replace('/\s+/u', ' ', $title);
+
+                        if (mb_strlen($title) >= 10 && self::headlineMatchesLanguage($title, $lang)) {
                             $items[] = [
-                                'title' => trim($title),
-                                'pubDate' => $lastmod,
+                                'title' => $title,
+                                'pubDate' => !empty($lastmod) ? $lastmod : null,
                             ];
                         }
                     }
@@ -837,7 +834,7 @@ class KeywordService
         ];
     }
 
-    public function fetchCompetitorsHeadlines($lang = 'ar', $userId = null, $syncStart = null, string $timeFilter = '60m', ?string $boxId = null)
+    public function fetchCompetitorsHeadlines($lang = 'ar', $userId = null, $syncStart = null, string $timeFilter = '60m', ?string $boxId = null, string $mode = 'smart')
     {
         $syncStart = $syncStart ?? microtime(true);
         $competitorUrls = $this->getMergedCompetitorUrls($userId, $lang, $boxId);
@@ -847,10 +844,11 @@ class KeywordService
             return [];
         }
 
+        $isMax = ($mode === 'max');
         $freshnessLimit = $this->resolveFreshnessLimit($timeFilter);
         $filterLabel = $this->describeTimeFilter($timeFilter);
 
-        Log::info("[Keyword Radar] Processing ALL " . count($competitorUrls) . " competitors. [Filter: {$filterLabel}]");
+        Log::info("[Keyword Radar] Processing ALL " . count($competitorUrls) . " competitors. [Filter: {$filterLabel}] [Mode: {$mode}]");
 
         @ini_set('memory_limit', '-1');
         @ini_set('max_execution_time', 300);
@@ -870,8 +868,9 @@ class KeywordService
 
         // === PHASE 1: LIGHTWEIGHT PARALLEL GOOGLE NEWS FETCH (IPv4 forced, 5s timeout) ===
         $chunks = array_chunk($competitorUrls, 10);
+        $maxPhase1Budget = $isMax ? 90 : 40;
         foreach ($chunks as $chunkIndex => $chunkUrls) {
-            if ((microtime(true) - $syncStart) > 40) {
+            if ((microtime(true) - $syncStart) > $maxPhase1Budget) {
                 Log::warning("[Keyword Radar] Headline fetch budget reached (" . round(microtime(true) - $syncStart) . "s). " . count($allHeadlines) . " headlines collected.");
                 break;
             }
