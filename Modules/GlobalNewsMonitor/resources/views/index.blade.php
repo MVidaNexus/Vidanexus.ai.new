@@ -33,12 +33,6 @@
                     <span class="ml-1 text-[10px] bg-white/20 px-1.5 rounded-full">ON</span>
                 </template>
             </button>
-
-            {{-- Get News Button --}}
-            <button @click="refreshNews(true)" class="vn-btn vn-btn-primary px-6 py-3 rounded-2xl flex items-center gap-2 text-sm z-50 overflow-visible relative">
-                <i class="fas fa-sync-alt" :class="{ 'animate-spin': loading }"></i>
-                <span class="font-bold">Get News</span>
-            </button>
         </div>
     </div>
 
@@ -71,7 +65,7 @@
         <!-- Separator -->
         <div class="w-full h-px bg-white/5 opacity-50"></div>
 
-        <!-- 2. Topic Selector (Bottom) -->
+        <!-- 2. Topic Selector (Middle) -->
         <div class="flex flex-col sm:flex-row sm:items-start gap-3 sm:gap-4">
             <div class="w-10 h-10 sm:w-12 sm:h-12 rounded-2xl flex items-center justify-center border shrink-0" style="background: var(--card-bg); color: var(--text-muted); border-color: var(--glass-border);">
                 <i class="fas fa-layer-group text-base sm:text-xl"></i>
@@ -92,6 +86,25 @@
                     @endforeach
                 </div>
             </div>
+        </div>
+
+        <!-- Separator -->
+        <div class="w-full h-px bg-white/5 opacity-50"></div>
+
+        <!-- 3. Action Section (Bottom) -->
+        <div class="flex flex-col sm:flex-row items-center justify-between gap-4 pt-1">
+            <div class="flex items-center gap-2 text-xs font-semibold text-gray-400 text-center sm:text-left">
+                <i class="fas fa-info-circle text-primary-cyan text-sm"></i>
+                <span>Choose your target <strong>Region</strong> and <strong>Category</strong>, then click <strong>Get News</strong> to scan live opportunities.</span>
+            </div>
+
+            <button @click="refreshNews(true)" 
+                    :disabled="loading"
+                    class="w-full sm:w-auto vn-btn vn-btn-primary px-8 py-3.5 rounded-2xl flex items-center justify-center gap-2.5 text-sm font-black shadow-lg shadow-primary-cyan/20 hover:scale-[1.02] active:scale-[0.98] transition-all disabled:opacity-50 disabled:cursor-not-allowed">
+                <i class="fas fa-sync-alt" :class="{ 'animate-spin': loading }"></i>
+                <span>Get News</span>
+                <i class="fas fa-arrow-right text-xs ml-1"></i>
+            </button>
         </div>
 
     </div>
