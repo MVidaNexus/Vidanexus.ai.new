@@ -45,23 +45,23 @@
     @include('partials.tool-usage-badge', ['slug' => 'global-news-monitor'])
 
     <!-- Filters -->
-    <div class="glass-card p-4 sm:p-6 mb-8 flex flex-col gap-8">
+    <div class="glass-card p-4 sm:p-6 mb-8 flex flex-col gap-6 sm:gap-8">
         
         <!-- 1. Region Selector (Top) -->
-        <div class="flex flex-col md:flex-row md:items-start gap-4">
-            <div class="w-12 h-12 rounded-2xl flex items-center justify-center border shrink-0" style="background: var(--card-bg); color: var(--text-muted); border-color: var(--glass-border);">
-                <i class="fas fa-map-marker-alt text-xl"></i>
+        <div class="flex flex-col sm:flex-row sm:items-start gap-3 sm:gap-4">
+            <div class="w-10 h-10 sm:w-12 sm:h-12 rounded-2xl flex items-center justify-center border shrink-0" style="background: var(--card-bg); color: var(--text-muted); border-color: var(--glass-border);">
+                <i class="fas fa-map-marker-alt text-base sm:text-xl"></i>
             </div>
-            <div class="flex-1">
+            <div class="flex-1 min-w-0">
                 <label class="block text-xs font-bold uppercase tracking-widest mb-3" style="color: var(--text-muted);">Region</label>
-                <div class="flex flex-wrap gap-2">
+                <div class="grid grid-cols-2 sm:flex sm:flex-wrap gap-2">
                     @foreach($countryMap as $code => $country)
                         <button @click="changeRegion('{{ $code }}')" 
-                                :class="region === '{{ $code }}' ? 'bg-primary-cyan text-black' : ''"
+                                :class="region === '{{ $code }}' ? 'bg-primary-cyan text-black border-primary-cyan shadow-[0_0_15px_rgba(0,168,230,0.3)] font-black' : ''"
                                 :style="region === '{{ $code }}' ? '' : 'background: var(--card-bg); color: var(--text-muted); border: 1px solid var(--glass-border);'"
-                                class="px-4 py-2.5 rounded-xl text-[11px] font-bold transition-all flex items-center gap-2 border-transparent hover:border-primary-cyan/50 min-w-[100px] justify-center sm:justify-start">
-                            <span>{{ $country['flag'] }}</span>
-                            <span>{{ $country['name'] }}</span>
+                                class="px-3.5 py-2.5 rounded-xl border text-[11px] font-bold transition-all flex items-center gap-2 hover:border-primary-cyan/50 justify-center sm:justify-start">
+                            <span class="text-sm sm:text-base">{{ $country['flag'] }}</span>
+                            <span class="truncate">{{ $country['name'] }}</span>
                         </button>
                     @endforeach
                 </div>
@@ -72,22 +72,22 @@
         <div class="w-full h-px bg-white/5 opacity-50"></div>
 
         <!-- 2. Topic Selector (Bottom) -->
-        <div class="flex flex-col md:flex-row md:items-start gap-4">
-            <div class="w-12 h-12 rounded-2xl flex items-center justify-center border shrink-0" style="background: var(--card-bg); color: var(--text-muted); border-color: var(--glass-border);">
-                <i class="fas fa-layer-group text-xl"></i>
+        <div class="flex flex-col sm:flex-row sm:items-start gap-3 sm:gap-4">
+            <div class="w-10 h-10 sm:w-12 sm:h-12 rounded-2xl flex items-center justify-center border shrink-0" style="background: var(--card-bg); color: var(--text-muted); border-color: var(--glass-border);">
+                <i class="fas fa-layer-group text-base sm:text-xl"></i>
             </div>
-            <div class="flex-1 overflow-x-auto no-scrollbar pb-2 sm:pb-0">
+            <div class="flex-1 min-w-0">
                 <label class="block text-xs font-bold uppercase tracking-widest mb-3" style="color: var(--text-muted);">Category</label>
-                <div class="flex items-center gap-2">
+                <div class="grid grid-cols-2 sm:flex sm:flex-wrap gap-2">
                     @foreach($topicsMap as $key => $name)
                         <button @click="changeTopic('{{ $key }}')"
-                                :class="topic === '{{ $key }}' ? 'text-primary-cyan border-primary-cyan bg-primary-cyan/5' : ''"
+                                :class="topic === '{{ $key }}' ? 'bg-primary-cyan text-black border-primary-cyan shadow-[0_0_15px_rgba(0,168,230,0.3)] font-black' : ''"
                                 :style="topic === '{{ $key }}' ? '' : 'background: var(--card-bg); color: var(--text-muted); border: 1px solid var(--glass-border);'"
-                                class="px-5 py-2.5 rounded-xl border text-[11px] font-bold transition-all whitespace-nowrap flex items-center gap-2 hover:border-white/20">
+                                class="px-3.5 py-2.5 rounded-xl border text-[11px] font-bold transition-all flex items-center gap-2 hover:border-primary-cyan/50 justify-center sm:justify-start">
                             @if(!empty($name['icon']))
-                                <i class="{{ $name['icon'] }} text-[10px]"></i>
+                                <i class="{{ $name['icon'] }} text-[11px]"></i>
                             @endif
-                            <span>{{ $name['name'] }}</span>
+                            <span class="truncate">{{ $name['name'] }}</span>
                         </button>
                     @endforeach
                 </div>
