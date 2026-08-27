@@ -399,6 +399,55 @@
             }
         }
 
+        /* ── Unified Responsive Horizon Tabs & Controls ── */
+        .horizon-tabs {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.4rem;
+            margin-bottom: 2rem;
+            border-bottom: 1px solid var(--horizon-border);
+            padding-bottom: 1rem;
+        }
+        .horizon-tab-btn {
+            background: rgba(255, 255, 255, 0.03);
+            border: 1px solid var(--horizon-border);
+            color: var(--text-muted);
+            font-size: 0.82rem;
+            font-weight: 600;
+            padding: 0.6rem 0.9rem;
+            cursor: pointer;
+            transition: all 0.25s ease;
+            border-radius: 10px;
+            font-family: 'Poppins', sans-serif;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.45rem;
+            white-space: nowrap;
+        }
+        .horizon-tab-btn:hover {
+            color: var(--text-main);
+            background: rgba(255, 255, 255, 0.08);
+            border-color: rgba(255, 255, 255, 0.2);
+        }
+        .horizon-tab-btn.active {
+            color: #000 !important;
+            background: var(--primary-admin) !important;
+            border-color: var(--primary-admin) !important;
+            font-weight: 700;
+            box-shadow: 0 4px 15px rgba(0, 168, 230, 0.35);
+        }
+        .horizon-tab-pane {
+            display: none;
+            animation: horizonTabFadeIn 0.3s ease;
+        }
+        .horizon-tab-pane.active {
+            display: block;
+        }
+        @keyframes horizonTabFadeIn {
+            from { opacity: 0; transform: translateY(6px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
         @media (max-width: 992px) {
             .sidebar-toggle-btn,
             .sidebar-close-btn {
@@ -422,6 +471,43 @@
                 top: 0.75rem;
                 padding: 0.9rem 1rem;
             }
+
+            .horizon-tabs {
+                display: grid !important;
+                grid-template-columns: repeat(4, 1fr) !important;
+                gap: 0.45rem !important;
+                padding-bottom: 1.25rem !important;
+                margin-bottom: 1.5rem !important;
+                overflow-x: visible !important;
+                white-space: normal !important;
+            }
+            .horizon-tab-btn {
+                flex-direction: column !important;
+                justify-content: center !important;
+                align-items: center !important;
+                text-align: center !important;
+                padding: 0.65rem 0.25rem !important;
+                font-size: 0.72rem !important;
+                line-height: 1.2 !important;
+                gap: 0.35rem !important;
+                white-space: normal !important;
+                min-height: 54px !important;
+                border-radius: 10px !important;
+            }
+            .horizon-tab-btn i {
+                font-size: 0.95rem !important;
+                margin: 0 !important;
+            }
+
+            .tool-control-layout {
+                grid-template-columns: 1fr !important;
+            }
+            .horizon-responsive-grid-2 {
+                grid-template-columns: 1fr 1fr !important;
+            }
+            .horizon-responsive-grid-3 {
+                grid-template-columns: 1fr !important;
+            }
         }
 
         @media (max-width: 768px) {
@@ -434,6 +520,31 @@
             .horizon-header > div:last-child {
                 width: 100%;
                 justify-content: space-between;
+            }
+
+            .horizon-responsive-grid-2 {
+                grid-template-columns: 1fr !important;
+            }
+        }
+
+        @media (max-width: 600px) {
+            .horizon-tabs {
+                grid-template-columns: repeat(3, 1fr) !important;
+                gap: 0.35rem !important;
+            }
+            .horizon-tab-btn {
+                padding: 0.55rem 0.2rem !important;
+                font-size: 0.68rem !important;
+                min-height: 50px !important;
+            }
+            .horizon-tab-btn i {
+                font-size: 0.9rem !important;
+            }
+        }
+
+        @media (max-width: 400px) {
+            .horizon-tabs {
+                grid-template-columns: repeat(2, 1fr) !important;
             }
         }
     </style>

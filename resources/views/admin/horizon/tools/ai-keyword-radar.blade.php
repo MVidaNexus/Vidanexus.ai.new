@@ -34,17 +34,6 @@
 @endsection
 
 @section('content')
-<style>
-    .horizon-tabs { display: flex; gap: 0.25rem; margin-bottom: 2rem; border-bottom: 1px solid var(--horizon-border); padding-bottom: 1rem; overflow-x: auto; scrollbar-width: none; }
-    .horizon-tabs::-webkit-scrollbar { display: none; }
-    .horizon-tab-btn { background: none; border: 1px solid transparent; color: var(--text-muted); font-size: 0.8rem; font-weight: 600; padding: 0.6rem 0.8rem; cursor: pointer; transition: all 0.3s; border-radius: 8px; font-family: 'Poppins', sans-serif; display: flex; align-items: center; gap: 0.4rem; white-space: nowrap; }
-    .horizon-tab-btn:hover { color: var(--text-main); background: rgba(255,255,255,0.05); }
-    .horizon-tab-btn.active { color: var(--primary-admin); background: rgba(0, 168, 230, 0.1); border-color: rgba(0, 168, 230, 0.3); }
-    .horizon-tab-pane { display: none; animation: fadeIn 0.3s ease; }
-    .horizon-tab-pane.active { display: block; }
-    @keyframes fadeIn { from { opacity: 0; transform: translateY(5px); } to { opacity: 1; transform: translateY(0); } }
-</style>
-
 <div style="max-width: 1100px; margin: 0 auto;">
     <div class="card-admin">
         <div style="display: flex; align-items: center; gap: 1rem; margin-bottom: 2rem; padding-bottom: 1rem; border-bottom: 1px solid var(--horizon-border);">
@@ -54,7 +43,7 @@
             <h2 style="margin: 0; font-family: 'Space+Grotesk', sans-serif;">Core Intelligence Center</h2>
         </div>
 
-        <div class="horizon-tabs" style="overflow-x: auto; white-space: nowrap; padding-bottom: 5px;">
+        <div class="horizon-tabs">
             <button type="button" class="horizon-tab-btn active" onclick="switchHorizonTab('ai', this)"><i class="fas fa-brain"></i> Intelligence</button>
             <button type="button" class="horizon-tab-btn" onclick="switchHorizonTab('sources', this)"><i class="fas fa-satellite-dish"></i> Sources</button>
             <button type="button" class="horizon-tab-btn" onclick="switchHorizonTab('filters', this)"><i class="fas fa-filter"></i> Filters</button>

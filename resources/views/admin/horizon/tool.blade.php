@@ -3,7 +3,7 @@
 @section('title', "Control: " . $tool['name'])
 
 @section('content')
-<div style="display: grid; grid-template-columns: 2fr 1fr; gap: 2rem;">
+<div class="tool-control-layout" style="display: grid; grid-template-columns: 2fr 1fr; gap: 2rem;">
     <!-- Configuration Panel -->
     <div class="card-admin">
         <div style="display: flex; align-items: center; gap: 1rem; margin-bottom: 2rem; padding-bottom: 1rem; border-bottom: 1px solid var(--horizon-border);">
@@ -13,7 +13,7 @@
             <h2 style="margin: 0; font-family: 'Space+Grotesk', sans-serif;">Core Intelligence Center</h2>
         </div>
 
-        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem; margin-bottom: 2rem;">
+        <div class="horizon-responsive-grid-2" style="display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem; margin-bottom: 2rem;">
             <div style="background: rgba(255,255,255,0.02); border: 1px solid var(--horizon-border); border-radius: 16px; padding: 1.25rem; display: flex; align-items: center; gap: 1rem;">
                 <div style="width: 40px; height: 40px; border-radius: 50%; background: var(--horizon-primary-bg); display: flex; align-items: center; justify-content: center; color: var(--primary-admin);">
                     <i class="fas fa-bolt"></i>
@@ -45,7 +45,7 @@
                 </p>
             </div>
 
-            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 2rem; margin-bottom: 2.5rem;">
+            <div class="horizon-responsive-grid-2" style="display: grid; grid-template-columns: 1fr 1fr; gap: 2rem; margin-bottom: 2.5rem;">
                 <div>
                     <label style="display: block; font-size: 0.8rem; color: var(--text-muted); text-transform: uppercase; letter-spacing: 1px; margin-bottom: 1rem;">AI Provider</label>
                     <select name="provider" style="width: 100%; background: #0a0f19; border: 1px solid var(--horizon-border); border-radius: 12px; color: #fff; padding: 1rem; cursor: pointer; outline: none;">
@@ -86,7 +86,7 @@
                 <label style="display: block; font-size: 0.8rem; color: var(--text-muted); text-transform: uppercase; letter-spacing: 1px; margin-bottom: 1.25rem;">
                     <i class="fas fa-store" style="color: var(--primary-admin); margin-right: 0.5rem;"></i> Marketplace Pricing
                 </label>
-                <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 1rem;">
+                <div class="horizon-responsive-grid-3" style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 1rem;">
                     <div>
                         <label style="display: block; font-size: 0.7rem; color: var(--text-muted); margin-bottom: 0.5rem;">Monthly Price (EGP)</label>
                         <input type="number" name="unlock_price" value="{{ $unlockPrice }}" min="0" style="width: 100%; background: #0a0f19; border: 1px solid var(--horizon-border); border-radius: 10px; color: #fff; padding: 0.75rem; outline: none; font-size: 1rem; font-weight: 700; text-align: center;">
