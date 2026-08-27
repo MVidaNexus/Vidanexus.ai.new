@@ -35,7 +35,19 @@ class KeywordPayload
     {
         $text = mb_strtolower(trim($text), 'UTF-8');
 
-        // 1. Commercial / Transactional (Buying intent, pricing, stores, reviews)
+        // 1. Informational (How to, guide, questions, tutorial, explain)
+        if (preg_match('/(كيف|كيفية|طريقة|شرح|معنى|ما هو|ما هي|ماذا|لماذا|اسباب|أسباب|اعراض|أعراض|فوائد|أضرار|خطوات|دليل|نصائح|حل|علاج|شروط|تنسيق|نتائج|جدول|how|what|why|when|guide|tips|steps|tutorial|explain|meaning|symptoms|benefits|causes|solution|remedy|requirements)/u', $text)) {
+            return [
+                'type' => 'informational',
+                'label' => ($lang === 'ar') ? 'معلوماتي' : 'Informational',
+                'icon' => 'fas fa-info-circle',
+                'badge_bg' => 'rgba(14, 165, 233, 0.15)',
+                'badge_border' => 'rgba(14, 165, 233, 0.35)',
+                'badge_color' => '#38bdf8',
+            ];
+        }
+
+        // 2. Commercial / Transactional (Buying intent, pricing, stores, reviews)
         if (preg_match('/(سعر|اسعار|أسعار|شراء|اشتري|متجر|سوق|عروض|عرض|خصم|كود|تخفيض|ارخص|أرخص|افضل|أفضل|مقارنة|مراجعة|مواصفات|تقسيط|للبيع|حجز|تكلفة|رسوم|كم سعر|buy|price|cost|pricing|best|top|cheap|cheapest|deal|deals|discount|coupon|promo|store|shop|for sale|vs|review|reviews|order|hire|rent|booking)/u', $text)) {
             return [
                 'type' => 'commercial',
@@ -44,18 +56,6 @@ class KeywordPayload
                 'badge_bg' => 'rgba(16, 185, 129, 0.15)',
                 'badge_border' => 'rgba(16, 185, 129, 0.35)',
                 'badge_color' => '#10b981',
-            ];
-        }
-
-        // 2. Informational (How to, guide, questions, tutorial, explain)
-        if (preg_match('/(كيف|كيفية|طريقة|شرح|معنى|ما هو|ما هي|ماذا|لماذا|اسباب|أسباب|اعراض|أعراض|فوائد|أضرار|خطوات|دليل|نصائح|حل|علاج|شروط|تنسيق|نتائج|جدول|how|what|why|guide|tips|steps|tutorial|explain|meaning|symptoms|benefits|causes|solution|remedy|requirements)/u', $text)) {
-            return [
-                'type' => 'informational',
-                'label' => ($lang === 'ar') ? 'معلوماتي' : 'Informational',
-                'icon' => 'fas fa-info-circle',
-                'badge_bg' => 'rgba(14, 165, 233, 0.15)',
-                'badge_border' => 'rgba(14, 165, 233, 0.35)',
-                'badge_color' => '#38bdf8',
             ];
         }
 
