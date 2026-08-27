@@ -2259,7 +2259,7 @@ Example Output:
     /**
      * Expand and Sync Direct Seed Keywords for User
      */
-    public function syncSeedKeywords($userId, string $lang = 'ar'): array
+    public function syncSeedKeywords($userId, string $lang = 'ar', string $timeFilter = '60m', string $mode = 'smart'): array
     {
         ini_set('max_execution_time', 300);
         set_time_limit(300);
@@ -2280,12 +2280,46 @@ Example Output:
 
         $allKeywords = [];
         $userAgent = $this->getRandomUserAgent();
+        $googleWhen = ($timeFilter === '24h' || $timeFilter === '1d') ? '24h' : (($timeFilter === 'all' || $timeFilter === 'unlimited') ? '7d' : '1h');
+        $googleCountry = ($lang === 'en') ? 'US' : 'EG';
+        $googleHl = ($lang === 'en') ? 'en' : 'ar';
+        $freshnessLimit = $this->resolveFreshnessLimit($timeFilter);
+
+        $totalHeadlinesFound = 0;
 
         foreach ($seeds as $seed) {
             if (mb_strlen($seed) < 2) continue;
 
+            // 1. Fetch latest published articles and news about this seed topic
+            try {
+                $gnewsUrl = \App\Support\GoogleNewsRss::searchUrl("{$seed} when:{$googleWhen}", $googleCountry, $googleHl);
+                $resp = Http::withHeaders(['User-Agent' => $userAgent])
+                    ->withOptions(['curl' => [CURLOPT_IPRESOLVE => CURL_IPRESOLVE_V4, CURLOPT_TIMEOUT => 5]])
+                    ->timeout(5)->get($gnewsUrl);
+
+                if ($resp->successful()) {
+                    $newsItems = $this->parseGoogleNewsRss($resp->body());
+                    $filteredNews = $this->applyTimeFilter($newsItems, $freshnessLimit, $seed);
+                    foreach ($filteredNews['kept'] as $item) {
+                        $title = trim($item['title'] ?? '');
+                        if (empty($title)) continue;
+                        $totalHeadlinesFound++;
+                        $allKeywords[] = [
+                            'text' => $title,
+                            'source' => $item['source'] ?? 'Google News',
+                            'headline_title' => $title,
+                            'published_at' => $item['pubDate'] ?? now()->toDateTimeString(),
+                            'created_at' => now()->toDateTimeString(),
+                        ];
+                    }
+                }
+            } catch (\Throwable $e) {
+                Log::warning("[Seed Explorer] News fetch error for '{$seed}': " . $e->getMessage());
+            }
+
+            // 2. Fetch high-intent autocomplete search queries
             $suggestions = $this->fetchGoogleSuggestionsForSeed($seed, $lang, $userAgent);
-            $headlineTitle = ($lang === 'ar') ? "استكشاف الكلمة المباشرة: {$seed}" : "Direct Seed Exploration: {$seed}";
+            $headlineTitle = ($lang === 'ar') ? "مستكشف الكلمات المباشرة: {$seed}" : "Direct Seed Explorer: {$seed}";
             
             foreach ($suggestions as $sug) {
                 $allKeywords[] = [

@@ -113,7 +113,7 @@ class AiKeywordRadarSyncController extends Controller
             ]);
 
             if ($boxId === 'direct_seed') {
-                $result = $keywordService->syncSeedKeywords($user->id, $lang);
+                $result = $keywordService->syncSeedKeywords($user->id, $lang, $timeFilter, $mode);
             } else {
                 $result = $keywordService->syncKeywords(500, $lang, $user->id, $timeFilter, $boxId, $mode);
             }

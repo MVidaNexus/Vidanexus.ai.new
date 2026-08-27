@@ -167,45 +167,43 @@
         </div>
     </div>
 
-    {{-- Dedicated Direct Seed Keywords Explorer Box --}}
-    @if(!empty($hasSeedTopics))
-        <div class="mt-10">
-            <div class="mb-4 flex items-center justify-between">
-                <h3 class="text-xl font-black text-white flex items-center gap-2.5">
-                    <div class="w-8 h-8 rounded-lg bg-emerald-500/20 text-emerald-400 flex items-center justify-center text-sm shadow-sm">
-                        <i class="fas fa-crosshairs"></i>
-                    </div>
-                    <span>{{ __('Direct Seed Keywords Explorer (الكلمات المفتاحية المباشرة المستهدفة)') }}</span>
-                </h3>
-                <span class="text-xs font-bold bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 px-3 py-1 rounded-full">
-                    <i class="fas fa-bolt text-[10px] mr-1"></i> {{ __('Direct Search Intent & Autocomplete Intelligence') }}
-                </span>
-            </div>
+    {{-- Dedicated Direct Seed Keywords Explorer Box (Always Visible) --}}
+    <div class="mt-10">
+        <div class="mb-4 flex items-center justify-between">
+            <h3 class="text-xl font-black text-white flex items-center gap-2.5">
+                <div class="w-8 h-8 rounded-lg bg-emerald-500/20 text-emerald-400 flex items-center justify-center text-sm shadow-sm">
+                    <i class="fas fa-crosshairs"></i>
+                </div>
+                <span>{{ __('Direct Seed Keywords Explorer (الكلمات المفتاحية المباشرة المستهدفة)') }}</span>
+            </h3>
+            <span class="text-xs font-bold bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 px-3 py-1 rounded-full">
+                <i class="fas fa-bolt text-[10px] mr-1"></i> {{ __('Direct Search Intent & Autocomplete Intelligence') }}
+            </span>
+        </div>
 
-            <div class="grid grid-cols-1 {{ $enableEn ? 'lg:grid-cols-2' : '' }} gap-8 items-start">
-                @if($enableEn)
-                    <div>
-                        @include('aikeywordradar::partials.keyword_box', [
-                            'lang' => 'en',
-                            'title' => 'Direct Seed Explorer (EN)',
-                            'targetKeywords' => $directSeedKeywordsEn ?? [],
-                            'boxId' => 'direct_seed',
-                            'boxColor' => '#10b981',
-                        ])
-                    </div>
-                @endif
+        <div class="grid grid-cols-1 {{ $enableEn ? 'lg:grid-cols-2' : '' }} gap-8 items-start">
+            @if($enableEn)
                 <div>
                     @include('aikeywordradar::partials.keyword_box', [
-                        'lang' => 'ar',
-                        'title' => 'الكلمات المفتاحية المباشرة (AR)',
-                        'targetKeywords' => $directSeedKeywordsAr ?? [],
+                        'lang' => 'en',
+                        'title' => 'Direct Seed Explorer (EN)',
+                        'targetKeywords' => $directSeedKeywordsEn ?? [],
                         'boxId' => 'direct_seed',
                         'boxColor' => '#10b981',
                     ])
                 </div>
+            @endif
+            <div>
+                @include('aikeywordradar::partials.keyword_box', [
+                    'lang' => 'ar',
+                    'title' => 'الكلمات المفتاحية المباشرة (AR)',
+                    'targetKeywords' => $directSeedKeywordsAr ?? [],
+                    'boxId' => 'direct_seed',
+                    'boxColor' => '#10b981',
+                ])
             </div>
         </div>
-    @endif
+    </div>
 
     {{-- Custom Boxes --}}
     @if(!empty($customBoxes))
@@ -243,7 +241,10 @@ function keywordRadar() {
         currentTime: Date.now(),
         
         init() {
-            this.selectedKeywords['direct_seed'] = [];
+            this.selectedKeywords['direct_seed_ar'] = [];
+            this.selectedKeywords['direct_seed_en'] = [];
+            this.loading['sync_direct_seed_ar'] = false;
+            this.loading['sync_direct_seed_en'] = false;
             @foreach($customBoxes ?? [] as $box)
             this.selectedKeywords['{{ $box['id'] }}'] = [];
             @endforeach
@@ -443,7 +444,7 @@ function keywordRadar() {
         },
 
         syncCompetitors(lang, timeFilter = '60m', boxId = '', mode = 'smart') {
-            const prop = boxId ? `sync_${boxId}` : (lang === 'ar' ? 'syncAr' : 'syncEn');
+            const prop = boxId ? (boxId === 'direct_seed' ? `sync_direct_seed_${lang}` : `sync_${boxId}`) : (lang === 'ar' ? 'syncAr' : 'syncEn');
             if (this.loading[prop]) return;
             this.loading[prop] = true;
             this._startSyncCountdown(prop, timeFilter);

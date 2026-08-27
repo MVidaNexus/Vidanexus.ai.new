@@ -2,7 +2,20 @@
     $customBoxId = $boxId ?? null; // Custom box ID (null for standard AR/EN)
     $customBoxColor = $boxColor ?? null;
     
-    if ($customBoxId) {
+    if ($customBoxId === 'direct_seed') {
+        $colorVar = '#10b981';
+        $colorClass = 'emerald-500';
+        $icon = 'fas fa-crosshairs';
+        $loadingModel = "loading['sync_direct_seed_{$lang}']";
+        $syncProp = "sync_direct_seed_{$lang}";
+        $boxKey = "direct_seed_{$lang}";
+        $userSeeds = ($lang === 'en')
+            ? (auth()->user()->settings['keywords_seed_topics_en'] ?? auth()->user()->settings['keywords_seed_topics'] ?? '')
+            : (auth()->user()->settings['keywords_seed_topics'] ?? '');
+        $hasCompetitors = !empty(trim((string)$userSeeds));
+        $isAr = ($lang ?? 'ar') === 'ar';
+        $htmlBoxId = 'kr-box-direct_seed_' . $lang;
+    } elseif ($customBoxId) {
         // Custom Box
         $colorVar = $customBoxColor;
         $colorClass = 'purple-500';
@@ -590,12 +603,16 @@
                     </div>
                 @else
                     <div class="w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4 border" style="background: var(--card-bg); border-color: var(--glass-border); color: var(--text-muted);">
-                        <i class="fas fa-satellite-dish text-2xl"></i>
+                        <i class="{{ $customBoxId === 'direct_seed' ? 'fas fa-crosshairs' : 'fas fa-satellite-dish' }} text-2xl" style="color: {{ $colorVar }};"></i>
                     </div>
-                    <h4 class="font-bold mb-2 text-sm" style="color: var(--text-main);">Intelligence Standby</h4>
-                    <p class="text-sm mb-6 max-w-xs" style="color: var(--text-muted);">No competitors tracked yet. Add domains to start receiving market intelligence.</p>
+                    <h4 class="font-bold mb-2 text-sm" style="color: var(--text-main);">
+                        {{ $customBoxId === 'direct_seed' ? ($isAr ? 'مستكشف الكلمات والمواضيع المباشرة' : 'Direct Seed Explorer') : ($isAr ? 'في وضع الاستعداد' : 'Intelligence Standby') }}
+                    </h4>
+                    <p class="text-sm mb-6 max-w-xs" style="color: var(--text-muted);">
+                        {{ $customBoxId === 'direct_seed' ? ($isAr ? 'أضف كلمات ومواضيع مجالك الرئيسية (مثل: هواتف، عقارات، أسعار الذهب) لمسح آخر ما نُشر عنها واقتراحات البحث.' : 'Add your niche seed topics to scan latest published stories and search trends.') : ($isAr ? 'لم يتم إضافة منافسين بعد. أضف روابط المنافسين لبدء رصد السوق.' : 'No competitors tracked yet. Add domains to start receiving market intelligence.') }}
+                    </p>
                     <a href="{{ route('dashboard.ai-keyword-radar.settings') }}" class="inline-block px-5 py-2.5 rounded-xl text-sm font-bold transition border" style="background: {{ $colorVar }}20; color: {{ $colorVar }}; border-color: {{ $colorVar }}30;">
-                        <i class="fas fa-cog me-2"></i> Configure Intel Sources
+                        <i class="fas fa-cog me-2"></i> {{ $customBoxId === 'direct_seed' ? ($isAr ? 'إضافة الكلمات المستهدفة' : 'Configure Seed Topics') : ($isAr ? 'إضافة مصادر المنافسين' : 'Configure Intel Sources') }}
                     </a>
                 @endif
             </div>
