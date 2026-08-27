@@ -138,6 +138,46 @@
                 <textarea id="keywords_custom_boxes" name="keywords_custom_boxes" class="hidden">{{ json_encode($settings['keywords_custom_boxes'] ?? []) }}</textarea>
             </div>
 
+            {{-- Direct Seed Keywords Explorer Section --}}
+            <div class="glass-card overflow-hidden">
+                <div class="px-6 py-4 border-b flex flex-col sm:flex-row justify-between sm:items-center gap-4" style="border-color: var(--glass-border); background: rgba(0,0,0,0.02);">
+                    <div class="flex items-center gap-3">
+                        <div class="w-10 h-10 rounded-xl bg-emerald-500/20 flex items-center justify-center text-emerald-400 flex-shrink-0">
+                            <i class="fas fa-crosshairs text-lg"></i>
+                        </div>
+                        <div>
+                            <h3 class="text-lg font-bold" style="color: var(--text-main);">Direct Seed Keywords Explorer</h3>
+                            <p class="text-[10px]" style="color: var(--text-muted);">Monitor and expand direct seed keywords/topics via Google Autocomplete & Search Intent algorithms (No competitors required).</p>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="p-6 space-y-6">
+                    <div>
+                        <label class="block text-sm font-bold mb-2 text-emerald-400">
+                            <i class="fas fa-tags mr-1"></i> Arabic Direct Seed Topics (الكلمات المستهدفة المباشرة):
+                        </label>
+                        <textarea name="keywords_seed_topics" rows="4" 
+                                  class="w-full px-4 py-3 rounded-xl border focus:ring-1 outline-none transition placeholder-gray-500 font-mono text-sm leading-relaxed"
+                                  style="background: var(--card-bg); color: var(--text-main); border-color: var(--glass-border);"
+                                  placeholder="اكتب كل كلمة أو موضوع في سطر منفصل (مثال:&#10;عطور رجالية&#10;شقق للبيع في التجمع&#10;سعر الذهب اليوم&#10;سيروم فيتامين سي)">{{ old('keywords_seed_topics', $settings['keywords_seed_topics'] ?? '') }}</textarea>
+                        <p class="text-[11px] text-gray-400 mt-1.5">اكتب كل موضوع أو كلمة مفتاحية رئيسية في سطر مستقل. سيقوم الرادار بتوسيعها واستخراج كل الكلمات الشرائية والمعلوماتية المتفرعة منها.</p>
+                    </div>
+
+                    @if(!empty($settings['enable_keywords_en']))
+                    <div>
+                        <label class="block text-sm font-bold mb-2 text-blue-400">
+                            <i class="fas fa-tags mr-1"></i> English Direct Seed Topics:
+                        </label>
+                        <textarea name="keywords_seed_topics_en" rows="3" 
+                                  class="w-full px-4 py-3 rounded-xl border focus:ring-1 outline-none transition placeholder-gray-500 font-mono text-sm leading-relaxed"
+                                  style="background: var(--card-bg); color: var(--text-main); border-color: var(--glass-border);"
+                                  placeholder="One topic per line (e.g.:&#10;best running shoes&#10;iphone 16 pro max&#10;crypto trading tips)">{{ old('keywords_seed_topics_en', $settings['keywords_seed_topics_en'] ?? '') }}</textarea>
+                    </div>
+                    @endif
+                </div>
+            </div>
+
             {{-- Submit --}}
             <div class="flex justify-end pt-4">
                     <button type="submit" class="px-8 py-3.5 rounded-xl text-lg flex items-center gap-3 font-bold transition-all hover:scale-105 active:scale-95" style="
@@ -898,6 +938,75 @@
         document.body.appendChild(a);
         a.click();
         document.body.removeChild(a);
+    }
+
+    const NICHE_PRESETS = {
+        ar: {
+            ecommerce: ['https://www.amazon.eg', 'https://www.noon.com/egypt-ar', 'https://www.jumia.com.eg', 'https://www.jarir.com/sa-ar', 'https://www.extra.com/ar-sa'],
+            realestate: ['https://www.propertyfinder.eg', 'https://aqarmap.com.eg/ar', 'https://egypt.dubizzle.com/properties', 'https://www.bayut.eg'],
+            health: ['https://www.webteb.com', 'https://altibbi.com', 'https://seha.sa', 'https://www.mayoclinic.org/ar'],
+            tech: ['https://tech-wd.com', 'https://unlimit-tech.com', 'https://aitnews.com', 'https://arabhardware.net'],
+            cars: ['https://eg.hatla2ee.com', 'https://syarah.com', 'https://motory.com/ar', 'https://contactcars.com'],
+            finance: ['https://www.mubasher.info', 'https://almalnews.com', 'https://sa.investing.com', 'https://www.argaam.com'],
+            sports: ['https://www.yallakora.com', 'https://www.filgoal.com', 'https://www.kooora.com', 'https://www.goal.com/ar'],
+            news: ['https://www.youm7.com', 'https://www.almasryalyoum.com', 'https://www.skynewsarabia.com', 'https://www.alarabiya.net']
+        },
+        en: {
+            ecommerce: ['https://www.amazon.com', 'https://www.ebay.com', 'https://www.walmart.com', 'https://www.target.com', 'https://www.bestbuy.com'],
+            tech: ['https://techcrunch.com', 'https://www.theverge.com', 'https://www.wired.com', 'https://mashable.com'],
+            health: ['https://www.healthline.com', 'https://www.medicalnewstoday.com', 'https://www.webmd.com', 'https://www.everydayhealth.com'],
+            finance: ['https://www.investopedia.com', 'https://www.bloomberg.com', 'https://www.marketwatch.com', 'https://coindesk.com'],
+            realestate: ['https://www.zillow.com', 'https://www.realtor.com', 'https://www.redfin.com'],
+            sports: ['https://www.espn.com', 'https://bleacherreport.com', 'https://www.bbc.com/sport']
+        }
+    };
+
+    function applyNichePreset(lang, niche) {
+        const list = (NICHE_PRESETS[lang] && NICHE_PRESETS[lang][niche]) ? NICHE_PRESETS[lang][niche] : [];
+        if (!list.length) return;
+
+        let addedCount = 0;
+        let room = marketSourcesRemaining();
+        let skippedDueToCap = false;
+
+        list.forEach(url => {
+            const isNew = !competitors[lang].some(u => normalizeUrl(u) === normalizeUrl(url));
+            if (room <= 0) {
+                if (isNew) skippedDueToCap = true;
+                return;
+            }
+            if (isNew) {
+                competitors[lang].push(url);
+                statuses[url] = { state: 'idle', message: 'Ready', count: 0 };
+                addedCount++;
+                room--;
+            }
+        });
+
+        renderCompetitors(lang);
+
+        if (skippedDueToCap) {
+            Swal.fire({
+                icon: 'warning',
+                title: lang === 'ar' ? 'تمت إضافة بعض المواقع' : 'Partial Preset Applied',
+                text: lang === 'ar' 
+                    ? `تمت إضافة ${addedCount} موقع. تم تخطي الباقي للوصول للحد الأقصى المسموح (${KEYWORD_RADAR_MARKET_SOURCE_LIMIT} مصادر).`
+                    : `Added ${addedCount} source(s). Remaining were skipped due to plan limit.`,
+                background: '#0f172a',
+                color: '#fff',
+                confirmButtonColor: '#f59e0b'
+            });
+            return;
+        }
+
+        Swal.fire({
+            icon: addedCount > 0 ? 'success' : 'info',
+            title: addedCount > 0 ? (lang === 'ar' ? 'تم تطبيق الباقة بنجاح!' : 'Preset Applied!') : (lang === 'ar' ? 'المواقع مضافة بالفعل' : 'Already Added'),
+            text: addedCount > 0 ? (lang === 'ar' ? `تمت إضافة ${addedCount} من كبرى المواقع المنافسة في هذا المجال. اضغط "Apply Configuration" للحفظ.` : `Added ${addedCount} authority competitors. Click Apply Configuration to save.`) : (lang === 'ar' ? 'جميع مواقع هذا النيتش مضافة بالفعل في قائمتك.' : 'All URLs from this preset already exist.'),
+            background: '#1a1b1f',
+            color: '#fff',
+            confirmButtonColor: '#0ea5e9'
+        });
     }
 
     document.addEventListener('DOMContentLoaded', initCompetitors);

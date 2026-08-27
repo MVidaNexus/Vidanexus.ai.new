@@ -308,6 +308,36 @@
                         <span>{{ $isAr ? 'إلغاء التحديد' : 'Clear' }}</span>
                     </button>
 
+                    {{-- Intent Filter Dropdown --}}
+                    <div class="relative" x-data="{ intentOpen: false, currentIntent: 'all', intentLabel: 'All Intents' }" @click.away="intentOpen = false">
+                        <button type="button" @click="intentOpen = !intentOpen" 
+                            style="display:inline-flex;align-items:center;gap:6px;padding:6px 12px;border-radius:12px;font-size:11px;font-weight:700;white-space:nowrap;background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.15);color:#ffffff;cursor:pointer;transition:all 0.2s;"
+                            onmouseover="this.style.background='rgba(255,255,255,0.12)'" onmouseout="this.style.background='rgba(255,255,255,0.06)'">
+                            <i class="fas fa-filter text-[10px] text-cyan-400"></i>
+                            <span x-text="intentLabel">All Intents</span>
+                            <i class="fas fa-chevron-down text-[8px] opacity-70"></i>
+                        </button>
+                        <div x-show="intentOpen" x-cloak
+                             style="position:absolute;top:calc(100% + 6px);{{ $isAr ? 'left:0' : 'right:0' }};width:210px;background:#0f172a !important;border:1px solid rgba(255,255,255,0.18) !important;border-radius:14px;z-index:99999;box-shadow:0 25px 60px rgba(0,0,0,0.85);backdrop-filter:blur(20px);overflow:hidden;">
+                            <button type="button" @click="currentIntent = 'all'; intentLabel = 'All Intents'; intentOpen = false; window.filterBoxByIntent('{{ $boxKey }}', 'all')"
+                                style="display:flex;align-items:center;gap:8px;width:100%;padding:10px 14px;background:transparent;color:#fff;border:none;cursor:pointer;font-size:11px;font-weight:700;text-align:{{ $isAr ? 'right' : 'left' }};">
+                                <i class="fas fa-layer-group text-slate-400"></i> {{ $isAr ? 'جميع النوايا' : 'All Intents' }}
+                            </button>
+                            <button type="button" @click="currentIntent = 'commercial'; intentLabel = '🛒 Commercial'; intentOpen = false; window.filterBoxByIntent('{{ $boxKey }}', 'commercial')"
+                                style="display:flex;align-items:center;gap:8px;width:100%;padding:10px 14px;background:transparent;color:#10b981;border:none;border-top:1px solid rgba(255,255,255,0.08);cursor:pointer;font-size:11px;font-weight:700;text-align:{{ $isAr ? 'right' : 'left' }};">
+                                <i class="fas fa-shopping-cart"></i> 🛒 {{ $isAr ? 'شرائي / تجاري' : 'Commercial' }}
+                            </button>
+                            <button type="button" @click="currentIntent = 'informational'; intentLabel = 'ℹ️ Informational'; intentOpen = false; window.filterBoxByIntent('{{ $boxKey }}', 'informational')"
+                                style="display:flex;align-items:center;gap:8px;width:100%;padding:10px 14px;background:transparent;color:#38bdf8;border:none;border-top:1px solid rgba(255,255,255,0.08);cursor:pointer;font-size:11px;font-weight:700;text-align:{{ $isAr ? 'right' : 'left' }};">
+                                <i class="fas fa-info-circle"></i> ℹ️ {{ $isAr ? 'معلوماتي / أدلة' : 'Informational' }}
+                            </button>
+                            <button type="button" @click="currentIntent = 'trending'; intentLabel = '⚡ Trending'; intentOpen = false; window.filterBoxByIntent('{{ $boxKey }}', 'trending')"
+                                style="display:flex;align-items:center;gap:8px;width:100%;padding:10px 14px;background:transparent;color:#f59e0b;border:none;border-top:1px solid rgba(255,255,255,0.08);cursor:pointer;font-size:11px;font-weight:700;text-align:{{ $isAr ? 'right' : 'left' }};">
+                                <i class="fas fa-bolt"></i> ⚡ {{ $isAr ? 'تريند / أحداث' : 'Trending' }}
+                            </button>
+                        </div>
+                    </div>
+
                     {{-- Delete All Button --}}
                     <form id="delete-all-form-{{ $boxKey }}" action="{{ route('dashboard.ai-keyword-radar.delete-all', ['lang' => $lang]) }}" method="POST" class="inline-block">
                         @csrf
@@ -350,33 +380,39 @@
                     }
                 }
             @endphp
-            <div class="space-y-4 keyword-container-{{ $lang }}">
+            <div class="space-y-3 sm:space-y-4" id="keywords-container-{{ $boxKey }}">
                 @foreach($headlineGroups as $headlineTitle => $groupKeywords)
                     @php
-                        $firstKw = $groupKeywords[0];
+                        $firstKw = $groupKeywords[0] ?? [];
                         $source = is_array($firstKw) ? ($firstKw['source'] ?? 'AI') : 'AI';
-                        $syncTime = null;
-                        $pubTime = null;
+                        $pubTime = is_array($firstKw) ? ($firstKw['published_at'] ?? null) : null;
+                        $syncTime = is_array($firstKw) ? ($firstKw['synced_at'] ?? null) : null;
                         $pullTs = 0;
+                        if (!empty($syncTime)) {
+                            $pullTs = strtotime($syncTime) ?: 0;
+                        } elseif (is_array($firstKw) && !empty($firstKw['created_at'])) {
+                            $pullTs = strtotime($firstKw['created_at']) ?: 0;
+                        }
                         $pubTs = 0;
+                        if (!empty($pubTime)) {
+                            $pubTs = strtotime($pubTime) ?: 0;
+                        }
                         $groupKeywordTexts = [];
-                        $primaryKeyword = '';
                         foreach ($groupKeywords as $gkw) {
-                            $kwText = is_array($gkw) ? trim($gkw['text'] ?? $gkw['keyword'] ?? '') : trim((string) $gkw);
-                            if ($kwText !== '') {
-                                $groupKeywordTexts[] = $kwText;
-                                if ($primaryKeyword === '') {
-                                    $primaryKeyword = $kwText;
-                                }
-                            }
-                            $st = $gkw['synced_at'] ?? $gkw['created_at'] ?? null;
-                            $pt = $gkw['published_at'] ?? null;
-                            if ($st) {
-                                $ts = \Carbon\Carbon::parse($st)->timestamp;
+                            $gt = is_array($gkw) ? trim($gkw['text'] ?? $gkw['keyword'] ?? '') : trim((string) $gkw);
+                            if ($gt !== '') $groupKeywordTexts[] = $gt;
+                        }
+                        $primaryKeyword = $groupKeywordTexts[0] ?? '';
+                        foreach ($groupKeywords as $gkw) {
+                            if (!is_array($gkw)) continue;
+                            $st = $gkw['synced_at'] ?? null;
+                            if (!empty($st)) {
+                                $ts = strtotime($st) ?: 0;
                                 if ($ts > $pullTs) { $pullTs = $ts; $syncTime = $st; }
                             }
-                            if ($pt) {
-                                $ts = \Carbon\Carbon::parse($pt)->timestamp;
+                            $pt = $gkw['published_at'] ?? null;
+                            if (!empty($pt)) {
+                                $ts = strtotime($pt) ?: 0;
                                 if ($ts > $pubTs) { $pubTs = $ts; $pubTime = $pt; }
                             }
                         }
@@ -391,9 +427,10 @@
                                 @foreach($groupKeywords as $kw)
                                     @php
                                         $text = is_array($kw) ? ($kw['text'] ?? $kw['keyword'] ?? '') : $kw;
+                                        $intent = is_array($kw) ? ($kw['intent'] ?? \Modules\AIKeywordRadar\Support\KeywordPayload::detectSearchIntent($text, $lang)) : \Modules\AIKeywordRadar\Support\KeywordPayload::detectSearchIntent($text, $lang);
                                     @endphp
                                     @if(!empty($text))
-                                    <div class="keyword-tag keyword-chip-row" style="display:inline-flex;align-items:center;gap:8px;max-width:100%;">
+                                    <div class="keyword-tag keyword-chip-row" data-intent="{{ $intent['type'] ?? 'general' }}" style="display:inline-flex;align-items:center;gap:8px;max-width:100%;flex-wrap:wrap;">
                                         <input type="checkbox"
                                                class="kw-select-{{ $boxKey }}"
                                                value="{{ $text }}"
@@ -403,6 +440,12 @@
                                             <i class="fas fa-hashtag text-[10px] flex-shrink-0" style="color:{{ $colorVar }};"></i>
                                             <span class="break-words font-black" style="color:#ffffff;">{{ $text }}</span>
                                         </span>
+                                        @if(!empty($intent))
+                                        <span class="intent-badge" style="display:inline-flex;align-items:center;gap:4px;padding:3px 8px;border-radius:6px;font-size:10px;font-weight:800;background:{{ $intent['badge_bg'] }};border:1px solid {{ $intent['badge_border'] }};color:{{ $intent['badge_color'] }};" title="{{ $intent['label'] }}">
+                                            <i class="{{ $intent['icon'] }} text-[9px]"></i>
+                                            <span>{{ $intent['label'] }}</span>
+                                        </span>
+                                        @endif
                                     </div>
                                     @endif
                                 @endforeach

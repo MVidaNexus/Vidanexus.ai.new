@@ -68,12 +68,31 @@ class AIKeywordRadarController extends Controller
             $customBoxKeywords[$boxId] = $this->loadKeywordsForBox($userId, $boxLang, $category, $boxId, $cacheTtl);
         }
 
+        // Fetch Direct Seed Keywords (Dedicated Box)
+        $directSeedKeywordsAr = $this->loadKeywordsForBox($userId, 'ar', 'Direct:Seed', 'direct_seed', $cacheTtl);
+        $directSeedKeywordsEn = $enableEn ? $this->loadKeywordsForBox($userId, 'en', 'Direct:Seed', 'direct_seed', $cacheTtl) : [];
+
+        $hasSeedTopics = !empty(trim((string)($settings['keywords_seed_topics'] ?? ''))) 
+            || !empty(trim((string)($settings['keywords_seed_topics_en'] ?? '')))
+            || !empty($directSeedKeywordsAr)
+            || !empty($directSeedKeywordsEn);
+
         $stats = [
             'total' => Keyword::where('user_id', $userId)->count(),
             'retention_hours' => KeywordPayload::retentionHours(),
         ];
 
-        return view('aikeywordradar::index', compact('stats', 'targetKeywordsAr', 'targetKeywordsEn', 'enableEn', 'customBoxes', 'customBoxKeywords'));
+        return view('aikeywordradar::index', compact(
+            'stats',
+            'targetKeywordsAr',
+            'targetKeywordsEn',
+            'enableEn',
+            'customBoxes',
+            'customBoxKeywords',
+            'directSeedKeywordsAr',
+            'directSeedKeywordsEn',
+            'hasSeedTopics'
+        ));
     }
 
     private function loadKeywordsForBox(int $userId, string $lang, string $category, ?string $boxId, int $cacheTtl): array
@@ -136,6 +155,8 @@ class AIKeywordRadarController extends Controller
             'keywords_competitors_en' => 'nullable|string',
             'enable_keywords_en' => 'nullable|boolean',
             'keywords_custom_boxes' => 'nullable|string',
+            'keywords_seed_topics' => 'nullable|string',
+            'keywords_seed_topics_en' => 'nullable|string',
         ]);
 
         $user = auth()->user();
@@ -355,9 +376,9 @@ class AIKeywordRadarController extends Controller
         $userId = auth()->id();
         $lang = $request->get('lang', 'ar');
         $boxId = $request->get('box_id');
-        $category = $boxId ? "Target:{$boxId}" : 'Target';
+        $category = ($boxId === 'direct_seed') ? 'Direct:Seed' : ($boxId ? "Target:{$boxId}" : 'Target');
         
-        $cacheKey = $boxId ? "target_keywords_{$userId}_{$boxId}" : "target_keywords_{$userId}_{$lang}";
+        $cacheKey = ($boxId === 'direct_seed') ? "target_keywords_{$userId}_direct_seed" : ($boxId ? "target_keywords_{$userId}_{$boxId}" : "target_keywords_{$userId}_{$lang}");
 
         $keywords = $this->fetchKeywordsFromDb($userId, $lang, $category);
 
@@ -379,7 +400,7 @@ class AIKeywordRadarController extends Controller
         $lang = $request->get('lang', 'ar');
         $boxId = $request->get('box_id');
         
-        $category = $boxId ? "Target:{$boxId}" : 'Target';
+        $category = ($boxId === 'direct_seed') ? 'Direct:Seed' : ($boxId ? "Target:{$boxId}" : 'Target');
         
         Log::info("[Keyword Radar] Delete All requested. User: {$userId}, Lang: {$lang}, Category: {$category}");
 
@@ -392,6 +413,9 @@ class AIKeywordRadarController extends Controller
             ->where('category', $category)
             ->where('lang', $lang)
             ->delete();
+
+        $cacheKey = ($boxId === 'direct_seed') ? "target_keywords_{$userId}_direct_seed" : ($boxId ? "target_keywords_{$userId}_{$boxId}" : "target_keywords_{$userId}_{$lang}");
+        Cache::forget($cacheKey);
 
         Log::info("[Keyword Radar] Deleted {$count} keywords from DB.");
 

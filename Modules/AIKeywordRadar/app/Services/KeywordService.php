@@ -2254,4 +2254,166 @@ Example Output:
         }
         return 'd';
     }
+
+    /**
+     * Expand and Sync Direct Seed Keywords for User
+     */
+    public function syncSeedKeywords($userId, string $lang = 'ar'): array
+    {
+        ini_set('max_execution_time', 300);
+        set_time_limit(300);
+        $user = \App\Models\User::find($userId);
+        if (!$user) return ['saved' => 0, 'headlines' => 0, 'keywords' => []];
+
+        $settings = $user->settings ?? [];
+        $seedString = ($lang === 'en')
+            ? ($settings['keywords_seed_topics_en'] ?? $settings['keywords_seed_topics'] ?? '')
+            : ($settings['keywords_seed_topics'] ?? '');
+
+        $lines = preg_split('/[\r\n,]+/', (string) $seedString);
+        $seeds = array_values(array_unique(array_filter(array_map('trim', $lines))));
+
+        if (empty($seeds)) {
+            return ['saved' => 0, 'headlines' => 0, 'keywords' => [], 'error' => 'NO_SEEDS'];
+        }
+
+        $allKeywords = [];
+        $userAgent = $this->getRandomUserAgent();
+
+        foreach ($seeds as $seed) {
+            if (mb_strlen($seed) < 2) continue;
+
+            $suggestions = $this->fetchGoogleSuggestionsForSeed($seed, $lang, $userAgent);
+            $headlineTitle = ($lang === 'ar') ? "استكشاف الكلمة المباشرة: {$seed}" : "Direct Seed Exploration: {$seed}";
+            
+            foreach ($suggestions as $sug) {
+                $allKeywords[] = [
+                    'text' => $sug,
+                    'source' => 'Seed Explorer',
+                    'headline_title' => $headlineTitle,
+                    'published_at' => now()->toDateTimeString(),
+                    'created_at' => now()->toDateTimeString(),
+                ];
+            }
+        }
+
+        $category = 'Direct:Seed';
+        $existingTexts = Keyword::where('user_id', $userId)
+            ->where('category', $category)
+            ->where('lang', $lang)
+            ->pluck('keyword')
+            ->mapWithKeys(fn ($k) => [mb_strtolower(trim($k), 'UTF-8') => trim($k)])
+            ->all();
+
+        $addedCount = 0;
+        foreach ($allKeywords as $kw) {
+            $text = trim($kw['text'] ?? '');
+            if ($text === '') continue;
+            $textLower = mb_strtolower($text, 'UTF-8');
+            if (isset($existingTexts[$textLower])) {
+                Keyword::where('user_id', $userId)
+                    ->where('category', $category)
+                    ->where('lang', $lang)
+                    ->where('keyword', $existingTexts[$textLower])
+                    ->update(['synced_at' => now()]);
+                continue;
+            }
+
+            Keyword::create([
+                'keyword' => $text,
+                'category' => $category,
+                'lang' => $lang,
+                'source' => $kw['source'] ?? 'Seed Explorer',
+                'headline_title' => $kw['headline_title'] ?? null,
+                'user_id' => $userId,
+                'synced_at' => now(),
+                'published_at' => now(),
+                'created_at' => now(),
+            ]);
+            $existingTexts[$textLower] = $text;
+            $addedCount++;
+        }
+
+        Cache::forget("target_keywords_{$userId}_direct_seed");
+        Cache::forget("target_keywords_{$userId}_{$lang}");
+
+        return [
+            'saved' => $addedCount,
+            'headlines' => count($seeds),
+            'total_extracted' => count($allKeywords),
+            'seeds_count' => count($seeds),
+            'keywords' => $allKeywords,
+        ];
+    }
+
+    /**
+     * Fetch rich Google Autocomplete suggestions for a seed keyword
+     */
+    protected function fetchGoogleSuggestionsForSeed(string $seed, string $lang, string $userAgent): array
+    {
+        $queries = [$seed];
+        
+        if ($lang === 'ar') {
+            $modifiers = ['سعر', 'أفضل', 'طريقة', 'كيف', 'شراء', 'أنواع', 'مقارنة', 'عروض', 'مميزات', 'تجربة', 'أرخص', 'أماكن'];
+            foreach ($modifiers as $mod) {
+                $queries[] = "{$mod} {$seed}";
+                $queries[] = "{$seed} {$mod}";
+            }
+            $letters = ['ا', 'ب', 'ت', 'م', 'س', 'ك', 'ع', 'ف', 'ن', 'ي'];
+            foreach ($letters as $l) {
+                $queries[] = "{$seed} {$l}";
+            }
+        } else {
+            $modifiers = ['best', 'how to', 'buy', 'price of', 'types of', 'cheap', 'top', 'review', 'vs', 'guide'];
+            foreach ($modifiers as $mod) {
+                $queries[] = "{$mod} {$seed}";
+                $queries[] = "{$seed} {$mod}";
+            }
+            $letters = ['a', 'b', 'c', 's', 'p', 't', 'm', 'f'];
+            foreach ($letters as $l) {
+                $queries[] = "{$seed} {$l}";
+            }
+        }
+
+        $results = [];
+        $hl = ($lang === 'en') ? 'en' : 'ar';
+        $gl = ($lang === 'en') ? 'us' : 'eg';
+
+        // Query in chunks of 6 for speed
+        $chunks = array_chunk($queries, 6);
+        foreach ($chunks as $chunk) {
+            try {
+                $responses = Http::pool(function ($pool) use ($chunk, $hl, $gl, $userAgent) {
+                    $reqs = [];
+                    foreach ($chunk as $q) {
+                        $url = "https://suggestqueries.google.com/complete/search?client=firefox&hl={$hl}&gl={$gl}&q=" . urlencode($q);
+                        $reqs[] = $pool->as($q)
+                            ->withHeaders(['User-Agent' => $userAgent])
+                            ->timeout(4)
+                            ->get($url);
+                    }
+                    return $reqs;
+                });
+
+                foreach ($chunk as $q) {
+                    $resp = $responses[$q] ?? null;
+                    if ($resp && $resp->successful()) {
+                        $data = json_decode($resp->body(), true);
+                        if (isset($data[1]) && is_array($data[1])) {
+                            foreach ($data[1] as $item) {
+                                $cleanItem = trim(strip_tags((string) $item));
+                                if (mb_strlen($cleanItem) >= 3 && !in_array($cleanItem, $results)) {
+                                    $results[] = $cleanItem;
+                                }
+                            }
+                        }
+                    }
+                }
+            } catch (\Throwable $e) {
+                Log::warning("[Seed Explorer] Suggest fetch error: " . $e->getMessage());
+            }
+        }
+
+        return $results;
+    }
 }

@@ -167,6 +167,46 @@
         </div>
     </div>
 
+    {{-- Dedicated Direct Seed Keywords Explorer Box --}}
+    @if(!empty($hasSeedTopics))
+        <div class="mt-10">
+            <div class="mb-4 flex items-center justify-between">
+                <h3 class="text-xl font-black text-white flex items-center gap-2.5">
+                    <div class="w-8 h-8 rounded-lg bg-emerald-500/20 text-emerald-400 flex items-center justify-center text-sm shadow-sm">
+                        <i class="fas fa-crosshairs"></i>
+                    </div>
+                    <span>{{ __('Direct Seed Keywords Explorer (الكلمات المفتاحية المباشرة المستهدفة)') }}</span>
+                </h3>
+                <span class="text-xs font-bold bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 px-3 py-1 rounded-full">
+                    <i class="fas fa-bolt text-[10px] mr-1"></i> {{ __('Direct Search Intent & Autocomplete Intelligence') }}
+                </span>
+            </div>
+
+            <div class="grid grid-cols-1 {{ $enableEn ? 'lg:grid-cols-2' : '' }} gap-8 items-start">
+                @if($enableEn)
+                    <div>
+                        @include('aikeywordradar::partials.keyword_box', [
+                            'lang' => 'en',
+                            'title' => 'Direct Seed Explorer (EN)',
+                            'targetKeywords' => $directSeedKeywordsEn ?? [],
+                            'boxId' => 'direct_seed',
+                            'boxColor' => '#10b981',
+                        ])
+                    </div>
+                @endif
+                <div>
+                    @include('aikeywordradar::partials.keyword_box', [
+                        'lang' => 'ar',
+                        'title' => 'الكلمات المفتاحية المباشرة (AR)',
+                        'targetKeywords' => $directSeedKeywordsAr ?? [],
+                        'boxId' => 'direct_seed',
+                        'boxColor' => '#10b981',
+                    ])
+                </div>
+            </div>
+        </div>
+    @endif
+
     {{-- Custom Boxes --}}
     @if(!empty($customBoxes))
         <div class="grid grid-cols-1 lg:grid-cols-2 gap-8 items-start mt-8">
@@ -203,6 +243,7 @@ function keywordRadar() {
         currentTime: Date.now(),
         
         init() {
+            this.selectedKeywords['direct_seed'] = [];
             @foreach($customBoxes ?? [] as $box)
             this.selectedKeywords['{{ $box['id'] }}'] = [];
             @endforeach
@@ -916,6 +957,49 @@ window.applyKeywordTimeFilter = function(lang, value) {
         if (shouldShow) {
             visibleKeywords += card.querySelectorAll('.keyword-chip-row').length;
         }
+    });
+
+    const card = container.closest('.glass-card');
+    const badge = card ? card.querySelector('[data-keyword-count]') : null;
+    if (badge) {
+        badge.textContent = totalKeywords === visibleKeywords
+            ? `${visibleKeywords} Keywords`
+            : `${visibleKeywords} / ${totalKeywords} Keywords`;
+    }
+};
+
+window.filterBoxByIntent = function(boxKey, intent) {
+    const container = document.getElementById(`keywords-container-${boxKey}`);
+    if (!container) return;
+
+    const cards = container.querySelectorAll('.headline-card, .keyword-row');
+    const totalKeywords = container.querySelectorAll('.keyword-chip-row').length;
+    let visibleKeywords = 0;
+
+    cards.forEach(card => {
+        const chips = card.querySelectorAll('.keyword-chip-row');
+        if (intent === 'all') {
+            card.style.display = '';
+            chips.forEach(chip => {
+                chip.style.display = '';
+                visibleKeywords++;
+            });
+            return;
+        }
+
+        let hasMatch = false;
+        chips.forEach(chip => {
+            const chipIntent = chip.getAttribute('data-intent') || 'general';
+            if (chipIntent === intent) {
+                chip.style.display = '';
+                hasMatch = true;
+                visibleKeywords++;
+            } else {
+                chip.style.display = 'none';
+            }
+        });
+
+        card.style.display = hasMatch ? '' : 'none';
     });
 
     const card = container.closest('.glass-card');

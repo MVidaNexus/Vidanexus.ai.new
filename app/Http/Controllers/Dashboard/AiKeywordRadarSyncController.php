@@ -77,7 +77,7 @@ class AiKeywordRadarSyncController extends Controller
             return back()->with('error', $competitorCheck);
         }
 
-        $category = $boxId ? "Target:{$boxId}" : 'Target';
+        $category = ($boxId === 'direct_seed') ? 'Direct:Seed' : ($boxId ? "Target:{$boxId}" : 'Target');
 
         if (KeywordPayload::isSyncLocked($user->id, $lang, $boxId)) {
             $remain = KeywordPayload::syncLockRemainingSeconds($user->id, $lang, $boxId);
@@ -109,9 +109,14 @@ class AiKeywordRadarSyncController extends Controller
                 'user_id' => $user->id,
                 'lang' => $lang,
                 'time_filter' => $timeFilter,
+                'box_id' => $boxId,
             ]);
 
-            $result = $keywordService->syncKeywords(500, $lang, $user->id, $timeFilter, $boxId, $mode);
+            if ($boxId === 'direct_seed') {
+                $result = $keywordService->syncSeedKeywords($user->id, $lang);
+            } else {
+                $result = $keywordService->syncKeywords(500, $lang, $user->id, $timeFilter, $boxId, $mode);
+            }
             $saved = (int) ($result['saved'] ?? 0);
             $headlines = (int) ($result['headlines'] ?? 0);
 
@@ -216,6 +221,20 @@ class AiKeywordRadarSyncController extends Controller
     private function validateCompetitorsConfigured($user, string $lang, ?string $boxId): ?string
     {
         $settings = $user->settings ?? [];
+
+        if ($boxId === 'direct_seed') {
+            $seeds = ($lang === 'en')
+                ? ($settings['keywords_seed_topics_en'] ?? $settings['keywords_seed_topics'] ?? '')
+                : ($settings['keywords_seed_topics'] ?? '');
+
+            if (empty(trim((string) $seeds))) {
+                return ($lang === 'ar')
+                    ? 'لم يتم العثور على كلمات مفتاحية مباشرة. يرجى إضافة الكلمات المستهدفة في إعدادات الرادار أولاً.'
+                    : 'No direct seed keywords found. Please add direct seed keywords in Radar Settings first.';
+            }
+
+            return null;
+        }
 
         if ($boxId) {
             foreach ($settings['keywords_custom_boxes'] ?? [] as $box) {

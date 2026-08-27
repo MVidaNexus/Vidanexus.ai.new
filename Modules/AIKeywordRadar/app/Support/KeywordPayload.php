@@ -10,10 +10,13 @@ use Modules\AIKeywordRadar\Models\Keyword;
 class KeywordPayload
 {
     /**
-     * @return array{text: string, source: string, headline_title: ?string, published_at: ?string, synced_at: ?string, created_at: string}
+     * @return array{text: string, source: string, headline_title: ?string, published_at: ?string, synced_at: ?string, created_at: string, intent: array}
      */
     public static function fromModel(Keyword $kw): array
     {
+        $lang = $kw->lang ?? 'ar';
+        $intent = self::detectSearchIntent($kw->keyword, $lang);
+
         return [
             'text' => $kw->keyword,
             'source' => $kw->source ?? 'AI',
@@ -21,6 +24,72 @@ class KeywordPayload
             'published_at' => $kw->published_at ? $kw->published_at->toDateTimeString() : null,
             'synced_at' => $kw->synced_at ? $kw->synced_at->toDateTimeString() : null,
             'created_at' => $kw->created_at->toDateTimeString(),
+            'intent' => $intent,
+        ];
+    }
+
+    /**
+     * Detect Search Intent (Commercial, Informational, Trending, Navigational, General)
+     */
+    public static function detectSearchIntent(string $text, string $lang = 'ar'): array
+    {
+        $text = mb_strtolower(trim($text), 'UTF-8');
+
+        // 1. Commercial / Transactional (Buying intent, pricing, stores, reviews)
+        if (preg_match('/(سعر|اسعار|أسعار|شراء|اشتري|متجر|سوق|عروض|عرض|خصم|كود|تخفيض|ارخص|أرخص|افضل|أفضل|مقارنة|مراجعة|مواصفات|تقسيط|للبيع|حجز|تكلفة|رسوم|كم سعر|buy|price|cost|pricing|best|top|cheap|cheapest|deal|deals|discount|coupon|promo|store|shop|for sale|vs|review|reviews|order|hire|rent|booking)/u', $text)) {
+            return [
+                'type' => 'commercial',
+                'label' => ($lang === 'ar') ? 'شرائي / تجاري' : 'Commercial',
+                'icon' => 'fas fa-shopping-cart',
+                'badge_bg' => 'rgba(16, 185, 129, 0.15)',
+                'badge_border' => 'rgba(16, 185, 129, 0.35)',
+                'badge_color' => '#10b981',
+            ];
+        }
+
+        // 2. Informational (How to, guide, questions, tutorial, explain)
+        if (preg_match('/(كيف|كيفية|طريقة|شرح|معنى|ما هو|ما هي|ماذا|لماذا|اسباب|أسباب|اعراض|أعراض|فوائد|أضرار|خطوات|دليل|نصائح|حل|علاج|شروط|تنسيق|نتائج|جدول|how|what|why|guide|tips|steps|tutorial|explain|meaning|symptoms|benefits|causes|solution|remedy|requirements)/u', $text)) {
+            return [
+                'type' => 'informational',
+                'label' => ($lang === 'ar') ? 'معلوماتي' : 'Informational',
+                'icon' => 'fas fa-info-circle',
+                'badge_bg' => 'rgba(14, 165, 233, 0.15)',
+                'badge_border' => 'rgba(14, 165, 233, 0.35)',
+                'badge_color' => '#38bdf8',
+            ];
+        }
+
+        // 3. Trending / News (Live, breaking, match, score, today, date)
+        if (preg_match('/(مباشر|بث|مباراة|مباريات|اهداف|أهداف|ملخص|ترتيب|موعد|تاريخ|اليوم|الان|الآن|عاجل|وفاة|حادث|تشكيل|live|stream|match|score|today|now|date|breaking|vs|highlights)/u', $text)) {
+            return [
+                'type' => 'trending',
+                'label' => ($lang === 'ar') ? 'تريند' : 'Trending',
+                'icon' => 'fas fa-bolt',
+                'badge_bg' => 'rgba(245, 158, 11, 0.15)',
+                'badge_border' => 'rgba(245, 158, 11, 0.35)',
+                'badge_color' => '#f59e0b',
+            ];
+        }
+
+        // 4. Navigational (Login, portal, app, link, site)
+        if (preg_match('/(تسجيل|دخول|موقع|رابط|لينك|تطبيق|تحميل|بوابة|منصة|login|signin|portal|app|download|link|website|official)/u', $text)) {
+            return [
+                'type' => 'navigational',
+                'label' => ($lang === 'ar') ? 'تصفحي' : 'Navigational',
+                'icon' => 'fas fa-compass',
+                'badge_bg' => 'rgba(168, 85, 247, 0.15)',
+                'badge_border' => 'rgba(168, 85, 247, 0.35)',
+                'badge_color' => '#c084fc',
+            ];
+        }
+
+        return [
+            'type' => 'general',
+            'label' => ($lang === 'ar') ? 'عام' : 'General',
+            'icon' => 'fas fa-search',
+            'badge_bg' => 'rgba(255, 255, 255, 0.08)',
+            'badge_border' => 'rgba(255, 255, 255, 0.15)',
+            'badge_color' => '#94a3b8',
         ];
     }
 
