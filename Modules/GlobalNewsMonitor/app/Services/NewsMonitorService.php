@@ -22,9 +22,8 @@ class NewsMonitorService
      * path so filters are never bypassed.
      */
     /**
-     * Fetch News from Google News RSS — High-Volume Parallel Multi-Stream Engine
-     * Combines official section feeds with targeted real-time search streams and
-     * strict country/category isolation.
+     * Fetch News directly from official Google News RSS feeds
+     * Pulls directly from Google News country edition (gl/hl/ceid) and official topic section URLs.
      */
     public function fetchGoogleNews($country = 'EG', $topic = 'WORLD', $lang = 'ar', $timeWindow = '24h', $countryName = '')
     {
@@ -32,7 +31,7 @@ class NewsMonitorService
         $topic = strtoupper($topic);
         $lang = $lang ?: CountryRegistry::langFor($country);
 
-        // ─── 1. Build Multi-Stream URL Batch ───
+        // ─── 1. Build Official Google News Source URLs ───
         $urlsToFetch = [];
 
         $topicIds = [
@@ -43,7 +42,7 @@ class NewsMonitorService
                 'TECHNOLOGY'    => 'CAAqKAgKIiJDQkFTRXdvSkwyMHZNR1ptZHpWbUVnSmhjaG9DUlVjb0FBUAE',
                 'ENTERTAINMENT' => 'CAAqJggKIiBDQkFTRWdvSUwyMHZNREpxYW5RU0FtRnlHZ0pGUnlnQVAB',
                 'SPORTS'        => 'CAAqJggKIiBDQkFTRWdvSUwyMHZNRFp1ZEdvU0FtRnlHZ0pGUnlnQVAB',
-                'SCIENCE'       => '',
+                'SCIENCE'       => 'CAAqJggKIiBDQkFTRWdvSUwyMHZNRFp0Y1RjU0FtRnlHZ0pGUnlnQVAB',
                 'HEALTH'        => 'CAAqIQgKIhtDQkFTRGdvSUwyMHZNR3QwTlRFU0FtRnlLQUFQAQ',
             ],
             'en' => [
@@ -61,59 +60,56 @@ class NewsMonitorService
         $langKey = $lang === 'ar' ? 'ar' : 'en';
         $encodedTopicId = $topicIds[$langKey][$topic] ?? null;
 
-        // Stream 1: Official Section / Topic URL
+        $topicNames = [
+            'TECHNOLOGY'    => ['ar' => 'تكنولوجيا', 'en' => 'Technology'],
+            'BUSINESS'      => ['ar' => 'اقتصاد', 'en' => 'Business'],
+            'SPORTS'        => ['ar' => 'رياضة', 'en' => 'Sports'],
+            'HEALTH'        => ['ar' => 'صحة', 'en' => 'Health'],
+            'SCIENCE'       => ['ar' => 'علوم', 'en' => 'Science'],
+            'ENTERTAINMENT' => ['ar' => 'فن وترفيه', 'en' => 'Entertainment'],
+            'WORLD'         => ['ar' => 'أخبار العالم', 'en' => 'World'],
+        ];
+
+        $topicName = $topicNames[$topic][$langKey] ?? '';
+
         $generalTopics = ['GENERAL', 'TOP_STORIES'];
         if (in_array($topic, $generalTopics, true)) {
             $urlsToFetch[] = GoogleNewsRss::feedUrl($country, $lang);
-        } elseif (!empty($encodedTopicId)) {
-            $urlsToFetch[] = GoogleNewsRss::topicUrl($encodedTopicId, $country, $lang);
-            $urlsToFetch[] = GoogleNewsRss::sectionUrl($topic, $country, $lang);
         } else {
+            // 1. Official section feed for this topic & country
             $urlsToFetch[] = GoogleNewsRss::sectionUrl($topic, $country, $lang);
-        }
 
-        // Stream 2: Targeted Category Search Queries with Freshness Operator
-        $targetedQueries = $this->buildTargetedCategoryQueries($topic, $country, $lang, $countryName, $timeWindow);
-        foreach ($targetedQueries as $q) {
-            $urlsToFetch[] = GoogleNewsRss::searchUrl($q, $country, $lang);
-        }
+            // 2. Official encoded topic ID feed (if available)
+            if (!empty($encodedTopicId)) {
+                $urlsToFetch[] = GoogleNewsRss::topicUrl($encodedTopicId, $country, $lang);
+            }
 
-        // ─── 2. Fetch All Streams Concurrently ───
-        $rawNews = $this->fetchFromUrlsParallel($urlsToFetch);
-        Log::info("NewsMonitor [{$topic}]: multi-stream fetch returned " . count($rawNews) . " raw articles for {$country} [{$lang}]");
-
-        // ─── 3. Strict Relevance & Country Filter ───
-        $relevant = $this->applyRelevanceFilter($rawNews, $country, $topic, $lang);
-
-        // ─── 4. Freshness Filtering ───
-        $maxAge = min($this->parseTimeWindow($timeWindow), 172800);
-        $scrapedAt = now()->toIso8601String();
-        $freshNews = $this->collectFreshArticles($relevant, $maxAge, $scrapedAt);
-
-        // If very tight window returned few items, relax to 48h
-        if (count($freshNews) < 15 && $maxAge < 172800) {
-            $relaxed = $this->collectFreshArticles($relevant, 172800, $scrapedAt);
-            foreach ($relaxed as $item) {
-                $titleKey = mb_strtolower(preg_replace('/\s+/u', '', $item['title']));
-                $exists = false;
-                foreach ($freshNews as $existing) {
-                    if (mb_strtolower(preg_replace('/\s+/u', '', $existing['title'])) === $titleKey) {
-                        $exists = true;
-                        break;
-                    }
-                }
-                if (! $exists) {
-                    $freshNews[] = $item;
-                }
+            // 3. Country-specific topic search feed
+            if (!empty($topicName)) {
+                $urlsToFetch[] = GoogleNewsRss::searchUrl($topicName, $country, $lang);
             }
         }
 
-        // ─── 5. Sort by Newest Publication Date ───
+        // ─── 2. Fetch Streams Concurrently ───
+        $rawNews = $this->fetchFromUrlsParallel($urlsToFetch);
+        Log::info("NewsMonitor [{$topic}]: direct fetch returned " . count($rawNews) . " articles from Google News for {$country} [{$lang}]");
+
+        // ─── 3. Freshness Filter ───
+        $maxAge = $this->parseTimeWindow($timeWindow);
+        $scrapedAt = now()->toIso8601String();
+        $freshNews = $this->collectFreshArticles(array_values($rawNews), $maxAge, $scrapedAt);
+
+        // If time window is tight and returned few items, relax to full feed
+        if (count($freshNews) < 10) {
+            $freshNews = $this->collectFreshArticles(array_values($rawNews), 604800, $scrapedAt);
+        }
+
+        // ─── 4. Sort by Newest Publication Date ───
         usort($freshNews, function ($a, $b) {
             return strtotime($b['pubDate']) <=> strtotime($a['pubDate']);
         });
 
-        // ─── 6. Deduplication by Normalized Title ───
+        // ─── 5. Deduplication by Normalized Title ───
         $seenTitles = [];
         $finalNews = [];
         foreach ($freshNews as $item) {
@@ -122,12 +118,12 @@ class NewsMonitorService
                 $seenTitles[] = $titleKey;
                 $finalNews[] = $item;
             }
-            if (count($finalNews) >= 80) {
+            if (count($finalNews) >= 100) {
                 break;
             }
         }
 
-        Log::info("NewsMonitor [{$topic}]: final count = " . count($finalNews) . " articles for {$country} (raw fetched: " . count($rawNews) . ")");
+        Log::info("NewsMonitor [{$topic}]: final count = " . count($finalNews) . " articles for {$country}");
 
         return $finalNews;
     }
