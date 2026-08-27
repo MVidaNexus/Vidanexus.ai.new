@@ -2386,27 +2386,38 @@ Example Output:
      */
     protected function fetchGoogleSuggestionsForSeed(string $seed, string $lang, string $userAgent): array
     {
-        $queries = [$seed];
+        $seedTrim = trim($seed);
+        // 1. Direct Instant Autocomplete (What Google search bar shows immediately on typing + space)
+        $queries = [
+            "{$seedTrim} ",
+            $seedTrim,
+        ];
         
         if ($lang === 'ar') {
-            $modifiers = ['سعر', 'أفضل', 'طريقة', 'كيف', 'شراء', 'أنواع', 'مقارنة', 'عروض', 'مميزات', 'تجربة', 'أرخص', 'أماكن'];
-            foreach ($modifiers as $mod) {
-                $queries[] = "{$mod} {$seed}";
-                $queries[] = "{$seed} {$mod}";
-            }
-            $letters = ['ا', 'ب', 'ت', 'م', 'س', 'ك', 'ع', 'ف', 'ن', 'ي'];
+            // 2. Alphabet Soup (A-Z autocomplete completions)
+            $letters = ['ا', 'ب', 'ت', 'ث', 'ج', 'ح', 'خ', 'د', 'ر', 'ز', 'س', 'ش', 'ص', 'ط', 'ع', 'غ', 'ف', 'ق', 'ك', 'ل', 'م', 'ن', 'ه', 'و', 'ي'];
             foreach ($letters as $l) {
-                $queries[] = "{$seed} {$l}";
+                $queries[] = "{$seedTrim} {$l}";
+            }
+
+            // 3. Search Intent Modifiers (Buying, questions, comparisons)
+            $modifiers = ['سعر', 'أفضل', 'طريقة', 'كيف', 'شراء', 'أنواع', 'مقارنة', 'عروض', 'مميزات', 'تجربة', 'أرخص', 'أماكن بيع'];
+            foreach ($modifiers as $mod) {
+                $queries[] = "{$mod} {$seedTrim}";
+                $queries[] = "{$seedTrim} {$mod}";
             }
         } else {
-            $modifiers = ['best', 'how to', 'buy', 'price of', 'types of', 'cheap', 'top', 'review', 'vs', 'guide'];
-            foreach ($modifiers as $mod) {
-                $queries[] = "{$mod} {$seed}";
-                $queries[] = "{$seed} {$mod}";
-            }
-            $letters = ['a', 'b', 'c', 's', 'p', 't', 'm', 'f'];
+            // 2. Alphabet Soup (A-Z autocomplete completions)
+            $letters = range('a', 'z');
             foreach ($letters as $l) {
-                $queries[] = "{$seed} {$l}";
+                $queries[] = "{$seedTrim} {$l}";
+            }
+
+            // 3. Search Intent Modifiers
+            $modifiers = ['best', 'how to', 'buy', 'price of', 'types of', 'cheap', 'top', 'review', 'vs', 'guide', 'where to buy'];
+            foreach ($modifiers as $mod) {
+                $queries[] = "{$mod} {$seedTrim}";
+                $queries[] = "{$seedTrim} {$mod}";
             }
         }
 
