@@ -111,9 +111,13 @@
                         <span class="px-2 py-1 bg-red-500/10 text-red-400 text-[8px] border border-red-500/20 rounded-lg font-black flex items-center gap-1 animate-pulse">
                             <div class="w-1.5 h-1.5 bg-red-400 rounded-full"></div> LIVE
                         </span>
-                        @elseif($ageHours < 3)
+                        @elseif($ageHours < 24)
                         <span class="px-2 py-1 text-[8px] rounded-lg font-bold" style="background: rgba(14, 165, 233, 0.08); color: #0ea5e9; border: 1px solid rgba(14, 165, 233, 0.15);">
-                            {{ round($ageHours * 60) }}m ago
+                            {{ $ageHours < 2 ? round($ageHours * 60) . 'm ago' : round($ageHours) . 'h ago' }}
+                        </span>
+                        @else
+                        <span class="px-2 py-1 text-[8px] rounded-lg font-bold" style="background: rgba(255, 255, 255, 0.05); color: var(--text-muted); border: 1px solid var(--glass-border);">
+                            {{ round($ageHours / 24) }}d ago
                         </span>
                         @endif
                     </div>
@@ -247,9 +251,9 @@
                             <span>Read Source</span>
                             <i class="fas fa-external-link-alt text-[9px]"></i>
                         </a>
-                        <span class="text-[10px] font-medium opacity-60 flex items-center gap-1" style="color: var(--text-muted);">
+                        <span class="text-[10px] font-medium opacity-70 flex items-center gap-1" style="color: var(--text-muted);">
                             <i class="far fa-clock text-[8px]"></i>
-                            {{ \Carbon\Carbon::parse($item['pubDate'])->diffForHumans() }}
+                            {{ !empty($item['time_ago']) ? $item['time_ago'] : \Carbon\Carbon::parse($item['pubDate'])->diffForHumans() }}
                             @if(!empty($item['scraped_at']))
                                 <span class="mx-1">·</span>
                                 <i class="fas fa-sync text-[8px]"></i>

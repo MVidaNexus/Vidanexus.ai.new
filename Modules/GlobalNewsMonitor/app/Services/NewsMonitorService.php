@@ -21,19 +21,20 @@ class NewsMonitorService
      * the selected topic. This applies to the primary fetch and every fallback
      * path so filters are never bypassed.
      */
-    public function fetchGoogleNews($country = 'EG', $topic = 'WORLD', $lang = 'ar', $timeWindow = '12h', $countryName = '')
+    /**
+     * Fetch News from Google News RSS — High-Volume Parallel Multi-Stream Engine
+     * Combines official section feeds with targeted real-time search streams and
+     * strict country/category isolation.
+     */
+    public function fetchGoogleNews($country = 'EG', $topic = 'WORLD', $lang = 'ar', $timeWindow = '24h', $countryName = '')
     {
         $country = CountryRegistry::normalizeCode($country) ?: 'EG';
         $topic = strtoupper($topic);
         $lang = $lang ?: CountryRegistry::langFor($country);
 
-        $rawNews = [];
+        // ─── 1. Build Multi-Stream URL Batch ───
+        $urlsToFetch = [];
 
-        // ─── Google News Encoded Topic IDs ───
-        // Extracted directly from Google News navigation. Each language ships its
-        // own set; an empty value means we fall back to the language-agnostic
-        // /headlines/section/topic/{TOPIC} URL (this avoids cross-category leaks
-        // like the legacy ar:SCIENCE id pointing at the TECHNOLOGY feed).
         $topicIds = [
             'ar' => [
                 'NATION'        => 'CAAqIQgKIhtDQkFTRGdvSUwyMHZNREpyTlRRU0FtRnlLQUFQAQ',
@@ -42,7 +43,7 @@ class NewsMonitorService
                 'TECHNOLOGY'    => 'CAAqKAgKIiJDQkFTRXdvSkwyMHZNR1ptZHpWbUVnSmhjaG9DUlVjb0FBUAE',
                 'ENTERTAINMENT' => 'CAAqJggKIiBDQkFTRWdvSUwyMHZNREpxYW5RU0FtRnlHZ0pGUnlnQVAB',
                 'SPORTS'        => 'CAAqJggKIiBDQkFTRWdvSUwyMHZNRFp1ZEdvU0FtRnlHZ0pGUnlnQVAB',
-                'SCIENCE'       => '', // language-agnostic section URL avoids the duplicate-of-tech leak
+                'SCIENCE'       => '',
                 'HEALTH'        => 'CAAqIQgKIhtDQkFTRGdvSUwyMHZNR3QwTlRFU0FtRnlLQUFQAQ',
             ],
             'en' => [
@@ -60,75 +61,37 @@ class NewsMonitorService
         $langKey = $lang === 'ar' ? 'ar' : 'en';
         $encodedTopicId = $topicIds[$langKey][$topic] ?? null;
 
+        // Stream 1: Official Section / Topic URL
         $generalTopics = ['GENERAL', 'TOP_STORIES'];
-
         if (in_array($topic, $generalTopics, true)) {
-            $primaryUrl = GoogleNewsRss::feedUrl($country, $lang);
-        } elseif (! empty($encodedTopicId)) {
-            $primaryUrl = GoogleNewsRss::topicUrl($encodedTopicId, $country, $lang);
+            $urlsToFetch[] = GoogleNewsRss::feedUrl($country, $lang);
+        } elseif (!empty($encodedTopicId)) {
+            $urlsToFetch[] = GoogleNewsRss::topicUrl($encodedTopicId, $country, $lang);
+            $urlsToFetch[] = GoogleNewsRss::sectionUrl($topic, $country, $lang);
         } else {
-            $primaryUrl = GoogleNewsRss::sectionUrl($topic, $country, $lang);
+            $urlsToFetch[] = GoogleNewsRss::sectionUrl($topic, $country, $lang);
         }
 
-        $rawNews = $this->fetchFromUrl($primaryUrl, $rawNews);
-        Log::info("NewsMonitor [{$topic}]: primary fetch returned " . count($rawNews) . " articles for {$country} [{$lang}]");
+        // Stream 2: Targeted Category Search Queries with Freshness Operator
+        $targetedQueries = $this->buildTargetedCategoryQueries($topic, $country, $lang, $countryName, $timeWindow);
+        foreach ($targetedQueries as $q) {
+            $urlsToFetch[] = GoogleNewsRss::searchUrl($q, $country, $lang);
+        }
 
-        // Apply the relevance filter against the requested country + topic so
-        // the post-filter count is what drives the fallback decisions. This
-        // prevents a feed that returned 100 off-topic / off-country articles
-        // from short-circuiting the fallbacks.
+        // ─── 2. Fetch All Streams Concurrently ───
+        $rawNews = $this->fetchFromUrlsParallel($urlsToFetch);
+        Log::info("NewsMonitor [{$topic}]: multi-stream fetch returned " . count($rawNews) . " raw articles for {$country} [{$lang}]");
+
+        // ─── 3. Strict Relevance & Country Filter ───
         $relevant = $this->applyRelevanceFilter($rawNews, $country, $topic, $lang);
 
-        // Fallback 1: If we don't have enough on-topic, on-country results, try
-        // the language-agnostic section URL (works even when the encoded id is
-        // sparse or wrong).
-        if (count($relevant) < 8 && ! in_array($topic, $generalTopics, true)) {
-            $sectionUrl = GoogleNewsRss::sectionUrl($topic, $country, $lang);
-            $rawNews = $this->fetchFromUrl($sectionUrl, $rawNews);
-            $relevant = $this->applyRelevanceFilter($rawNews, $country, $topic, $lang);
-            Log::info("NewsMonitor [{$topic}]: section fallback → relevant now " . count($relevant) . " of " . count($rawNews) . " for {$country}");
-        }
-
-        // Fallback 2: If we are still short on Arabic content and we have an
-        // English encoded id available, try that with the same country. The
-        // relevance filter is applied again so this cannot smuggle in
-        // off-country / off-topic articles.
-        if (count($relevant) < 5 && $langKey === 'ar' && ! empty($topicIds['en'][$topic])) {
-            $enTopicId = $topicIds['en'][$topic];
-            $urlEnFallback = GoogleNewsRss::topicUrl($enTopicId, $country, 'ar');
-            $rawNews = $this->fetchFromUrl($urlEnFallback, $rawNews);
-            $relevant = $this->applyRelevanceFilter($rawNews, $country, $topic, $lang);
-            Log::info("NewsMonitor [{$topic}]: en-id fallback → relevant now " . count($relevant) . " of " . count($rawNews) . " for {$country}");
-        }
-
-        // Freshness Filter: reject articles older than 48 hours (strict cap)
+        // ─── 4. Freshness Filtering ───
         $maxAge = min($this->parseTimeWindow($timeWindow), 172800);
         $scrapedAt = now()->toIso8601String();
-
         $freshNews = $this->collectFreshArticles($relevant, $maxAge, $scrapedAt);
 
-        // Supplement with top-headlines RSS when filtered set is sparse
-        if (count($freshNews) < 50) {
-            $topUrl = GoogleNewsRss::feedUrl($country, $lang);
-            $rawNews = $this->fetchFromUrl($topUrl, $rawNews);
-            $topRelevant = $this->applyRelevanceFilter(array_values($rawNews), $country, $topic, $lang);
-            foreach ($this->collectFreshArticles($topRelevant, $maxAge, $scrapedAt) as $item) {
-                $titleKey = mb_strtolower(preg_replace('/\s+/u', '', $item['title']));
-                $exists = false;
-                foreach ($freshNews as $existing) {
-                    if (mb_strtolower(preg_replace('/\s+/u', '', $existing['title'])) === $titleKey) {
-                        $exists = true;
-                        break;
-                    }
-                }
-                if (! $exists) {
-                    $freshNews[] = $item;
-                }
-            }
-        }
-
-        // If the configured window is too tight, widen to 48h before giving up.
-        if (count($freshNews) < 5 && $maxAge < 172800) {
+        // If very tight window returned few items, relax to 48h
+        if (count($freshNews) < 15 && $maxAge < 172800) {
             $relaxed = $this->collectFreshArticles($relevant, 172800, $scrapedAt);
             foreach ($relaxed as $item) {
                 $titleKey = mb_strtolower(preg_replace('/\s+/u', '', $item['title']));
@@ -145,21 +108,12 @@ class NewsMonitorService
             }
         }
 
-        // Last resort: trust Google's regional feed when strict rules leave nothing.
-        if (count($freshNews) < 1 && ! empty($rawNews)) {
-            $regional = $this->applyRelevanceFilter(array_values($rawNews), $country, $topic, $lang, true);
-            $freshNews = $this->collectFreshArticles($regional, 172800, $scrapedAt);
-            if (! empty($freshNews)) {
-                Log::info("NewsMonitor [{$topic}]: regional feed fallback returned ".count($freshNews)." articles for {$country}");
-            }
-        }
-
-        // Sort from newest to oldest
+        // ─── 5. Sort by Newest Publication Date ───
         usort($freshNews, function ($a, $b) {
             return strtotime($b['pubDate']) <=> strtotime($a['pubDate']);
         });
 
-        // Deduplication by normalized title
+        // ─── 6. Deduplication by Normalized Title ───
         $seenTitles = [];
         $finalNews = [];
         foreach ($freshNews as $item) {
@@ -168,33 +122,166 @@ class NewsMonitorService
                 $seenTitles[] = $titleKey;
                 $finalNews[] = $item;
             }
-            if (count($finalNews) >= 100) {
+            if (count($finalNews) >= 80) {
                 break;
-            }
-        }
-
-        // Enrich sparse grids with Google's regional feed (topic filter still applies).
-        if (count($finalNews) < 15 && ! empty($rawNews)) {
-            $regional = $this->applyRelevanceFilter(array_values($rawNews), $country, $topic, $lang, true);
-            foreach ($this->collectFreshArticles($regional, 172800, $scrapedAt) as $item) {
-                $titleKey = mb_strtolower(preg_replace('/\s+/u', '', $item['title']));
-                if (in_array($titleKey, $seenTitles, true)) {
-                    continue;
-                }
-                $seenTitles[] = $titleKey;
-                $finalNews[] = $item;
-                if (count($finalNews) >= 100) {
-                    break;
-                }
-            }
-            if (count($finalNews) > 0) {
-                Log::info("NewsMonitor [{$topic}]: sparse-grid regional enrichment → ".count($finalNews)." articles for {$country}");
             }
         }
 
         Log::info("NewsMonitor [{$topic}]: final count = " . count($finalNews) . " articles for {$country} (raw fetched: " . count($rawNews) . ")");
 
         return $finalNews;
+    }
+
+    /**
+     * Build targeted category search queries for parallel multi-stream fetching
+     */
+    protected function buildTargetedCategoryQueries(string $topic, string $country, string $lang, string $countryName, string $timeWindow): array
+    {
+        $timeParam = ($timeWindow === '6h' || $timeWindow === '1h') ? '1h' : (($timeWindow === '12h') ? '12h' : '24h');
+        $isAr = ($lang === 'ar');
+        $queries = [];
+
+        if ($topic === 'TECHNOLOGY') {
+            if ($isAr) {
+                $queries[] = "(تكنولوجيا OR تقنية OR هواتف OR ذكاء اصطناعي OR تطبيقات OR آبل OR سامسونج) when:{$timeParam}";
+                $queries[] = "(برمجة OR روبوتات OR أمن سيبراني OR حاسوب OR إلكترونيات OR شركات تقنية) when:{$timeParam}";
+                $queries[] = "(هواتف ذكية OR آيفون OR شات جي بي تي OR أجهزة OR رقائق إلكترونية) when:{$timeParam}";
+            } else {
+                $queries[] = "(technology OR tech OR AI OR smartphone OR Apple OR Google OR software) when:{$timeParam}";
+                $queries[] = "(cybersecurity OR robotics OR gadgets OR semiconductor OR hardware) when:{$timeParam}";
+                $queries[] = "(startups OR gadgets OR ChatGPT OR Nvidia OR tech industry) when:{$timeParam}";
+            }
+        } elseif ($topic === 'BUSINESS') {
+            if ($isAr) {
+                $queries[] = "(اقتصاد OR أسهم OR بورصة OR أسعار الذهب OR التضخم OR البنك المركزي) when:{$timeParam}";
+                $queries[] = "(استثمار OR عقارات OR نفط OR شركات OR صفقات OR تمويل OR تجارة) when:{$timeParam}";
+                $queries[] = "(سعر الذهب OR سعر الدولار OR البورصة OR العملات OR أرباح الشركات) when:{$timeParam}";
+            } else {
+                $queries[] = "(economy OR business OR stocks OR inflation OR central bank OR investment) when:{$timeParam}";
+                $queries[] = "(markets OR real estate OR crude oil OR revenue OR trading OR mergers) when:{$timeParam}";
+                $queries[] = "(stock market OR interest rates OR oil prices OR gold price OR corporate earnings) when:{$timeParam}";
+            }
+        } elseif ($topic === 'SPORTS') {
+            if ($isAr) {
+                $queries[] = "(رياضة OR كرة قدم OR دوري OR مباراة OR أهداف OR منتخب) when:{$timeParam}";
+                $queries[] = "(الدوري الإنجليزي OR دوري أبطال أوروبا OR ريال مدريد OR برشلونة OR محمد صلاح) when:{$timeParam}";
+                $queries[] = "(مباريات اليوم OR جدول الترتيب OR ملخص أهداف OR انتقالات اللاعبين) when:{$timeParam}";
+                if ($country === 'EG') {
+                    $queries[] = "(الأهلي OR الزمالك OR الدوري المصري) when:{$timeParam}";
+                } elseif ($country === 'SA') {
+                    $queries[] = "(الهلال OR النصر OR الاتحاد OR الدوري السعودي OR دوري روشن) when:{$timeParam}";
+                }
+            } else {
+                $queries[] = "(sports OR football OR soccer OR champions league OR premier league OR goal) when:{$timeParam}";
+                $queries[] = "(basketball OR NBA OR tennis OR Formula 1 OR athletes OR match) when:{$timeParam}";
+                $queries[] = "(match results OR league standings OR transfer news OR sports highlights) when:{$timeParam}";
+            }
+        } elseif ($topic === 'HEALTH') {
+            if ($isAr) {
+                $queries[] = "(صحة OR طب OR دراسة طبية OR علاج OR دواء OR مستشفى) when:{$timeParam}";
+                $queries[] = "(أمراض OR فيروس OR وقاية OR تغذية OR جراحة OR منظمة الصحة) when:{$timeParam}";
+                $queries[] = "(أبحاث طبية OR فيروسات OR لقاحات OR صحة عامة OR نصائح طبية) when:{$timeParam}";
+            } else {
+                $queries[] = "(health OR medicine OR medical study OR treatment OR hospital OR doctor) when:{$timeParam}";
+                $queries[] = "(disease OR virus OR wellness OR nutrition OR surgery OR pharma) when:{$timeParam}";
+                $queries[] = "(medical breakthroughs OR public health OR nutrition advice OR clinical trial) when:{$timeParam}";
+            }
+        } elseif ($topic === 'ENTERTAINMENT') {
+            if ($isAr) {
+                $queries[] = "(سينما OR فيلم OR فنان OR مسلسلات OR دراما OR مهرجان) when:{$timeParam}";
+                $queries[] = "(نجوم OR أوسكار OR نتفليكس OR موسيقى OR حفل OR مسرح) when:{$timeParam}";
+                $queries[] = "(شباك التذاكر OR مسلسلات جديدة OR مهرجان سينمائي OR أغاني جديدة) when:{$timeParam}";
+            } else {
+                $queries[] = "(entertainment OR movie OR film OR celebrity OR series OR cinema) when:{$timeParam}";
+                $queries[] = "(box office OR Netflix OR Oscar OR music OR concert OR Hollywood) when:{$timeParam}";
+                $queries[] = "(celebrity news OR film festival OR new movie releases OR music chart) when:{$timeParam}";
+            }
+        } elseif ($topic === 'SCIENCE') {
+            if ($isAr) {
+                $queries[] = "(فضاء OR وكالة ناسا OR اكتشاف علمي OR فلك OR كواكب OR أحافير) when:{$timeParam}";
+                $queries[] = "(أبحاث علمية OR فيزياء OR كيمياء OR بيئة OR احتباس حراري OR مناخ) when:{$timeParam}";
+                $queries[] = "(استكشاف الفضاء OR تلسكوب جيمس ويب OR كواكب جديدة OR اكتشافات) when:{$timeParam}";
+            } else {
+                $queries[] = "(science OR NASA OR space discovery OR astronomy OR planet OR fossil) when:{$timeParam}";
+                $queries[] = "(scientific research OR physics OR chemistry OR climate change OR biology) when:{$timeParam}";
+                $queries[] = "(James Webb telescope OR space mission OR climate discoveries OR quantum physics) when:{$timeParam}";
+            }
+        } elseif ($topic === 'NATION') {
+            $cName = !empty($countryName) ? $countryName : ($country === 'EG' ? 'مصر' : ($country === 'SA' ? 'السعودية' : ($country === 'AE' ? 'الإمارات' : 'Nation')));
+            if ($isAr) {
+                $queries[] = "({$cName} OR الحكومة OR مجلس الوزراء OR قرارات OR وزارة) when:{$timeParam}";
+                $queries[] = "({$cName} أخبار عاجلة OR تصريحات OR مشاريع OR تنمية) when:{$timeParam}";
+                $queries[] = "({$cName} الاقتصاد الوطني OR البرلمان OR الموازنة العامة) when:{$timeParam}";
+            } else {
+                $queries[] = "({$cName} OR government OR cabinet OR national OR parliament) when:{$timeParam}";
+                $queries[] = "({$cName} national news OR breaking news OR policy) when:{$timeParam}";
+            }
+        } else {
+            // WORLD / GENERAL
+            if ($isAr) {
+                $queries[] = "(أخبار العالم OR دولي OR الأمم المتحدة OR البيت الأبيض OR قمة) when:{$timeParam}";
+                $queries[] = "(عاجل دولي OR علاقات دولية OR مفاوضات OR أزمة عالمية) when:{$timeParam}";
+                $queries[] = "(السياسة العالمية OR قمة دولية OR مجلس الأمن OR صراعات دولية) when:{$timeParam}";
+            } else {
+                $queries[] = "(world news OR international OR United Nations OR global summit) when:{$timeParam}";
+                $queries[] = "(global politics OR breaking international OR foreign affairs) when:{$timeParam}";
+            }
+        }
+
+        return $queries;
+    }
+
+    /**
+     * Fetch multiple RSS URLs in parallel using Http::pool
+     */
+    protected function fetchFromUrlsParallel(array $urls, array $existingNews = []): array
+    {
+        if (empty($urls)) return $existingNews;
+
+        try {
+            $responses = Http::pool(function ($pool) use ($urls) {
+                $reqs = [];
+                foreach ($urls as $idx => $url) {
+                    $reqs[$idx] = $pool->as("req_{$idx}")
+                        ->timeout(6)
+                        ->withHeaders([
+                            'User-Agent' => 'Mozilla/5.0 (compatible; VidaNexus/1.0; +https://vidanexus.ai)',
+                            'Accept' => 'application/rss+xml, application/xml, text/xml',
+                        ])
+                        ->get($url);
+                }
+                return $reqs;
+            });
+
+            foreach ($urls as $idx => $url) {
+                $resp = $responses["req_{$idx}"] ?? null;
+                if ($resp && $resp->successful()) {
+                    $xml = @simplexml_load_string($resp->body());
+                    if ($xml && isset($xml->channel->item)) {
+                        foreach ($xml->channel->item as $item) {
+                            $mapped = GoogleNewsRss::mapRssItem($item);
+                            if ($mapped === null) continue;
+
+                            $link = $mapped['link'];
+                            if (isset($existingNews[$link])) continue;
+
+                            $seoData = $this->analyzeSeoPotential(
+                                $mapped['title'],
+                                $mapped['description'],
+                                $mapped['pubDate'],
+                                $mapped['source']
+                            );
+
+                            $existingNews[$link] = array_merge($mapped, $seoData);
+                        }
+                    }
+                }
+            }
+        } catch (\Throwable $e) {
+            Log::error("[NewsMonitor] Parallel Fetch Error: " . $e->getMessage());
+        }
+
+        return $existingNews;
     }
 
     /**
@@ -355,6 +442,11 @@ class NewsMonitorService
      * (via TLD or known-publisher list), or — when published by an
      * international wire — that the article content references the country.
      */
+    /**
+     * Verify the article was published by an outlet from the requested country
+     * (via TLD or known-publisher list), or — when published by an
+     * international wire / regional outlet — that the article content references the country.
+     */
     protected function articleMatchesCountry(array $item, string $country): bool
     {
         $country = strtoupper($country);
@@ -367,6 +459,7 @@ class NewsMonitorService
         $map = $this->countrySourceMap();
         $entry = $map[$country] ?? null;
 
+        // 1. Exact match: Check if outlet belongs to the requested country
         if ($entry !== null) {
             foreach ($entry['tlds'] as $tld) {
                 if ($tld !== '' && (str_contains($sourceUrl, $tld) || str_contains($linkHost, $tld))) {
@@ -385,66 +478,69 @@ class NewsMonitorService
             }
         }
 
-        // Allow international wires to pass when the article body mentions the
-        // selected country — otherwise an Egyptian SPORTS feed would lose every
-        // Reuters/BBC story tagged "Egypt".
-        if ($this->isInternationalWire($combined)) {
-            $aliases = $this->countryAliases()[$country] ?? [];
-            $haystack = mb_strtolower(($item['title'] ?? '') . ' ' . ($item['description'] ?? ''));
-            foreach ($aliases as $alias) {
-                if ($alias !== '' && mb_strpos($haystack, mb_strtolower($alias)) !== false) {
-                    return true;
+        // 2. Reject if the publisher is explicitly registered to ANOTHER specific country
+        foreach ($map as $otherCountry => $otherEntry) {
+            if ($otherCountry === $country) continue;
+            foreach ($otherEntry['tlds'] as $tld) {
+                if ($tld !== '' && (str_contains($sourceUrl, $tld) || str_contains($linkHost, $tld))) {
+                    return false;
+                }
+            }
+            foreach ($otherEntry['publishers'] as $pub) {
+                if ($pub !== '' && str_contains($combined, $pub)) {
+                    return false;
                 }
             }
         }
 
-        if ($this->isMenaCountry($country) && $this->articleMatchesMenaPublisher($combined, $linkHost)) {
-            return true;
+        // 3. For International Wires / Unbound Publishers: Allow ONLY if article mentions the requested country
+        $aliases = $this->countryAliases()[$country] ?? [];
+        $haystack = mb_strtolower(($item['title'] ?? '') . ' ' . ($item['description'] ?? ''));
+        foreach ($aliases as $alias) {
+            if ($alias !== '' && mb_strpos($haystack, mb_strtolower($alias)) !== false) {
+                return true;
+            }
         }
 
         return false;
     }
 
     /**
-     * @return list<string>
+     * Negative exclude keywords for each topic to prevent off-topic contamination
      */
-    protected function menaCountryCodes(): array
+    protected function topicNegativeKeywords(): array
     {
-        return ['EG', 'SA', 'AE', 'KW', 'QA', 'BH', 'OM', 'IQ', 'JO', 'LB', 'MA', 'DZ', 'TN', 'LY', 'PS', 'SY', 'YE', 'SD'];
-    }
-
-    protected function isMenaCountry(string $country): bool
-    {
-        return in_array(strtoupper($country), $this->menaCountryCodes(), true);
-    }
-
-    protected function articleMatchesMenaPublisher(string $combined, string $linkHost): bool
-    {
-        $map = $this->countrySourceMap();
-        foreach ($this->menaCountryCodes() as $code) {
-            $entry = $map[$code] ?? null;
-            if ($entry === null) {
-                continue;
-            }
-            foreach ($entry['tlds'] as $tld) {
-                if ($tld !== '' && (str_contains($combined, $tld) || str_contains($linkHost, $tld))) {
-                    return true;
-                }
-            }
-            foreach ($entry['publishers'] as $pub) {
-                if ($pub !== '' && str_contains($combined, $pub)) {
-                    return true;
-                }
-            }
-        }
-
-        return false;
+        return [
+            'TECHNOLOGY' => [
+                'ar' => ['أمطار', 'سيول', 'طقس', 'الأرصاد', 'وفاة شخص', 'حادث تصادم', 'قتلى', 'جريمة', 'زلزال', 'سعر جرام', 'سعر الدولار', 'أهداف مباراة', 'تشكيل المنتخب', 'خفاش', 'جنازة', 'عزاء', 'إعدام', 'محاكمة', 'خسوف القمر'],
+                'en' => ['weather forecast', 'heavy rain', 'earthquake', 'car crash', 'murder', 'shooting', 'gold price', 'dollar rate', 'match highlights', 'team lineup', 'funeral'],
+            ],
+            'BUSINESS' => [
+                'ar' => ['أهداف مباراة', 'تشكيل منتخب', 'وفاة فنان', 'خفاش', 'طقس غدا', 'أمطار غزيرة', 'زلزال مدمر', 'حادث قطار'],
+                'en' => ['match highlights', 'team lineup', 'celebrity dating', 'bat in mouth', 'heavy rain', 'fatal crash'],
+            ],
+            'HEALTH' => [
+                'ar' => ['أهداف مباراة', 'سعر الدولار', 'سهم البورصة', 'فيلم جديد', 'إيرادات السينما', 'مهرجان سينمائي'],
+                'en' => ['box office', 'movie trailer', 'stock market crash', 'premier league score'],
+            ],
+            'SPORTS' => [
+                'ar' => ['سعر الفائدة', 'التضخم الاقتصادي', 'تطبيق ذكي', 'هاتف جديد', 'أسعار الذهب'],
+                'en' => ['stock dividend', 'interest rate hike', 'cyberattack', 'software update'],
+            ],
+            'SCIENCE' => [
+                'ar' => ['أهداف مباراة', 'سعر جرام الذهب', 'مسلسل رمضاني', 'طلاق فنانة'],
+                'en' => ['premier league', 'celebrity divorce', 'gold jewelry price'],
+            ],
+            'ENTERTAINMENT' => [
+                'ar' => ['سعر الفائدة', 'التضخم', 'أهداف مباراة', 'زلزال بقوة', 'سعر الدولار'],
+                'en' => ['interest rates', 'inflation surge', 'match score', 'earthquake magnitude'],
+            ],
+        ];
     }
 
     /**
      * Verify the article actually belongs to the selected topic by scanning
-     * its title + description for topic keywords. Topics like GENERAL / WORLD
-     * / NATION are inherently broad so we skip the strict check for them.
+     * its title + description for topic keywords and enforcing negative exclusions.
      */
     protected function articleMatchesTopic(array $item, string $topic, string $lang): bool
     {
@@ -454,13 +550,25 @@ class NewsMonitorService
             return true;
         }
 
+        $haystack = ' ' . mb_strtolower(($item['title'] ?? '') . ' ' . ($item['description'] ?? '') . ' ' . ($item['source'] ?? '')) . ' ';
+
+        // 1. Check Negative Exclude Keywords for this topic
+        $negativesMap = $this->topicNegativeKeywords();
+        $negatives = $negativesMap[$topic] ?? null;
+        if ($negatives !== null) {
+            $negHits = $this->countKeywordHits($haystack, $negatives['ar'] ?? [])
+                + $this->countKeywordHits($haystack, $negatives['en'] ?? []);
+            if ($negHits > 0) {
+                return false;
+            }
+        }
+
+        // 2. Check Positive Topic Keywords
         $keywordsMap = $this->topicKeywordMap();
         $topicKeywords = $keywordsMap[$topic] ?? null;
         if ($topicKeywords === null) {
-            return true; // unknown topic → don't apply strict filter (custom admin topics).
+            return true;
         }
-
-        $haystack = ' ' . mb_strtolower(($item['title'] ?? '') . ' ' . ($item['description'] ?? '') . ' ' . ($item['source'] ?? '')) . ' ';
 
         $primary = $this->countKeywordHits($haystack, $topicKeywords['ar'] ?? [])
             + $this->countKeywordHits($haystack, $topicKeywords['en'] ?? []);
@@ -469,9 +577,7 @@ class NewsMonitorService
             return false;
         }
 
-        // Reject when another category dominates the article more strongly than
-        // the requested topic. Ties go to the requested topic (the user's
-        // explicit selection wins ambiguous classifications).
+        // 3. Reject when another category dominates the article more strongly than the requested topic
         $bestOther = 0;
         foreach ($keywordsMap as $otherTopic => $sets) {
             if ($otherTopic === $topic) continue;
@@ -818,7 +924,12 @@ class NewsMonitorService
         }
         // Deduplicate
         $entities = array_values(array_unique($entities));
-        if (count($entities) > 4) $entities = array_slice($entities, 0, 4);
+        $timeAgo = '';
+        try {
+            $timeAgo = \Carbon\Carbon::parse($pubDate)->diffForHumans();
+        } catch (\Throwable $e) {
+            $timeAgo = '';
+        }
 
         return [
             'seo_score'           => $rankingOpportunity,
@@ -831,6 +942,7 @@ class NewsMonitorService
             'freshness_score'     => $freshnessScore,
             'virality_score'      => $viralityScore,
             'age_hours'           => round($ageHours, 1),
+            'time_ago'            => $timeAgo,
         ];
     }
 
