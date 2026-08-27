@@ -416,7 +416,7 @@ class NewsMonitorService
         $passed = [];
 
         foreach ($articles as $item) {
-            $countryOk = $strictCountry ? $this->articleMatchesCountry($item, $country) : true;
+            $countryOk = $strictCountry ? $this->articleMatchesCountry($item, $country, $topic) : true;
             $topicOk = $strictTopic ? $this->articleMatchesTopic($item, $topic, $lang) : true;
 
             if ($countryOk && $topicOk) {
@@ -438,18 +438,14 @@ class NewsMonitorService
     }
 
     /**
-     * Verify the article was published by an outlet from the requested country
-     * (via TLD or known-publisher list), or — when published by an
-     * international wire — that the article content references the country.
+     * Verify country relevance based on topic context:
+     * - NATION: Strict country matching (local publishers or country mention).
+     * - Specialized topics: Local publishers + regional/global coverage.
      */
-    /**
-     * Verify the article was published by an outlet from the requested country
-     * (via TLD or known-publisher list), or — when published by an
-     * international wire / regional outlet — that the article content references the country.
-     */
-    protected function articleMatchesCountry(array $item, string $country): bool
+    protected function articleMatchesCountry(array $item, string $country, string $topic = 'GENERAL'): bool
     {
         $country = strtoupper($country);
+        $topic = strtoupper($topic);
         $sourceUrl = mb_strtolower((string) ($item['source_url'] ?? ''));
         $sourceName = mb_strtolower((string) ($item['source'] ?? ''));
         $link = mb_strtolower((string) ($item['link'] ?? ''));
@@ -478,22 +474,7 @@ class NewsMonitorService
             }
         }
 
-        // 2. Reject if the publisher is explicitly registered to ANOTHER specific country
-        foreach ($map as $otherCountry => $otherEntry) {
-            if ($otherCountry === $country) continue;
-            foreach ($otherEntry['tlds'] as $tld) {
-                if ($tld !== '' && (str_contains($sourceUrl, $tld) || str_contains($linkHost, $tld))) {
-                    return false;
-                }
-            }
-            foreach ($otherEntry['publishers'] as $pub) {
-                if ($pub !== '' && str_contains($combined, $pub)) {
-                    return false;
-                }
-            }
-        }
-
-        // 3. For International Wires / Unbound Publishers: Allow ONLY if article mentions the requested country
+        // 2. Check if article explicitly references the country or capital
         $aliases = $this->countryAliases()[$country] ?? [];
         $haystack = mb_strtolower(($item['title'] ?? '') . ' ' . ($item['description'] ?? ''));
         foreach ($aliases as $alias) {
@@ -502,7 +483,13 @@ class NewsMonitorService
             }
         }
 
-        return false;
+        if ($topic === 'NATION') {
+            return false;
+        }
+
+        // 3. For specialized categories (TECH, BIZ, HEALTH, SCIENCE, SPORTS, ENT, WORLD):
+        // Allow regional and international outlets serving the selected market
+        return true;
     }
 
     /**
@@ -592,8 +579,8 @@ class NewsMonitorService
     }
 
     /**
-     * Count keyword hits for a haystack using a multi-word friendly
-     * substring search. Each keyword counts at most once.
+     * Count keyword hits for a haystack using Unicode-aware whole word regex matching.
+     * Prevents substring false positives (e.g. 'تقني' in 'مقتنيات' or 'فن' in 'مدفن').
      */
     protected function countKeywordHits(string $haystack, array $keywords): int
     {
@@ -603,7 +590,8 @@ class NewsMonitorService
             if ($kw === '' || mb_strlen($kw) < 2) {
                 continue;
             }
-            if (mb_strpos($haystack, $kw) !== false) {
+            $pattern = '/(?<=^|[^\p{L}\p{N}])' . preg_quote($kw, '/') . '(?=[^\p{L}\p{N}]|$)/u';
+            if (preg_match($pattern, $haystack)) {
                 $hits++;
             }
         }
