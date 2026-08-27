@@ -314,22 +314,63 @@
                     <input type="hidden" name="strategies" id="strategies-hidden-input" value="{{ $savedStrats }}">
                 </div>
 
-                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 2rem; margin-bottom: 2.5rem; padding: 2rem; background: rgba(0,0,0,0.15); border: 1px solid var(--horizon-border); border-radius: 20px;">
-                    <div>
-                        <label style="display: block; font-size: 0.75rem; color: var(--text-muted); text-transform: uppercase; letter-spacing: 1px; margin-bottom: 1rem;">Scraping Limit (Depth)</label>
-                        <div class="ai-input-base" style="display: flex; align-items: center; gap: 0.75rem; border-radius: 12px; padding: 0 1rem; background: rgba(0,0,0,0.2) !important;">
-                            <i class="fas fa-layer-group" style="color: var(--primary-admin); font-size: 0.9rem;"></i>
-                            <input type="number" name="scraping_depth" value="{{ App\Models\Setting::get('ai-keyword-radar_scraping_depth', 20) }}" style="flex: 1; background: transparent; border: none; color: #fff; padding: 1.25rem 0; outline: none; font-size: 1rem; font-weight: 600;">
+                <div style="background: rgba(0,0,0,0.25); border: 1px solid var(--horizon-border); border-radius: 20px; padding: 2rem; margin-bottom: 2.5rem;">
+                    <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 1.5rem;">
+                        <div>
+                            <h4 style="margin: 0 0 0.25rem; font-size: 1.05rem; color: #fff; font-weight: 700;">
+                                <i class="fas fa-layer-group" style="color: var(--primary-admin); margin-right: 0.5rem;"></i>
+                                Scraping Depth & Volume (عمق وسعة سحب الكلمات والمحتوى)
+                            </h4>
+                            <p style="margin: 0; font-size: 0.8rem; color: var(--text-muted);">
+                                حدد الحد الأقصى لعدد العناوين والمقالات المسحوبة من كل موقع منافس في كل دورة فحص، أو اختر Max Unlimited لسحب كل شيء متاح.
+                            </p>
                         </div>
-                        <p style="font-size: 0.7rem; color: var(--text-muted); margin-top: 0.75rem;">Headlines per site per cycle</p>
                     </div>
-                    <div>
-                        <label style="display: block; font-size: 0.75rem; color: var(--text-muted); text-transform: uppercase; letter-spacing: 1px; margin-bottom: 1rem;">SerpApi Fallback Token</label>
-                        <div class="ai-input-base" style="display: flex; align-items: center; gap: 0.75rem; border-radius: 12px; padding: 0 1rem; background: rgba(0,0,0,0.2) !important;">
-                            <i class="fas fa-shield-alt" style="color: var(--primary-cyan); font-size: 0.9rem;"></i>
-                            <input type="password" name="serpapi_key" value="{{ $settings['serpapi_key'] ?? '' }}" placeholder="Enter key (Optional)" style="flex: 1; background: transparent; border: none; color: #fff; padding: 1.25rem 0; outline: none; font-family: 'JetBrains Mono'; font-size: 0.9rem;">
+
+                    @php
+                        $currentDepth = (int) App\Models\Setting::get('ai-keyword-radar_scraping_depth', 50);
+                    @endphp
+
+                    <div style="display: flex; flex-wrap: wrap; gap: 0.75rem; margin-bottom: 1.5rem;">
+                        <button type="button" onclick="document.getElementById('scraping_depth_input').value = 20;" 
+                                class="px-4 py-2 rounded-xl text-xs font-bold transition border"
+                                style="background: {{ $currentDepth == 20 ? 'var(--primary-admin)' : 'rgba(255,255,255,0.05)' }}; color: {{ $currentDepth == 20 ? '#000' : '#fff' }}; border-color: rgba(255,255,255,0.1);">
+                            ⚡ 20 (سريع / Fast)
+                        </button>
+                        <button type="button" onclick="document.getElementById('scraping_depth_input').value = 50;" 
+                                class="px-4 py-2 rounded-xl text-xs font-bold transition border"
+                                style="background: {{ $currentDepth == 50 ? 'var(--primary-admin)' : 'rgba(255,255,255,0.05)' }}; color: {{ $currentDepth == 50 ? '#000' : '#fff' }}; border-color: rgba(255,255,255,0.1);">
+                            🎯 50 (متوازن / Balanced - موصى به)
+                        </button>
+                        <button type="button" onclick="document.getElementById('scraping_depth_input').value = 100;" 
+                                class="px-4 py-2 rounded-xl text-xs font-bold transition border"
+                                style="background: {{ $currentDepth == 100 ? 'var(--primary-admin)' : 'rgba(255,255,255,0.05)' }}; color: {{ $currentDepth == 100 ? '#000' : '#fff' }}; border-color: rgba(255,255,255,0.1);">
+                            🔍 100 (عميق / Deep)
+                        </button>
+                        <button type="button" onclick="document.getElementById('scraping_depth_input').value = 300;" 
+                                class="px-4 py-2 rounded-xl text-xs font-bold transition border"
+                                style="background: {{ $currentDepth >= 300 ? 'linear-gradient(135deg, #00A8E6, #bf00ff)' : 'rgba(255,255,255,0.05)' }}; color: #fff; border-color: rgba(255,255,255,0.2);">
+                            🚀 300+ Max Unlimited (أقصى سحب شامل)
+                        </button>
+                    </div>
+
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 2rem;">
+                        <div>
+                            <label style="display: block; font-size: 0.75rem; color: var(--text-muted); text-transform: uppercase; letter-spacing: 1px; margin-bottom: 0.75rem;">Scraping Limit (عدد العناوين لكل موقع)</label>
+                            <div class="ai-input-base" style="display: flex; align-items: center; gap: 0.75rem; border-radius: 12px; padding: 0 1rem; background: rgba(0,0,0,0.2) !important;">
+                                <i class="fas fa-hashtag" style="color: var(--primary-admin); font-size: 0.9rem;"></i>
+                                <input type="number" min="5" max="500" id="scraping_depth_input" name="scraping_depth" value="{{ $currentDepth }}" style="flex: 1; background: transparent; border: none; color: #fff; padding: 1.25rem 0; outline: none; font-size: 1rem; font-weight: 700;">
+                            </div>
+                            <p style="font-size: 0.7rem; color: var(--text-muted); margin-top: 0.5rem;">عدد المقالات والعناوين التي يتم سحبها من كل موقع/متجر (اختر 300 لأقصى سحب شامل).</p>
                         </div>
-                        <p style="font-size: 0.7rem; color: var(--text-muted); margin-top: 0.75rem;">Used for reliable Google News indexing</p>
+                        <div>
+                            <label style="display: block; font-size: 0.75rem; color: var(--text-muted); text-transform: uppercase; letter-spacing: 1px; margin-bottom: 0.75rem;">SerpApi Fallback Token (اختياري)</label>
+                            <div class="ai-input-base" style="display: flex; align-items: center; gap: 0.75rem; border-radius: 12px; padding: 0 1rem; background: rgba(0,0,0,0.2) !important;">
+                                <i class="fas fa-shield-alt" style="color: var(--primary-cyan); font-size: 0.9rem;"></i>
+                                <input type="password" name="serpapi_key" value="{{ $settings['serpapi_key'] ?? '' }}" placeholder="Enter key (Optional)" style="flex: 1; background: transparent; border: none; color: #fff; padding: 1.25rem 0; outline: none; font-family: 'JetBrains Mono'; font-size: 0.9rem;">
+                            </div>
+                            <p style="font-size: 0.7rem; color: var(--text-muted); margin-top: 0.5rem;">توكن SerpApi لسحب مقالات إضافية من Google News عند الحاجة.</p>
+                        </div>
                     </div>
                 </div>
 

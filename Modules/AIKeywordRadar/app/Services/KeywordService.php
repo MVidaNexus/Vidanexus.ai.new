@@ -256,10 +256,11 @@ class KeywordService
             return ['keywords' => [], 'headlines_count' => 0];
         }
 
-        // Mode determines how many candidates to process and whether to use deep / max coverage
-        $isMax = ($mode === 'max');
-        $isDeep = ($mode === 'deep' || $isMax);
-        $maxCandidates = $isMax ? 300 : ($isDeep ? 80 : 40);
+        // Mode and Admin Depth determine how many candidates to process
+        $adminDepth = (int) \App\Models\Setting::get('ai-keyword-radar_scraping_depth', 50);
+        $isMax = ($mode === 'max' || $adminDepth >= 300);
+        $isDeep = ($mode === 'deep' || $isMax || $adminDepth >= 80);
+        $maxCandidates = $isMax ? 300 : ($isDeep ? 100 : max(40, min(100, $adminDepth)));
 
         // === STEP 1: Algorithmic Pre-AI Heuristic Scoring & Clustering ===
         $headlines = $this->scoreAndClusterHeadlines($rawHeadlines, $lang, $maxCandidates, $isDeep);
@@ -917,41 +918,41 @@ class KeywordService
             unset($responses);
         }
 
-        // === PHASE 2: FAST DIRECT RSS FALLBACK (ONLY if Phase 1 collected ZERO headlines) ===
-        if (empty($allHeadlines) && !empty($needsFallback) && (microtime(true) - $syncStart) < 30) {
-            Log::info("[Keyword Radar] Phase 2: Fast fallback for " . count($needsFallback) . " competitors.");
-            foreach ($needsFallback as $url) {
-                if ((microtime(true) - $syncStart) > 40) break;
+        // === PHASE 2: COMPREHENSIVE MULTI-SOURCE FALLBACK FOR SITES NOT ON GOOGLE NEWS ===
+        // Runs for ANY competitor that returned zero from Google News (e.g. stores, niche blogs, regional portals)
+        $maxPhase2Budget = $isMax ? 120 : 60;
+        if (!empty($needsFallback) && (microtime(true) - $syncStart) < $maxPhase2Budget) {
+            Log::info("[Keyword Radar] Phase 2: Running deep fallback (Sitemaps, RSS, HTML) for " . count($needsFallback) . " competitors.");
+            
+            // Process in chunks of 5
+            $fallbackChunks = array_chunk($needsFallback, 5);
+            foreach ($fallbackChunks as $fChunk) {
+                if ((microtime(true) - $syncStart) > $maxPhase2Budget) break;
 
-                $url = rtrim(trim($url), '/');
-                $host = parse_url($url, PHP_URL_HOST) ?: $url;
-                $domain = preg_replace('/^www\./i', '', $host);
-                $siteHeadlines = [];
+                foreach ($fChunk as $url) {
+                    $url = rtrim(trim($url), '/');
+                    $host = parse_url($url, PHP_URL_HOST) ?: $url;
+                    $domain = preg_replace('/^www\./i', '', $host);
+                    $siteHeadlines = [];
 
-                try {
-                    $rssResp = Http::withHeaders(['User-Agent' => $userAgent])
-                        ->withOptions(['curl' => [CURLOPT_IPRESOLVE => CURL_IPRESOLVE_V4, CURLOPT_TIMEOUT => 4]])
-                        ->timeout(4)->get($url . '/feed');
-                    if ($rssResp->successful() && (str_contains($rssResp->body(), '<rss') || str_contains($rssResp->body(), '<feed'))) {
-                        $siteHeadlines = $this->parseSimpleRss($rssResp->body());
+                    // 1. Try Sitemap first (most reliable for blogs and e-commerce)
+                    $siteHeadlines = $this->fetchViaSitemap($url, $userAgent, $userId, $lang);
+
+                    // 2. If no sitemap, try direct RSS feeds
+                    if (empty($siteHeadlines)) {
+                        $siteHeadlines = $this->fetchViaRss($url, $userAgent, $userId);
                     }
-                } catch (\Throwable $e) {}
 
-                if (empty($siteHeadlines)) {
-                    try {
-                        $rssResp = Http::withHeaders(['User-Agent' => $userAgent])
-                            ->withOptions(['curl' => [CURLOPT_IPRESOLVE => CURL_IPRESOLVE_V4, CURLOPT_TIMEOUT => 4]])
-                            ->timeout(4)->get($url . '/rss');
-                        if ($rssResp->successful() && (str_contains($rssResp->body(), '<rss') || str_contains($rssResp->body(), '<feed'))) {
-                            $siteHeadlines = $this->parseSimpleRss($rssResp->body());
-                        }
-                    } catch (\Throwable $e) {}
-                }
+                    // 3. If no RSS, try direct HTML scraping of homepage
+                    if (empty($siteHeadlines)) {
+                        $siteHeadlines = $this->fetchViaHtmlScraping($url, $userAgent, $userId);
+                    }
 
-                if (!empty($siteHeadlines)) {
-                    $applied = $this->applyTimeFilter($siteHeadlines, $freshnessLimit, $domain);
-                    $allHeadlines = array_merge($allHeadlines, $applied['kept']);
-                    Log::info("[Fallback Sync] {$domain}: {$applied['total']} total → {$applied['fresh']} fresh [Filter: {$filterLabel}]");
+                    if (!empty($siteHeadlines)) {
+                        $applied = $this->applyTimeFilter($siteHeadlines, $freshnessLimit, $domain);
+                        $allHeadlines = array_merge($allHeadlines, $applied['kept']);
+                        Log::info("[Fallback Sync] {$domain}: {$applied['total']} total → {$applied['fresh']} fresh [Filter: {$filterLabel}]");
+                    }
                 }
             }
         }
