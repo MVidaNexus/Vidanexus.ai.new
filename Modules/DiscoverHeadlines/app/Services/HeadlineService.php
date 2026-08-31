@@ -682,19 +682,24 @@ class HeadlineService
     protected function getDiscoverRules($isArabic = true)
     {
         if ($isArabic) {
-            return "🔹 قواعد صياغة عناوين Google Discover عالية النقر (High CTR):\n"
-                . "1. ابدأ بالكيان الرئيسي مباشرة (اسم الشخص، الفريق، الحدث، الجهة، المنتج).\n"
-                . "2. استخدم فجوة الفضول الذكية (Curiosity Gap): أجب عن 'ماذا حدث' واجعل القارئ ينقر ليعرف 'التفاصيل والسبب والكواليس' دون تضليل.\n"
-                . "3. أفعال قوية وديناميكية (يكشف، يحسم، يفاجئ، يعلن، يصدر، يوضح).\n"
-                . "4. ممنوع العناوين التافهة أو المضللة أو المبهمة.\n"
-                . "5. لكل عنوان، اقترح زاويتين بصريتين للصورة الرئيسية للمقال (visual_concepts) بنفس لغة العنوان لتعزيز النقر.";
+            return "🔹 المعايير الصارمة لصياغة عناوين Google Discover (تعتمد على الحقائق بنسبة 100% وبدون تأليف):\n"
+                . "1. المصداقية التامة ومنع الفبركة: كل رقم، تصريح، نتيجة، قرار، أو حدث يجب أن يكون حقيقياً ومستنداً بدقة إلى السياق الإخباري أو الواقع الحقيقي دون اختلاق أو تضليل.\n"
+                . "2. الكيان أولاً (Entity-Prominent): ابدأ العنوان باسم الكيان الرئيسي فوراً (الشخص، النادي، الوزارة، السلعة، الشركة، الحدث) لتسهيل التقاطه بخوارزمية ديسكوفر.\n"
+                . "3. فجوة فضول ذكية وصادقة (Intelligent Curiosity Gap): اذكر الحدث الرئيسي بوضوح واجعل الفضول يدور حول الكواليس، الأسباب الحقيقية، الأثر المباشر، أو التفاصيل غير المعلنة دون كليك بيت كاذب.\n"
+                . "4. أفعال خبرية نشطة وحاسمة (يكشف، يحسم، يعلن، يفاجئ، يوضح، يصدر، يحدد، يتراجع، يوجه).\n"
+                . "5. تنوع الزوايا التحريرية: قدّم زوايا مختلفة (خبر مباشر، كواليس وأسباب، أثر وقيمة للقارئ، موقف رسمي، تحليل وسيناريو قادم).\n"
+                . "6. الطول المثالي: بين 45 و 85 حرفاً لظهور كامل في بطاقات ديسكوفر بالهاتف المحمول.\n"
+                . "7. زوايا بصرية (visual_concepts): لكل عنوان، اقترح زاويتين بصريتين للصورة الرئيسية بدقة للمساعدة في رفع النقر (CTR).";
         }
 
-        return "🔹 Google Discover High-CTR Headline Rules:\n"
-            . "1. Entity-Led: Start with the primary entity (Person, Team, Event, Company).\n"
-            . "2. Intelligent Curiosity Gap: Share the hook while making the full story irresistible to click without clickbait.\n"
-            . "3. Strong Active Verbs (Reveals, Decides, Shocks, Unveils, Explains).\n"
-            . "4. For every headline, suggest 2 tailored visual angles for the featured image (visual_concepts) in English.";
+        return "🔹 Google Discover Strict Ranking Rules (100% Fact-Based & High-CTR):\n"
+            . "1. Absolute Factuality & Zero Hallucination: All numbers, quotes, dates, and decisions must strictly derive from the news context or verified real-world facts without fabrication.\n"
+            . "2. Entity-Led: Start the headline or lead immediately with the core Knowledge Graph Entity (Person, Team, Organization, Product).\n"
+            . "3. Intelligent Curiosity Gap: Answer WHAT happened while creating honest intrigue around the 'why', backstage details, or consequences without misleading clickbait.\n"
+            . "4. Strong Active Verbs (Reveals, Decides, Shocks, Unveils, Clarifies, Sets, Announces).\n"
+            . "5. Editorial Diversity: Provide distinct angles (Breaking, Backstage, Reader Impact, Official Statement, Future Outlook).\n"
+            . "6. Ideal Length: 50 to 90 characters for optimal mobile card rendering.\n"
+            . "7. Visual Concepts: Provide 2 tailored visual angles for the featured image (visual_concepts) in English.";
     }
 
     protected function getDefaultHeadlinesStyle($isArabic = true)
