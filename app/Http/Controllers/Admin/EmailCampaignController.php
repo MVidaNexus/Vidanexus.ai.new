@@ -121,6 +121,7 @@ class EmailCampaignController extends Controller
         ]);
 
         $recipients = [];
+        $statsNote = '';
         $audienceType = $validated['audience_type'];
 
         if ($audienceType === 'all') {
