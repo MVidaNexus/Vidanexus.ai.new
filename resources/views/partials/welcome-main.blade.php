@@ -297,31 +297,43 @@
                     @foreach($tools as $tool)
                     <div class="tool-card {{ !$tool['is_available'] ? 'is-coming-soon' : '' }}" x-show="filter === 'all' || filter === '{{ $tool['category'] ?? '' }}'" x-transition:enter="transition ease-out duration-300" x-transition:enter-start="opacity-0 transform scale-95" x-transition:enter-end="opacity-100 transform scale-100">
                         @if(!$tool['is_available'])
-                            <div style="position: absolute; top: 1rem; right: 1rem; background: var(--card-bg); backdrop-filter: blur(5px); color: var(--text-muted); font-size: 0.65rem; font-weight: 800; padding: 0.4rem 0.8rem; border-radius: 20px; border: 1px solid var(--glass-border); box-shadow: 0 4px 10px rgba(0,0,0,0.05); z-index: 10; letter-spacing: 1px;">
-                                <i class="fas fa-clock mr-1"></i> COMING SOON
-                            </div>
-                        @elseif(!$tool['is_owned'])
-                             <div style="position: absolute; top: 1rem; right: 1rem; background: rgba(168, 85, 247, 0.15); backdrop-filter: blur(5px); color: #a855f7; font-size: 0.65rem; font-weight: 800; padding: 0.4rem 0.8rem; border-radius: 20px; border: 1px solid rgba(168, 85, 247, 0.3); z-index: 10; letter-spacing: 1px;">
-                                <i class="fas fa-shopping-cart mr-1"></i> MARKETPLACE
+                            <div class="coming-soon-overlay">
+                                <div class="coming-soon-badge-glow">
+                                    <div class="cs-icon"><i class="fas fa-lock"></i></div>
+                                    <div class="cs-title">COMING SOON</div>
+                                    <div class="cs-subtitle">In Active Development</div>
+                                </div>
                             </div>
                         @endif
-                        <div class="tool-icon" style="color: {{ $tool['color'] }};">
-                            <i class="fas {{ $tool['icon'] }}"></i>
+
+                        <div class="tool-card-content" style="display: flex; flex-direction: column; height: 100%;">
+                            @if(!$tool['is_available'])
+                                <div style="position: absolute; top: 1rem; right: 1rem; background: var(--card-bg); backdrop-filter: blur(5px); color: var(--text-muted); font-size: 0.65rem; font-weight: 800; padding: 0.4rem 0.8rem; border-radius: 20px; border: 1px solid var(--glass-border); box-shadow: 0 4px 10px rgba(0,0,0,0.05); z-index: 10; letter-spacing: 1px;">
+                                    <i class="fas fa-clock mr-1"></i> COMING SOON
+                                </div>
+                            @elseif(!$tool['is_owned'])
+                                 <div style="position: absolute; top: 1rem; right: 1rem; background: rgba(168, 85, 247, 0.15); backdrop-filter: blur(5px); color: #a855f7; font-size: 0.65rem; font-weight: 800; padding: 0.4rem 0.8rem; border-radius: 20px; border: 1px solid rgba(168, 85, 247, 0.3); z-index: 10; letter-spacing: 1px;">
+                                    <i class="fas fa-shopping-cart mr-1"></i> MARKETPLACE
+                                </div>
+                            @endif
+                            <div class="tool-icon" style="color: {{ $tool['color'] }};">
+                                <i class="fas {{ $tool['icon'] }}"></i>
+                            </div>
+                            <h3>{{ $tool['name'] }}</h3>
+                            <p style="flex-grow: 1;">{{ $tool['tagline'] ?? $tool['name'] }}</p>
+                            
+                            @if($tool['is_available'])
+                                <a href="/tools/{{ $tool['slug'] }}" class="vn-btn vn-btn-primary" style="width: 100%;">
+                                    <span>Explore Tool</span>
+                                    <i class="fas fa-arrow-right"></i>
+                                </a>
+                            @else
+                                <button class="vn-btn btn-outline" style="width: 100%; cursor: not-allowed; opacity: 0.5;" disabled>
+                                    <span>Coming Soon</span>
+                                    <i class="fas fa-lock"></i>
+                                </button>
+                            @endif
                         </div>
-                        <h3>{{ $tool['name'] }}</h3>
-                        <p>{{ $tool['tagline'] ?? $tool['name'] }}</p>
-                        
-                        @if($tool['is_available'])
-                            <a href="/tools/{{ $tool['slug'] }}" class="vn-btn vn-btn-primary" style="width: 100%;">
-                                <span>Explore Tool</span>
-                                <i class="fas fa-arrow-right"></i>
-                            </a>
-                        @else
-                            <button class="vn-btn btn-outline" style="width: 100%; cursor: not-allowed; opacity: 0.5;" disabled>
-                                <span>Coming Soon</span>
-                                <i class="fas fa-lock"></i>
-                            </button>
-                        @endif
                     </div>
                 @endforeach
                 </div>
