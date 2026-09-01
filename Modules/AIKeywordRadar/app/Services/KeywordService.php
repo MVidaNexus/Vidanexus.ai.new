@@ -257,10 +257,11 @@ class KeywordService
         }
 
         // Mode and Admin Depth determine how many candidates to process
+        // Mode and Admin Depth determine how many candidates to process
         $adminDepth = (int) \App\Models\Setting::get('ai-keyword-radar_scraping_depth', 50);
         $isMax = ($mode === 'max' || $adminDepth >= 300);
         $isDeep = ($mode === 'deep' || $isMax || $adminDepth >= 80);
-        $maxCandidates = $isMax ? 300 : ($isDeep ? 100 : max(40, min(100, $adminDepth)));
+        $maxCandidates = $isMax ? 50 : ($isDeep ? 35 : 25);
 
         // === STEP 1: Algorithmic Pre-AI Heuristic Scoring & Clustering ===
         $headlines = $this->scoreAndClusterHeadlines($rawHeadlines, $lang, $maxCandidates, $isDeep);
@@ -269,11 +270,11 @@ class KeywordService
             return ['keywords' => [], 'headlines_count' => 0];
         }
 
-        // === STEP 2: AI Keyword Extraction — BATCHED for speed ===
+        // === STEP 2: AI Keyword Extraction — High-speed single/dual batch ===
         $allKeywords = [];
         $aiExtractionStart = microtime(true);
-        $batchSize = $isMax ? 15 : 10;
-        $timeBudgetSeconds = $isMax ? 300 : (int) \App\Models\Setting::get('ai-keyword-radar_ai_time_budget', 180);
+        $batchSize = $isMax ? 25 : 25;
+        $timeBudgetSeconds = 45;
 
         $batches = array_chunk($headlines, $batchSize);
         Log::info("[Keyword Radar] AI extraction [Mode: {$mode}]: " . count($headlines) . ' prioritized candidates in ' . count($batches) . " batches.");
@@ -1955,17 +1956,12 @@ BAD example (NEVER do this):
         $filtered = [];
         $usedTexts = [];
         
-        // Comprehensive list of Arabic filler words and generic news terms to exclude
+        // Pure grammatical particles and prepositions to exclude when measuring similarity
         $fillerWords = [
-            'اليوم', 'غدا', 'أمس', 'الآن', 'في', 'على', 'من', 'إلى', 'عن', 'مع',
-            'و', 'أو', 'ال', 'لـ', 'بـ', 'السبت', 'الأحد', 'الاثنين', 'الثلاثاء',
-            'الأربعاء', 'الخميس', 'الجمعة', 'شهر', 'يناير', 'فبراير', 'مارس',
-            'أبريل', 'مايو', 'يونيو', 'يوليو', 'أغسطس', 'سبتمبر', 'أكتوبر',
-            'نوفمبر', 'ديسمبر', '2025', '2026', '2027', '2028',
-            'أخبار', 'سعر', 'حالة', 'مصر', 'القاهرة', 'بث', 'مباشر', 'عاجل',
-            'تفاصيل', 'موعد', 'خطوات', 'رابط', 'رسميا', 'تعرف', 'شاهد',
-            'بسبب', 'طريقة', 'نتيجة', 'تطبيق', 'برنامج', 'تحديث', 'جديد',
-            'أهم', 'آخر', 'توقعات', 'تقرير', 'دراسة', 'كشف', 'بيان'
+            'في', 'على', 'من', 'إلى', 'عن', 'مع', 'و', 'أو', 'ال', 'لـ', 'بـ', 'ثم',
+            'هذا', 'هذه', 'ذلك', 'تلك', 'التي', 'الذي', 'الذين', 'اللائي', 'اللواتي',
+            'هل', 'إن', 'أن', 'كان', 'أصبح', 'صار', 'ليس',
+            'in', 'on', 'at', 'to', 'for', 'with', 'by', 'from', 'about', 'the', 'a', 'an', 'and', 'or'
         ];
         
         foreach ($keywords as $kw) {
