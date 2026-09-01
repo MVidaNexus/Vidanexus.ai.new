@@ -278,36 +278,13 @@
                     </div>
                 </div>
             </div>
-            <h2 id="tools" style="font-family: var(--font-heading); font-size: clamp(1.4rem, 3vw, 2rem); margin: 0.5rem 0 1rem; color: #fff;">AI Tools & Solutions</h2>
-
-            <div x-data="{ filter: 'all' }" style="width: 100%;">
-                <!-- Filter Bar -->
-                <div class="filter-bar" style="margin-bottom: 1.25rem;">
-                    <button @click="filter = 'all'" :class="filter === 'all' ? 'active' : ''" class="filter-btn">
-                        <i class="fas fa-th-large mr-1"></i> All Tools
-                    </button>
-                    <button @click="filter = 'seo'" :class="filter === 'seo' ? 'active' : ''" class="filter-btn">
-                        <i class="fas fa-search mr-1"></i> SEO & Search
-                    </button>
-                    <button @click="filter = 'marketing'" :class="filter === 'marketing' ? 'active' : ''" class="filter-btn">
-                        <i class="fas fa-bullhorn mr-1"></i> Marketing & Ads
-                    </button>
-                    <button @click="filter = 'content'" :class="filter === 'content' ? 'active' : ''" class="filter-btn">
-                        <i class="fas fa-pen-nib mr-1"></i> Content & Writing
-                    </button>
-                    <button @click="filter = 'intelligence'" :class="filter === 'intelligence' ? 'active' : ''" class="filter-btn">
-                        <i class="fas fa-brain mr-1"></i> Intelligence
-                    </button>
-                    <button @click="filter = 'tools'" :class="filter === 'tools' ? 'active' : ''" class="filter-btn">
-                        <i class="fas fa-toolbox mr-1"></i> Power Tools
-                    </button>
-                </div>
+            <h2 id="tools" style="font-family: var(--font-heading); font-size: clamp(1.4rem, 3vw, 2rem); margin: 0.5rem 0 1.5rem; color: #fff;">AI Tools & Solutions</h2>
 
 <style>
 /* Responsive Grid and Mobile Optimization for AI Tools & Solutions */
 .tools-grid {
     display: grid !important;
-    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)) !important;
+    grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)) !important;
     gap: 1.5rem !important;
     width: 100% !important;
     max-width: 1200px !important;
@@ -323,22 +300,6 @@
 }
 
 @media (max-width: 768px) {
-    .filter-bar {
-        display: flex !important;
-        flex-wrap: wrap !important;
-        justify-content: center !important;
-        gap: 0.35rem !important;
-        margin-bottom: 1rem !important;
-    }
-    .filter-btn {
-        padding: 0.32rem 0.65rem !important;
-        font-size: 0.72rem !important;
-        border-radius: 20px !important;
-    }
-    .filter-btn i {
-        font-size: 0.68rem !important;
-        margin-right: 0.2rem !important;
-    }
     .tools-grid {
         display: grid !important;
         grid-template-columns: repeat(2, 1fr) !important;
@@ -372,119 +333,21 @@
         font-size: 0.72rem !important;
         border-radius: 8px !important;
     }
-    .coming-soon-pill {
-        padding: 0.45rem 0.85rem !important;
-        font-size: 0.68rem !important;
-        letter-spacing: 1px !important;
-    }
-    .coming-soon-pill i {
-        font-size: 0.75rem !important;
-    }
-}
-
-/* 100% Image-Style Heavy Blur on Coming Soon Tool Cards */
-.tool-card.is-coming-soon,
-.dash-tool-card.is-coming-soon {
-    position: relative !important;
-    overflow: hidden !important;
-    cursor: not-allowed !important;
-    user-select: none !important;
-    background: rgba(13, 18, 33, 0.7) !important;
-    border: 1px solid rgba(255, 255, 255, 0.08) !important;
-}
-
-.tool-card.is-coming-soon:hover,
-.dash-tool-card.is-coming-soon:hover {
-    transform: none !important;
-    box-shadow: none !important;
-    border-color: rgba(255, 255, 255, 0.08) !important;
-}
-
-.tool-card.is-coming-soon .blur-content,
-.dash-tool-card.is-coming-soon .blur-content {
-    filter: blur(14px) !important;
-    -webkit-filter: blur(14px) !important;
-    opacity: 0.25 !important;
-    pointer-events: none !important;
-    user-select: none !important;
-    transform: scale(0.96) !important;
-}
-
-.coming-soon-glass-cover {
-    position: absolute !important;
-    inset: 0 !important;
-    z-index: 30 !important;
-    display: flex !important;
-    align-items: center !important;
-    justify-content: center !important;
-    background: rgba(5, 8, 16, 0.4) !important;
-    backdrop-filter: blur(4px) !important;
-    -webkit-backdrop-filter: blur(4px) !important;
-    pointer-events: all !important;
-}
-
-.coming-soon-pill {
-    display: inline-flex !important;
-    align-items: center !important;
-    gap: 0.6rem !important;
-    padding: 0.7rem 1.4rem;
-    background: rgba(15, 23, 42, 0.92) !important;
-    border: 1px solid rgba(0, 168, 230, 0.5) !important;
-    border-radius: 50px !important;
-    box-shadow: 0 0 30px rgba(0, 168, 230, 0.35), inset 0 0 12px rgba(0, 168, 230, 0.15) !important;
-    color: #ffffff !important;
-    font-size: 0.82rem;
-    font-weight: 900 !important;
-    letter-spacing: 2px !important;
-    text-transform: uppercase !important;
-}
-
-.coming-soon-pill i {
-    color: var(--primary-cyan, #00A8E6) !important;
-    font-size: 0.9rem;
-    filter: drop-shadow(0 0 8px rgba(0, 168, 230, 0.9)) !important;
-}
-
-html[data-theme="light"] .tool-card.is-coming-soon,
-html[data-theme="light"] .dash-tool-card.is-coming-soon {
-    background: rgba(241, 245, 249, 0.8) !important;
-    border-color: rgba(0, 0, 0, 0.08) !important;
-}
-html[data-theme="light"] .coming-soon-glass-cover {
-    background: rgba(255, 255, 255, 0.35) !important;
-}
-html[data-theme="light"] .coming-soon-pill {
-    background: rgba(255, 255, 255, 0.95) !important;
-    color: #0f172a !important;
-    border-color: rgba(0, 168, 230, 0.5) !important;
-    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1) !important;
 }
 </style>
 
+            <div style="width: 100%;">
                 <div class="tools-grid">
                     @php
-                        $comingSoonCount = collect($tools)->filter(fn($t) => !(bool)$t['is_available'])->count();
+                        $activeToolsOnly = collect($tools)->filter(fn($t) => (bool)$t['is_available']);
+                        $comingSoonCount = count($tools) - $activeToolsOnly->count();
                     @endphp
 
-                    {{-- All Tools Loop --}}
-                    @foreach($tools as $tool)
-                        <div class="tool-card {{ !$tool['is_available'] ? 'is-coming-soon' : '' }}" 
-                             x-show="filter === 'all' ? {{ $tool['is_available'] ? 'true' : 'false' }} : filter === '{{ $tool['category'] ?? '' }}'" 
-                             x-transition:enter="transition ease-out duration-300" 
-                             x-transition:enter-start="opacity-0 transform scale-95" 
-                             x-transition:enter-end="opacity-100 transform scale-100">
-                            
-                            @if(!$tool['is_available'])
-                                <div class="coming-soon-glass-cover">
-                                    <div class="coming-soon-pill">
-                                        <i class="fas fa-lock"></i>
-                                        <span>COMING SOON</span>
-                                    </div>
-                                </div>
-                            @endif
-
-                            <div class="tool-card-body {{ !$tool['is_available'] ? 'blur-content' : '' }}" style="display: flex; flex-direction: column; height: 100%;">
-                                @if($tool['is_available'] && !$tool['is_owned'])
+                    {{-- Render ONLY Live, Working Tools --}}
+                    @foreach($activeToolsOnly as $tool)
+                        <div class="tool-card">
+                            <div class="tool-card-body" style="display: flex; flex-direction: column; height: 100%;">
+                                @if(!$tool['is_owned'])
                                      <div style="position: absolute; top: 0.85rem; right: 0.85rem; background: rgba(168, 85, 247, 0.15); backdrop-filter: blur(5px); color: #a855f7; font-size: 0.62rem; font-weight: 800; padding: 0.3rem 0.65rem; border-radius: 20px; border: 1px solid rgba(168, 85, 247, 0.3); z-index: 10; letter-spacing: 1px;">
                                         <i class="fas fa-shopping-cart mr-1"></i> MARKETPLACE
                                     </div>
@@ -495,54 +358,28 @@ html[data-theme="light"] .coming-soon-pill {
                                 <h3>{{ $tool['name'] }}</h3>
                                 <p style="flex-grow: 1;">{{ $tool['tagline'] ?? $tool['name'] }}</p>
                                 
-                                @if($tool['is_available'])
-                                    <a href="/tools/{{ $tool['slug'] }}" class="vn-btn vn-btn-primary" style="width: 100%;">
-                                        <span>Explore Tool</span>
-                                        <i class="fas fa-arrow-right"></i>
-                                    </a>
-                                @else
-                                    <button class="vn-btn btn-outline" style="width: 100%; cursor: not-allowed; opacity: 0.5;" disabled>
-                                        <span>Coming Soon</span>
-                                        <i class="fas fa-lock"></i>
-                                    </button>
-                                @endif
+                                <a href="/tools/{{ $tool['slug'] }}" class="vn-btn vn-btn-primary" style="width: 100%;">
+                                    <span>Explore Tool</span>
+                                    <i class="fas fa-arrow-right"></i>
+                                </a>
                             </div>
                         </div>
                     @endforeach
-
-                    {{-- Single Unified Coming Soon Teaser Card (Only on 'All Tools' view) --}}
-                    @if($comingSoonCount > 0)
-                        <div class="tool-card coming-soon-teaser-card" 
-                             x-show="filter === 'all'" 
-                             x-transition:enter="transition ease-out duration-300" 
-                             x-transition:enter-start="opacity-0 transform scale-95" 
-                             x-transition:enter-end="opacity-100 transform scale-100" 
-                             style="background: radial-gradient(circle at top left, rgba(0, 168, 230, 0.09), rgba(15, 23, 42, 0.7)); border: 1.5px dashed rgba(0, 168, 230, 0.35); position: relative; overflow: hidden; display: flex; flex-direction: column; justify-content: space-between; text-align: left;">
-                            <div style="position: absolute; top: 0.85rem; right: 0.85rem; background: rgba(0, 168, 230, 0.15); border: 1px solid rgba(0, 168, 230, 0.35); color: var(--primary-cyan, #00A8E6); font-size: 0.62rem; font-weight: 800; padding: 0.3rem 0.65rem; border-radius: 20px; letter-spacing: 0.5px;">
-                                <i class="fas fa-sparkles mr-1"></i> PIPELINE
-                            </div>
-                            
-                            <div>
-                                <div class="tool-icon" style="color: #00A8E6; background: rgba(0, 168, 230, 0.12); border: 1px solid rgba(0, 168, 230, 0.25);">
-                                    <i class="fas fa-layer-group"></i>
-                                </div>
-                                <h3 style="color: #fff; font-size: 1.15rem; margin-bottom: 0.4rem;">
-                                    +{{ $comingSoonCount }} More AI Tools
-                                </h3>
-                                <p style="color: var(--text-muted); font-size: 0.78rem; line-height: 1.45; margin-bottom: 1rem;">
-                                    New specialized solutions for Article Writing, Competitor X-Ray, Velocity Auditing, and Folio OCR are currently in active engineering.
-                                </p>
-                            </div>
-
-                            <div>
-                                <div style="display: flex; align-items: center; justify-content: center; gap: 0.5rem; width: 100%; padding: 0.6rem 0.9rem; background: rgba(0, 168, 230, 0.08); border: 1px solid rgba(0, 168, 230, 0.25); border-radius: 10px; color: var(--primary-cyan); font-size: 0.78rem; font-weight: 700;">
-                                    <i class="fas fa-clock"></i>
-                                    <span>Coming Soon to VidaNexus</span>
-                                </div>
-                            </div>
-                        </div>
-                    @endif
                 </div>
+
+                {{-- Clean & Prestigious Pipeline Status Indicator --}}
+                @if($comingSoonCount > 0)
+                    <div style="margin: 2.5rem auto 1rem auto; text-align: center;">
+                        <div style="display: inline-flex; align-items: center; gap: 0.75rem; padding: 0.55rem 1.25rem; background: rgba(255, 255, 255, 0.03); border: 1px solid rgba(255, 255, 255, 0.08); border-radius: 99px; backdrop-filter: blur(20px); max-width: 90%; flex-wrap: wrap; justify-content: center;">
+                            <span style="display: inline-flex; align-items: center; justify-content: center; width: 18px; height: 18px; border-radius: 50%; background: rgba(0, 168, 230, 0.2); color: var(--primary-cyan); font-size: 0.65rem;">
+                                <i class="fas fa-sparkles"></i>
+                            </span>
+                            <span style="font-size: 0.8rem; color: var(--text-muted); font-weight: 500;">
+                                <strong style="color: #fff; font-weight: 700;">+{{ $comingSoonCount }} More AI Tools</strong> in active pipeline for Content, Marketing & Market Intelligence.
+                            </span>
+                        </div>
+                    </div>
+                @endif
             </div>
             
         </main>
