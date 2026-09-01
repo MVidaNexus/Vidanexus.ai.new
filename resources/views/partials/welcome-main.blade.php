@@ -304,7 +304,24 @@
                 </div>
 
 <style>
-/* Responsive Mobile Optimization for AI Tools & Solutions */
+/* Responsive Grid and Mobile Optimization for AI Tools & Solutions */
+.tools-grid {
+    display: grid !important;
+    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)) !important;
+    gap: 1.5rem !important;
+    width: 100% !important;
+    max-width: 1200px !important;
+    margin: 0 auto !important;
+    justify-content: center !important;
+}
+
+.tool-card {
+    width: 100% !important;
+    max-width: 380px !important;
+    margin: 0 auto !important;
+    box-sizing: border-box !important;
+}
+
 @media (max-width: 768px) {
     .filter-bar {
         display: flex !important;
@@ -330,6 +347,7 @@
     .tool-card {
         padding: 0.9rem 0.65rem !important;
         border-radius: 14px !important;
+        max-width: 100% !important;
     }
     .tool-icon {
         width: 36px !important;
@@ -445,15 +463,28 @@ html[data-theme="light"] .coming-soon-pill {
 
                 <div class="tools-grid">
                     @php
-                        $activeToolsOnly = collect($tools)->filter(fn($t) => (bool)$t['is_available']);
-                        $comingSoonTools = collect($tools)->filter(fn($t) => !(bool)$t['is_available']);
+                        $comingSoonCount = collect($tools)->filter(fn($t) => !(bool)$t['is_available'])->count();
                     @endphp
 
-                    {{-- Active Tools Cards --}}
-                    @foreach($activeToolsOnly as $tool)
-                        <div class="tool-card" x-show="filter === 'all' || filter === '{{ $tool['category'] ?? '' }}'" x-transition:enter="transition ease-out duration-300" x-transition:enter-start="opacity-0 transform scale-95" x-transition:enter-end="opacity-100 transform scale-100">
-                            <div class="tool-card-body" style="display: flex; flex-direction: column; height: 100%;">
-                                @if(!$tool['is_owned'])
+                    {{-- All Tools Loop --}}
+                    @foreach($tools as $tool)
+                        <div class="tool-card {{ !$tool['is_available'] ? 'is-coming-soon' : '' }}" 
+                             x-show="filter === 'all' ? {{ $tool['is_available'] ? 'true' : 'false' }} : filter === '{{ $tool['category'] ?? '' }}'" 
+                             x-transition:enter="transition ease-out duration-300" 
+                             x-transition:enter-start="opacity-0 transform scale-95" 
+                             x-transition:enter-end="opacity-100 transform scale-100">
+                            
+                            @if(!$tool['is_available'])
+                                <div class="coming-soon-glass-cover">
+                                    <div class="coming-soon-pill">
+                                        <i class="fas fa-lock"></i>
+                                        <span>COMING SOON</span>
+                                    </div>
+                                </div>
+                            @endif
+
+                            <div class="tool-card-body {{ !$tool['is_available'] ? 'blur-content' : '' }}" style="display: flex; flex-direction: column; height: 100%;">
+                                @if($tool['is_available'] && !$tool['is_owned'])
                                      <div style="position: absolute; top: 0.85rem; right: 0.85rem; background: rgba(168, 85, 247, 0.15); backdrop-filter: blur(5px); color: #a855f7; font-size: 0.62rem; font-weight: 800; padding: 0.3rem 0.65rem; border-radius: 20px; border: 1px solid rgba(168, 85, 247, 0.3); z-index: 10; letter-spacing: 1px;">
                                         <i class="fas fa-shopping-cart mr-1"></i> MARKETPLACE
                                     </div>
@@ -464,17 +495,29 @@ html[data-theme="light"] .coming-soon-pill {
                                 <h3>{{ $tool['name'] }}</h3>
                                 <p style="flex-grow: 1;">{{ $tool['tagline'] ?? $tool['name'] }}</p>
                                 
-                                <a href="/tools/{{ $tool['slug'] }}" class="vn-btn vn-btn-primary" style="width: 100%;">
-                                    <span>Explore Tool</span>
-                                    <i class="fas fa-arrow-right"></i>
-                                </a>
+                                @if($tool['is_available'])
+                                    <a href="/tools/{{ $tool['slug'] }}" class="vn-btn vn-btn-primary" style="width: 100%;">
+                                        <span>Explore Tool</span>
+                                        <i class="fas fa-arrow-right"></i>
+                                    </a>
+                                @else
+                                    <button class="vn-btn btn-outline" style="width: 100%; cursor: not-allowed; opacity: 0.5;" disabled>
+                                        <span>Coming Soon</span>
+                                        <i class="fas fa-lock"></i>
+                                    </button>
+                                @endif
                             </div>
                         </div>
                     @endforeach
 
-                    {{-- Single Unified Coming Soon Teaser Card --}}
-                    @if($comingSoonTools->isNotEmpty())
-                        <div class="tool-card coming-soon-teaser-card" x-show="filter === 'all' || ['seo', 'marketing', 'content', 'intelligence', 'tools'].includes(filter)" x-transition:enter="transition ease-out duration-300" x-transition:enter-start="opacity-0 transform scale-95" x-transition:enter-end="opacity-100 transform scale-100" style="background: radial-gradient(circle at top left, rgba(0, 168, 230, 0.09), rgba(15, 23, 42, 0.7)); border: 1.5px dashed rgba(0, 168, 230, 0.35); position: relative; overflow: hidden; display: flex; flex-direction: column; justify-content: space-between; text-align: left;">
+                    {{-- Single Unified Coming Soon Teaser Card (Only on 'All Tools' view) --}}
+                    @if($comingSoonCount > 0)
+                        <div class="tool-card coming-soon-teaser-card" 
+                             x-show="filter === 'all'" 
+                             x-transition:enter="transition ease-out duration-300" 
+                             x-transition:enter-start="opacity-0 transform scale-95" 
+                             x-transition:enter-end="opacity-100 transform scale-100" 
+                             style="background: radial-gradient(circle at top left, rgba(0, 168, 230, 0.09), rgba(15, 23, 42, 0.7)); border: 1.5px dashed rgba(0, 168, 230, 0.35); position: relative; overflow: hidden; display: flex; flex-direction: column; justify-content: space-between; text-align: left;">
                             <div style="position: absolute; top: 0.85rem; right: 0.85rem; background: rgba(0, 168, 230, 0.15); border: 1px solid rgba(0, 168, 230, 0.35); color: var(--primary-cyan, #00A8E6); font-size: 0.62rem; font-weight: 800; padding: 0.3rem 0.65rem; border-radius: 20px; letter-spacing: 0.5px;">
                                 <i class="fas fa-sparkles mr-1"></i> PIPELINE
                             </div>
@@ -483,8 +526,8 @@ html[data-theme="light"] .coming-soon-pill {
                                 <div class="tool-icon" style="color: #00A8E6; background: rgba(0, 168, 230, 0.12); border: 1px solid rgba(0, 168, 230, 0.25);">
                                     <i class="fas fa-layer-group"></i>
                                 </div>
-                                <h3 style="color: #fff; font-size: clamp(1rem, 2vw, 1.25rem); margin-bottom: 0.4rem;">
-                                    +{{ $comingSoonTools->count() }} More AI Tools
+                                <h3 style="color: #fff; font-size: 1.15rem; margin-bottom: 0.4rem;">
+                                    +{{ $comingSoonCount }} More AI Tools
                                 </h3>
                                 <p style="color: var(--text-muted); font-size: 0.78rem; line-height: 1.45; margin-bottom: 1rem;">
                                     New specialized solutions for Article Writing, Competitor X-Ray, Velocity Auditing, and Folio OCR are currently in active engineering.
