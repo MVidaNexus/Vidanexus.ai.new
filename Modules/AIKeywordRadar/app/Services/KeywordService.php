@@ -261,23 +261,23 @@ class KeywordService
         $adminDepth = (int) \App\Models\Setting::get('ai-keyword-radar_scraping_depth', 50);
         $isMax = ($mode === 'max' || $adminDepth >= 300);
         $isDeep = ($mode === 'deep' || $isMax || $adminDepth >= 80);
-        $maxCandidates = $isMax ? 50 : ($isDeep ? 35 : 25);
+        $maxCandidates = $isMax ? 100 : ($isDeep ? 80 : 60);
 
-        // === STEP 1: Algorithmic Pre-AI Heuristic Scoring & Clustering ===
+        // === STEP 1: Algorithmic Pre-AI Heuristic Scoring & Diverse Clustering ===
         $headlines = $this->scoreAndClusterHeadlines($rawHeadlines, $lang, $maxCandidates, $isDeep);
 
         if (empty($headlines)) {
             return ['keywords' => [], 'headlines_count' => 0];
         }
 
-        // === STEP 2: AI Keyword Extraction — High-speed single/dual batch ===
+        // === STEP 2: AI Keyword Extraction — High-throughput batched generation ===
         $allKeywords = [];
         $aiExtractionStart = microtime(true);
-        $batchSize = $isMax ? 25 : 25;
-        $timeBudgetSeconds = 45;
+        $batchSize = 20;
+        $timeBudgetSeconds = 60;
 
         $batches = array_chunk($headlines, $batchSize);
-        Log::info("[Keyword Radar] AI extraction [Mode: {$mode}]: " . count($headlines) . ' prioritized candidates in ' . count($batches) . " batches.");
+        Log::info("[Keyword Radar] AI extraction [Mode: {$mode}]: " . count($headlines) . ' prioritized candidates across all competitors in ' . count($batches) . " batches.");
 
         foreach ($batches as $batchIndex => $batch) {
             $aiElapsed = microtime(true) - $aiExtractionStart;
@@ -421,9 +421,31 @@ class KeywordService
             return $tb <=> $ta;
         });
 
-        $topCandidates = array_slice($clusters, 0, $maxCandidates);
+        // Step 5: Diverse Source Sampling to guarantee every competitor is represented
+        $topCandidates = [];
+        $candidatesBySource = [];
+        foreach ($clusters as $c) {
+            $mainSource = $c['sources'][0] ?? $c['source'] ?? 'General';
+            $candidatesBySource[$mainSource][] = $c;
+        }
 
-        Log::info('[Keyword Radar] Heuristic Engine: Ingested ' . count($rawHeadlines) . ' raw headlines into ' . count($clusters) . ' clusters. Selected top ' . count($topCandidates) . " candidates (Deep: " . ($deepMode ? 'YES' : 'NO') . ") for AI.");
+        // Pass 1: Take top 2 stories from each competitor source
+        foreach ($candidatesBySource as $src => $srcClusters) {
+            $topFromSrc = array_slice($srcClusters, 0, 2);
+            foreach ($topFromSrc as $tc) {
+                $topCandidates[$tc['normalized']] = $tc;
+            }
+        }
+
+        // Pass 2: Fill remaining slots up to $maxCandidates with highest scoring clusters
+        foreach ($clusters as $c) {
+            if (count($topCandidates) >= $maxCandidates) break;
+            $topCandidates[$c['normalized']] = $c;
+        }
+
+        $topCandidates = array_values($topCandidates);
+
+        Log::info('[Keyword Radar] Heuristic Engine: Ingested ' . count($rawHeadlines) . ' raw headlines into ' . count($clusters) . ' clusters. Selected top ' . count($topCandidates) . " source-diverse candidates for AI.");
 
         return $topCandidates;
     }
