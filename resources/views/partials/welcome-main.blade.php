@@ -1,52 +1,52 @@
-        <main class="hero" style="text-align: center; display: flex; flex-direction: column; align-items: center; justify-content: center; min-height: 80vh;">
-            <p class="hero-pretitle" style="color: var(--primary-cyan); font-weight: 800; letter-spacing: 4px; text-transform: uppercase; font-size: 0.8rem; margin-bottom: 1rem; text-shadow: 0 0 15px var(--primary-cyan);">AI Tools For Content & SEO Growth</p>
-            <h1 class="hero-title" style="margin: 0 auto 2rem;">
+        <main class="hero" style="text-align: center; display: flex; flex-direction: column; align-items: center; justify-content: center; min-height: auto; padding: 2rem 1rem 1rem;">
+            <p class="hero-pretitle" style="color: var(--primary-cyan); font-weight: 800; letter-spacing: 3px; text-transform: uppercase; font-size: 0.75rem; margin-bottom: 0.75rem; text-shadow: 0 0 15px var(--primary-cyan);">AI Tools For Content & SEO Growth</p>
+            <h1 class="hero-title" style="margin: 0 auto 1.25rem;">
                 <span class="line-1">The Future is</span>
                 <span class="line-2">
                     <span class="word-vida">VIDA</span>
                     <span class="word-nexus">NEXUS</span>
                 </span>
             </h1>
-            <p class="hero-subtitle" style="margin: 0 auto 3rem; max-width: 800px; font-weight: 400; line-height: 1.8; font-size: clamp(0.95rem, 2vw, 1.25rem);">
+            <p class="hero-subtitle" style="margin: 0 auto 2rem; max-width: 780px; font-weight: 400; line-height: 1.6; font-size: clamp(0.88rem, 1.8vw, 1.15rem);">
                 Supercharge your publishing workflow with specialized AI tools for keyword discovery, trend tracking, and high-ranking article generation. 
                 <span style="color: var(--text-main); font-weight: 600;">Built for SEO growth.</span>
                 <span style="color: var(--primary-cyan); font-weight: 700; text-shadow: 0 0 20px var(--primary-cyan);">Fast, accurate, and actionable.</span>
             </p>
 
             <!-- About The Platform Section: The Vida Nexus Advantage -->
-            <div id="ecosystem" class="mb-16 w-full max-w-7xl mx-auto px-6">
+            <div id="ecosystem" class="w-full max-w-7xl mx-auto px-4" style="margin-bottom: 1.5rem;">
                 <style>
                     .vna-container {
                         text-align: center;
-                        margin-bottom: 4rem;
+                        margin-bottom: 1.25rem;
                     }
                     .vna-badge {
                         display: inline-flex;
                         align-items: center;
-                        gap: 0.5rem;
+                        gap: 0.4rem;
                         background: rgba(56, 189, 248, 0.1);
                         border: 1px solid rgba(56, 189, 248, 0.2);
-                        padding: 0.4rem 0.8rem;
+                        padding: 0.25rem 0.65rem;
                         border-radius: 99px;
                         color: #38bdf8;
-                        font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
-                        font-size: 0.75rem;
+                        font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+                        font-size: 0.68rem;
                         font-weight: 600;
                         text-transform: uppercase;
                         letter-spacing: 0.05em;
-                        margin-bottom: 1.5rem;
+                        margin-bottom: 0.6rem;
                     }
                     .vna-title {
                         font-family: var(--font-heading);
-                        font-size: clamp(2rem, 5vw, 3.5rem);
+                        font-size: clamp(1.5rem, 3.5vw, 2.4rem);
                         font-weight: 800;
                         color: #fff;
-                        margin-bottom: 0.75rem;
-                        letter-spacing: -0.03em;
+                        margin-bottom: 0.35rem;
+                        letter-spacing: -0.02em;
                     }
                     .vna-subtitle {
                         color: var(--text-muted);
-                        font-size: clamp(0.9rem, 2vw, 1.1rem);
+                        font-size: clamp(0.8rem, 1.5vw, 0.95rem);
                         font-weight: 400;
                         opacity: 0.8;
                     }
@@ -54,17 +54,17 @@
                     .vna-grid {
                         display: grid;
                         grid-template-columns: repeat(3, 1fr);
-                        gap: 1.5rem;
+                        gap: 1rem;
                     }
                     .vna-card {
                         background: rgba(255, 255, 255, 0.02);
-                        backdrop-filter: blur(40px) saturate(180%);
-                        -webkit-backdrop-filter: blur(40px) saturate(180%);
-                        border: 1.2px solid rgba(255, 255, 255, 0.08);
-                        border-radius: 24px;
-                        padding: 2.25rem 1.5rem;
+                        backdrop-filter: blur(30px) saturate(180%);
+                        -webkit-backdrop-filter: blur(30px) saturate(180%);
+                        border: 1px solid rgba(255, 255, 255, 0.08);
+                        border-radius: 16px;
+                        padding: 1.25rem 1rem;
                         text-align: center;
-                        transition: all 0.5s cubic-bezier(0.2, 1, 0.3, 1);
+                        transition: all 0.3s ease;
                         position: relative;
                         overflow: hidden;
                         display: flex;
@@ -72,78 +72,76 @@
                         align-items: center;
                     }
                     .vna-card:hover {
-                        transform: translateY(-8px);
+                        transform: translateY(-4px);
                         background: rgba(255, 255, 255, 0.04);
                         border-color: rgba(255, 255, 255, 0.15);
-                        box-shadow: 0 30px 60px -15px rgba(0, 0, 0, 0.6);
                     }
                     
                     .vna-icon-main {
-                        font-size: 2.25rem;
-                        margin-bottom: 1.5rem;
-                        filter: drop-shadow(0 0 15px var(--vna-accent));
-                        transition: transform 0.5s ease;
+                        font-size: 1.5rem;
+                        margin-bottom: 0.75rem;
+                        filter: drop-shadow(0 0 10px var(--vna-accent));
                     }
-                    .vna-card:hover .vna-icon-main { transform: scale(1.1); }
 
                     .vna-dot {
-                        width: 6px;
-                        height: 6px;
+                        width: 5px;
+                        height: 5px;
                         border-radius: 50%;
                         background: var(--vna-accent);
-                        position: relative;
                         display: inline-block;
-                        box-shadow: 0 0 8px var(--vna-accent);
-                    }
-                    .vna-dot::after {
-                        content: '';
-                        position: absolute;
-                        inset: -2px;
-                        border-radius: 50%;
-                        border: 1px solid var(--vna-accent);
-                        animation: vna-pulse 2s infinite;
-                        opacity: 0;
-                    }
-                    @keyframes vna-pulse {
-                        0% { transform: scale(0.8); opacity: 0.8; }
-                        100% { transform: scale(2.5); opacity: 0; }
+                        box-shadow: 0 0 6px var(--vna-accent);
                     }
 
                     .vna-card-title {
                         font-family: var(--font-heading);
-                        font-size: 1.25rem;
+                        font-size: 1.05rem;
                         font-weight: 800;
                         color: #fff;
-                        margin-bottom: 0.75rem;
-                        letter-spacing: -0.01em;
+                        margin-bottom: 0.4rem;
                         display: flex;
                         align-items: center;
                         justify-content: center;
-                        gap: 0.6rem;
+                        gap: 0.5rem;
                     }
                     .vna-card-desc {
-                        font-size: 0.85rem;
+                        font-size: 0.78rem;
                         color: var(--text-muted);
-                        line-height: 1.6;
+                        line-height: 1.45;
                         font-weight: 400;
-                        opacity: 0.8;
+                        opacity: 0.85;
+                        margin: 0;
                     }
 
-                    @media (max-width: 1024px) {
-                        .vna-grid { grid-template-columns: 1fr; max-width: 450px; margin: 0 auto; gap: 2rem; }
+                    @media (max-width: 768px) {
+                        .vna-grid {
+                            display: flex;
+                            overflow-x: auto;
+                            gap: 0.75rem;
+                            padding: 0.25rem 0.25rem 0.5rem;
+                            scroll-snap-type: x mandatory;
+                            -webkit-overflow-scrolling: touch;
+                            scrollbar-width: none;
+                        }
+                        .vna-grid::-webkit-scrollbar { display: none; }
+                        .vna-card {
+                            flex: 0 0 82%;
+                            min-width: 250px;
+                            scroll-snap-align: center;
+                            padding: 1.1rem 0.9rem;
+                        }
                     }
 
                     [data-theme="light"] .vna-card {
                         background: rgba(255, 255, 255, 0.95);
                         border-color: rgba(0, 0, 0, 0.08);
-                        box-shadow: 0 15px 30px rgba(0, 0, 0, 0.05);
+                        box-shadow: 0 10px 25px rgba(0, 0, 0, 0.04);
                     }
                     [data-theme="light"] .vna-title, [data-theme="light"] .vna-card-title { color: #0f172a; }
                 </style>
 
                 <div class="vna-container">
                     <div class="vna-badge">
-                        <i class="fas fa-laptop-code" style="margin-right: 0.4rem;"></i>
+                        <i class="fas fa-laptop-code"></i>
                         SOFTWARE HOUSE
                     </div>
                     <h2 class="vna-title">The Vida Nexus <span style="background: linear-gradient(to right, #38bdf8, #818cf8); -webkit-background-clip: text; -webkit-text-fill-color: transparent;">Advantage</span></h2>
@@ -160,7 +158,7 @@
                             <span class="vna-dot"></span>
                             Specialized SEO Tools
                         </h3>
-                        <p class="vna-card-desc">From real-time keyword radars to headline analyzers and article writers, access tools built for real-world publishing workflows.</p>
+                        <p class="vna-card-desc">Real-time keyword radars, headline analyzers, and article writers built for publishing workflows.</p>
                     </div>
 
                     <!-- Feature 2: Pay-As-You-Go Credits -->
@@ -172,7 +170,7 @@
                             <span class="vna-dot"></span>
                             Pay-As-You-Go Credits
                         </h3>
-                        <p class="vna-card-desc">Only pay for what you actually use. Top up your wallet with transparent credit pricing, zero waste, and complete budget control.</p>
+                        <p class="vna-card-desc">Only pay for what you use. Transparent wallet credit pricing, zero waste, and complete control.</p>
                     </div>
 
                     <!-- Feature 3: Fast & Reliable -->
@@ -184,7 +182,7 @@
                             <span class="vna-dot"></span>
                             Fast & Reliable
                         </h3>
-                        <p class="vna-card-desc">Built on high-speed cloud infrastructure to deliver real-time news scans, deep competitor insights, and rapid generation 24/7.</p>
+                        <p class="vna-card-desc">High-speed cloud infrastructure delivering real-time scans, competitor insights, and 24/7 AI output.</p>
                     </div>
                 </div>
             </div>
@@ -195,13 +193,13 @@
                     .vna-stats-bar-wrapper {
                         width: 100%;
                         max-width: 1100px;
-                        margin: 2rem auto 6rem auto;
+                        margin: 0.5rem auto 2rem auto;
                         background: rgba(255, 255, 255, 0.03);
                         backdrop-filter: blur(25px) saturate(200%);
                         -webkit-backdrop-filter: blur(25px) saturate(200%);
                         border: 1px solid rgba(255, 255, 255, 0.08);
-                        border-radius: 20px;
-                        padding: 2.5rem 1rem;
+                        border-radius: 16px;
+                        padding: 1rem 1.5rem;
                         z-index: 10;
                     }
                     .vna-stats-container {
@@ -216,28 +214,25 @@
                     }
                     .vna-stat-value {
                         font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
-                        font-size: 2.25rem;
+                        font-size: 1.8rem;
                         font-weight: 900;
                         display: block;
-                        margin-bottom: 0.5rem;
-                        letter-spacing: -0.05em;
-                        text-shadow: 0 0 20px rgba(255, 255, 255, 0.2);
+                        margin-bottom: 0.2rem;
+                        letter-spacing: -0.04em;
                     }
                     .vna-stat-label {
-                        font-size: 0.7rem;
+                        font-size: 0.65rem;
                         color: var(--text-muted);
                         text-transform: uppercase;
-                        letter-spacing: 0.2em;
+                        letter-spacing: 0.12em;
                         font-weight: 700;
-                        opacity: 0.6;
-                    }
-                    @media (max-width: 900px) {
-                        .vna-stat-value { font-size: 1.75rem; }
-                        .vna-stat-label { font-size: 0.6rem; }
+                        opacity: 0.7;
                     }
                     @media (max-width: 768px) {
-                        .vna-stats-container { flex-direction: column; gap: 3rem; }
-                        .vna-stats-bar-wrapper { margin-bottom: 4rem; padding: 3rem 1rem; }
+                        .vna-stats-bar-wrapper { margin: 0.5rem auto 1.5rem auto; padding: 0.75rem 0.5rem; border-radius: 12px; }
+                        .vna-stats-container { display: grid; grid-template-columns: repeat(4, 1fr); gap: 0.25rem; }
+                        .vna-stat-value { font-size: 1.3rem; margin-bottom: 0.1rem; }
+                        .vna-stat-label { font-size: 0.52rem; letter-spacing: 0.04em; }
                     }
                 </style>
                 <div class="vna-stats-container">
@@ -251,28 +246,28 @@
                         $comingSoonCount = count($tools) - $activeCount;
                     @endphp
                     <div class="vna-stat-item">
-                        <span class="vna-stat-value" style="color: #00A58B; text-shadow: 0 0 20px rgba(16, 185, 129, 0.3);">{{ $activeCount }}</span>
+                        <span class="vna-stat-value" style="color: #00A58B; text-shadow: 0 0 15px rgba(16, 185, 129, 0.3);">{{ $activeCount }}</span>
                         <span class="vna-stat-label">Active Tools</span>
                     </div>
                     <div class="vna-stat-item">
-                        <span class="vna-stat-value" style="color: #f59e0b; text-shadow: 0 0 20px rgba(245, 158, 11, 0.3);">{{ $comingSoonCount }}</span>
+                        <span class="vna-stat-value" style="color: #f59e0b; text-shadow: 0 0 15px rgba(245, 158, 11, 0.3);">{{ $comingSoonCount }}</span>
                         <span class="vna-stat-label">Coming Soon</span>
                     </div>
                     <div class="vna-stat-item">
-                        <span class="vna-stat-value" style="color: #38bdf8; text-shadow: 0 0 20px rgba(56, 189, 248, 0.3);">100+</span>
+                        <span class="vna-stat-value" style="color: #38bdf8; text-shadow: 0 0 15px rgba(56, 189, 248, 0.3);">100+</span>
                         <span class="vna-stat-label">Active Clients</span>
                     </div>
                     <div class="vna-stat-item">
-                        <span class="vna-stat-value" style="color: #a855f7; text-shadow: 0 0 20px rgba(168, 85, 247, 0.3);">20+</span>
+                        <span class="vna-stat-value" style="color: #a855f7; text-shadow: 0 0 15px rgba(168, 85, 247, 0.3);">20+</span>
                         <span class="vna-stat-label">Partnerships</span>
                     </div>
                 </div>
             </div>
-            <h2 id="tools" style="font-family: var(--font-heading); font-size: 2rem; margin-bottom: 3.5rem;">Exploration Deck</h2>
+            <h2 id="tools" style="font-family: var(--font-heading); font-size: 1.8rem; margin: 0.5rem 0 1.25rem;">Exploration Deck</h2>
 
             <div x-data="{ filter: 'all' }" style="width: 100%;">
                 <!-- Filter Bar -->
-                <div class="filter-bar">
+                <div class="filter-bar" style="margin-bottom: 1.5rem;">
                     <button @click="filter = 'all'" :class="filter === 'all' ? 'active' : ''" class="filter-btn">
                         <i class="fas fa-th-large mr-2"></i> All Tools
                     </button>
