@@ -256,12 +256,20 @@ class KeywordService
             return ['keywords' => [], 'headlines_count' => 0];
         }
 
-        // Mode and Admin Depth determine how many candidates to process
-        // Mode and Admin Depth determine how many candidates to process
+        // Dynamically scale candidate capacity based on time filter to capture all competitor stories
         $adminDepth = (int) \App\Models\Setting::get('ai-keyword-radar_scraping_depth', 50);
         $isMax = ($mode === 'max' || $adminDepth >= 300);
         $isDeep = ($mode === 'deep' || $isMax || $adminDepth >= 80);
-        $maxCandidates = $isMax ? 45 : ($isDeep ? 35 : 30);
+
+        if ($timeFilter === 'all' || $timeFilter === 'unlimited') {
+            $defaultCap = 200;
+        } elseif ($timeFilter === '24h' || $timeFilter === '1d') {
+            $defaultCap = 120;
+        } else {
+            $defaultCap = 60;
+        }
+
+        $maxCandidates = $isMax ? max($defaultCap, 250) : ($isDeep ? max($defaultCap, 150) : $defaultCap);
 
         // === STEP 1: Algorithmic Pre-AI Heuristic Scoring & Diverse Clustering ===
         $headlines = $this->scoreAndClusterHeadlines($rawHeadlines, $lang, $maxCandidates, $isDeep);
@@ -270,14 +278,14 @@ class KeywordService
             return ['keywords' => [], 'headlines_count' => 0];
         }
 
-        // === STEP 2: AI Keyword Extraction — Ultra-Fast Single Batch ===
+        // === STEP 2: AI Keyword Extraction — High-Throughput Batches ===
         $allKeywords = [];
         $aiExtractionStart = microtime(true);
-        $batchSize = $maxCandidates; // Process all candidates in 1 single high-efficiency AI call
-        $timeBudgetSeconds = 15;
+        $batchSize = 25;
+        $timeBudgetSeconds = 45;
 
         $batches = array_chunk($headlines, $batchSize);
-        Log::info("[Keyword Radar] AI extraction [Mode: {$mode}]: " . count($headlines) . ' prioritized candidates across all competitors in ' . count($batches) . " batch(es).");
+        Log::info("[Keyword Radar] AI extraction [Mode: {$mode} / Filter: {$timeFilter}]: " . count($headlines) . ' prioritized candidates across all competitors in ' . count($batches) . " batch(es).");
 
         foreach ($batches as $batchIndex => $batch) {
             $aiElapsed = microtime(true) - $aiExtractionStart;
@@ -429,9 +437,9 @@ class KeywordService
             $candidatesBySource[$mainSource][] = $c;
         }
 
-        // Pass 1: Take top 2 stories from each competitor source
+        // Pass 1: Take up to 4 top stories from each competitor source
         foreach ($candidatesBySource as $src => $srcClusters) {
-            $topFromSrc = array_slice($srcClusters, 0, 2);
+            $topFromSrc = array_slice($srcClusters, 0, 4);
             foreach ($topFromSrc as $tc) {
                 $topCandidates[$tc['normalized']] = $tc;
             }
