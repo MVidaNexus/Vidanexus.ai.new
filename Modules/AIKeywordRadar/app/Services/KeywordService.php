@@ -261,7 +261,7 @@ class KeywordService
         $adminDepth = (int) \App\Models\Setting::get('ai-keyword-radar_scraping_depth', 50);
         $isMax = ($mode === 'max' || $adminDepth >= 300);
         $isDeep = ($mode === 'deep' || $isMax || $adminDepth >= 80);
-        $maxCandidates = $isMax ? 100 : ($isDeep ? 80 : 60);
+        $maxCandidates = $isMax ? 45 : ($isDeep ? 35 : 30);
 
         // === STEP 1: Algorithmic Pre-AI Heuristic Scoring & Diverse Clustering ===
         $headlines = $this->scoreAndClusterHeadlines($rawHeadlines, $lang, $maxCandidates, $isDeep);
@@ -270,14 +270,14 @@ class KeywordService
             return ['keywords' => [], 'headlines_count' => 0];
         }
 
-        // === STEP 2: AI Keyword Extraction — High-throughput batched generation ===
+        // === STEP 2: AI Keyword Extraction — Ultra-Fast Single Batch ===
         $allKeywords = [];
         $aiExtractionStart = microtime(true);
-        $batchSize = 20;
-        $timeBudgetSeconds = 60;
+        $batchSize = $maxCandidates; // Process all candidates in 1 single high-efficiency AI call
+        $timeBudgetSeconds = 15;
 
         $batches = array_chunk($headlines, $batchSize);
-        Log::info("[Keyword Radar] AI extraction [Mode: {$mode}]: " . count($headlines) . ' prioritized candidates across all competitors in ' . count($batches) . " batches.");
+        Log::info("[Keyword Radar] AI extraction [Mode: {$mode}]: " . count($headlines) . ' prioritized candidates across all competitors in ' . count($batches) . " batch(es).");
 
         foreach ($batches as $batchIndex => $batch) {
             $aiElapsed = microtime(true) - $aiExtractionStart;
