@@ -579,7 +579,6 @@ class KeywordService
             $url . '/sitemap-news.xml',
             $url . '/news-sitemap.xml',
             $url . '/sitemap.xml',
-            $url . '/sitemap_index.xml',
         ];
 
         foreach ($sitemapUrls as $sitemapUrl) {
@@ -587,11 +586,17 @@ class KeywordService
                 $response = Http::withHeaders([
                     'User-Agent' => $userAgent,
                     'Accept' => 'application/xml, text/xml, */*'
-                ])->timeout(12)->get($sitemapUrl);
+                ])->timeout(8)->get($sitemapUrl);
                 
                 if (!$response->successful()) continue;
 
-                $xml = @simplexml_load_string($response->body());
+                $body = $response->body();
+                // Guard: Don't parse XML files larger than 1.5MB to protect server memory
+                if (empty($body) || strlen($body) > 1572864) {
+                    continue;
+                }
+
+                $xml = @simplexml_load_string($body);
                 if (!$xml) continue;
 
                 $items = [];
@@ -613,7 +618,9 @@ class KeywordService
                 // Standard sitemap URL-slug fallback for blogs and e-commerce stores (Arabic & English)
                 if (empty($items)) {
                     $urls = $xml->xpath('//s:url');
+                    $count = 0;
                     foreach ($urls as $node) {
+                        if (++$count > 100) break; // Limit to top 100 entries to prevent memory bloating
                         $lastmod = (string) $node->lastmod;
                         $loc = (string) $node->loc;
                         if (empty($loc)) continue;
@@ -851,8 +858,9 @@ class KeywordService
 
         Log::info("[Keyword Radar] Processing ALL " . count($competitorUrls) . " competitors. [Filter: {$filterLabel}] [Mode: {$mode}]");
 
-        @ini_set('memory_limit', '-1');
+        @ini_set('memory_limit', '1024M');
         @ini_set('max_execution_time', 300);
+        @set_time_limit(300);
         $allHeadlines = [];
         $userAgent = $this->getRandomUserAgent();
         $needsFallback = [];
