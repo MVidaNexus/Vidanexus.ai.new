@@ -334,14 +334,14 @@ class AIKeywordRadarController extends Controller
 
             Log::info("[Keyword Radar Sync] Job dispatched for user #{$user->id} ({$lang}) Filter: {$timeFilter} Mode: {$mode}");
 
-            // Spawn queue worker targeting only the keyword-radar queue with 512M memory
-            $php = PHP_BINARY;
+            // Spawn queue worker targeting only the keyword-radar queue
+            $php = $this->getCliPhpBinary();
             $artisan = base_path('artisan');
             $logFile = storage_path('logs/queue-worker.log');
-            $cmd = "nohup {$php} -d memory_limit=512M {$artisan} queue:work --queue=keyword-radar --once --timeout=300 >> {$logFile} 2>&1 &";
+            $cmd = "nohup {$php} {$artisan} queue:work --queue=keyword-radar --once --timeout=300 >> {$logFile} 2>&1 &";
             exec($cmd);
             
-            Log::info("[Keyword Radar Sync] Queue worker spawned in background.");
+            Log::info("[Keyword Radar Sync] Queue worker spawned in background with {$php}.");
 
             $boxLabel = $boxId ? " (Custom Box)" : " (" . ($lang === 'en' ? 'EN' : 'AR') . ")";
             $filterLabel = $this->service->describeTimeFilter($timeFilter);
@@ -527,5 +527,37 @@ class AIKeywordRadarController extends Controller
         }
 
         return $clean;
+    }
+
+    /**
+     * Locate the real CLI PHP executable path across various server environments.
+     */
+    protected function getCliPhpBinary(): string
+    {
+        $candidates = [
+            '/usr/local/bin/php',
+            '/opt/alt/php83/usr/bin/php',
+            '/opt/alt/php82/usr/bin/php',
+            '/opt/cpanel/ea-php83/root/usr/bin/php',
+            '/opt/cpanel/ea-php82/root/usr/bin/php',
+            '/usr/bin/php',
+        ];
+
+        foreach ($candidates as $candidate) {
+            if (@file_exists($candidate) && @is_executable($candidate)) {
+                return $candidate;
+            }
+        }
+
+        $binary = PHP_BINARY;
+        if (!empty($binary)) {
+            $lower = strtolower($binary);
+            if (str_contains($lower, 'lsphp') || str_contains($lower, 'fpm') || str_contains($lower, 'cgi')) {
+                return 'php';
+            }
+            return $binary;
+        }
+
+        return 'php';
     }
 }
