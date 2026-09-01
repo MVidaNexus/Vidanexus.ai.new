@@ -42,7 +42,9 @@ class AuthController extends Controller
 
     public function login(LoginUserRequest $request): \Illuminate\Http\RedirectResponse
     {
-        if (Auth::attempt($request->only('email', 'password'))) {
+        $remember = $request->boolean('remember', true);
+
+        if (Auth::attempt($request->only('email', 'password'), $remember)) {
             $request->session()->regenerate();
 
             if (! Auth::user()->hasVerifiedEmail()) {

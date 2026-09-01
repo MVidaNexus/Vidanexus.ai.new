@@ -91,7 +91,7 @@ class UserRegistrationService
                 Log::error('Failed sending verification email on registration: ' . $e->getMessage(), ['user_id' => $user->id]);
             }
 
-            Auth::login($user);
+            Auth::login($user, remember: true);
 
             $crsMsg = $beginnerCredits > 0
                 ? ' You have received '.number_format($beginnerCredits).' welcome CRS in your wallet.'
@@ -102,7 +102,7 @@ class UserRegistrationService
         }
 
         $user->markEmailAsVerified();
-        Auth::login($user);
+        Auth::login($user, remember: true);
 
         $crsMsg = $beginnerCredits > 0
             ? ' You have received '.number_format($beginnerCredits).' welcome CRS in your wallet.'

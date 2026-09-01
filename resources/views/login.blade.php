@@ -50,6 +50,13 @@
                         </div>
                     </div>
 
+                    <div style="margin-bottom: 1.5rem; display: flex; align-items: center; justify-content: space-between;">
+                        <label style="display: flex; align-items: center; gap: 0.5rem; cursor: pointer; color: var(--text-muted); font-size: 0.85rem; user-select: none;">
+                            <input type="checkbox" name="remember" value="1" checked style="accent-color: var(--primary-cyan); width: 16px; height: 16px; border-radius: 4px; cursor: pointer;">
+                            <span>Keep me signed in</span>
+                        </label>
+                    </div>
+
                     <button type="submit" class="notify-btn" style="width: 100%; justify-content: center;">
                         <span>Authenticate Access</span>
                         <i class="fas fa-shield-alt"></i>
