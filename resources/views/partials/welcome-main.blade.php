@@ -362,8 +362,8 @@
                 @if($comingSoonCount > 0)
                     <div style="margin: 2.5rem auto 1rem auto; text-align: center;">
                         <div style="display: inline-flex; align-items: center; gap: 0.75rem; padding: 0.55rem 1.25rem; background: rgba(255, 255, 255, 0.03); border: 1px solid rgba(255, 255, 255, 0.08); border-radius: 99px; backdrop-filter: blur(20px); max-width: 90%; flex-wrap: wrap; justify-content: center;">
-                            <span style="display: inline-flex; align-items: center; justify-content: center; width: 18px; height: 18px; border-radius: 50%; background: rgba(0, 168, 230, 0.2); color: var(--primary-cyan); font-size: 0.65rem;">
-                                <i class="fas fa-sparkles"></i>
+                            <span style="display: inline-flex; align-items: center; justify-content: center; width: 22px; height: 22px; border-radius: 50%; background: rgba(0, 168, 230, 0.18); border: 1px solid rgba(0, 168, 230, 0.4); color: var(--primary-cyan, #00A8E6); font-size: 0.72rem; box-shadow: 0 0 10px rgba(0, 168, 230, 0.3);">
+                                <i class="fas fa-wand-magic-sparkles"></i>
                             </span>
                             <span style="font-size: 0.8rem; color: var(--text-muted); font-weight: 500;">
                                 <strong style="color: #fff; font-weight: 700;">+{{ $comingSoonCount }} More AI Tools</strong> in active pipeline for Content, Marketing & Market Intelligence.
