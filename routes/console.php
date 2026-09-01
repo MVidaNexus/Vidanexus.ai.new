@@ -11,7 +11,8 @@ Artisan::command('inspire', function () {
     $this->comment(Inspiring::quote());
 })->purpose('Display an inspiring quote');
 
-Artisan::command('radar:clean-duplicates {user_id=1}', function ($userId) {
+Artisan::command('radar:clean-duplicates {user_id=1}', function () {
+    $userId = (int) $this->argument('user_id');
     $del = \Illuminate\Support\Facades\DB::table('ai_keywords')->where('user_id', $userId)->where(function($q) {
         $q->where('keyword', 'like', '% في')
           ->orWhere('keyword', 'like', '% من')
@@ -27,7 +28,7 @@ Artisan::command('radar:clean-duplicates {user_id=1}', function ($userId) {
         return ['id' => $k->id, 'text' => $k->keyword, 'headline_title' => $k->headline_title];
     })->toArray();
 
-    $kept = $service->filterSimilarKeywords($arr, 0.50, (int)$userId);
+    $kept = $service->filterSimilarKeywords($arr, 0.50, $userId);
     $keptIds = array_column($kept, 'id');
 
     $deletedDupes = \Modules\AIKeywordRadar\Models\Keyword::where('user_id', $userId)
