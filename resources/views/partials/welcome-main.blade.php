@@ -251,30 +251,21 @@
                     }
                 </style>
                 <div class="vna-stats-container">
-                    @php 
-                        $activeCount = 0;
-                        foreach($tools as $t) {
-                            if (\App\Models\Setting::get("tool_available_{$t['slug']}", false)) {
-                                $activeCount++;
-                            }
-                        }
-                        $comingSoonCount = count($tools) - $activeCount;
-                    @endphp
                     <div class="vna-stat-item">
-                        <span class="vna-stat-value" style="color: #00A58B; text-shadow: 0 0 15px rgba(16, 185, 129, 0.3);">{{ $activeCount }}</span>
-                        <span class="vna-stat-label">Active Tools</span>
+                        <span class="vna-stat-value" style="color: #00f3ff; text-shadow: 0 0 15px rgba(0, 243, 255, 0.35);">100K+</span>
+                        <span class="vna-stat-label">Keywords Scanned</span>
                     </div>
                     <div class="vna-stat-item">
-                        <span class="vna-stat-value" style="color: #f59e0b; text-shadow: 0 0 15px rgba(245, 158, 11, 0.3);">{{ $comingSoonCount }}</span>
-                        <span class="vna-stat-label">Coming Soon</span>
+                        <span class="vna-stat-value" style="color: #10b981; text-shadow: 0 0 15px rgba(16, 185, 129, 0.35);">99.9%</span>
+                        <span class="vna-stat-label">Real-Time Uptime</span>
                     </div>
                     <div class="vna-stat-item">
-                        <span class="vna-stat-value" style="color: #38bdf8; text-shadow: 0 0 15px rgba(56, 189, 248, 0.3);">100+</span>
-                        <span class="vna-stat-label">Active Clients</span>
+                        <span class="vna-stat-value" style="color: #38bdf8; text-shadow: 0 0 15px rgba(56, 189, 248, 0.35);">100+</span>
+                        <span class="vna-stat-label">Active Publishers</span>
                     </div>
                     <div class="vna-stat-item">
-                        <span class="vna-stat-value" style="color: #a855f7; text-shadow: 0 0 15px rgba(168, 85, 247, 0.3);">20+</span>
-                        <span class="vna-stat-label">Partnerships</span>
+                        <span class="vna-stat-value" style="color: #a855f7; text-shadow: 0 0 15px rgba(168, 85, 247, 0.35);">24/7</span>
+                        <span class="vna-stat-label">Autonomous Scans</span>
                     </div>
                 </div>
             </div>
