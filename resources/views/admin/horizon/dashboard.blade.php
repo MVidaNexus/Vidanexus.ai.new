@@ -91,17 +91,28 @@
     </div>
 </div>
 
-<h2 style="font-family: 'Space+Grotesk', sans-serif; font-size: 1.4rem; margin-bottom: 1.5rem;">Platform AI Tools</h2>
+<div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem; flex-wrap: wrap; gap: 1rem;">
+    <h2 style="font-family: 'Space+Grotesk', sans-serif; font-size: 1.4rem; margin: 0;">Platform AI Tools</h2>
+    <div style="display: flex; gap: 0.5rem;" id="adminToolFilterTabs">
+        <button type="button" onclick="filterAdminTools('all')" class="admin-tab-btn active" data-filter="all" style="padding: 0.4rem 0.9rem; border-radius: 8px; font-size: 0.8rem; font-weight: 600; cursor: pointer; background: var(--primary-admin); color: #000; border: none;">All Tools</button>
+        <button type="button" onclick="filterAdminTools('active')" class="admin-tab-btn" data-filter="active" style="padding: 0.4rem 0.9rem; border-radius: 8px; font-size: 0.8rem; font-weight: 600; cursor: pointer; background: rgba(255,255,255,0.05); color: var(--text-muted); border: 1px solid var(--horizon-border);">⚡ Live Only</button>
+        <button type="button" onclick="filterAdminTools('maintenance')" class="admin-tab-btn" data-filter="maintenance" style="padding: 0.4rem 0.9rem; border-radius: 8px; font-size: 0.8rem; font-weight: 600; cursor: pointer; background: rgba(255,255,255,0.05); color: var(--text-muted); border: 1px solid var(--horizon-border);">🔒 Coming Soon</button>
+    </div>
+</div>
+
 <div class="horizon-tools-grid">
     @foreach($tools as $tool)
-        <a href="{{ route('admin.horizon.show', $tool['slug']) }}" class="tool-card-link">
+        @php
+            $isLiveAvail = (bool) App\Models\Setting::get("tool_available_{$tool['slug']}", false);
+            $isActive = $isLiveAvail || App\Models\Setting::get($tool['slug'] . '_active', false);
+        @endphp
+        <a href="{{ route('admin.horizon.show', $tool['slug']) }}" class="tool-card-link" data-tool-status="{{ $isLiveAvail ? 'active' : 'maintenance' }}">
             <div class="card-admin tool-card">
                 <div style="position: absolute; top: 0; right: 0; padding: 1rem; opacity: 0.1; font-size: 4rem;">
                     <i class="fas {{ $tool['icon'] }}"></i>
                 </div>
-                @php $isActive = App\Models\Setting::get($tool['slug'] . '_active', true); @endphp
-                <div style="position: absolute; top: 1rem; right: 1rem; font-size: 0.6rem; font-weight: 800; padding: 2px 8px; border-radius: 4px; background: {{ $isActive ? 'rgba(0, 255, 170, 0.1)' : 'rgba(255, 75, 75, 0.1)' }}; color: {{ $isActive ? 'var(--horizon-success)' : '#ff4b4b' }}; border: 1px solid {{ $isActive ? 'rgba(0, 255, 170, 0.2)' : 'rgba(255, 75, 75, 0.2)' }};">
-                    {{ $isActive ? 'ACTIVE' : 'MAINTENANCE' }}
+                <div style="position: absolute; top: 1rem; right: 1rem; font-size: 0.65rem; font-weight: 800; padding: 2px 8px; border-radius: 4px; background: {{ $isLiveAvail ? 'rgba(0, 255, 170, 0.1)' : 'rgba(255, 75, 75, 0.1)' }}; color: {{ $isLiveAvail ? 'var(--horizon-success)' : '#ff4b4b' }}; border: 1px solid {{ $isLiveAvail ? 'rgba(0, 255, 170, 0.2)' : 'rgba(255, 75, 75, 0.2)' }};">
+                    {{ $isLiveAvail ? '● LIVE' : 'COMING SOON' }}
                 </div>
                 <div style="display: flex; align-items: center; gap: 1rem; margin-bottom: 1.5rem;">
                     <div style="width: 40px; height: 40px; border-radius: 10px; background: var(--horizon-icon-bg); display: flex; align-items: center; justify-content: center; color: {{ $tool['color'] }}">
@@ -133,4 +144,33 @@
         </a>
     @endforeach
 </div>
+
+@push('scripts')
+<script>
+function filterAdminTools(type) {
+    const buttons = document.querySelectorAll('#adminToolFilterTabs .admin-tab-btn');
+    buttons.forEach(btn => {
+        if (btn.getAttribute('data-filter') === type) {
+            btn.style.background = 'var(--primary-admin)';
+            btn.style.color = '#000';
+            btn.style.border = 'none';
+        } else {
+            btn.style.background = 'rgba(255,255,255,0.05)';
+            btn.style.color = 'var(--text-muted)';
+            btn.style.border = '1px solid var(--horizon-border)';
+        }
+    });
+
+    const cards = document.querySelectorAll('.horizon-tools-grid .tool-card-link');
+    cards.forEach(card => {
+        const status = card.getAttribute('data-tool-status');
+        if (type === 'all' || status === type) {
+            card.style.display = 'block';
+        } else {
+            card.style.display = 'none';
+        }
+    });
+}
+</script>
+@endpush
 @endsection

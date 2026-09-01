@@ -624,6 +624,33 @@
             </a>
         </div>
 
+        @php
+            $allSystemTools = config('tools.all_tools', []);
+            $activeToolsList = collect($allSystemTools)->filter(function($t) {
+                return (bool) \App\Models\Setting::get("tool_available_{$t['slug']}", false);
+            });
+        @endphp
+
+        @if($activeToolsList->isNotEmpty())
+        <div class="nav-group" style="margin-bottom: 1.25rem;">
+            <div class="nav-label" style="display: flex; align-items: center; justify-content: space-between; color: #10b981; font-weight: 700; letter-spacing: 0.5px;">
+                <span><i class="fas fa-bolt" style="margin-right: 5px;"></i> Active Live Tools</span>
+                <span style="background: rgba(16, 185, 129, 0.15); color: #10b981; border: 1px solid rgba(16, 185, 129, 0.3); font-size: 0.65rem; padding: 2px 8px; border-radius: 20px; font-weight: 800;">{{ $activeToolsList->count() }} LIVE</span>
+            </div>
+            <div style="display: flex; flex-direction: column; gap: 2px; background: rgba(16, 185, 129, 0.03); border-radius: 10px; border: 1px solid rgba(16, 185, 129, 0.1); padding: 4px;">
+                @foreach($activeToolsList as $at)
+                    <a href="{{ route('admin.horizon.show', $at['slug']) }}" class="nav-link {{ request()->segment(3) == $at['slug'] ? 'active' : '' }}" style="display: flex; align-items: center; justify-content: space-between; border-radius: 8px; padding: 0.55rem 0.8rem;">
+                        <span style="display: flex; align-items: center; gap: 0.65rem; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">
+                            <i class="fas {{ $at['icon'] ?? 'fa-cube' }}" style="color: {{ $at['color'] ?? '#00A8E6' }}; font-size: 0.85rem; width: 16px; text-align: center;"></i>
+                            <span style="font-weight: 500; font-size: 0.85rem;">{{ $at['name'] }}</span>
+                        </span>
+                        <span style="width: 7px; height: 7px; border-radius: 50%; background: #10b981; box-shadow: 0 0 8px #10b981; flex-shrink: 0;"></span>
+                    </a>
+                @endforeach
+            </div>
+        </div>
+        @endif
+
         <div class="nav-group">
             <div class="nav-label">AI Tool Control</div>
             @php
