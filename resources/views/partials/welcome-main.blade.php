@@ -278,32 +278,92 @@
                     </div>
                 </div>
             </div>
-            <h2 id="tools" style="font-family: var(--font-heading); font-size: 1.8rem; margin: 0.5rem 0 1.25rem;">Exploration Deck</h2>
+            <h2 id="tools" style="font-family: var(--font-heading); font-size: clamp(1.4rem, 3vw, 2rem); margin: 0.5rem 0 1rem; color: #fff;">AI Tools & Solutions</h2>
 
             <div x-data="{ filter: 'all' }" style="width: 100%;">
                 <!-- Filter Bar -->
-                <div class="filter-bar" style="margin-bottom: 1.5rem;">
+                <div class="filter-bar" style="margin-bottom: 1.25rem;">
                     <button @click="filter = 'all'" :class="filter === 'all' ? 'active' : ''" class="filter-btn">
-                        <i class="fas fa-th-large mr-2"></i> All Tools
+                        <i class="fas fa-th-large mr-1"></i> All Tools
                     </button>
                     <button @click="filter = 'seo'" :class="filter === 'seo' ? 'active' : ''" class="filter-btn">
-                        <i class="fas fa-search mr-2"></i> SEO & Search
+                        <i class="fas fa-search mr-1"></i> SEO & Search
                     </button>
                     <button @click="filter = 'marketing'" :class="filter === 'marketing' ? 'active' : ''" class="filter-btn">
-                        <i class="fas fa-bullhorn mr-2"></i> Marketing & Ads
+                        <i class="fas fa-bullhorn mr-1"></i> Marketing & Ads
                     </button>
                     <button @click="filter = 'content'" :class="filter === 'content' ? 'active' : ''" class="filter-btn">
-                        <i class="fas fa-pen-nib mr-2"></i> Content & Writing
+                        <i class="fas fa-pen-nib mr-1"></i> Content & Writing
                     </button>
                     <button @click="filter = 'intelligence'" :class="filter === 'intelligence' ? 'active' : ''" class="filter-btn">
-                        <i class="fas fa-brain mr-2"></i> Intelligence
+                        <i class="fas fa-brain mr-1"></i> Intelligence
                     </button>
                     <button @click="filter = 'tools'" :class="filter === 'tools' ? 'active' : ''" class="filter-btn">
-                        <i class="fas fa-toolbox mr-2"></i> Power Tools
+                        <i class="fas fa-toolbox mr-1"></i> Power Tools
                     </button>
                 </div>
 
 <style>
+/* Responsive Mobile Optimization for AI Tools & Solutions */
+@media (max-width: 768px) {
+    .filter-bar {
+        display: flex !important;
+        flex-wrap: wrap !important;
+        justify-content: center !important;
+        gap: 0.35rem !important;
+        margin-bottom: 1rem !important;
+    }
+    .filter-btn {
+        padding: 0.32rem 0.65rem !important;
+        font-size: 0.72rem !important;
+        border-radius: 20px !important;
+    }
+    .filter-btn i {
+        font-size: 0.68rem !important;
+        margin-right: 0.2rem !important;
+    }
+    .tools-grid {
+        display: grid !important;
+        grid-template-columns: repeat(2, 1fr) !important;
+        gap: 0.6rem !important;
+    }
+    .tool-card {
+        padding: 0.9rem 0.65rem !important;
+        border-radius: 14px !important;
+    }
+    .tool-icon {
+        width: 36px !important;
+        height: 36px !important;
+        font-size: 1rem !important;
+        border-radius: 10px !important;
+        margin-bottom: 0.5rem !important;
+    }
+    .tool-card h3 {
+        font-size: 0.9rem !important;
+        margin-bottom: 0.25rem !important;
+        line-height: 1.25 !important;
+    }
+    .tool-card p {
+        font-size: 0.7rem !important;
+        line-height: 1.35 !important;
+        margin-bottom: 0.65rem !important;
+        opacity: 0.8 !important;
+    }
+    .tool-card .vn-btn {
+        padding: 0.4rem 0.5rem !important;
+        font-size: 0.72rem !important;
+        border-radius: 8px !important;
+    }
+    .coming-soon-pill {
+        padding: 0.45rem 0.85rem !important;
+        font-size: 0.68rem !important;
+        letter-spacing: 1px !important;
+    }
+    .coming-soon-pill i {
+        font-size: 0.75rem !important;
+    }
+}
+
 /* 100% Image-Style Heavy Blur on Coming Soon Tool Cards */
 .tool-card.is-coming-soon,
 .dash-tool-card.is-coming-soon {
@@ -349,13 +409,13 @@
     display: inline-flex !important;
     align-items: center !important;
     gap: 0.6rem !important;
-    padding: 0.7rem 1.4rem !important;
+    padding: 0.7rem 1.4rem;
     background: rgba(15, 23, 42, 0.92) !important;
     border: 1px solid rgba(0, 168, 230, 0.5) !important;
     border-radius: 50px !important;
     box-shadow: 0 0 30px rgba(0, 168, 230, 0.35), inset 0 0 12px rgba(0, 168, 230, 0.15) !important;
     color: #ffffff !important;
-    font-size: 0.82rem !important;
+    font-size: 0.82rem;
     font-weight: 900 !important;
     letter-spacing: 2px !important;
     text-transform: uppercase !important;
@@ -363,7 +423,7 @@
 
 .coming-soon-pill i {
     color: var(--primary-cyan, #00A8E6) !important;
-    font-size: 0.9rem !important;
+    font-size: 0.9rem;
     filter: drop-shadow(0 0 8px rgba(0, 168, 230, 0.9)) !important;
 }
 
