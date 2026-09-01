@@ -38,7 +38,7 @@
     </style>
     <a href="/" style="text-decoration: none;" class="header-logo-link flex items-center">
         <div class="logo-container">
-            <img src="{{ asset('assets/brand-logo.png?v=2026_2') }}" alt="VidaNexus AI - Intelligent Tools for Content Creators & Publishers" class="logo-img" fetchpriority="high" style="height: 52px; width: auto; object-fit: contain;">
+            <img src="{{ asset('assets/brand-logo.png?v=2026_2') }}" alt="VidaNexus AI - Next-Gen AI Solutions for Business Growth & Intelligence" class="logo-img" fetchpriority="high" style="height: 52px; width: auto; object-fit: contain;">
         </div>
     </a>
 

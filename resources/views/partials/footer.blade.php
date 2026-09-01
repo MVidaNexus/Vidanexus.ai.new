@@ -11,11 +11,11 @@
             <div class="footer-col brand-col">
                 <a href="/" style="text-decoration: none;">
                     <div class="logo-container" style="margin-bottom: 1.5rem;">
-                        <img src="{{ asset('assets/brand-logo.png?v=2026_2') }}" alt="VidaNexus AI - Intelligent Tools for Content Creators & Publishers" class="logo-img" loading="lazy" style="height: 60px; width: auto; object-fit: contain;">
+                        <img src="{{ asset('assets/brand-logo.png?v=2026_2') }}" alt="VidaNexus AI - Next-Gen AI Solutions for Business Growth & Intelligence" class="logo-img" loading="lazy" style="height: 60px; width: auto; object-fit: contain;">
                     </div>
                 </a>
                 <p class="footer-bio">
-                    VidaNexus is a modern AI workspace designed for creators, publishers, and growth-focused businesses. We build practical tools that turn real-time data, search trends, and research into high-performing content.
+                    VidaNexus is an advanced AI intelligence and growth platform built for modern businesses, scaling enterprises, and digital creators. We engineer autonomous AI solutions that transform market trends, search data, and competitive research into measurable business growth.
                 </p>
             </div>
             
