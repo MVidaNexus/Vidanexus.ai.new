@@ -287,6 +287,7 @@ class KeywordService
 
         $batches = array_chunk($headlines, $batchSize);
         $aiBatchesToRun = array_slice($batches, 0, $maxAiBatches);
+        $aiProcessedTitles = [];
 
         Log::info("[Keyword Radar] AI extraction [Mode: {$mode} / Filter: {$timeFilter}]: " . count($headlines) . " candidate stories across all competitors in " . count($aiBatchesToRun) . " AI batch(es).");
 
@@ -297,20 +298,35 @@ class KeywordService
                 break;
             }
 
+            foreach ($batch as $bh) {
+                $t = trim($bh['title'] ?? '');
+                if ($t !== '') $aiProcessedTitles[mb_strtolower($t, 'UTF-8')] = true;
+            }
+
             $batchKeywords = $this->extractKeywordsWithAI($batch, $lang, $userId);
             if (! empty($batchKeywords)) {
                 $allKeywords = array_merge($allKeywords, $batchKeywords);
             }
         }
 
-        // === STEP 3: Exhaustive Coverage — Synthesize Target Keywords for ALL 100% of Competitor Headlines ===
-        $nlpKeywords = $this->synthesizeTargetKeywordsFromHeadlines($headlines, $lang);
-        if (! empty($nlpKeywords)) {
-            $allKeywords = array_merge($allKeywords, $nlpKeywords);
+        // === STEP 3: Exhaustive Coverage — Synthesize Target Keywords for headlines NOT processed by AI ===
+        $remainingHeadlines = [];
+        foreach ($headlines as $h) {
+            $t = mb_strtolower(trim($h['title'] ?? ''), 'UTF-8');
+            if (!isset($aiProcessedTitles[$t])) {
+                $remainingHeadlines[] = $h;
+            }
         }
 
-        // === STEP 4: Deduplicate and Filter Similar Variants ===
-        $allKeywords = $this->filterSimilarKeywords($allKeywords, 0.75, $userId);
+        if (! empty($remainingHeadlines)) {
+            $nlpKeywords = $this->synthesizeTargetKeywordsFromHeadlines($remainingHeadlines, $lang);
+            if (! empty($nlpKeywords)) {
+                $allKeywords = array_merge($allKeywords, $nlpKeywords);
+            }
+        }
+
+        // === STEP 4: Semantic Angle Deduplication (Eliminates Near-Duplicate Phrases) ===
+        $allKeywords = $this->filterSimilarKeywords($allKeywords, 0.60, $userId);
 
         Log::info("[Keyword Radar] Total extracted keywords after AI + NLP synthesis: " . count($allKeywords) . " from " . count($rawHeadlines) . " raw headlines (" . count($headlines) . " unique stories).");
 
@@ -2027,9 +2043,10 @@ BAD example (NEVER do this):
         foreach ($keywords as $kw) {
             $text = is_array($kw) ? ($kw['text'] ?? '') : $kw;
             $text = trim($text);
+            $headline = is_array($kw) ? trim($kw['headline_title'] ?? '') : '';
             
             // Dynamic length filter
-            if (empty($text) || mb_strlen($text) < $minChars) continue;
+            if (empty($text) || mb_strlen($text, 'UTF-8') < $minChars) continue;
             
             $words = array_filter(explode(' ', $text));
             $wordCount = count($words);
@@ -2038,6 +2055,8 @@ BAD example (NEVER do this):
             if ($wordCount < $minWords || $wordCount > $maxWords) continue;
 
             $normalizedText = $this->normalizeForComparison($text);
+            if (in_array($normalizedText, $usedTexts, true)) continue;
+
             $currentWords = $this->extractSignificantWords($normalizedText, $fillerWords);
             
             // If the keyword is mostly filler words, still keep it if it meets the minWords criteria
@@ -2052,12 +2071,30 @@ BAD example (NEVER do this):
             $isSimilar = false;
             foreach ($filtered as $existingKw) {
                 $existingText = is_array($existingKw) ? ($existingKw['text'] ?? '') : $existingKw;
+                $existingHeadline = is_array($existingKw) ? trim($existingKw['headline_title'] ?? '') : '';
                 $existingNormalized = $this->normalizeForComparison($existingText);
-                $existingWords = $this->extractSignificantWords($existingNormalized, $fillerWords);
                 
+                // 1. Substring / Containment Check (e.g. "تشغيل سفينة التغييز" vs "موعد تشغيل سفينة التغييز")
+                if (str_contains($normalizedText, $existingNormalized) || str_contains($existingNormalized, $normalizedText)) {
+                    $isSimilar = true;
+                    break;
+                }
+
+                $existingWords = $this->extractSignificantWords($existingNormalized, $fillerWords);
                 $similarity = $this->calculateWordOverlap($currentWords, $existingWords);
                 
-                if ($similarity >= $threshold) {
+                // 2. Intra-Headline Check: If from the SAME story/headline, require MUCH stricter divergence (max 35% overlap)
+                $sameHeadline = ($headline !== '' && $existingHeadline !== '' && mb_strtolower($headline, 'UTF-8') === mb_strtolower($existingHeadline, 'UTF-8'));
+                $allowedOverlap = $sameHeadline ? 0.35 : $threshold;
+
+                if ($similarity >= $allowedOverlap) {
+                    $isSimilar = true;
+                    break;
+                }
+
+                // 3. Shared root words check: If they share 3 or more significant words, they are redundant angles
+                $commonWords = count(array_intersect($currentWords, $existingWords));
+                if ($commonWords >= 3 && ($sameHeadline || count($currentWords) <= 4)) {
                     $isSimilar = true;
                     break;
                 }
