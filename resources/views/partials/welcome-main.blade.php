@@ -1,5 +1,5 @@
         <main class="hero" style="text-align: center; display: flex; flex-direction: column; align-items: center; justify-content: center; min-height: auto; padding: 2rem 1rem 1rem;">
-            <p class="hero-pretitle" style="color: var(--primary-cyan); font-weight: 800; letter-spacing: 3px; text-transform: uppercase; font-size: 0.75rem; margin-bottom: 0.75rem; text-shadow: 0 0 15px var(--primary-cyan);">AI Tools For Content & SEO Growth</p>
+            <p class="hero-pretitle" style="color: var(--primary-cyan); font-weight: 800; letter-spacing: 3px; text-transform: uppercase; font-size: 0.75rem; margin-bottom: 0.75rem; text-shadow: 0 0 15px var(--primary-cyan);">Next-Gen AI Solutions For Business Growth</p>
             <h1 class="hero-title" style="margin: 0 auto 1.25rem;">
                 <span class="line-1">The Future is</span>
                 <span class="line-2">
@@ -7,9 +7,9 @@
                     <span class="word-nexus">NEXUS</span>
                 </span>
             </h1>
-            <p class="hero-subtitle" style="margin: 0 auto 2rem; max-width: 780px; font-weight: 400; line-height: 1.6; font-size: clamp(0.88rem, 1.8vw, 1.15rem);">
-                Supercharge your publishing workflow with specialized AI tools for keyword discovery, trend tracking, and high-ranking article generation. 
-                <span style="color: var(--text-main); font-weight: 600;">Built for SEO growth.</span>
+            <p class="hero-subtitle" style="margin: 0 auto 2rem; max-width: 820px; font-weight: 400; line-height: 1.6; font-size: clamp(0.88rem, 1.8vw, 1.15rem);">
+                Supercharge your business growth and digital presence with specialized AI engines for market discovery, competitive intelligence, and automated high-impact execution. 
+                <span style="color: var(--text-main); font-weight: 600;">Built to scale your operations.</span>
                 <span style="color: var(--primary-cyan); font-weight: 700; text-shadow: 0 0 20px var(--primary-cyan);">Fast, accurate, and actionable.</span>
             </p>
 
@@ -156,48 +156,48 @@
 
                 <div class="vna-container">
                     <div class="vna-badge">
-                        <i class="fas fa-laptop-code"></i>
-                        SOFTWARE HOUSE
+                        <i class="fas fa-cubes"></i>
+                        AI GROWTH SUITE
                     </div>
                     <h2 class="vna-title">The Vida Nexus <span style="background: linear-gradient(to right, #38bdf8, #818cf8); -webkit-background-clip: text; -webkit-text-fill-color: transparent;">Advantage</span></h2>
-                    <p class="vna-subtitle">Tailored AI tools designed to help creators and publishers grow search traffic.</p>
+                    <p class="vna-subtitle">Enterprise-grade AI solutions engineered to accelerate business growth, insights, and scaling.</p>
                 </div>
 
                 <div class="vna-grid">
-                    <!-- Feature 1: Specialized SEO & Content Tools -->
+                    <!-- Feature 1: Autonomous AI Solutions -->
                     <div class="vna-card" style="--vna-accent: #a855f7;">
                         <div class="vna-icon-main" style="color: var(--vna-accent);">
-                            <i class="fas fa-microchip"></i>
+                            <i class="fas fa-brain"></i>
                         </div>
                         <h3 class="vna-card-title">
                             <span class="vna-dot"></span>
-                            Specialized SEO Tools
+                            AI Intelligence
                         </h3>
-                        <p class="vna-card-desc">Real-time keyword radars, headline analyzers, and article writers built for publishing workflows.</p>
+                        <p class="vna-card-desc">Real-time market radars, automated analyzers, and actionable intelligence engines.</p>
                     </div>
 
                     <!-- Feature 2: Pay-As-You-Go Credits -->
                     <div class="vna-card" style="--vna-accent: #00A8E6;">
                         <div class="vna-icon-main" style="color: var(--vna-accent);">
-                            <i class="fas fa-coins"></i>
+                            <i class="fas fa-chart-line"></i>
                         </div>
                         <h3 class="vna-card-title">
                             <span class="vna-dot"></span>
-                            Pay-As-You-Go Credits
+                            Scalable Growth
                         </h3>
-                        <p class="vna-card-desc">Only pay for what you use. Transparent wallet credit pricing, zero waste, and complete control.</p>
+                        <p class="vna-card-desc">Pay-as-you-grow wallet pricing with complete budget control and zero waste.</p>
                     </div>
 
                     <!-- Feature 3: Fast & Reliable -->
                     <div class="vna-card" style="--vna-accent: #00A58B;">
                         <div class="vna-icon-main" style="color: var(--vna-accent);">
-                            <i class="fas fa-globe-americas"></i>
+                            <i class="fas fa-bolt"></i>
                         </div>
                         <h3 class="vna-card-title">
                             <span class="vna-dot"></span>
-                            Fast & Reliable
+                            Enterprise Speed
                         </h3>
-                        <p class="vna-card-desc">High-speed cloud infrastructure delivering real-time scans, competitor insights, and 24/7 AI output.</p>
+                        <p class="vna-card-desc">High-speed cloud infrastructure delivering 24/7 autonomous scans and instant output.</p>
                     </div>
                 </div>
             </div>
