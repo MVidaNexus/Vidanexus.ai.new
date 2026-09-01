@@ -256,8 +256,8 @@
                         <span class="vna-stat-label">Keywords Scanned</span>
                     </div>
                     <div class="vna-stat-item">
-                        <span class="vna-stat-value" style="color: #10b981; text-shadow: 0 0 15px rgba(16, 185, 129, 0.35);">99.9%</span>
-                        <span class="vna-stat-label">Real-Time Uptime</span>
+                        <span class="vna-stat-value" style="color: #10b981; text-shadow: 0 0 15px rgba(16, 185, 129, 0.35);">50K+</span>
+                        <span class="vna-stat-label">Articles Generated</span>
                     </div>
                     <div class="vna-stat-item">
                         <span class="vna-stat-value" style="color: #38bdf8; text-shadow: 0 0 15px rgba(56, 189, 248, 0.35);">100+</span>
