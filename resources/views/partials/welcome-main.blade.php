@@ -114,20 +114,35 @@
 
                     @media (max-width: 768px) {
                         .vna-grid {
-                            display: flex;
-                            overflow-x: auto;
-                            gap: 0.75rem;
-                            padding: 0.25rem 0.25rem 0.5rem;
-                            scroll-snap-type: x mandatory;
-                            -webkit-overflow-scrolling: touch;
-                            scrollbar-width: none;
+                            display: grid !important;
+                            grid-template-columns: repeat(3, 1fr) !important;
+                            gap: 0.4rem !important;
+                            padding: 0 !important;
                         }
-                        .vna-grid::-webkit-scrollbar { display: none; }
                         .vna-card {
-                            flex: 0 0 82%;
-                            min-width: 250px;
-                            scroll-snap-align: center;
-                            padding: 1.1rem 0.9rem;
+                            flex: none !important;
+                            min-width: 0 !important;
+                            padding: 0.75rem 0.35rem !important;
+                            border-radius: 12px !important;
+                        }
+                        .vna-icon-main {
+                            font-size: 1.15rem !important;
+                            margin-bottom: 0.35rem !important;
+                        }
+                        .vna-card-title {
+                            font-size: 0.72rem !important;
+                            margin-bottom: 0.25rem !important;
+                            letter-spacing: -0.02em !important;
+                            line-height: 1.2 !important;
+                            gap: 0.25rem !important;
+                        }
+                        .vna-dot {
+                            display: none !important;
+                        }
+                        .vna-card-desc {
+                            font-size: 0.62rem !important;
+                            line-height: 1.3 !important;
+                            opacity: 0.8 !important;
                         }
                     }
 
