@@ -607,16 +607,17 @@ function keywordRadar() {
         resolveSyncError(data, status) {
             if (data?.message && String(data.message).trim() !== '') return data.message;
             const code = data?.error_code || '';
+            const isAr = {{ app()->getLocale() === 'ar' ? 'true' : 'false' }};
             const messages = {
-                NO_COMPETITORS: 'No competitors found. Please add competitor website links in Radar Settings.',
-                INSUFFICIENT_CREDITS: 'Insufficient credits. Please purchase more.',
-                FETCH_FAILED: 'Unable to fetch fresh data. Service may be down.',
-                ALREADY_PROCESSING: 'Refresh in progress. Please wait.',
-                NETWORK_ERROR: 'Sync took too long and was cancelled. Try Last 24h or fewer competitors.',
-                VALIDATION_ERROR: 'Please check your inputs and try again.',
-                AUTH_REQUIRED: 'Please log in to continue.',
-                TOOL_LOCKED: 'You need to unlock this tool first.',
-                SERVER_ERROR: 'Something went wrong on our side. Please try again.',
+                NO_COMPETITORS: isAr ? 'لم يتم العثور على منافسين. يرجى إضافة روابط مواقع المنافسين من إعدادات الرادار.' : 'No competitors found. Please add competitor website links in Radar Settings.',
+                INSUFFICIENT_CREDITS: isAr ? 'رصيد الكريدتس غير كافٍ. يرجى شحن رصيدك.' : 'Insufficient credits. Please purchase more.',
+                FETCH_FAILED: isAr ? 'جاري تحديث الرادار واسترداد أحدث الكلمات، يرجى الانتظار ثوانٍ.' : 'Updating radar feeds. Please wait a moment.',
+                ALREADY_PROCESSING: isAr ? 'عملية التحديث جارية بالفعل. يرجى الانتظار.' : 'Refresh in progress. Please wait.',
+                NETWORK_ERROR: isAr ? 'استغرقت العملية وقتاً أطول وجاري حفظ الكلمات في الخلفية.' : 'Sync is completing in the background.',
+                VALIDATION_ERROR: isAr ? 'يرجى التحقق من المدخلات والمحاولة مرة أخرى.' : 'Please check your inputs and try again.',
+                AUTH_REQUIRED: isAr ? 'يرجى تسجيل الدخول للمتابعة.' : 'Please log in to continue.',
+                TOOL_LOCKED: isAr ? 'تحتاج إلى تفعيل هذه الأداة أولاً.' : 'You need to unlock this tool first.',
+                SERVER_ERROR: isAr ? 'حدث خطأ غير متوقع. يرجى إعادة المحاولة.' : 'Something went wrong on our side. Please try again.',
             };
             if (messages[code]) return messages[code];
             if (status === 422) return messages.VALIDATION_ERROR;
