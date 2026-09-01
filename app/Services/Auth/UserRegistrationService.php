@@ -85,7 +85,12 @@ class UserRegistrationService
         $isVerificationEnabled = (bool) Setting::get('global_email_verification', true);
 
         if ($isVerificationEnabled) {
-            $user->sendEmailVerificationNotification();
+            try {
+                $user->sendEmailVerificationNotification();
+            } catch (\Throwable $e) {
+                Log::error('Failed sending verification email on registration: ' . $e->getMessage(), ['user_id' => $user->id]);
+            }
+
             Auth::login($user);
 
             $crsMsg = $beginnerCredits > 0
