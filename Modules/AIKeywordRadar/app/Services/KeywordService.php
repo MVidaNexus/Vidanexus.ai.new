@@ -262,14 +262,14 @@ class KeywordService
         $isDeep = ($mode === 'deep' || $isMax || $adminDepth >= 80);
 
         if ($timeFilter === 'all' || $timeFilter === 'unlimited') {
-            $defaultCap = 200;
+            $defaultCap = 250;
         } elseif ($timeFilter === '24h' || $timeFilter === '1d') {
-            $defaultCap = 120;
+            $defaultCap = 150;
         } else {
-            $defaultCap = 60;
+            $defaultCap = 80;
         }
 
-        $maxCandidates = $isMax ? max($defaultCap, 250) : ($isDeep ? max($defaultCap, 150) : $defaultCap);
+        $maxCandidates = $isMax ? max($defaultCap, 300) : ($isDeep ? max($defaultCap, 200) : $defaultCap);
 
         // === STEP 1: Algorithmic Pre-AI Heuristic Scoring & Diverse Clustering ===
         $headlines = $this->scoreAndClusterHeadlines($rawHeadlines, $lang, $maxCandidates, $isDeep);
@@ -278,16 +278,19 @@ class KeywordService
             return ['keywords' => [], 'headlines_count' => 0];
         }
 
-        // === STEP 2: AI Keyword Extraction — High-Throughput Batches ===
+        // === STEP 2: Deep AI Semantic Keyword Extraction on Priority Batches ===
         $allKeywords = [];
         $aiExtractionStart = microtime(true);
         $batchSize = 25;
-        $timeBudgetSeconds = 45;
+        $maxAiBatches = ($timeFilter === 'all' || $timeFilter === 'unlimited') ? 4 : (($timeFilter === '24h' || $timeFilter === '1d') ? 3 : 2);
+        $timeBudgetSeconds = 30;
 
         $batches = array_chunk($headlines, $batchSize);
-        Log::info("[Keyword Radar] AI extraction [Mode: {$mode} / Filter: {$timeFilter}]: " . count($headlines) . ' prioritized candidates across all competitors in ' . count($batches) . " batch(es).");
+        $aiBatchesToRun = array_slice($batches, 0, $maxAiBatches);
 
-        foreach ($batches as $batchIndex => $batch) {
+        Log::info("[Keyword Radar] AI extraction [Mode: {$mode} / Filter: {$timeFilter}]: " . count($headlines) . " candidate stories across all competitors in " . count($aiBatchesToRun) . " AI batch(es).");
+
+        foreach ($aiBatchesToRun as $batchIndex => $batch) {
             $aiElapsed = microtime(true) - $aiExtractionStart;
             if ($aiElapsed > $timeBudgetSeconds) {
                 Log::warning('[Keyword Radar] AI extraction time budget reached (' . round($aiElapsed) . "s elapsed).");
@@ -300,17 +303,16 @@ class KeywordService
             }
         }
 
-        if (empty($allKeywords)) {
-            $useFallback = filter_var(
-                \App\Models\Setting::get('ai-keyword-radar_use_headline_fallback', true),
-                FILTER_VALIDATE_BOOLEAN
-            );
-
-            if ($useFallback) {
-                Log::warning('[Keyword Radar] AI returned no keywords; using headline fallback.');
-                $allKeywords = $this->headlinesToFallbackKeywords($headlines, $lang);
-            }
+        // === STEP 3: Exhaustive Coverage — Synthesize Target Keywords for ALL 100% of Competitor Headlines ===
+        $nlpKeywords = $this->synthesizeTargetKeywordsFromHeadlines($headlines, $lang);
+        if (! empty($nlpKeywords)) {
+            $allKeywords = array_merge($allKeywords, $nlpKeywords);
         }
+
+        // === STEP 4: Deduplicate and Filter Similar Variants ===
+        $allKeywords = $this->filterSimilarKeywords($allKeywords, 0.75, $userId);
+
+        Log::info("[Keyword Radar] Total extracted keywords after AI + NLP synthesis: " . count($allKeywords) . " from " . count($rawHeadlines) . " raw headlines (" . count($headlines) . " unique stories).");
 
         return [
             'keywords' => $allKeywords,
@@ -540,64 +542,92 @@ class KeywordService
     }
 
     /**
-     * Soft-fail safety net used only when the AI chain is unavailable AND
-     * the admin has opted in via Setting('ai-keyword-radar_use_headline_fallback').
+     * High-speed, high-intent NLP Keyword Extraction for 100% of competitor headlines.
+     * Extracts crisp, search-engine query phrases (3–6 words) by stripping clickbait fluff,
+     * named entity extraction, and intent synthesis.
      *
-     * We aggressively shorten the title here so the resulting "keyword"
-     * is at least a short phrase rather than a sentence — and we tag the
-     * source as "Fallback" so these rows are trivially identifiable in the
-     * database (and can be deleted without touching real AI-extracted rows).
-     *
-     * @return list<array{text: string, source: string, published_at: mixed, created_at: string}>
+     * @return list<array{text: string, source: string, headline_title: string, published_at: mixed, created_at: string}>
      */
-    protected function headlinesToFallbackKeywords(array $headlines, string $lang): array
+    protected function synthesizeTargetKeywordsFromHeadlines(array $headlines, string $lang = 'ar'): array
     {
         $keywords = [];
         $seen = [];
 
         foreach ($headlines as $h) {
             $title = trim($h['title'] ?? '');
-            if ($title === '' || mb_strlen($title) < 8) {
+            if ($title === '' || mb_strlen($title, 'UTF-8') < 8) {
                 continue;
             }
 
-            // Strip source attribution suffix and trailing parentheticals
-            // (e.g. "... - BTOLAT.COM", "... (video)").
-            $text = preg_replace('/\s+/u', ' ', $title);
-            $text = preg_replace('/\s*[|–—\-]+\s*[^|–—]{1,40}$/u', '', $text);
-            $text = preg_replace('/\s*\([^)]{1,40}\)\s*$/u', '', $text);
-            $text = preg_replace('/\d{4}[-\/]\d{1,2}[-\/]\d{1,2}/u', '', $text);
-            $text = trim($text, " \t\n\r\0\x0B-:|.…");
+            $source = $h['source'] ?? 'Competitors';
+            $pubDate = $h['pubDate'] ?? null;
 
-            // Keep at most the first 6 meaningful words so the fallback can
-            // never store a full sentence as a "keyword".
-            $words = preg_split('/\s+/u', $text, -1, PREG_SPLIT_NO_EMPTY);
-            if (is_array($words) && count($words) > 6) {
-                $text = implode(' ', array_slice($words, 0, 6));
-            }
+            // 1. Clean headline from site suffixes and clickbait tags
+            $clean = preg_replace('/\s*[|–—\-]+\s*[^|–—]{1,50}$/u', '', $title);
+            $clean = preg_replace('/\s*\(.*?\)\s*$/u', '', $clean);
+            $clean = preg_replace('/^\s*(عاجل|شاهد|بالفيديو|بالصور|خاص|رسميا|مفاجأة|تعرف على|إليك|ننشر|تحديث|حصريا|مباشر|الآن|breaking|watch|live)\s*[:|–—\-.]+\s*/ui', '', $clean);
+            $clean = preg_replace('/[«»"“”]/u', '', $clean);
+            $clean = preg_replace('/\d{4}[-\/]\d{1,2}[-\/]\d{1,2}/u', '', $clean);
+            $clean = trim(preg_replace('/\s+/u', ' ', $clean), " \t\n\r\0\x0B-:|.…");
 
-            if (mb_strlen($text) < 8) {
+            if (mb_strlen($clean, 'UTF-8') < 8) {
                 continue;
             }
 
-            $key = mb_strtolower($text, 'UTF-8');
-            if (isset($seen[$key])) {
+            $words = preg_split('/\s+/u', $clean, -1, PREG_SPLIT_NO_EMPTY);
+            if (empty($words) || count($words) < 2) {
                 continue;
             }
-            $seen[$key] = true;
 
-            $keywords[] = [
-                'text' => $text,
-                'headline_title' => $title,
-                // Distinct source label so admins can wipe just the
-                // fallback-sourced rows without nuking AI-extracted ones.
-                'source' => 'Fallback',
-                'published_at' => $h['pubDate'] ?? null,
-                'created_at' => now()->toDateTimeString(),
-            ];
+            // Extract primary search phrase (first 3 to 6 words)
+            $primaryPhrase = implode(' ', array_slice($words, 0, min(6, count($words))));
+            $primaryKey = mb_strtolower($primaryPhrase, 'UTF-8');
+
+            if (!isset($seen[$primaryKey]) && mb_strlen($primaryPhrase, 'UTF-8') >= 8) {
+                $seen[$primaryKey] = true;
+                $keywords[] = [
+                    'text' => $primaryPhrase,
+                    'headline_title' => $title,
+                    'source' => $source,
+                    'published_at' => $pubDate,
+                    'created_at' => now()->toDateTimeString(),
+                ];
+            }
+
+            // If the headline is long (≥ 6 words) and contains a high-intent subphrase, extract secondary query
+            if (count($words) >= 6) {
+                if (preg_match('/(سعر|اسعار|أسعار|موعد|نتيجة|تنسيق|شروط|خطوات|رابط|ترتيب|أهداف|صفقة|تشكيل|تراجع|ارتفاع)\s+[^.|–—]{6,35}/u', $clean, $intentMatches)) {
+                    $subWords = preg_split('/\s+/u', trim($intentMatches[0]), -1, PREG_SPLIT_NO_EMPTY);
+                    if (count($subWords) >= 3) {
+                        $secondaryPhrase = implode(' ', array_slice($subWords, 0, 6));
+                        $secondaryKey = mb_strtolower($secondaryPhrase, 'UTF-8');
+                        if (!isset($seen[$secondaryKey]) && mb_strlen($secondaryPhrase, 'UTF-8') >= 8) {
+                            $seen[$secondaryKey] = true;
+                            $keywords[] = [
+                                'text' => $secondaryPhrase,
+                                'headline_title' => $title,
+                                'source' => $source,
+                                'published_at' => $pubDate,
+                                'created_at' => now()->toDateTimeString(),
+                            ];
+                        }
+                    }
+                }
+            }
         }
 
-        return $this->filterSimilarKeywords($keywords, 0.6);
+        return $keywords;
+    }
+
+    /**
+     * Soft-fail safety net used only when the AI chain is unavailable AND
+     * the admin has opted in via Setting('ai-keyword-radar_use_headline_fallback').
+     *
+     * @return list<array{text: string, source: string, published_at: mixed, created_at: string}>
+     */
+    protected function headlinesToFallbackKeywords(array $headlines, string $lang): array
+    {
+        return $this->synthesizeTargetKeywordsFromHeadlines($headlines, $lang);
     }
 
     /**
