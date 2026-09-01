@@ -139,13 +139,13 @@ class User extends Authenticatable implements MustVerifyEmail
     public function sendEmailVerificationNotification(): void
     {
         $this->logAuthMailDispatch('verify_email');
-        $this->notify(new QueuedVerifyEmailNotification);
+        $this->notifyNow(new QueuedVerifyEmailNotification);
     }
 
     public function sendPasswordResetNotification($token): void
     {
         $this->logAuthMailDispatch('password_reset');
-        $this->notify(new QueuedResetPasswordNotification($token));
+        $this->notifyNow(new QueuedResetPasswordNotification($token));
     }
 
     /**

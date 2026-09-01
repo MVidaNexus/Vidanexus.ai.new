@@ -7,26 +7,10 @@ use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
 
 /**
- * Password reset link sent via the queue.
+ * Password reset link sent immediately via configured SMTP mailer.
  */
-class QueuedResetPassword extends ResetPassword implements ShouldQueue
+class QueuedResetPassword extends ResetPassword
 {
-    use Queueable;
-
-    public int $tries = 3;
-
-    public function backoff(): array
-    {
-        return [30, 120, 300];
-    }
-
-    public function viaQueues(): array
-    {
-        return [
-            'mail' => 'emails',
-        ];
-    }
-
     public function toMail($notifiable)
     {
         $resetUrl = url(route('password.reset', [
