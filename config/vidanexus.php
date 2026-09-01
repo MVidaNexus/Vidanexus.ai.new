@@ -32,7 +32,7 @@ return [
     | refetch; all Blade layouts read this single value.
     |
     */
-    'style_css_version' => env('VIDANEXUS_STYLE_VERSION', '32'),
+    'style_css_version' => env('VIDANEXUS_STYLE_VERSION', '34'),
 
     /*
     |--------------------------------------------------------------------------

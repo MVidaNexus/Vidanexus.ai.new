@@ -8,16 +8,15 @@
                         @foreach($tools as $tool)
                             <div class="dash-tool-card premium-tool-card {{ $tool['accessible'] ? 'unlocked' : '' }} {{ !$tool['is_available'] ? 'is-coming-soon' : '' }}">
                                 @if(!$tool['is_available'])
-                                    <div class="coming-soon-overlay">
-                                        <div class="coming-soon-badge-glow">
-                                            <div class="cs-icon"><i class="fas fa-lock"></i></div>
-                                            <div class="cs-title">COMING SOON</div>
-                                            <div class="cs-subtitle">In Active Development</div>
+                                    <div class="coming-soon-glass-cover">
+                                        <div class="coming-soon-pill">
+                                            <i class="fas fa-lock"></i>
+                                            <span>COMING SOON</span>
                                         </div>
                                     </div>
                                 @endif
 
-                                <div class="tool-card-content" style="display: flex; flex-direction: column; height: 100%;">
+                                <div class="tool-card-body {{ !$tool['is_available'] ? 'blur-content' : '' }}" style="display: flex; flex-direction: column; height: 100%;">
                                     @if($tool['accessible'])
                                         <div style="position: absolute; top: 0; left: 0; right: 0; height: 3px; background: linear-gradient(90deg, #00A58B, #34d399); box-shadow: 0 0 10px #00A58B;"></div>
                                         <div class="tool-status status-active" style="background: rgba(16,185,129,0.1); border: 1px solid rgba(16,185,129,0.3); color: #00A58B; box-shadow: 0 0 10px rgba(16,185,129,0.2);"><i class="fas fa-unlock" style="margin-right: 4px;"></i> Unlocked</div>

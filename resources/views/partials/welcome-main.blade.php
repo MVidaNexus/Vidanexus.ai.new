@@ -293,25 +293,100 @@
                     </button>
                 </div>
 
+<style>
+/* 100% Image-Style Heavy Blur on Coming Soon Tool Cards */
+.tool-card.is-coming-soon,
+.dash-tool-card.is-coming-soon {
+    position: relative !important;
+    overflow: hidden !important;
+    cursor: not-allowed !important;
+    user-select: none !important;
+    background: rgba(13, 18, 33, 0.7) !important;
+    border: 1px solid rgba(255, 255, 255, 0.08) !important;
+}
+
+.tool-card.is-coming-soon:hover,
+.dash-tool-card.is-coming-soon:hover {
+    transform: none !important;
+    box-shadow: none !important;
+    border-color: rgba(255, 255, 255, 0.08) !important;
+}
+
+.tool-card.is-coming-soon .blur-content,
+.dash-tool-card.is-coming-soon .blur-content {
+    filter: blur(14px) !important;
+    -webkit-filter: blur(14px) !important;
+    opacity: 0.25 !important;
+    pointer-events: none !important;
+    user-select: none !important;
+    transform: scale(0.96) !important;
+}
+
+.coming-soon-glass-cover {
+    position: absolute !important;
+    inset: 0 !important;
+    z-index: 30 !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    background: rgba(5, 8, 16, 0.4) !important;
+    backdrop-filter: blur(4px) !important;
+    -webkit-backdrop-filter: blur(4px) !important;
+    pointer-events: all !important;
+}
+
+.coming-soon-pill {
+    display: inline-flex !important;
+    align-items: center !important;
+    gap: 0.6rem !important;
+    padding: 0.7rem 1.4rem !important;
+    background: rgba(15, 23, 42, 0.92) !important;
+    border: 1px solid rgba(0, 168, 230, 0.5) !important;
+    border-radius: 50px !important;
+    box-shadow: 0 0 30px rgba(0, 168, 230, 0.35), inset 0 0 12px rgba(0, 168, 230, 0.15) !important;
+    color: #ffffff !important;
+    font-size: 0.82rem !important;
+    font-weight: 900 !important;
+    letter-spacing: 2px !important;
+    text-transform: uppercase !important;
+}
+
+.coming-soon-pill i {
+    color: var(--primary-cyan, #00A8E6) !important;
+    font-size: 0.9rem !important;
+    filter: drop-shadow(0 0 8px rgba(0, 168, 230, 0.9)) !important;
+}
+
+html[data-theme="light"] .tool-card.is-coming-soon,
+html[data-theme="light"] .dash-tool-card.is-coming-soon {
+    background: rgba(241, 245, 249, 0.8) !important;
+    border-color: rgba(0, 0, 0, 0.08) !important;
+}
+html[data-theme="light"] .coming-soon-glass-cover {
+    background: rgba(255, 255, 255, 0.35) !important;
+}
+html[data-theme="light"] .coming-soon-pill {
+    background: rgba(255, 255, 255, 0.95) !important;
+    color: #0f172a !important;
+    border-color: rgba(0, 168, 230, 0.5) !important;
+    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1) !important;
+}
+</style>
+
                 <div class="tools-grid">
                     @foreach($tools as $tool)
                     <div class="tool-card {{ !$tool['is_available'] ? 'is-coming-soon' : '' }}" x-show="filter === 'all' || filter === '{{ $tool['category'] ?? '' }}'" x-transition:enter="transition ease-out duration-300" x-transition:enter-start="opacity-0 transform scale-95" x-transition:enter-end="opacity-100 transform scale-100">
                         @if(!$tool['is_available'])
-                            <div class="coming-soon-overlay">
-                                <div class="coming-soon-badge-glow">
-                                    <div class="cs-icon"><i class="fas fa-lock"></i></div>
-                                    <div class="cs-title">COMING SOON</div>
-                                    <div class="cs-subtitle">In Active Development</div>
+                            <div class="coming-soon-glass-cover">
+                                <div class="coming-soon-pill">
+                                    <i class="fas fa-lock"></i>
+                                    <span>COMING SOON</span>
                                 </div>
                             </div>
                         @endif
 
-                        <div class="tool-card-content" style="display: flex; flex-direction: column; height: 100%;">
-                            @if(!$tool['is_available'])
-                                <div style="position: absolute; top: 1rem; right: 1rem; background: var(--card-bg); backdrop-filter: blur(5px); color: var(--text-muted); font-size: 0.65rem; font-weight: 800; padding: 0.4rem 0.8rem; border-radius: 20px; border: 1px solid var(--glass-border); box-shadow: 0 4px 10px rgba(0,0,0,0.05); z-index: 10; letter-spacing: 1px;">
-                                    <i class="fas fa-clock mr-1"></i> COMING SOON
-                                </div>
-                            @elseif(!$tool['is_owned'])
+                        <div class="tool-card-body {{ !$tool['is_available'] ? 'blur-content' : '' }}" style="display: flex; flex-direction: column; height: 100%;">
+                            @if($tool['is_available'] && !$tool['is_owned'])
                                  <div style="position: absolute; top: 1rem; right: 1rem; background: rgba(168, 85, 247, 0.15); backdrop-filter: blur(5px); color: #a855f7; font-size: 0.65rem; font-weight: 800; padding: 0.4rem 0.8rem; border-radius: 20px; border: 1px solid rgba(168, 85, 247, 0.3); z-index: 10; letter-spacing: 1px;">
                                     <i class="fas fa-shopping-cart mr-1"></i> MARKETPLACE
                                 </div>
