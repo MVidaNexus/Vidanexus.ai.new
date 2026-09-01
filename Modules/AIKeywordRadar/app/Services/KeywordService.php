@@ -926,41 +926,41 @@ class KeywordService
             unset($responses);
         }
 
-        // === PHASE 2: COMPREHENSIVE MULTI-SOURCE FALLBACK FOR SITES NOT ON GOOGLE NEWS ===
-        // Runs for ANY competitor that returned zero from Google News (e.g. stores, niche blogs, regional portals)
-        $maxPhase2Budget = $isMax ? 120 : 60;
-        if (!empty($needsFallback) && (microtime(true) - $syncStart) < $maxPhase2Budget) {
-            Log::info("[Keyword Radar] Phase 2: Running deep fallback (Sitemaps, RSS, HTML) for " . count($needsFallback) . " competitors.");
+        // === PHASE 2: TARGETED FALLBACK FOR SITES NOT ON GOOGLE NEWS ===
+        // Only run Phase 2 if Phase 1 collected FEWER than 25 headlines (e.g. niche personal blogs)
+        // When Phase 1 already yielded dozens or hundreds of headlines, Phase 2 is skipped completely
+        // to prevent OOM memory exhaustion and eliminate slow/hanging external requests.
+        $maxPhase2Budget = $isMax ? 40 : 20;
+        if (count($allHeadlines) < 25 && !empty($needsFallback) && (microtime(true) - $syncStart) < $maxPhase2Budget) {
+            Log::info("[Keyword Radar] Phase 2: Running deep fallback for " . count($needsFallback) . " competitors (Current headlines: " . count($allHeadlines) . ").");
             
-            // Process in chunks of 5
-            $fallbackChunks = array_chunk($needsFallback, 5);
-            foreach ($fallbackChunks as $fChunk) {
+            // Process at most 5 fallback competitors
+            $fallbackTargets = array_slice($needsFallback, 0, 5);
+            foreach ($fallbackTargets as $url) {
                 if ((microtime(true) - $syncStart) > $maxPhase2Budget) break;
 
-                foreach ($fChunk as $url) {
-                    $url = rtrim(trim($url), '/');
-                    $host = parse_url($url, PHP_URL_HOST) ?: $url;
-                    $domain = preg_replace('/^www\./i', '', $host);
-                    $siteHeadlines = [];
+                $url = rtrim(trim($url), '/');
+                $host = parse_url($url, PHP_URL_HOST) ?: $url;
+                $domain = preg_replace('/^www\./i', '', $host);
+                $siteHeadlines = [];
 
-                    // 1. Try Sitemap first (most reliable for blogs and e-commerce)
-                    $siteHeadlines = $this->fetchViaSitemap($url, $userAgent, $userId, $lang);
+                // 1. Try Sitemap first (most reliable for blogs and e-commerce)
+                $siteHeadlines = $this->fetchViaSitemap($url, $userAgent, $userId, $lang);
 
-                    // 2. If no sitemap, try direct RSS feeds
-                    if (empty($siteHeadlines)) {
-                        $siteHeadlines = $this->fetchViaRss($url, $userAgent, $userId);
-                    }
+                // 2. If no sitemap, try direct RSS feeds
+                if (empty($siteHeadlines)) {
+                    $siteHeadlines = $this->fetchViaRss($url, $userAgent, $userId);
+                }
 
-                    // 3. If no RSS, try direct HTML scraping of homepage
-                    if (empty($siteHeadlines)) {
-                        $siteHeadlines = $this->fetchViaHtmlScraping($url, $userAgent, $userId);
-                    }
+                // 3. If no RSS, try direct HTML scraping of homepage
+                if (empty($siteHeadlines)) {
+                    $siteHeadlines = $this->fetchViaHtmlScraping($url, $userAgent, $userId);
+                }
 
-                    if (!empty($siteHeadlines)) {
-                        $applied = $this->applyTimeFilter($siteHeadlines, $freshnessLimit, $domain);
-                        $allHeadlines = array_merge($allHeadlines, $applied['kept']);
-                        Log::info("[Fallback Sync] {$domain}: {$applied['total']} total → {$applied['fresh']} fresh [Filter: {$filterLabel}]");
-                    }
+                if (!empty($siteHeadlines)) {
+                    $applied = $this->applyTimeFilter($siteHeadlines, $freshnessLimit, $domain);
+                    $allHeadlines = array_merge($allHeadlines, $applied['kept']);
+                    Log::info("[Fallback Sync] {$domain}: {$applied['total']} total → {$applied['fresh']} fresh [Filter: {$filterLabel}]");
                 }
             }
         }

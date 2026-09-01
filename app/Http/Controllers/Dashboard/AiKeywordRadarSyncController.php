@@ -157,14 +157,29 @@ class AiKeywordRadarSyncController extends Controller
             Cache::put($cacheKey, $keywords, 3600);
 
             $visibleCount = count($keywords);
+            $rediscovered = (int) ($result['rediscovered'] ?? 0);
+            $found = (int) ($result['found'] ?? 0);
+
             if ($saved > 0) {
-                $statusMsg = "Success! Found {$saved} new trend(s) from {$headlines} headline(s). Showing {$visibleCount} in radar.";
+                $statusMsg = ($lang === 'ar')
+                    ? "تم بنجاح! اكتشاف {$saved} كلمة مفتاحية جديدة من {$headlines} عنوان صحفي رائج."
+                    : "Success! Discovered {$saved} new keyword(s) from {$headlines} trending headline(s).";
+            } elseif ($rediscovered > 0) {
+                $statusMsg = ($lang === 'ar')
+                    ? "تم فحص {$headlines} عنوان وتأكيد تحديث {$rediscovered} اتجاه حالي نشط في رادارك."
+                    : "Scan complete. Verified and updated {$rediscovered} active trending keywords from {$headlines} headlines.";
             } elseif ($visibleCount > 0) {
-                $statusMsg = "Scan complete. {$visibleCount} keyword(s) match your retention window ({$headlines} headlines scanned).";
+                $statusMsg = ($lang === 'ar')
+                    ? "اكتمل المسح. توجد {$visibleCount} كلمة نشطة في رادارك من أحدث عناوين المنافسين."
+                    : "Scan complete. {$visibleCount} active keywords in your radar from recent competitor coverage.";
             } elseif ($headlines > 0) {
-                $statusMsg = 'Headlines were found but no keywords passed quality filters. Try Last 24h or All Time.';
+                $statusMsg = ($lang === 'ar')
+                    ? "تم فحص {$headlines} عنوان. الكلمات الحالية ما زالت تغطي كل الاتجاهات الرائجة."
+                    : "Scanned {$headlines} headlines. Existing keywords already cover active trends.";
             } else {
-                $statusMsg = 'No recent headlines found from your competitor sources for this time range. Try Last 24h or All Time.';
+                $statusMsg = ($lang === 'ar')
+                    ? "لم يتم العثور على عناوين جديدة خلال هذه الفترة الزمنية. جرّب اختيار (Last 24 Hours) أو (All Time)."
+                    : "No fresh headlines found for this time range. Try selecting (Last 24 Hours) or (All Time).";
             }
 
             Log::info('[Keyword Radar Sync] Completed', [

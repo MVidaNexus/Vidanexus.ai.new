@@ -522,12 +522,12 @@ function keywordRadar() {
                     // Only reload when there is fresh keyword data to render,
                     // otherwise just toast — credits already animated in place
                     // and the existing list is still accurate.
-                    const shouldReload = added > 0;
+                    const shouldReload = added > 0 || (data.keywords && data.keywords.length > 0);
                     Swal.fire({
-                        title: added > 0 ? `🎯 ${added} New Leads!` : 'Insight Update Complete',
+                        title: added > 0 ? (lang === 'ar' ? `🎯 تم اكتشاف ${added} اتجاه جديد!` : `🎯 ${added} New Leads!`) : (lang === 'ar' ? '✅ اكتمل تحديث الرادار' : 'Insight Update Complete'),
                         text: data.message,
-                        icon,
-                        timer: added > 0 ? 3500 : 4000,
+                        icon: added > 0 ? 'success' : 'info',
+                        timer: added > 0 ? 2500 : 3000,
                         timerProgressBar: true,
                         showConfirmButton: false,
                         background: '#0f172a',
