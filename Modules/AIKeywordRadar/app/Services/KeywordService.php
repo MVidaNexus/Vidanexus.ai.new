@@ -281,9 +281,9 @@ class KeywordService
         // === STEP 2: Deep AI Semantic Keyword Extraction on Priority Batches ===
         $allKeywords = [];
         $aiExtractionStart = microtime(true);
-        $batchSize = 25;
-        $maxAiBatches = ($timeFilter === 'all' || $timeFilter === 'unlimited') ? 4 : (($timeFilter === '24h' || $timeFilter === '1d') ? 3 : 2);
-        $timeBudgetSeconds = 30;
+        $batchSize = 12;
+        $maxAiBatches = ($timeFilter === 'all' || $timeFilter === 'unlimited') ? 6 : (($timeFilter === '24h' || $timeFilter === '1d') ? 5 : 4);
+        $timeBudgetSeconds = 45;
 
         $batches = array_chunk($headlines, $batchSize);
         $aiBatchesToRun = array_slice($batches, 0, $maxAiBatches);
@@ -298,14 +298,15 @@ class KeywordService
                 break;
             }
 
-            foreach ($batch as $bh) {
-                $t = trim($bh['title'] ?? '');
-                if ($t !== '') $aiProcessedTitles[mb_strtolower($t, 'UTF-8')] = true;
-            }
-
             $batchKeywords = $this->extractKeywordsWithAI($batch, $lang, $userId);
             if (! empty($batchKeywords)) {
                 $allKeywords = array_merge($allKeywords, $batchKeywords);
+                foreach ($batchKeywords as $bk) {
+                    $ht = trim($bk['headline_title'] ?? '');
+                    if ($ht !== '') {
+                        $aiProcessedTitles[mb_strtolower($ht, 'UTF-8')] = true;
+                    }
+                }
             }
         }
 
@@ -578,13 +579,24 @@ class KeywordService
             $source = $h['source'] ?? 'Competitors';
             $pubDate = $h['pubDate'] ?? null;
 
-            // 1. Clean headline from site suffixes and clickbait tags
-            $clean = preg_replace('/\s*[|–—\-]+\s*[^|–—]{1,50}$/u', '', $title);
+            // 1. Clean headline from site suffixes, media brackets, and clickbait tags
+            $clean = preg_replace('/\s*[|–—\-]+\s*(صور|فيديو|فيديوجراف|إنفوجراف|عاجل|خاص|بث مباشر|تفاصيل|مستند|فيديو وصور).*$/ui', '', $title);
+            $clean = preg_replace('/\s*[|–—\-]+\s*[^|–—]{1,30}$/u', '', $clean);
             $clean = preg_replace('/\s*\(.*?\)\s*$/u', '', $clean);
             $clean = preg_replace('/^\s*(عاجل|شاهد|بالفيديو|بالصور|خاص|رسميا|مفاجأة|تعرف على|إليك|ننشر|تحديث|حصريا|مباشر|الآن|breaking|watch|live)\s*[:|–—\-.]+\s*/ui', '', $clean);
             $clean = preg_replace('/[«»"“”]/u', '', $clean);
             $clean = preg_replace('/\d{4}[-\/]\d{1,2}[-\/]\d{1,2}/u', '', $clean);
-            $clean = trim(preg_replace('/\s+/u', ' ', $clean), " \t\n\r\0\x0B-:|.…");
+
+            // Clean rhetorical / clickbait prefixes before double dots (e.g. 'وداعاً للاصفرار..', 'صدمة مدوية..')
+            $clean = preg_replace('/^(وداع[اًا]\s+[^.]{2,30}|\w+\s+(مدوية|صادمة|غير متوقعة)|كارثة|مأساة)\s*\.{2,}\s*/u', '', $clean);
+
+            // Replace colloquial question starters with search intent terms (e.g. إزاي -> طريقة)
+            $clean = preg_replace('/^\s*إزاي\s+/u', 'طريقة ', $clean);
+            $clean = preg_replace('/^\s*ازاي\s+/u', 'طريقة ', $clean);
+
+            // Remove trailing rhetorical tails (e.g. وترجعيها جديدة من تاني؟)
+            $clean = preg_replace('/\s*(وترجعيها جديدة من تاني|من جديد|لأول مرة|لن تصدق|تعرف على التفاصيل)\s*[?؟]*$/u', '', $clean);
+            $clean = trim(preg_replace('/\s+/u', ' ', $clean), " \t\n\r\0\x0B-:|.…?؟");
 
             if (mb_strlen($clean, 'UTF-8') < 8) {
                 continue;
