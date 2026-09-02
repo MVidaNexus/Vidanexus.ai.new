@@ -226,12 +226,11 @@
             {{-- High Traffic Filter Button --}}
             <button type="button" 
                 @click="highTrafficActive = !highTrafficActive; window.toggleHighTrafficFilter('{{ $boxKey }}', highTrafficActive, '{{ $lang }}')"
-                style="display:inline-flex;align-items:center;gap:6px;padding:6px 15px;border-radius:9999px;font-size:11px;font-weight:800;white-space:nowrap;cursor:pointer;transition:all 0.2s ease;"
+                class="rounded-full inline-flex items-center gap-1.5 px-4 py-1.5 text-[11px] font-extrabold whitespace-nowrap cursor-pointer select-none transition-all duration-200"
+                style="border-radius: 9999px !important; display: inline-flex !important; align-items: center !important; gap: 6px !important; padding: 6px 16px !important; font-size: 11px !important; font-weight: 800 !important; white-space: nowrap !important; cursor: pointer !important; transition: all 0.2s ease !important;"
                 :style="highTrafficActive 
-                    ? 'background: linear-gradient(135deg, #f59e0b, #ea580c); color: #ffffff; border: 1px solid rgba(255,255,255,0.3); box-shadow: 0 4px 15px rgba(245, 158, 11, 0.4); transform: scale(1.03);' 
-                    : 'background: rgba(245, 158, 11, 0.1); color: #fbbf24; border: 1px solid rgba(245, 158, 11, 0.35); box-shadow: 0 2px 8px rgba(0,0,0,0.2);'"
-                onmouseover="this.style.transform='scale(1.05)'" 
-                onmouseout="this.style.transform=highTrafficActive?'scale(1.03)':'scale(1)'"
+                    ? 'border-radius: 9999px !important; display: inline-flex !important; align-items: center !important; gap: 6px !important; padding: 6px 16px !important; font-size: 11px !important; font-weight: 800 !important; background: linear-gradient(135deg, #f59e0b, #ea580c) !important; color: #ffffff !important; border: 1px solid rgba(255,255,255,0.4) !important; box-shadow: 0 4px 15px rgba(245, 158, 11, 0.45) !important; transform: scale(1.02);' 
+                    : 'border-radius: 9999px !important; display: inline-flex !important; align-items: center !important; gap: 6px !important; padding: 6px 16px !important; font-size: 11px !important; font-weight: 800 !important; background: rgba(245, 158, 11, 0.1) !important; color: #fbbf24 !important; border: 1px solid rgba(245, 158, 11, 0.35) !important; box-shadow: 0 2px 8px rgba(0,0,0,0.2) !important;'"
                 title="Filter high-traffic search keywords with commercial & viral potential">
                 <i class="fas fa-fire text-[11px]" :class="{'animate-bounce text-white': highTrafficActive, 'text-amber-400': !highTrafficActive}"></i>
                 <span>High Traffic</span>
