@@ -561,11 +561,12 @@ class AIKeywordRadarController extends Controller
     protected function getCliPhpBinary(): string
     {
         $candidates = [
-            '/usr/local/bin/php',
             '/opt/alt/php83/usr/bin/php',
+            '/opt/alt/php84/usr/bin/php',
             '/opt/alt/php82/usr/bin/php',
             '/opt/cpanel/ea-php83/root/usr/bin/php',
             '/opt/cpanel/ea-php82/root/usr/bin/php',
+            '/usr/local/bin/php',
             '/usr/bin/php',
         ];
 
