@@ -5,7 +5,7 @@
     @include('partials.theme-init')
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>@yield('title', 'Ramadan 2026 Trends') | VidaNexus AI</title>
-    <link rel="icon" type="image/png" href="{{ asset('assets/logo.png') }}">
+    @include('partials.favicons')
     <meta name="description" content="Ramadan Series Analytics Dashboard - Comparing Series Performance on WATCH IT and Google Trends">
 
     <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -16,7 +16,6 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
-    <link rel="icon" type="image/png" href="{{ asset('assets/logo.png') }}">
     <link rel="stylesheet" href="{{ asset('style.v2.css') }}?v={{ config('vidanexus.style_css_version') }}">
 
     <script>

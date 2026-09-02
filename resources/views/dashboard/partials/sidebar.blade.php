@@ -41,5 +41,10 @@
                         <i class="fas fa-cog"></i>
                         <span>Settings</span>
                     </a>
+
+                    <button type="button" onclick="window.installPWA()" class="dash-nav-item pwa-install-btn" style="width: 100%; text-align: inherit; background: rgba(6, 182, 212, 0.08); border: 1px dashed rgba(6, 182, 212, 0.35); color: #06b6d4; margin-top: 1rem; border-radius: 12px; cursor: pointer; transition: all 0.2s ease;">
+                        <i class="fas fa-download"></i>
+                        <span>{{ app()->getLocale() == 'ar' ? 'تثبيت التطبيق (App)' : 'Install App' }}</span>
+                    </button>
                 </nav>
             </aside>

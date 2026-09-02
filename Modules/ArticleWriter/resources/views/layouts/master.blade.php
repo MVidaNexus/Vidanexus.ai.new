@@ -8,8 +8,8 @@
     <meta name="csrf-token" content="{{ csrf_token() }}">
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
 
-    <title>ArticleWriter Module - {{ config('app.name', 'Laravel') }}</title>
-    <link rel="icon" type="image/png" href="{{ asset('assets/logo.png') }}">
+    <title>@yield('title', 'Article Writer') | VidaNexus AI</title>
+    @include('partials.favicons')
 
     <meta name="description" content="{{ $description ?? '' }}">
     <meta name="keywords" content="{{ $keywords ?? '' }}">

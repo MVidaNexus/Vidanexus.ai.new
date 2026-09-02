@@ -5,8 +5,8 @@
     @include('partials.theme-init')
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>@yield('title') | VidaNexus AI</title>
+    @include('partials.favicons')
     <meta name="description" content="AIO Optimizer — Maximize your content visibility in Google AI Overviews with NLP-powered gap analysis.">
-    <link rel="icon" type="image/png" href="{{ asset('assets/logo.png') }}">
 
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
