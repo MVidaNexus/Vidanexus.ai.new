@@ -149,7 +149,9 @@
                 
                 {{-- ═══ TITLE ═══ --}}
                 <h3 class="px-5 pt-1 font-bold leading-relaxed text-sm line-clamp-2 min-h-[3rem] mb-1 pl-10" style="color: var(--text-main);">
-                    {{ $item['title'] }}
+                    <a href="{{ $item['link'] }}" target="_blank" class="hover:text-primary-cyan transition-colors no-underline">
+                        {{ $item['title'] }}
+                    </a>
                 </h3>
 
                 {{-- ═══ ENTITY TAGS ═══ --}}

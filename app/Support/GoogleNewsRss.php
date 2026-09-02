@@ -48,41 +48,42 @@ class GoogleNewsRss
     }
 
     /**
-     * Prefer a direct publisher URL over Google's RSS redirect wrapper.
+     * Prefer a direct publisher article URL if found, otherwise use Google's RSS article redirect link ($rssLink).
+     * NEVER overwrite an article link with just the publisher's root domain homepage ($sourceUrl).
      */
     public static function resolveArticleLink(string $rssLink, string $description = '', string $sourceUrl = ''): string
     {
-        $candidates = [];
-
+        // 1. Look for direct publisher article deep links in the description
         if ($description !== '') {
             if (preg_match_all('/href=["\']([^"\']+)["\']/i', $description, $matches)) {
                 foreach ($matches[1] as $href) {
-                    $candidates[] = html_entity_decode($href, ENT_QUOTES, 'UTF-8');
+                    $href = html_entity_decode(trim($href), ENT_QUOTES, 'UTF-8');
+                    if (self::isValidOutboundUrl($href) && ! self::isGoogleNewsWrapper($href) && ! self::isRootDomain($href)) {
+                        return $href;
+                    }
                 }
             }
         }
 
+        // 2. Use Google News article redirect link (which forwards the browser directly to the exact article)
+        if ($rssLink !== '' && self::isValidOutboundUrl($rssLink)) {
+            return $rssLink;
+        }
+
+        // 3. Fallback to publisher homepage only if no specific article link exists
         if ($sourceUrl !== '' && self::isValidOutboundUrl($sourceUrl)) {
-            $candidates[] = $sourceUrl;
-        }
-
-        if ($rssLink !== '') {
-            $candidates[] = $rssLink;
-        }
-
-        foreach ($candidates as $url) {
-            $url = trim($url);
-            if (! self::isValidOutboundUrl($url)) {
-                continue;
-            }
-            if (self::isGoogleNewsWrapper($url) && count($candidates) > 1) {
-                continue;
-            }
-
-            return $url;
+            return $sourceUrl;
         }
 
         return $rssLink;
+    }
+
+    public static function isRootDomain(string $url): bool
+    {
+        $path = trim((string) parse_url($url, PHP_URL_PATH), '/');
+        $query = (string) parse_url($url, PHP_URL_QUERY);
+
+        return empty($path) && empty($query);
     }
 
     public static function isGoogleNewsWrapper(string $url): bool
