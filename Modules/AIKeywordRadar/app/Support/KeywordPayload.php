@@ -16,6 +16,7 @@ class KeywordPayload
     {
         $lang = $kw->lang ?? 'ar';
         $intent = self::detectSearchIntent($kw->keyword, $lang);
+        $trafficAnalysis = self::analyzeTrafficPotential($kw->keyword, $kw->published_at, $lang);
 
         return [
             'text' => $kw->keyword,
@@ -25,7 +26,9 @@ class KeywordPayload
             'synced_at' => $kw->synced_at ? $kw->synced_at->toDateTimeString() : null,
             'created_at' => $kw->created_at->toDateTimeString(),
             'intent' => $intent,
-            'is_high_traffic' => self::isHighTraffic($kw->keyword, $lang),
+            'is_high_traffic' => $trafficAnalysis['is_high'],
+            'traffic_score' => $trafficAnalysis['score'],
+            'traffic_reasons' => $trafficAnalysis['reasons'],
         ];
     }
 
@@ -34,18 +37,97 @@ class KeywordPayload
      */
     public static function isHighTraffic(string $text, string $lang = 'ar'): bool
     {
-        $text = mb_strtolower(trim($text), 'UTF-8');
+        $analysis = self::analyzeTrafficPotential($text, null, $lang);
+        return $analysis['is_high'];
+    }
 
-        // Disqualify editorial / rhetorical commentary
-        if (preg_match('/(أسئلة حول|قراءة في|تأملات|نظرة على|شهادات عن|أسرar وخفايا|ماذا وراء|التفاصيل الدامية)/u', $text)) {
-            return false;
+    /**
+     * Multi-Dimensional Traffic & Trend Potential Analyzer
+     * Evaluates semantic intent, user demand volume, searchability, and freshness
+     *
+     * @return array{score: int, is_high: bool, reasons: list<string>}
+     */
+    public static function analyzeTrafficPotential(string $text, ?Carbon $publishedAt = null, string $lang = 'ar'): array
+    {
+        $text = mb_strtolower(trim($text), 'UTF-8');
+        $words = preg_split('/\s+/u', $text, -1, PREG_SPLIT_NO_EMPTY);
+        $wordCount = count($words);
+
+        // Disqualify empty or single-word fragments or overly long sentences
+        if ($wordCount < 2 || $wordCount > 7) {
+            return ['score' => 20, 'is_high' => false, 'reasons' => ['length_mismatch']];
         }
 
-        $pattern = ($lang === 'en')
-            ? '/\b(price|pricing|cost|how to|guide|result|results|date|when|schedule|live|stream|score|highlights|vs|standings|best|top|review|discount|coupon|deal|deals|jobs|salary|steps|download|link|portal|update)\b/i'
-            : '/(سعر|اسعار|أسعار|موعد|نتيجة|نتائج|تنسيق|شروط|خطوات|رابط|لينك|مباراة|مباريات|بث مباشر|أهداف|اهداف|ملخص|ترتيب|جدول|تشكيل|معلق|وظائف|مرتبات|صرف|عروض|تخفيضات|أفضل|افضل|مقارنة|مواصفات|تراجع|ارتفاع|انخفاض|طريقة|تحديث|بوابة|الاستعلام|قرعة|حجز|ذهب|دولار|بترول)/u';
+        // Severe penalty for journalistic commentary/op-eds
+        if (preg_match('/(أسئلة حول|قراءة في|تأملات|نظرة على|شهادات عن|أسرار وخفايا|ماذا وراء|التفاصيل الدامية|كواليس|مفاجأة غير متوقعة)/u', $text)) {
+            return ['score' => 10, 'is_high' => false, 'reasons' => ['commentary_fluff']];
+        }
 
-        return (bool) preg_match($pattern, $text);
+        $score = 0;
+        $reasons = [];
+
+        // 1. High Demand Pillars
+        // Pillar A: Markets, Gold, Currencies, Economy & Shopping (up to 40 pts)
+        if (preg_match('/(سعر|اسعار|أسعار|ذهب|عيار|دولار|ريال|عملات|بترول|تراجع|ارتفاع|تضخم|فوائد|شهادات|بورصة|شراء|خصم|عروض|تخفيضات|مواصفات|تقسيط|price|gold|dollar|rates|crypto|market|cost|cheapest|deal|deals|discount)/u', $text)) {
+            $score += 35;
+            $reasons[] = 'commercial_finance';
+        }
+
+        // Pillar B: Services, Housing, Jobs & Public Needs (up to 40 pts)
+        if (preg_match('/(معاشات|مرتبات|صرف|تكافل وكرامة|تموين|شقق|إسكان|سكن مصر|دار مصر|جنة|حجز|طرح|تأشيرة|تذاكر|طيران|قرعة|حج|عمرة|الطقس|أرصاد|درجات الحرارة|وظائف|وظائف شاغرة|وظائف خالية|شروط|خطوات|رابط|بوابة|الاستعلام|jobs|salary|housing|visa|tickets|weather|apply|portal|booking)/u', $text)) {
+            $score += 35;
+            $reasons[] = 'public_services';
+        }
+
+        // Pillar C: Results, Admissions, Education & Exams (up to 40 pts)
+        if (preg_match('/(نتيجة|نتائج|تنسيق|أوائل|دبلومات|ثانوية عامة|امتحانات|جدول امتحانات|شهادة|كليات|جامعات|result|results|exam|schedule|grades|admissions)/u', $text)) {
+            $score += 35;
+            $reasons[] = 'education_results';
+        }
+
+        // Pillar D: Sports, Matches, Viral Teams & Athletes (up to 40 pts)
+        if (preg_match('/(مباراة|مباريات|موعد مباراة|بث مباشر|القنوات الناقلة|تشكيل|أهداف|اهداف|ملخص|ترتيب الدوري|صفقة|انتقال|الأهلي|الزمالك|الهلال|النصر|الاتحاد|ريال مدريد|برشلونة|ليفربول|مانشستر|محمد صلاح|كولر|حسام حسن|ميسي|رونالدو|match|live|stream|score|highlights|standings|vs|fc)/u', $text)) {
+            $score += 35;
+            $reasons[] = 'sports_viral';
+        }
+
+        // Pillar E: Tech Gadgets, Cars & Consumer Reviews (up to 30 pts)
+        if (preg_match('/(iphone|آيفون|سامسونج|شاومي|هاتف|مواصفات|مقارنة|سيارات|تطبيق|تحديث|android|ios|xiaomi|samsung|car|review|specs)/u', $text)) {
+            $score += 30;
+            $reasons[] = 'tech_consumer';
+        }
+
+        // Pillar F: How-to & Actionable Procedures (up to 25 pts)
+        if (preg_match('/(كيف|كيفية|طريقة|شرح|حل مشكلة|دليل|خطوات|how to|guide|steps|solution)/u', $text)) {
+            $score += 20;
+            $reasons[] = 'actionable_how_to';
+        }
+
+        // 2. Freshness & Trend Momentum (up to 35 pts)
+        if ($publishedAt) {
+            $diffHours = now()->diffInHours($publishedAt);
+            if ($diffHours <= 2) {
+                $score += 35;
+                $reasons[] = 'breaking_freshness';
+            } elseif ($diffHours <= 6) {
+                $score += 25;
+                $reasons[] = 'momentum_freshness';
+            } elseif ($diffHours <= 24) {
+                $score += 15;
+                $reasons[] = 'daily_freshness';
+            }
+        } else {
+            $score += 20; // Default fresh crawl
+        }
+
+        $finalScore = min(100, $score);
+        $isHigh = ($finalScore >= 50);
+
+        return [
+            'score' => $finalScore,
+            'is_high' => $isHigh,
+            'reasons' => $reasons,
+        ];
     }
 
     /**

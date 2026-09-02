@@ -1022,8 +1022,8 @@ window.toggleHighTrafficFilter = function(boxKey, isActive, lang) {
     let visibleKeywords = 0;
     let highTrafficMatches = 0;
 
-    const arabicTrafficRegex = /(سعر|اسعار|أسعار|موعد|نتيجة|نتائج|تنسيق|شروط|خطوات|رابط|لينك|مباراة|مباريات|بث مباشر|أهداف|اهداف|ملخص|ترتيب|جدول|تشكيل|معلق|وظائف|مرتبات|صرف|عروض|تخفيضات|أفضل|افضل|مقارنة|مواصفات|تراجع|ارتفاع|انخفاض|طريقة|تحديث|بوابة|الاستعلام|قرعة|حجز|ذهب|دولار|بترول)/i;
-    const englishTrafficRegex = /\b(price|pricing|cost|how to|guide|result|results|date|when|schedule|live|stream|score|highlights|vs|standings|best|top|review|discount|coupon|deal|deals|jobs|salary|steps|download|link|portal|update)\b/i;
+    const arabicTrafficRegex = /(سعر|اسعار|أسعار|ذهب|عيار|دولار|ريال|عملات|بترول|تراجع|ارتفاع|تضخم|فوائد|شهادات|بورصة|شراء|خصم|عروض|تخفيضات|مواصفات|تقسيط|معاشات|مرتبات|صرف|تكافل وكرامة|تموين|شقق|إسكان|سكن مصر|دار مصر|جنة|حجز|طرح|تأشيرة|تذاكر|طيران|قرعة|حج|عمرة|الطقس|أرصاد|درجات الحرارة|وظائف|وظائف شاغرة|وظائف خالية|شروط|خطوات|رابط|بوابة|الاستعلام|نتيجة|نتائج|تنسيق|أوائل|دبلومات|ثانوية عامة|امتحانات|جدول امتحانات|شهادة|كليات|جامعات|مباراة|مباريات|موعد مباراة|بث مباشر|القنوات الناقلة|تشكيل|أهداف|اهداف|ملخص|ترتيب الدوري|صفقة|انتقال|الأهلي|الزمالك|الهلال|النصر|الاتحاد|ريال مدريد|برشلونة|ليفربول|مانشستر|محمد صلاح|كولر|حسام حسن|ميسي|رونالدو|iphone|آيفون|سامسونج|شاومي|هاتف|سيارات|تطبيق|تحديث|كيفية|طريقة|شرح|حل مشكلة|دليل)/i;
+    const englishTrafficRegex = /\b(price|pricing|cost|gold|rates|dollar|crypto|market|deal|deals|discount|salary|housing|visa|tickets|weather|jobs|apply|portal|booking|result|results|exam|schedule|grades|admissions|match|live|stream|score|highlights|standings|vs|fc|iphone|samsung|xiaomi|review|specs|how to|guide|steps|solution|update)\b/i;
     const trafficRegex = (lang === 'en') ? englishTrafficRegex : arabicTrafficRegex;
 
     cards.forEach(card => {
