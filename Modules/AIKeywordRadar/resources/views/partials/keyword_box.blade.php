@@ -133,7 +133,7 @@
             {{-- Mode Dropdown --}}
             <div class="relative" @click.away="modeOpen = false">
                 <button type="button" @click="modeOpen = !modeOpen" 
-                    style="display:inline-flex;align-items:center;gap:6px;padding:6px 14px;border-radius:12px;font-size:11px;font-weight:700;white-space:nowrap;background:#0f172a;border:1px solid rgba(255,255,255,0.15);color:#ffffff;box-shadow:0 2px 10px rgba(0,0,0,0.2);cursor:pointer;transition:all 0.2s;"
+                    style="display:inline-flex;align-items:center;gap:6px;padding:6px 14px;border-radius:9999px;font-size:11px;font-weight:700;white-space:nowrap;background:#0f172a;border:1px solid rgba(255,255,255,0.15);color:#ffffff;box-shadow:0 2px 10px rgba(0,0,0,0.2);cursor:pointer;transition:all 0.2s;"
                     onmouseover="this.style.background='rgba(255,255,255,0.1)'" onmouseout="this.style.background='#0f172a'">
                     <span x-text="modeLabel" style="color:#ffffff;">🎯 Smart Focus</span>
                     <i class="fas fa-chevron-down text-[8px] opacity-70 transition-transform duration-200" :class="{'rotate-180': modeOpen}"></i>
@@ -173,7 +173,7 @@
             {{-- Time Filter Button + Dropdown --}}
             <div class="relative" @click.away="timeOpen = false">
                 <button type="button" @click="timeOpen = !timeOpen" 
-                    style="display:inline-flex;align-items:center;gap:6px;padding:6px 14px;border-radius:12px;font-size:11px;font-weight:700;white-space:nowrap;background:#0f172a;border:1px solid rgba(255,255,255,0.15);color:#ffffff;box-shadow:0 2px 10px rgba(0,0,0,0.2);cursor:pointer;transition:all 0.2s;"
+                    style="display:inline-flex;align-items:center;gap:6px;padding:6px 14px;border-radius:9999px;font-size:11px;font-weight:700;white-space:nowrap;background:#0f172a;border:1px solid rgba(255,255,255,0.15);color:#ffffff;box-shadow:0 2px 10px rgba(0,0,0,0.2);cursor:pointer;transition:all 0.2s;"
                     onmouseover="this.style.background='rgba(255,255,255,0.1)'" onmouseout="this.style.background='#0f172a'">
                     <i class="fas fa-clock text-[10px]" style="color: #10b981;"></i> 
                     <span x-text="timeLabel" style="color:#ffffff;">Last 60m</span>
@@ -217,7 +217,7 @@
 
             {{-- Sync Button --}}
             <button @click="syncCompetitors('{{ $lang }}', timeValue, '{{ $customBoxId ?? '' }}', modeValue)" :disabled="{{ $loadingModel }}" 
-                style="display:inline-flex;align-items:center;gap:6px;padding:6px 16px;border-radius:12px;font-size:11px;font-weight:900;color:#fff;white-space:nowrap;border:1px solid rgba(255,255,255,0.2);background:{{ $colorVar }};box-shadow:0 4px 20px {{ $colorVar }}35;cursor:pointer;transition:transform 0.15s;"
+                style="display:inline-flex;align-items:center;gap:6px;padding:6px 16px;border-radius:9999px;font-size:11px;font-weight:900;color:#fff;white-space:nowrap;border:1px solid rgba(255,255,255,0.2);background:{{ $colorVar }};box-shadow:0 4px 20px {{ $colorVar }}35;cursor:pointer;transition:transform 0.15s;"
                 onmouseover="if(!this.disabled)this.style.transform='scale(1.05)'" onmouseout="this.style.transform='scale(1)'">
                 <i class="fas fa-sync-alt text-[10px]" :class="{ 'fa-spin': {{ $loadingModel }} }"></i> 
                 <span x-text="{{ $loadingModel }} ? 'Scanning...' : 'Refresh Radar'"></span>
@@ -226,14 +226,14 @@
             {{-- High Traffic Only Filter Button --}}
             <button type="button" 
                 @click="highTrafficActive = !highTrafficActive; window.toggleHighTrafficFilter('{{ $boxKey }}', highTrafficActive, '{{ $lang }}')"
-                style="display:inline-flex;align-items:center;gap:6px;padding:6px 16px;border-radius:12px;font-size:11px;font-weight:900;color:#fff;white-space:nowrap;border:1px solid rgba(255,255,255,0.25);cursor:pointer;transition:transform 0.15s, box-shadow 0.15s;"
+                style="display:inline-flex;align-items:center;gap:6px;padding:6px 16px;border-radius:9999px;font-size:11px;font-weight:800;white-space:nowrap;cursor:pointer;transition:all 0.2s ease;"
                 :style="highTrafficActive 
-                    ? 'background: linear-gradient(135deg, #ef4444, #f59e0b); box-shadow: 0 4px 25px rgba(239, 68, 68, 0.55); border-color: rgba(255,255,255,0.5);' 
-                    : 'background: linear-gradient(135deg, #f59e0b, #d97706); box-shadow: 0 4px 20px rgba(245, 158, 11, 0.35);'"
-                onmouseover="this.style.transform='scale(1.05)'" 
-                onmouseout="this.style.transform='scale(1)'"
+                    ? 'background: linear-gradient(135deg, #f59e0b, #ea580c); color: #ffffff; border: 1px solid rgba(255,255,255,0.3); box-shadow: 0 4px 15px rgba(245, 158, 11, 0.4); transform: scale(1.02);' 
+                    : 'background: rgba(245, 158, 11, 0.08); color: #fbbf24; border: 1px solid rgba(245, 158, 11, 0.35); box-shadow: 0 2px 8px rgba(0,0,0,0.2);'"
+                onmouseover="if(!highTrafficActive){this.style.background='rgba(245,158,11,0.18)';this.style.borderColor='rgba(245,158,11,0.6)';}this.style.transform='scale(1.04)'" 
+                onmouseout="if(!highTrafficActive){this.style.background='rgba(245,158,11,0.08)';this.style.borderColor='rgba(245,158,11,0.35)';}this.style.transform='scale(1)'"
                 title="Filter high-traffic search keywords with commercial & viral potential">
-                <i class="fas fa-fire text-[11px] text-white" :class="{'animate-bounce': highTrafficActive}"></i>
+                <i class="fas fa-fire text-[11px]" :class="{'animate-bounce text-white': highTrafficActive, 'text-amber-400': !highTrafficActive}"></i>
                 <span>High Traffic</span>
                 <span x-show="highTrafficActive" x-cloak class="px-1.5 py-0.2 rounded-full text-[9px] font-black bg-black/40 text-amber-200 border border-white/25" id="high-traffic-badge-{{ $boxKey }}"></span>
             </button>
@@ -241,8 +241,8 @@
 
         {{-- Settings --}}
         <a href="{{ route('dashboard.ai-keyword-radar.settings') }}" 
-            style="display:inline-flex;align-items:center;gap:6px;padding:6px 12px;border-radius:12px;font-size:11px;font-weight:700;border:1px solid rgba(168,85,247,0.25);color:#a855f7;background:rgba(168,85,247,0.05);white-space:nowrap;text-decoration:none;transition:all 0.2s;"
-            onmouseover="this.style.background='rgba(168,85,247,0.15)'" onmouseout="this.style.background='rgba(168,85,247,0.05)'">
+            style="display:inline-flex;align-items:center;gap:6px;padding:6px 14px;border-radius:9999px;font-size:11px;font-weight:700;border:1px solid rgba(168,85,247,0.3);color:#c084fc;background:rgba(168,85,247,0.08);white-space:nowrap;text-decoration:none;transition:all 0.2s;"
+            onmouseover="this.style.background='rgba(168,85,247,0.18)';this.style.transform='scale(1.04)'" onmouseout="this.style.background='rgba(168,85,247,0.08)';this.style.transform='scale(1)'">
             <i class="fas fa-cog text-[10px]"></i> Settings
         </a>
     </div>
