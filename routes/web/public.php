@@ -18,6 +18,68 @@ Route::get('/robots.txt', [\App\Http\Controllers\Web\SitemapController::class, '
 
 Route::get('/api-docs', fn () => view('pages.api-docs'))->name('api-docs');
 
+// PWA Core Routes (Manifest, Service Worker, Offline Fallback, Client Script)
+Route::get('/manifest.json', function () {
+    $path = public_path('manifest.json');
+    if (! file_exists($path)) {
+        $path = base_path('manifest.json');
+    }
+
+    return response()->file($path, [
+        'Content-Type' => 'application/manifest+json; charset=utf-8',
+        'Cache-Control' => 'public, max-age=86400',
+    ]);
+});
+
+Route::get('/site.webmanifest', function () {
+    $path = public_path('site.webmanifest');
+    if (! file_exists($path)) {
+        $path = base_path('site.webmanifest');
+    }
+
+    return response()->file($path, [
+        'Content-Type' => 'application/manifest+json; charset=utf-8',
+        'Cache-Control' => 'public, max-age=86400',
+    ]);
+});
+
+Route::get('/sw.js', function () {
+    $path = public_path('sw.js');
+    if (! file_exists($path)) {
+        $path = base_path('sw.js');
+    }
+
+    return response()->file($path, [
+        'Content-Type' => 'application/javascript; charset=utf-8',
+        'Service-Worker-Allowed' => '/',
+        'Cache-Control' => 'no-cache, no-store, must-revalidate',
+    ]);
+});
+
+Route::get('/offline.html', function () {
+    $path = public_path('offline.html');
+    if (! file_exists($path)) {
+        $path = base_path('offline.html');
+    }
+
+    return response()->file($path, [
+        'Content-Type' => 'text/html; charset=utf-8',
+        'Cache-Control' => 'public, max-age=3600',
+    ]);
+});
+
+Route::get('/js/pwa.js', function () {
+    $path = public_path('js/pwa.js');
+    if (! file_exists($path)) {
+        $path = base_path('js/pwa.js');
+    }
+
+    return response()->file($path, [
+        'Content-Type' => 'application/javascript; charset=utf-8',
+        'Cache-Control' => 'public, max-age=86400',
+    ]);
+});
+
 Route::get('/media/image-proxy', [\App\Http\Controllers\Media\ImageProxyController::class, 'show'])
     ->middleware('auth')
     ->name('media.image-proxy');

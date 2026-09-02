@@ -41,3 +41,19 @@
     php_value memory_limit 1024M
     php_value max_execution_time 300
 </IfModule>
+
+# PWA MIME Types and Service-Worker Scope
+<IfModule mod_mime.c>
+    AddType application/manifest+json .webmanifest
+    AddType application/manifest+json .json
+</IfModule>
+
+<IfModule mod_headers.c>
+    <Files "sw.js">
+        Header set Service-Worker-Allowed "/"
+        Header set Cache-Control "no-cache, no-store, must-revalidate"
+    </Files>
+    <FilesMatch "\.(webmanifest|json)$">
+        Header set Access-Control-Allow-Origin "*"
+    </FilesMatch>
+</IfModule>
