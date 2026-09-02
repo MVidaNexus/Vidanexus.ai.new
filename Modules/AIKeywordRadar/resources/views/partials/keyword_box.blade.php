@@ -226,15 +226,16 @@
             {{-- High Traffic Only Filter Button --}}
             <button type="button" 
                 @click="highTrafficActive = !highTrafficActive; window.toggleHighTrafficFilter('{{ $boxKey }}', highTrafficActive, '{{ $lang }}')"
-                style="display:inline-flex;align-items:center;gap:6px;padding:6px 15px;border-radius:12px;font-size:11px;font-weight:800;white-space:nowrap;cursor:pointer;transition:all 0.25s cubic-bezier(0.4, 0, 0.2, 1);"
+                style="display:inline-flex;align-items:center;gap:6px;padding:6px 14px;border-radius:12px;font-size:11px;font-weight:700;white-space:nowrap;cursor:pointer;transition:all 0.2s ease;"
                 :style="highTrafficActive 
-                    ? 'background: linear-gradient(135deg, #f59e0b, #ef4444); color: #ffffff; border: 1px solid rgba(255,255,255,0.4); box-shadow: 0 4px 25px rgba(245, 158, 11, 0.5); transform: scale(1.03);' 
-                    : 'background: rgba(245, 158, 11, 0.12); color: #fbbf24; border: 1px solid rgba(245, 158, 11, 0.3); box-shadow: 0 2px 10px rgba(0,0,0,0.2);'"
-                onmouseover="this.style.filter='brightness(1.15)'" onmouseout="this.style.filter='none'"
-                title="{{ $isAr ? 'فلترة الكلمات ذات أعلى احتمالية لجلب ترافيك وزيارات فورية' : 'Filter only high-traffic & viral search potential keywords' }}">
-                <i class="fas fa-fire text-[11px]" :class="{'animate-bounce text-white': highTrafficActive, 'text-amber-400': !highTrafficActive}"></i>
-                <span>{{ $isAr ? 'الأكثر ترافيكاً 🔥' : 'High Traffic 🔥' }}</span>
-                <span x-show="highTrafficActive" x-cloak class="px-1.5 py-0.2 rounded-full text-[9px] font-black bg-black/40 text-amber-200 border border-white/20" id="high-traffic-badge-{{ $boxKey }}"></span>
+                    ? 'background:#1e1b4b;border:1px solid #f59e0b;color:#fbbf24;box-shadow:0 0 16px rgba(245,158,11,0.25);transform:scale(1.02);' 
+                    : 'background:#0f172a;border:1px solid rgba(255,255,255,0.15);color:#e2e8f0;box-shadow:0 2px 10px rgba(0,0,0,0.2);'"
+                onmouseover="if(!this.style.borderColor.includes('rgb(245, 158, 11)'))this.style.background='rgba(255,255,255,0.1)'" 
+                onmouseout="if(!this.style.borderColor.includes('rgb(245, 158, 11)'))this.style.background='#0f172a'"
+                title="Filter high-traffic search keywords with commercial & viral potential">
+                <i class="fas fa-fire text-[11px]" :style="{ color: highTrafficActive ? '#f59e0b' : '#f59e0b' }"></i>
+                <span style="font-weight:700;">High Traffic</span>
+                <span x-show="highTrafficActive" x-cloak style="display:inline-flex;align-items:center;padding:1px 6px;border-radius:999px;font-size:9px;font-weight:800;background:rgba(245,158,11,0.2);color:#fef08a;border:1px solid rgba(245,158,11,0.4);" id="high-traffic-badge-{{ $boxKey }}"></span>
             </button>
         </div>
 

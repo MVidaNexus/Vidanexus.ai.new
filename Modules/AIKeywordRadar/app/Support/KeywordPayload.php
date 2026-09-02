@@ -36,6 +36,11 @@ class KeywordPayload
     {
         $text = mb_strtolower(trim($text), 'UTF-8');
 
+        // Disqualify editorial / rhetorical commentary
+        if (preg_match('/(أسئلة حول|قراءة في|تأملات|نظرة على|شهادات عن|أسرar وخفايا|ماذا وراء|التفاصيل الدامية)/u', $text)) {
+            return false;
+        }
+
         $pattern = ($lang === 'en')
             ? '/\b(price|pricing|cost|how to|guide|result|results|date|when|schedule|live|stream|score|highlights|vs|standings|best|top|review|discount|coupon|deal|deals|jobs|salary|steps|download|link|portal|update)\b/i'
             : '/(سعر|اسعار|أسعار|موعد|نتيجة|نتائج|تنسيق|شروط|خطوات|رابط|لينك|مباراة|مباريات|بث مباشر|أهداف|اهداف|ملخص|ترتيب|جدول|تشكيل|معلق|وظائف|مرتبات|صرف|عروض|تخفيضات|أفضل|افضل|مقارنة|مواصفات|تراجع|ارتفاع|انخفاض|طريقة|تحديث|بوابة|الاستعلام|قرعة|حجز|ذهب|دولار|بترول)/u';
@@ -50,20 +55,20 @@ class KeywordPayload
     {
         $text = mb_strtolower(trim($text), 'UTF-8');
 
-        // 1. Informational (How to, guide, questions, tutorial, explain)
-        if (preg_match('/(كيف|كيفية|طريقة|شرح|معنى|ما هو|ما هي|ماذا|لماذا|اسباب|أسباب|اعراض|أعراض|فوائد|أضرار|خطوات|دليل|نصائح|حل|علاج|شروط|تنسيق|نتائج|جدول|how|what|why|when|guide|tips|steps|tutorial|explain|meaning|symptoms|benefits|causes|solution|remedy|requirements)/u', $text)) {
+        // 0. Editorial / Rhetorical Commentary (Classified as General)
+        if (preg_match('/(أسئلة حول|قراءة في|تأملات|نظرة على|شهادات عن|أسرار وخفايا|ماذا وراء|التفاصيل الدامية)/u', $text)) {
             return [
-                'type' => 'informational',
-                'label' => ($lang === 'ar') ? 'معلوماتي' : 'Informational',
-                'icon' => 'fas fa-info-circle',
-                'badge_bg' => 'rgba(14, 165, 233, 0.15)',
-                'badge_border' => 'rgba(14, 165, 233, 0.35)',
-                'badge_color' => '#38bdf8',
+                'type' => 'general',
+                'label' => ($lang === 'ar') ? 'عام' : 'General',
+                'icon' => 'fas fa-search',
+                'badge_bg' => 'rgba(255, 255, 255, 0.08)',
+                'badge_border' => 'rgba(255, 255, 255, 0.15)',
+                'badge_color' => '#94a3b8',
             ];
         }
 
-        // 2. Commercial / Transactional (Buying intent, pricing, stores, reviews)
-        if (preg_match('/(سعر|اسعار|أسعار|شراء|اشتري|متجر|سوق|عروض|عرض|خصم|كود|تخفيض|ارخص|أرخص|افضل|أفضل|مقارنة|مراجعة|مواصفات|تقسيط|للبيع|حجز|تكلفة|رسوم|كم سعر|buy|price|cost|pricing|best|top|cheap|cheapest|deal|deals|discount|coupon|promo|store|shop|for sale|vs|review|reviews|order|hire|rent|booking)/u', $text)) {
+        // 1. Commercial / Transactional (Buying intent, pricing, stores, reviews)
+        if (preg_match('/(سعر|اسعار|أسعار|شراء|اشتري|متجر|سوق|عروض|عرض|خصم|كود|تخفيض|ارخص|أرخص|افضل|أفضل|مقارنة|مراجعة|مواصفات|تقسيط|للبيع|حجز|تكلفة|رسوم|كم سعر|ذهب|دولار|بترول|buy|price|cost|pricing|best|top|cheap|cheapest|deal|deals|discount|coupon|promo|store|shop|for sale|vs|review|reviews|order|hire|rent|booking)/u', $text)) {
             return [
                 'type' => 'commercial',
                 'label' => ($lang === 'ar') ? 'شرائي / تجاري' : 'Commercial',
@@ -74,8 +79,8 @@ class KeywordPayload
             ];
         }
 
-        // 3. Trending / News (Live, breaking, match, score, today, date)
-        if (preg_match('/(مباشر|بث|مباراة|مباريات|اهداف|أهداف|ملخص|ترتيب|موعد|تاريخ|اليوم|الان|الآن|عاجل|وفاة|حادث|تشكيل|live|stream|match|score|today|now|date|breaking|vs|highlights)/u', $text)) {
+        // 2. Trending / News (Live, breaking, match, score, today, date)
+        if (preg_match('/(مباشر|بث مباشر|مباراة|مباريات|اهداف|أهداف|ملخص|ترتيب|موعد|تشكيل|معلق|صفقة|انتقال|قرعة|حفل|عاجل|زلزال|حادث|وفاة|live|stream|match|score|today|now|breaking|highlights)/u', $text)) {
             return [
                 'type' => 'trending',
                 'label' => ($lang === 'ar') ? 'تريند' : 'Trending',
@@ -83,6 +88,18 @@ class KeywordPayload
                 'badge_bg' => 'rgba(245, 158, 11, 0.15)',
                 'badge_border' => 'rgba(245, 158, 11, 0.35)',
                 'badge_color' => '#f59e0b',
+            ];
+        }
+
+        // 3. Informational (How to, guide, questions, tutorial, explain)
+        if (preg_match('/(كيف|كيفية|طريقة|شرح|معنى|ما هو|ما هي|ماذا|لماذا|اسباب|أسباب|اعراض|أعراض|فوائد|أضرار|خطوات|دليل|نصائح|حل|علاج|شروط|تنسيق|نتائج|جدول|how|what|why|when|guide|tips|steps|tutorial|explain|meaning|symptoms|benefits|causes|solution|remedy|requirements)/u', $text)) {
+            return [
+                'type' => 'informational',
+                'label' => ($lang === 'ar') ? 'معلوماتي' : 'Informational',
+                'icon' => 'fas fa-info-circle',
+                'badge_bg' => 'rgba(14, 165, 233, 0.15)',
+                'badge_border' => 'rgba(14, 165, 233, 0.35)',
+                'badge_color' => '#38bdf8',
             ];
         }
 
