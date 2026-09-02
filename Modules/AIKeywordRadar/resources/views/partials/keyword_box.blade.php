@@ -223,18 +223,19 @@
                 <span x-text="{{ $loadingModel }} ? 'Scanning...' : 'Refresh Radar'"></span>
             </button>
 
-            {{-- High Traffic Circular Button --}}
+            {{-- High Traffic Filter Button --}}
             <button type="button" 
                 @click="highTrafficActive = !highTrafficActive; window.toggleHighTrafficFilter('{{ $boxKey }}', highTrafficActive, '{{ $lang }}')"
-                style="display:inline-flex;align-items:center;justify-content:center;width:32px;height:32px;min-width:32px;border-radius:50%;cursor:pointer;transition:all 0.2s ease;position:relative;flex-shrink:0;"
+                style="display:inline-flex;align-items:center;gap:6px;padding:6px 15px;border-radius:9999px;font-size:11px;font-weight:800;white-space:nowrap;cursor:pointer;transition:all 0.2s ease;"
                 :style="highTrafficActive 
-                    ? 'background: linear-gradient(135deg, #f59e0b, #ea580c); color: #ffffff; border: 1px solid rgba(255,255,255,0.4); box-shadow: 0 0 16px rgba(245, 158, 11, 0.6); transform: scale(1.08);' 
-                    : 'background: rgba(245, 158, 11, 0.12); color: #fbbf24; border: 1px solid rgba(245, 158, 11, 0.35); box-shadow: 0 2px 8px rgba(0,0,0,0.2);'"
-                onmouseover="this.style.transform='scale(1.1)'" 
-                onmouseout="this.style.transform=highTrafficActive?'scale(1.08)':'scale(1)'"
-                title="High Traffic Keywords Filter 🔥">
-                <i class="fas fa-fire text-[13px]" :class="{'animate-bounce text-white': highTrafficActive, 'text-amber-400': !highTrafficActive}"></i>
-                <span x-show="highTrafficActive" x-cloak class="absolute -top-1 -right-1 px-1 min-w-[15px] h-[15px] flex items-center justify-center rounded-full text-[8px] font-black bg-red-600 text-white border border-white/40 shadow-sm" id="high-traffic-badge-{{ $boxKey }}"></span>
+                    ? 'background: linear-gradient(135deg, #f59e0b, #ea580c); color: #ffffff; border: 1px solid rgba(255,255,255,0.3); box-shadow: 0 4px 15px rgba(245, 158, 11, 0.4); transform: scale(1.03);' 
+                    : 'background: rgba(245, 158, 11, 0.1); color: #fbbf24; border: 1px solid rgba(245, 158, 11, 0.35); box-shadow: 0 2px 8px rgba(0,0,0,0.2);'"
+                onmouseover="this.style.transform='scale(1.05)'" 
+                onmouseout="this.style.transform=highTrafficActive?'scale(1.03)':'scale(1)'"
+                title="Filter high-traffic search keywords with commercial & viral potential">
+                <i class="fas fa-fire text-[11px]" :class="{'animate-bounce text-white': highTrafficActive, 'text-amber-400': !highTrafficActive}"></i>
+                <span>High Traffic</span>
+                <span x-show="highTrafficActive" x-cloak class="px-1.5 py-0.2 rounded-full text-[9px] font-black bg-black/40 text-amber-200 border border-white/25" id="high-traffic-badge-{{ $boxKey }}"></span>
             </button>
         </div>
 
