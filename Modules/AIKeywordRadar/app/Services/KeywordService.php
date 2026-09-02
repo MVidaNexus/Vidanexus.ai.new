@@ -965,8 +965,8 @@ class KeywordService
         ];
 
         // === PHASE 1: LIGHTWEIGHT PARALLEL GOOGLE NEWS FETCH (IPv4 forced, 5s timeout) ===
-        $chunks = array_chunk($competitorUrls, 10);
-        $maxPhase1Budget = $isMax ? 90 : 40;
+        $chunks = array_chunk($competitorUrls, 30);
+        $maxPhase1Budget = $isMax ? 120 : 60;
         foreach ($chunks as $chunkIndex => $chunkUrls) {
             if ((microtime(true) - $syncStart) > $maxPhase1Budget) {
                 Log::warning("[Keyword Radar] Headline fetch budget reached (" . round(microtime(true) - $syncStart) . "s). " . count($allHeadlines) . " headlines collected.");
