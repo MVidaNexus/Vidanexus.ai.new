@@ -10,7 +10,7 @@
 <link rel="icon" type="image/png" href="{{ asset('favicon.png?v=' . (file_exists(public_path('favicon.png')) ? filemtime(public_path('favicon.png')) : '2026_fav')) }}">
 
 <!-- PWA Web Manifest & App Capabilities -->
-<link rel="manifest" href="{{ asset('manifest.json') }}?v=2026_pwa">
+<link rel="manifest" href="{{ asset('manifest.json') }}?v=2026_pwa_v2">
 <meta name="theme-color" content="#030712">
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-capable" content="yes">
