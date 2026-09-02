@@ -395,16 +395,54 @@
         updateMarketSourceQuotaHint();
     }
 
+    const competitorTelemetry = @js($competitorTelemetry ?? []);
+
+    function formatTimeAgo(dateStr) {
+        if (!dateStr) return '';
+        const date = new Date(dateStr);
+        if (isNaN(date.getTime())) return dateStr;
+        const now = new Date();
+        const diffSec = Math.floor((now - date) / 1000);
+        if (diffSec < 60) return 'منذ ثوانٍ';
+        const diffMin = Math.floor(diffSec / 60);
+        if (diffMin < 60) return `منذ ${diffMin} د`;
+        const diffHours = Math.floor(diffMin / 60);
+        if (diffHours < 24) return `منذ ${diffHours} س`;
+        const diffDays = Math.floor(diffHours / 24);
+        return `منذ ${diffDays} ي`;
+    }
+
     function renderCompetitorCard(url, lang, index, colorClass, boxId = null) {
         const status = statuses[url] || { state: 'idle', message: 'Waiting', count: 0 };
+        const domain = url.replace(/^(?:https?:\/\/)?(?:www\.)?/i, '').split('/')[0].toLowerCase();
+        const telem = competitorTelemetry[url] || competitorTelemetry[domain] || null;
+        
         let statusBadge = '';
         
         if (status.state === 'loading') {
-            statusBadge = `<span class="text-[9px] px-2 py-0.5 rounded-full bg-blue-500/10 text-blue-400 border border-blue-500/20 animate-pulse flex items-center gap-1"><i class="fas fa-circle-notch fa-spin"></i> Scanning...</span>`;
-        } else if (status.state === 'success') {
-            statusBadge = `<span class="text-[9px] px-2 py-0.5 rounded-full bg-emerald-500/10 text-emerald-500 border border-emerald-500/20 flex items-center gap-1"><i class="fas fa-check-circle"></i> Monitored (${status.count})</span>`;
+            statusBadge = `<span class="text-[9px] px-2 py-0.5 rounded-full bg-blue-500/10 text-blue-400 border border-blue-500/20 animate-pulse flex items-center gap-1"><i class="fas fa-circle-notch fa-spin"></i> جاري الفحص السريع...</span>`;
+        } else if (status.state === 'success' && status.count !== '?') {
+            statusBadge = `<span class="text-[9px] px-2 py-0.5 rounded-full bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 flex items-center gap-1"><i class="fas fa-check-circle"></i> متصل بنجاح (${status.count} أخبار)</span>`;
         } else if (status.state === 'error') {
-            statusBadge = `<span class="text-[9px] px-2 py-0.5 rounded-full bg-red-500/10 text-red-400 border border-red-500/20 flex items-center gap-1"><i class="fas fa-exclamation-triangle"></i> Failed</span>`;
+            statusBadge = `<span class="text-[9px] px-2 py-0.5 rounded-full bg-red-500/10 text-red-400 border border-red-500/20 flex items-center gap-1"><i class="fas fa-exclamation-triangle"></i> تعذر السحب</span>`;
+        } else if (telem) {
+            const timeAgo = formatTimeAgo(telem.last_synced_at);
+            if (telem.total_count > 0 || telem.fresh_count > 0) {
+                statusBadge = `<span class="text-[10px] font-bold text-emerald-400 inline-flex items-center gap-1.5 px-2 py-0.5 rounded-lg bg-emerald-500/10 border border-emerald-500/20" title="${telem.last_synced_at}">
+                    <span class="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse"></span>
+                    <span>نشط — آخر سحب: ${timeAgo} (${telem.total_count} أخبار)</span>
+                </span>`;
+            } else {
+                statusBadge = `<span class="text-[10px] font-semibold text-amber-300 inline-flex items-center gap-1.5 px-2 py-0.5 rounded-lg bg-amber-500/10 border border-amber-500/20" title="${telem.last_synced_at}">
+                    <span class="w-1.5 h-1.5 rounded-full bg-amber-400"></span>
+                    <span>فُحص: ${timeAgo} (لا توجد أخبار جديدة)</span>
+                </span>`;
+            }
+        } else {
+            statusBadge = `<span class="text-[10px] font-medium text-slate-400 inline-flex items-center gap-1.5 px-2 py-0.5 rounded-lg bg-white/5 border border-white/10">
+                <i class="fas fa-clock text-[8px] opacity-60"></i>
+                <span>بانتظار المسح — اضغط ⚡ للفحص الفوري</span>
+            </span>`;
         }
 
         const removeAction = boxId 
@@ -427,7 +465,7 @@
                 </div>
                 <div class="flex items-center gap-1 ml-2">
                     <button type="button" onclick="${testAction}" 
-                            class="w-9 h-9 flex items-center justify-center text-primary-cyan hover:bg-primary-cyan/10 rounded-xl transition-colors shrink-0" title="Quick Scan">
+                            class="w-9 h-9 flex items-center justify-center text-primary-cyan hover:bg-primary-cyan/10 rounded-xl transition-colors shrink-0" title="فحص مباشر وسحب فوري">
                         <i class="fas fa-bolt text-xs"></i>
                     </button>
                     <button type="button" onclick="${removeAction}" 

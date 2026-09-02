@@ -139,9 +139,35 @@ class AIKeywordRadarController extends Controller
 
         $limit = $user->isAdmin() ? null : (int) \App\Models\Setting::get('ai-keyword-radar_max_competitors', self::MAX_MARKET_SOURCES_NON_ADMIN);
 
+        $telemetry = [];
+        $arClean = $this->parseDedupedCompetitorLines($settings['keywords_competitors'] ?? '');
+        $enClean = $this->parseDedupedCompetitorLines($settings['keywords_competitors_en'] ?? '');
+        $allUrls = array_merge($arClean, $enClean);
+
+        $customBoxes = $settings['keywords_custom_boxes'] ?? [];
+        if (is_array($customBoxes)) {
+            foreach ($customBoxes as $box) {
+                if (!empty($box['competitors'])) {
+                    $boxClean = $this->parseDedupedCompetitorLines($box['competitors']);
+                    $allUrls = array_merge($allUrls, $boxClean);
+                }
+            }
+        }
+
+        foreach ($allUrls as $url) {
+            $host = parse_url($url, PHP_URL_HOST) ?: $url;
+            $domain = preg_replace('/^www\./i', '', $host);
+            $item = Cache::get("competitor_telemetry_{$user->id}_{$domain}");
+            if ($item) {
+                $telemetry[$url] = $item;
+                $telemetry[$domain] = $item;
+            }
+        }
+
         return view('aikeywordradar::settings', [
             'settings' => $settings,
             'keywordRadarMarketSourceLimit' => $limit,
+            'competitorTelemetry' => $telemetry,
         ]);
     }
 

@@ -1002,11 +1002,28 @@ class KeywordService
 
                 if (empty($siteHeadlines)) {
                     $needsFallback[] = $url;
+                    if ($userId) {
+                        Cache::put("competitor_telemetry_{$userId}_{$domain}", [
+                            'last_synced_at' => now()->toDateTimeString(),
+                            'fresh_count' => 0,
+                            'total_count' => 0,
+                            'status' => 'no_feed',
+                        ], 86400 * 7);
+                    }
                     continue;
                 }
 
                 $applied = $this->applyTimeFilter($siteHeadlines, $freshnessLimit, $domain);
                 $allHeadlines = array_merge($allHeadlines, $applied['kept']);
+
+                if ($userId) {
+                    Cache::put("competitor_telemetry_{$userId}_{$domain}", [
+                        'last_synced_at' => now()->toDateTimeString(),
+                        'fresh_count' => $applied['fresh'],
+                        'total_count' => $applied['total'],
+                        'status' => 'active',
+                    ], 86400 * 7);
+                }
 
                 Log::info("[Competitor Sync] {$domain}: {$applied['total']} total → {$applied['fresh']} fresh "
                     . "(skipped: {$applied['too_old']} old, {$applied['no_date']} no-date) [Filter: {$filterLabel}]");
