@@ -446,105 +446,93 @@
                         }
                         $actionQuery = $primaryKeyword !== '' ? $primaryKeyword : $headlineTitle;
                     @endphp
-                    <div data-pulldate="{{ $pullTs }}" data-pubdate="{{ $pubTs }}" class="headline-card keyword-row group" style="border-radius:18px;border:1px solid var(--glass-border);background:var(--card-bg);overflow:hidden;transition:all 0.25s ease;">
-                        {{-- Top Header: Target Keyword(s) + Action Buttons --}}
-                        <div style="padding:14px 16px 12px;border-bottom:1px solid var(--glass-border);background:var(--glass-bg);">
-                            <div class="flex items-center justify-between gap-3 {{ $isAr ? '' : 'flex-row-reverse' }}">
-                                {{-- Keyword chips with checkboxes --}}
-                                <div class="flex-1 min-w-0 flex flex-wrap items-center gap-2">
-                                @foreach($groupKeywords as $kw)
-                                    @php
-                                        $text = is_array($kw) ? ($kw['text'] ?? $kw['keyword'] ?? '') : $kw;
-                                        $intent = is_array($kw) ? ($kw['intent'] ?? \Modules\AIKeywordRadar\Support\KeywordPayload::detectSearchIntent($text, $lang)) : \Modules\AIKeywordRadar\Support\KeywordPayload::detectSearchIntent($text, $lang);
-                                    @endphp
-                                    @if(!empty($text))
-                                    <div class="keyword-tag keyword-chip-row" 
-                                         data-intent="{{ $intent['type'] ?? 'general' }}" 
-                                         data-high-traffic="{{ \Modules\AIKeywordRadar\Support\KeywordPayload::isHighTraffic($text, $lang) ? '1' : '0' }}"
-                                         style="display:inline-flex;align-items:center;gap:8px;max-width:100%;flex-wrap:wrap;">
-                                        <input type="checkbox"
-                                               class="kw-select-{{ $boxKey }}"
-                                               value="{{ $text }}"
-                                               style="accent-color:{{ $colorVar }};width:16px;height:16px;cursor:pointer;flex-shrink:0;"
-                                               @change="toggleKeyword('{{ $boxKey }}', @js($text), $event.target.checked)">
-                                        <span class="keyword-text font-black text-sm sm:text-base" style="display:inline-flex;align-items:center;gap:6px;padding:6px 14px;border-radius:12px;line-height:1.3;border:1px solid rgba(255,255,255,0.15);background:rgba(255,255,255,0.06);color:#ffffff;max-width:100%;text-align:{{ $isAr ? 'right' : 'left' }};">
-                                            <i class="fas fa-hashtag text-[10px] flex-shrink-0" style="color:{{ $colorVar }};"></i>
-                                            <span class="break-words font-black" style="color:#ffffff;">{{ $text }}</span>
-                                        </span>
-                                        @if(!empty($intent))
-                                        <span class="intent-badge" style="display:inline-flex;align-items:center;gap:4px;padding:3px 8px;border-radius:6px;font-size:10px;font-weight:800;background:{{ $intent['badge_bg'] }};border:1px solid {{ $intent['badge_border'] }};color:{{ $intent['badge_color'] }};" title="{{ $intent['label'] }}">
-                                            <i class="{{ $intent['icon'] }} text-[9px]"></i>
-                                            <span>{{ $intent['label'] }}</span>
-                                        </span>
-                                        @endif
-                                    </div>
+                    <div data-pulldate="{{ $pullTs }}" data-pubdate="{{ $pubTs }}" class="headline-card keyword-row group relative p-3 sm:p-4 rounded-2xl border border-white/10 bg-white/[0.03] hover:bg-white/[0.06] hover:border-cyan-500/40 transition-all duration-200 shadow-sm" style="background:var(--card-bg);">
+                        {{-- Row 1: Target Keyword(s) + Intent Badge + Quick Actions --}}
+                        <div class="flex items-center justify-between gap-2 mb-2.5">
+                            {{-- Keyword tags & checkboxes --}}
+                            <div class="flex-1 min-w-0 flex flex-wrap items-center gap-1.5 sm:gap-2">
+                            @foreach($groupKeywords as $kw)
+                                @php
+                                    $text = is_array($kw) ? ($kw['text'] ?? $kw['keyword'] ?? '') : $kw;
+                                    $intent = is_array($kw) ? ($kw['intent'] ?? \Modules\AIKeywordRadar\Support\KeywordPayload::detectSearchIntent($text, $lang)) : \Modules\AIKeywordRadar\Support\KeywordPayload::detectSearchIntent($text, $lang);
+                                @endphp
+                                @if(!empty($text))
+                                <div class="keyword-tag keyword-chip-row inline-flex items-center gap-1.5 sm:gap-2 max-w-full" 
+                                     data-intent="{{ $intent['type'] ?? 'general' }}" 
+                                     data-high-traffic="{{ \Modules\AIKeywordRadar\Support\KeywordPayload::isHighTraffic($text, $lang) ? '1' : '0' }}">
+                                    <input type="checkbox"
+                                           class="kw-select-{{ $boxKey }}"
+                                           value="{{ $text }}"
+                                           style="accent-color:{{ $colorVar }};width:15px;height:15px;cursor:pointer;flex-shrink:0;border-radius:4px;"
+                                           @change="toggleKeyword('{{ $boxKey }}', @js($text), $event.target.checked)">
+                                    <span class="keyword-text font-black text-xs sm:text-sm inline-flex items-center gap-1.5 px-2.5 sm:px-3.5 py-1 sm:py-1.5 rounded-xl border border-white/15 bg-white/[0.08] text-white shadow-sm">
+                                        <i class="fas fa-hashtag text-[9px] sm:text-[10px]" style="color:{{ $colorVar }};"></i>
+                                        <span class="break-words font-black text-white">{{ $text }}</span>
+                                    </span>
+                                    @if(!empty($intent))
+                                    <span class="intent-badge inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[9px] sm:text-[10px] font-extrabold" style="background:{{ $intent['badge_bg'] }};border:1px solid {{ $intent['badge_border'] }};color:{{ $intent['badge_color'] }};" title="{{ $intent['label'] }}">
+                                        <i class="{{ $intent['icon'] }} text-[8px]"></i>
+                                        <span>{{ $intent['label'] }}</span>
+                                    </span>
                                     @endif
-                                @endforeach
                                 </div>
+                                @endif
+                            @endforeach
+                            </div>
 
-                                {{-- Action buttons --}}
-                                <div class="flex items-center gap-1.5 flex-shrink-0">
-                                    @if(!empty($groupKeywordTexts))
-                                    <a href="https://www.google.com/search?q={{ urlencode($actionQuery) }}&gl={{ \App\Support\CountryRegistry::defaultRegion($lang) }}" target="_blank"
-                                        style="width:32px;height:32px;display:flex;align-items:center;justify-content:center;border-radius:10px;background:var(--card-bg);border:1px solid var(--glass-border);color:var(--text-muted);text-decoration:none;transition:all 0.2s;"
-                                        title="Google"
-                                        onmouseover="this.style.color='{{ $colorVar }}';this.style.borderColor='{{ $colorVar }}'"
-                                        onmouseout="this.style.color='var(--text-muted)';this.style.borderColor='var(--glass-border)'">
-                                        <i class="fab fa-google text-xs"></i>
-                                    </a>
-                                    <a href="{{ route('headlines.index', ['keyword' => $actionQuery]) }}" target="_blank"
-                                        style="width:32px;height:32px;display:flex;align-items:center;justify-content:center;border-radius:10px;color:#fff;background:linear-gradient(135deg,var(--primary-cyan,#0ea5e9),#6366f1);border:1px solid rgba(255,255,255,0.15);text-decoration:none;transition:all 0.2s;"
-                                        title="{{ $isAr ? 'اكتشاف' : 'Discover' }}"
-                                        onmouseover="this.style.transform='scale(1.08)'" onmouseout="this.style.transform='scale(1)'">
-                                        <i class="fas fa-magic text-xs"></i>
-                                    </a>
-                                    <a href="{{ route('dashboard.article-writer.index', ['keyword' => $actionQuery]) }}" target="_blank"
-                                        style="width:32px;height:32px;display:flex;align-items:center;justify-content:center;border-radius:10px;color:#fff;background:linear-gradient(135deg,#a855f7,#6366f1);border:1px solid rgba(255,255,255,0.15);text-decoration:none;transition:all 0.2s;"
-                                        title="{{ $isAr ? 'كتابة' : 'Write' }}"
-                                        onmouseover="this.style.transform='scale(1.08)'" onmouseout="this.style.transform='scale(1)'">
-                                        <i class="fas fa-pen-fancy text-xs"></i>
-                                    </a>
-                                    @endif
-                                </div>
+                            {{-- Action buttons --}}
+                            <div class="flex items-center gap-1 sm:gap-1.5 flex-shrink-0">
+                                @if(!empty($groupKeywordTexts))
+                                <a href="https://www.google.com/search?q={{ urlencode($actionQuery) }}&gl={{ \App\Support\CountryRegistry::defaultRegion($lang) }}" target="_blank"
+                                    class="w-7 h-7 sm:w-8 sm:h-8 inline-flex items-center justify-center rounded-lg bg-white/5 border border-white/10 text-slate-400 hover:text-cyan-400 hover:border-cyan-500/40 transition-all text-xs"
+                                    title="Google">
+                                    <i class="fab fa-google text-[11px]"></i>
+                                </a>
+                                <a href="{{ route('headlines.index', ['keyword' => $actionQuery]) }}" target="_blank"
+                                    class="w-7 h-7 sm:w-8 sm:h-8 inline-flex items-center justify-center rounded-lg text-white bg-gradient-to-r from-cyan-500 to-blue-600 border border-white/20 hover:scale-105 transition-all text-xs shadow-sm"
+                                    title="{{ $isAr ? 'اكتشاف' : 'Discover' }}">
+                                    <i class="fas fa-magic text-[10px]"></i>
+                                </a>
+                                <a href="{{ route('dashboard.article-writer.index', ['keyword' => $actionQuery]) }}" target="_blank"
+                                    class="w-7 h-7 sm:w-8 sm:h-8 inline-flex items-center justify-center rounded-lg text-white bg-gradient-to-r from-purple-500 to-indigo-600 border border-white/20 hover:scale-105 transition-all text-xs shadow-sm"
+                                    title="{{ $isAr ? 'كتابة' : 'Write' }}">
+                                    <i class="fas fa-pen-fancy text-[10px]"></i>
+                                </a>
+                                @endif
                             </div>
                         </div>
 
-                        {{-- Bottom Body: Scraped Headline & Metadata --}}
-                        <div class="p-3 sm:p-4" style="background:var(--card-bg);">
-                            <div class="flex items-start gap-2.5 {{ $isAr ? '' : 'flex-row-reverse' }}">
-                                <span style="flex-shrink:0;width:26px;height:26px;display:flex;align-items:center;justify-content:center;border-radius:8px;font-size:10px;background:{{ $colorVar }}15;border:1px solid {{ $colorVar }}30;color:{{ $colorVar }};">
-                                    <i class="fas fa-newspaper text-[10px]"></i>
+                        {{-- Row 2: Headline & Metadata (Clean, integrated, zero dead space) --}}
+                        <div class="pt-2 border-t border-white/5 flex flex-col sm:flex-row sm:items-center justify-between gap-1.5 {{ $isAr ? 'text-right' : 'text-left' }}">
+                            <div class="flex items-start gap-1.5 flex-1 min-w-0">
+                                <i class="fas fa-newspaper text-[10px] mt-0.5 opacity-60 flex-shrink-0" style="color:{{ $colorVar }};"></i>
+                                <h4 class="font-medium text-[11px] sm:text-xs text-slate-300 leading-snug break-words flex-1">{{ $headlineTitle }}</h4>
+                            </div>
+                            <div class="flex items-center gap-2 flex-wrap flex-shrink-0 text-[9px] sm:text-[10px]">
+                                <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-md font-bold bg-white/10 border border-white/15 text-white">
+                                    <i class="fas fa-globe text-[8px] text-cyan-400"></i>
+                                    <span>{{ $source }}</span>
                                 </span>
-                                <div class="flex-1 min-w-0">
-                                    <h4 class="font-bold text-xs sm:text-sm break-words leading-relaxed mb-2" style="color:{{ $colorVar }};opacity:0.95;">{{ $headlineTitle }}</h4>
-                                    <div class="flex flex-wrap items-center gap-2.5">
-                                        <span style="font-size:10px;color:#ffffff;background:rgba(255,255,255,0.12);padding:3px 10px;border-radius:8px;font-weight:900;text-transform:uppercase;border:1px solid rgba(255,255,255,0.3);display:inline-flex;align-items:center;gap:5px;letter-spacing:0.3px;box-shadow:0 2px 8px rgba(0,0,0,0.4);"><i class="fas fa-globe text-[9px]" style="color:var(--primary-cyan, #0ea5e9);"></i> <span style="color:#ffffff !important;font-weight:900;">{{ $source }}</span></span>
-                                        @if($pubTime)
-                                            @php 
-                                                $pubCarbon = \Carbon\Carbon::parse($pubTime); 
-                                                if ($isAr) $pubCarbon->locale('ar');
-                                            @endphp
-                                            <span class="text-[9px] font-bold" style="color:var(--text-muted);"
-                                                  title="{{ $pubCarbon->timezone(config('app.timezone'))->format('Y-m-d H:i:s T') }}">
-                                                <i class="fas fa-clock text-[8px] opacity-50" style="color:var(--primary-cyan);"></i>
-                                                {{ $isAr ? 'نُشر:' : 'Published:' }}
-                                                <span style="color:var(--primary-cyan);">{{ $pubCarbon->diffForHumans() }}</span>
-                                            </span>
-                                        @endif
-                                        @if($syncTime)
-                                            @php 
-                                                $syncCarbon = \Carbon\Carbon::parse($syncTime); 
-                                                if ($isAr) $syncCarbon->locale('ar');
-                                            @endphp
-                                            <span class="text-[9px] font-bold" style="color:var(--text-muted);"
-                                                  title="{{ $syncCarbon->timezone(config('app.timezone'))->format('Y-m-d H:i:s T') }}">
-                                                <i class="fas fa-sync text-[8px] opacity-50" style="color:#f59e0b;"></i>
-                                                {{ $isAr ? 'تم السحب:' : 'Fetched:' }}
-                                                <span style="color:#f59e0b;">{{ $syncCarbon->diffForHumans() }}</span>
-                                            </span>
-                                        @endif
-                                    </div>
-                                </div>
+                                @if($pubTime)
+                                    @php 
+                                        $pubCarbon = \Carbon\Carbon::parse($pubTime); 
+                                        if ($isAr) $pubCarbon->locale('ar');
+                                    @endphp
+                                    <span class="text-slate-400 font-semibold" title="{{ $pubCarbon->timezone(config('app.timezone'))->format('Y-m-d H:i:s T') }}">
+                                        <i class="fas fa-clock text-[8px] text-cyan-400 opacity-60"></i>
+                                        {{ $pubCarbon->diffForHumans() }}
+                                    </span>
+                                @endif
+                                @if($syncTime)
+                                    @php 
+                                        $syncCarbon = \Carbon\Carbon::parse($syncTime); 
+                                        if ($isAr) $syncCarbon->locale('ar');
+                                    @endphp
+                                    <span class="text-amber-400/80 font-semibold hidden sm:inline" title="{{ $syncCarbon->timezone(config('app.timezone'))->format('Y-m-d H:i:s T') }}">
+                                        <i class="fas fa-sync text-[8px] text-amber-400 opacity-60"></i>
+                                        {{ $syncCarbon->diffForHumans() }}
+                                    </span>
+                                @endif
                             </div>
                         </div>
                     </div>

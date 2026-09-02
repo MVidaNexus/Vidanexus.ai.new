@@ -28,20 +28,20 @@
 
 <div x-data="keywordRadar()" x-init="init()" class="max-w-7xl mx-auto">
     <!-- Header Section -->
-    <div class="text-center mb-16 pt-10">
-        <div class="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-primary-cyan/10 border border-primary-cyan/20 text-primary-cyan text-xs font-bold mb-6 animate-pulse">
+    <div class="text-center mb-6 sm:mb-12 pt-4 sm:pt-10">
+        <div class="inline-flex items-center gap-2 px-3 py-1 sm:px-4 sm:py-2 rounded-full bg-primary-cyan/10 border border-primary-cyan/20 text-primary-cyan text-[11px] sm:text-xs font-bold mb-3 sm:mb-6 animate-pulse">
             <i class="fas fa-satellite-dish"></i> RADAR SURVEILLANCE ACTIVE
         </div>
-        <h1 class="text-6xl md:text-8xl font-black mb-6 tracking-tighter text-white" style="text-shadow: 0 0 30px rgba(0, 243, 255, 0.4); line-height: 1.1;">
+        <h1 class="text-3xl sm:text-6xl md:text-8xl font-black mb-2 sm:mb-6 tracking-tighter text-white" style="text-shadow: 0 0 30px rgba(0, 243, 255, 0.4); line-height: 1.1;">
             KEYWORD <span style="color: var(--primary-cyan);">SPY RADAR</span>
         </h1>
-        <p class="text-xl md:text-2xl font-bold opacity-90 max-w-3xl mx-auto" style="color: var(--text-muted);">
+        <p class="text-sm sm:text-xl md:text-2xl font-bold opacity-90 max-w-3xl mx-auto" style="color: var(--text-muted);">
             Spot your next big win before everyone else.
         </p>
     </div>
 
-    <!-- Professional Keyword Surveillance Protocol (Redesigned) -->
-    <div class="glass-card mb-16 border-white/5 backdrop-blur-xl overflow-hidden shadow-2xl shadow-primary-cyan/5">
+    <!-- Professional Keyword Surveillance Protocol (Desktop Only) -->
+    <div class="hidden md:block glass-card mb-12 border-white/5 backdrop-blur-xl overflow-hidden shadow-2xl shadow-primary-cyan/5">
         <div class="p-6 md:p-10">
             <!-- Sleek Header -->
             <div class="flex flex-col md:flex-row items-start md:items-center justify-between gap-6 mb-10 border-b border-white/5 pb-8">
