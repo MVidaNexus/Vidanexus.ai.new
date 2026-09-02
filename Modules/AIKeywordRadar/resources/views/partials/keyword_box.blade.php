@@ -88,12 +88,13 @@
             </div>
         </div>
 
-        {{-- Mode Selector + Time Filter + Sync --}}
+        {{-- Mode Selector + Time Filter + High Traffic + Sync --}}
         <div class="flex items-center gap-2 flex-wrap" x-data="{
                 timeOpen: false,
                 timeLabel: 'Last 60m',
                 timeValue: '60m',
                 hoverValue: null,
+                highTrafficActive: false,
                 timeOptions: [
                     { value: '60m',  label: 'Last 60m',  title: 'Last 60 Minutes',  hint: 'Most recent content only',         icon: 'fas fa-history',       color: '#10b981' },
                     { value: '24h',  label: 'Last 24h',  title: 'Last 24 Hours',    hint: 'Today\u2019s trending content',    icon: 'fas fa-calendar-day',  color: '#f59e0b' },
@@ -220,6 +221,20 @@
                 onmouseover="if(!this.disabled)this.style.transform='scale(1.05)'" onmouseout="this.style.transform='scale(1)'">
                 <i class="fas fa-sync-alt text-[10px]" :class="{ 'fa-spin': {{ $loadingModel }} }"></i> 
                 <span x-text="{{ $loadingModel }} ? 'Scanning...' : 'Refresh Radar'"></span>
+            </button>
+
+            {{-- High Traffic Only Filter Button --}}
+            <button type="button" 
+                @click="highTrafficActive = !highTrafficActive; window.toggleHighTrafficFilter('{{ $boxKey }}', highTrafficActive, '{{ $lang }}')"
+                style="display:inline-flex;align-items:center;gap:6px;padding:6px 15px;border-radius:12px;font-size:11px;font-weight:800;white-space:nowrap;cursor:pointer;transition:all 0.25s cubic-bezier(0.4, 0, 0.2, 1);"
+                :style="highTrafficActive 
+                    ? 'background: linear-gradient(135deg, #f59e0b, #ef4444); color: #ffffff; border: 1px solid rgba(255,255,255,0.4); box-shadow: 0 4px 25px rgba(245, 158, 11, 0.5); transform: scale(1.03);' 
+                    : 'background: rgba(245, 158, 11, 0.12); color: #fbbf24; border: 1px solid rgba(245, 158, 11, 0.3); box-shadow: 0 2px 10px rgba(0,0,0,0.2);'"
+                onmouseover="this.style.filter='brightness(1.15)'" onmouseout="this.style.filter='none'"
+                title="{{ $isAr ? 'فلترة الكلمات ذات أعلى احتمالية لجلب ترافيك وزيارات فورية' : 'Filter only high-traffic & viral search potential keywords' }}">
+                <i class="fas fa-fire text-[11px]" :class="{'animate-bounce text-white': highTrafficActive, 'text-amber-400': !highTrafficActive}"></i>
+                <span>{{ $isAr ? 'الأكثر ترافيكاً 🔥' : 'High Traffic 🔥' }}</span>
+                <span x-show="highTrafficActive" x-cloak class="px-1.5 py-0.2 rounded-full text-[9px] font-black bg-black/40 text-amber-200 border border-white/20" id="high-traffic-badge-{{ $boxKey }}"></span>
             </button>
         </div>
 
@@ -443,7 +458,10 @@
                                         $intent = is_array($kw) ? ($kw['intent'] ?? \Modules\AIKeywordRadar\Support\KeywordPayload::detectSearchIntent($text, $lang)) : \Modules\AIKeywordRadar\Support\KeywordPayload::detectSearchIntent($text, $lang);
                                     @endphp
                                     @if(!empty($text))
-                                    <div class="keyword-tag keyword-chip-row" data-intent="{{ $intent['type'] ?? 'general' }}" style="display:inline-flex;align-items:center;gap:8px;max-width:100%;flex-wrap:wrap;">
+                                    <div class="keyword-tag keyword-chip-row" 
+                                         data-intent="{{ $intent['type'] ?? 'general' }}" 
+                                         data-high-traffic="{{ \Modules\AIKeywordRadar\Support\KeywordPayload::isHighTraffic($text, $lang) ? '1' : '0' }}"
+                                         style="display:inline-flex;align-items:center;gap:8px;max-width:100%;flex-wrap:wrap;">
                                         <input type="checkbox"
                                                class="kw-select-{{ $boxKey }}"
                                                value="{{ $text }}"

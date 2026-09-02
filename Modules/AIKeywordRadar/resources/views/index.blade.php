@@ -1013,6 +1013,67 @@ window.filterBoxByIntent = function(boxKey, intent) {
     }
 };
 
+window.toggleHighTrafficFilter = function(boxKey, isActive, lang) {
+    const container = document.getElementById(`keywords-container-${boxKey}`) || document.querySelector(`.keyword-container-${boxKey}`);
+    if (!container) return;
+
+    const cards = container.querySelectorAll('.headline-card, .keyword-row');
+    const totalKeywords = container.querySelectorAll('.keyword-chip-row').length;
+    let visibleKeywords = 0;
+    let highTrafficMatches = 0;
+
+    const arabicTrafficRegex = /(سعر|اسعار|أسعار|موعد|نتيجة|نتائج|تنسيق|شروط|خطوات|رابط|لينك|مباراة|مباريات|بث مباشر|أهداف|اهداف|ملخص|ترتيب|جدول|تشكيل|معلق|وظائف|مرتبات|صرف|عروض|تخفيضات|أفضل|افضل|مقارنة|مواصفات|تراجع|ارتفاع|انخفاض|طريقة|تحديث|بوابة|الاستعلام|قرعة|حجز|ذهب|دولار|بترول)/i;
+    const englishTrafficRegex = /\b(price|pricing|cost|how to|guide|result|results|date|when|schedule|live|stream|score|highlights|vs|standings|best|top|review|discount|coupon|deal|deals|jobs|salary|steps|download|link|portal|update)\b/i;
+    const trafficRegex = (lang === 'en') ? englishTrafficRegex : arabicTrafficRegex;
+
+    cards.forEach(card => {
+        const chips = card.querySelectorAll('.keyword-chip-row');
+        if (!isActive) {
+            card.style.display = '';
+            chips.forEach(chip => {
+                chip.style.display = '';
+                visibleKeywords++;
+            });
+            return;
+        }
+
+        let hasHighTrafficChip = false;
+        chips.forEach(chip => {
+            const text = chip.querySelector('input[type="checkbox"]')?.value || chip.textContent.trim();
+            const isTagged = chip.getAttribute('data-high-traffic') === '1';
+            const intent = chip.getAttribute('data-intent') || '';
+            const matchesIntent = (intent === 'commercial' || intent === 'trending');
+            const matchesRegex = trafficRegex.test(text);
+
+            if (isTagged || matchesIntent || matchesRegex) {
+                chip.style.display = '';
+                hasHighTrafficChip = true;
+                visibleKeywords++;
+                highTrafficMatches++;
+            } else {
+                chip.style.display = 'none';
+            }
+        });
+
+        card.style.display = hasHighTrafficChip ? '' : 'none';
+    });
+
+    const badgeEl = document.getElementById(`high-traffic-badge-${boxKey}`);
+    if (badgeEl) {
+        badgeEl.textContent = `${highTrafficMatches}`;
+    }
+
+    const card = container.closest('.glass-card') || container.parentElement;
+    const badge = card ? card.querySelector('[data-keyword-count]') : null;
+    if (badge) {
+        if (isActive) {
+            badge.innerHTML = `<span class="w-2 h-2 rounded-full bg-amber-400 animate-ping"></span><span>${visibleKeywords} 🔥 (${lang === 'ar' ? 'أعلى ترافيك' : 'High Traffic'})</span>`;
+        } else {
+            badge.innerHTML = `<span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span><span>${totalKeywords} ${lang === 'ar' ? 'كلمة' : 'Keywords'}</span>`;
+        }
+    }
+};
+
 function copyToClipboard(text) {
     navigator.clipboard.writeText(text).then(() => {
         Swal.fire({ toast:true, position:'top-end', icon:'success', title:'Copied Successfully', showConfirmButton:false, timer:1500, background:'var(--card-bg)', color:'var(--text-main)' });

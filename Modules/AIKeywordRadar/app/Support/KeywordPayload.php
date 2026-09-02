@@ -10,7 +10,7 @@ use Modules\AIKeywordRadar\Models\Keyword;
 class KeywordPayload
 {
     /**
-     * @return array{text: string, source: string, headline_title: ?string, published_at: ?string, synced_at: ?string, created_at: string, intent: array}
+     * @return array{text: string, source: string, headline_title: ?string, published_at: ?string, synced_at: ?string, created_at: string, intent: array, is_high_traffic: bool}
      */
     public static function fromModel(Keyword $kw): array
     {
@@ -25,7 +25,22 @@ class KeywordPayload
             'synced_at' => $kw->synced_at ? $kw->synced_at->toDateTimeString() : null,
             'created_at' => $kw->created_at->toDateTimeString(),
             'intent' => $intent,
+            'is_high_traffic' => self::isHighTraffic($kw->keyword, $lang),
         ];
+    }
+
+    /**
+     * Determine if a keyword has high traffic potential / viral commercial search intent
+     */
+    public static function isHighTraffic(string $text, string $lang = 'ar'): bool
+    {
+        $text = mb_strtolower(trim($text), 'UTF-8');
+
+        $pattern = ($lang === 'en')
+            ? '/\b(price|pricing|cost|how to|guide|result|results|date|when|schedule|live|stream|score|highlights|vs|standings|best|top|review|discount|coupon|deal|deals|jobs|salary|steps|download|link|portal|update)\b/i'
+            : '/(سعر|اسعار|أسعار|موعد|نتيجة|نتائج|تنسيق|شروط|خطوات|رابط|لينك|مباراة|مباريات|بث مباشر|أهداف|اهداف|ملخص|ترتيب|جدول|تشكيل|معلق|وظائف|مرتبات|صرف|عروض|تخفيضات|أفضل|افضل|مقارنة|مواصفات|تراجع|ارتفاع|انخفاض|طريقة|تحديث|بوابة|الاستعلام|قرعة|حجز|ذهب|دولار|بترول)/u';
+
+        return (bool) preg_match($pattern, $text);
     }
 
     /**
