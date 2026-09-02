@@ -63,6 +63,12 @@
             </div>
         </label>
 
+        <!-- PWA Install App Button -->
+        <button type="button" onclick="window.installPWA()" class="pwa-header-install-btn" title="{{ app()->getLocale() == 'ar' ? 'تثبيت تطبيق المنصة' : 'Install VidaNexus App' }}" style="display: inline-flex; align-items: center; gap: 0.45rem; padding: 0.45rem 0.95rem; border-radius: 20px; font-size: 0.82rem; font-weight: 700; background: linear-gradient(135deg, rgba(6, 182, 212, 0.15), rgba(168, 85, 247, 0.15)); border: 1px solid rgba(6, 182, 212, 0.45); color: #38bdf8; cursor: pointer; transition: all 0.25s ease; box-shadow: 0 0 12px rgba(6, 182, 212, 0.2);" onmouseover="this.style.transform='scale(1.05)'; this.style.borderColor='#38bdf8'; this.style.boxShadow='0 0 20px rgba(6, 182, 212, 0.4)';" onmouseout="this.style.transform='scale(1)'; this.style.borderColor='rgba(6, 182, 212, 0.45)'; this.style.boxShadow='0 0 12px rgba(6, 182, 212, 0.2)';">
+            <i class="fas fa-download" style="color: #38bdf8; font-size: 0.75rem;"></i>
+            <span>{{ app()->getLocale() == 'ar' ? 'تثبيت التطبيق' : 'Install App' }}</span>
+        </button>
+
         @guest
             <a href="/login" style="color: var(--text-main); text-decoration: none; font-size: 0.9rem; font-weight: 600; padding: 0.6rem 1.2rem; border-radius: 8px; border: 1px solid var(--glass-border); transition: all 0.3s;" onmouseover="this.style.background='var(--primary-cyan)'; this.style.color='#000'; this.style.borderColor='var(--primary-cyan)'" onmouseout="this.style.background='none'; this.style.color='var(--text-main)'; this.style.borderColor='var(--glass-border)'">Login</a>
             <a href="/register" class="notify-btn" style="padding: 0.6rem 1.2rem; text-decoration: none;">
@@ -172,6 +178,10 @@
     <a href="/" onclick="closeMobileMenu()"><i class="fas fa-home" style="width: 25px;"></i> Home</a>
     <a href="/#tools" onclick="closeMobileMenu()"><i class="fas fa-layer-group" style="width: 25px;"></i> Tools</a>
     <a href="/pricing" onclick="closeMobileMenu()"><i class="fas fa-tags" style="width: 25px;"></i> Pricing</a>
+    
+    <a href="javascript:void(0)" onclick="closeMobileMenu(); window.installPWA();" style="color: #38bdf8 !important; background: rgba(6, 182, 212, 0.1); border: 1px dashed rgba(6, 182, 212, 0.45); border-radius: 12px; margin: 0.5rem 0; font-weight: 700; display: flex; align-items: center; gap: 0.75rem;">
+        <i class="fas fa-download" style="width: 25px; color: #38bdf8;"></i> {{ app()->getLocale() == 'ar' ? 'تثبيت التطبيق (App)' : 'Install App' }}
+    </a>
     
     <label class="theme-switch-dribbble" style="margin: 1rem 0;">
         <input type="checkbox" checked onchange="handleThemeChange(event)">

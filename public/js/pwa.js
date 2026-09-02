@@ -129,6 +129,34 @@
                     color: '#fff'
                 });
             }
+            return;
+        }
+
+        // Fallback guidance for desktop / other browsers
+        if (window.Swal) {
+            Swal.fire({
+                title: 'تثبيت تطبيق VidaNexus AI',
+                html: `
+                    <div class="text-right text-sm space-y-3 py-2 text-slate-200">
+                        <p>يمكنك تثبيت المنصة كتطبيق سطح مكتب أو هاتف بسهولة:</p>
+                        <div class="p-3 bg-white/5 border border-white/10 rounded-xl space-y-2">
+                            <p class="flex items-center gap-2">
+                                <span class="w-6 h-6 rounded-full bg-cyan-500/20 text-cyan-400 font-bold flex items-center justify-center text-xs">1</span>
+                                <span>اضغط على أيقونة التثبيت <i class="fas fa-desktop text-cyan-400"></i> في شريط العنوان (URL bar) بأعلى المتصفح.</span>
+                            </p>
+                            <p class="flex items-center gap-2">
+                                <span class="w-6 h-6 rounded-full bg-cyan-500/20 text-cyan-400 font-bold flex items-center justify-center text-xs">2</span>
+                                <span>أو افتح قائمة خيارات المتصفح <i class="fas fa-ellipsis-vertical text-cyan-400"></i> واضغط <b>"تثبيت التطبيق" (Install)</b>.</span>
+                            </p>
+                        </div>
+                    </div>
+                `,
+                icon: 'info',
+                confirmButtonText: 'فهمت',
+                confirmButtonColor: '#0ea5e9',
+                background: '#0f172a',
+                color: '#fff'
+            });
         }
     };
 
