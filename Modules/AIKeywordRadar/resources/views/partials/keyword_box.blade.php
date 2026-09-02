@@ -465,8 +465,10 @@
                                            value="{{ $text }}"
                                            style="accent-color:{{ $colorVar }};width:15px;height:15px;cursor:pointer;flex-shrink:0;border-radius:4px;"
                                            @change="toggleKeyword('{{ $boxKey }}', @js($text), $event.target.checked)">
-                                    <span class="keyword-text font-black text-xs sm:text-sm inline-flex items-center gap-1.5 px-2.5 sm:px-3.5 py-1 sm:py-1.5 rounded-xl border border-white/15 bg-white/[0.08] text-white shadow-sm">
-                                        <i class="fas fa-hashtag text-[9px] sm:text-[10px]" style="color:{{ $colorVar }};"></i>
+                                    <span class="keyword-text font-black text-xs sm:text-sm inline-flex items-center gap-1.5 px-2.5 sm:px-3.5 py-1 sm:py-1.5 rounded-xl border border-white/15 bg-white/[0.08] text-white shadow-sm cursor-pointer hover:bg-white/[0.15] hover:border-cyan-400/50 hover:scale-[1.02] active:scale-95 transition-all select-none group/chip"
+                                          @click.stop="copyKeywordDirectly($el, @js($text))"
+                                          title="{{ $isAr ? 'اضغط لنسخ الكلمة تلقائياً' : 'Click to copy keyword' }}">
+                                        <i class="fas fa-hashtag text-[9px] sm:text-[10px] kw-icon transition-colors" style="color:{{ $colorVar }};"></i>
                                         <span class="break-words font-black text-white">{{ $text }}</span>
                                     </span>
                                     @if(!empty($intent))

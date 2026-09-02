@@ -1075,9 +1075,61 @@ window.toggleHighTrafficFilter = function(boxKey, isActive, lang) {
 };
 
 function copyToClipboard(text) {
-    navigator.clipboard.writeText(text).then(() => {
-        Swal.fire({ toast:true, position:'top-end', icon:'success', title:'Copied Successfully', showConfirmButton:false, timer:1500, background:'var(--card-bg)', color:'var(--text-main)' });
-    });
+    copyKeywordDirectly(null, text);
+}
+
+window.copyKeywordDirectly = function(el, text) {
+    if (!text) return;
+    
+    // Copy to clipboard with fallback
+    if (navigator.clipboard && window.isSecureContext) {
+        navigator.clipboard.writeText(text).catch(() => copyFallback(text));
+    } else {
+        copyFallback(text);
+    }
+    
+    // Sleek Toast
+    if (window.Swal) {
+        Swal.fire({
+            toast: true,
+            position: 'top-end',
+            icon: 'success',
+            title: '{{ app()->getLocale() == 'ar' ? 'تم نسخ الكلمة بنجاح' : 'Keyword Copied!' }}',
+            text: text,
+            showConfirmButton: false,
+            timer: 1500,
+            timerProgressBar: true,
+            background: 'var(--card-bg, #0f172a)',
+            color: 'var(--text-main, #ffffff)'
+        });
+    }
+
+    // Interactive button animation
+    if (el) {
+        const icon = el.querySelector('.kw-icon');
+        el.classList.add('ring-2', 'ring-emerald-400', 'bg-emerald-500/20');
+        if (icon) {
+            icon.className = 'fas fa-check text-[10px] text-emerald-400 kw-icon transition-all';
+        }
+        setTimeout(() => {
+            el.classList.remove('ring-2', 'ring-emerald-400', 'bg-emerald-500/20');
+            if (icon) {
+                icon.className = 'fas fa-hashtag text-[9px] sm:text-[10px] kw-icon transition-all';
+            }
+        }, 1500);
+    }
+};
+
+function copyFallback(text) {
+    const ta = document.createElement('textarea');
+    ta.value = text;
+    ta.style.position = 'fixed';
+    ta.style.opacity = '0';
+    document.body.appendChild(ta);
+    ta.focus();
+    ta.select();
+    try { document.execCommand('copy'); } catch(e) {}
+    document.body.removeChild(ta);
 }
 
 function showInsufficientBalanceAlert(msg) {
