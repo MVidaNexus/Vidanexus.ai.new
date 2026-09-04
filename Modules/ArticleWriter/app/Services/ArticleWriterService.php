@@ -202,10 +202,10 @@ class ArticleWriterService
 
         // 4. Meta Tags Protocol (Dynamic — respect user selection)
         if (in_array('meta', $components)) {
-            $metaPrompt = Setting::get("{$slug}_prompt_meta", "After ALL article content, output these metadata tags on separate lines:\n\n[TITLE]: [Google Discover & Search optimized title — MAX 60 characters — high CTR, credible, includes focus keyword]\n[META_DESCRIPTION]: [Compelling SEO description — MAX 155 characters — includes focus keyword and a clear value hook]\n[FOCUS_KEYWORD]: [The exact primary keyword/phrase]");
+            $metaPrompt = Setting::get("{$slug}_prompt_meta", "After ALL article content, output these metadata tags on separate lines:\n\n[TITLE]: [Google Discover & Search optimized title — MAX 60 characters — high CTR, credible, includes focus keyword]\n[META_DESCRIPTION]: [Compelling SEO description — MAX 155 characters — includes focus keyword and a clear value hook]\n[FOCUS_KEYWORD]: [The exact primary keyword/phrase]\n[TAGS]: [5 to 8 comma-separated relevant SEO tags/keywords in {$langName} for CMS/WordPress publishing]");
             $prompt .= "# METADATA PROTOCOL\n" . $this->replaceVars($metaPrompt, $vars) . "\n";
         } else {
-            $prompt .= "# METADATA PROTOCOL\nOutput [TITLE] at the end.\n";
+            $prompt .= "# METADATA PROTOCOL\nOutput [TITLE] and [TAGS] at the end.\n";
         }
         $prompt .= "Additionally, ALWAYS append two slug suggestions on their own lines, in this exact format:\n";
         $prompt .= "[SLUG_EN]: short-seo-friendly-english-slug-derived-from-the-title\n";
@@ -220,7 +220,8 @@ class ArticleWriterService
         // 5. Final Synthesis Rules
         $prompt .= "# OUTPUT FINALIZATION\n";
         $prompt .= "CRITICAL LANGUAGE RULE: The ENTIRE output — [TITLE], all headings, every component header, and every paragraph — MUST be written 100% in {$langName} ONLY. NEVER output English headers like 'Key Takeaways' or 'Frequently Asked Questions' in an Arabic article. Translate every single heading and label to {$langName}.\n\n";
-        $prompt .= "- STRICT HTML DOCUMENT STRUCTURE: The very FIRST tag in your output MUST be <h1>[Article Title]</h1>. DO NOT place any summary or takeaways above the <h1>. Correct order: (1) <h1>, (2) <div class=\"quick-summary\"> if requested, (3) <div class=\"key-takeaways\"> if requested, (4) Main content body with <h2>/<h3>/<table>, (5) <div class=\"faq-section\"> if requested, (6) <div class=\"internal-links-suggestions\"> if requested, (7) Metadata tags ([TITLE], [META_DESCRIPTION], [FOCUS_KEYWORD], [SLUG_EN], [SLUG_AR]) on separate lines at the very end.\n";
+        $prompt .= "- STRICT HTML DOCUMENT STRUCTURE: The very FIRST tag in your output MUST be <h1>[Article Title]</h1>. DO NOT place any summary or takeaways above the <h1>. Correct order: (1) <h1>, (2) <div class=\"quick-summary\"> if requested, (3) <div class=\"key-takeaways\"> if requested, (4) Main content body with <h2>/<h3>/<table>, (5) <div class=\"faq-section\"> if requested, (6) <div class=\"internal-links-suggestions\"> if requested, (7) Metadata tags ([TITLE], [META_DESCRIPTION], [FOCUS_KEYWORD], [TAGS], [SLUG_EN], [SLUG_AR]) on separate lines at the very end.\n";
+
         $prompt .= "- Return CLEAN HTML only. No markdown fences.\n";
         $prompt .= "- NATURAL TEMPORAL CITATION (NO ROBOTIC DATE REPETITIONS): State the full date (e.g. '{$todayAnchor}') once in the opening lead paragraph. In subsequent H2 headings, tables, and FAQ questions, use natural flowing terms like 'في تعاملات اليوم', 'خلال الساعات الأخيرة', 'حركة الأسعار الراهنة', 'السوق المحلي'. DO NOT robotically repeat the 6-word date in every single heading.\n";
         $prompt .= "- Body paragraphs are clean prose <p>…</p> blocks. Do NOT prefix paragraphs with bullets, dots, dashes, hyphens, asterisks, or numbers. Lists ONLY appear inside <ul>/<ol> when the requested component genuinely calls for one.\n";

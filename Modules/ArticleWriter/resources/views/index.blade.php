@@ -18,6 +18,16 @@
                 </div>
             </div>
             <div class="d-flex align-items-center gap-3">
+                <button @click="openWpSettingsModal()" type="button" 
+                        class="btn d-inline-flex align-items-center gap-2 px-3 py-2 border-0" 
+                        style="background: linear-gradient(135deg, #0073aa, #00a0d2); color: #fff; font-weight: 700; font-size: 0.85rem; border-radius: 12px; cursor: pointer; transition: all 0.25s; box-shadow: 0 4px 15px rgba(0, 160, 210, 0.35);"
+                        onmouseover="this.style.transform='translateY(-2px)'; this.style.boxShadow='0 6px 20px rgba(0,160,210,0.6)';"
+                        onmouseout="this.style.transform='none'; this.style.boxShadow='0 4px 15px rgba(0,160,210,0.35)';"
+                        :title="form.language === 'ar' ? 'إعدادات ربط ووردبريس والمواقع' : 'WordPress & CMS Integration Settings'">
+                    <i class="fab fa-wordpress" style="font-size: 1.25rem;"></i>
+                    <span x-text="form.language === 'ar' ? 'إعدادات ووردبريس' : 'WordPress Settings'"></span>
+                    <span class="badge" style="background: rgba(0,0,0,0.35); color: #fff; font-size: 0.75rem; border-radius: 6px; padding: 2px 7px;" x-text="cmsConnections.length > 0 ? (cmsConnections.length + (form.language === 'ar' ? ' موقع' : ' sites')) : (form.language === 'ar' ? 'ربط موقع' : 'Connect')"></span>
+                </button>
                 <div class="header-stat">
                     <div class="header-stat-label" x-text="t('engine_label')">ENGINE</div>
                     <div class="header-stat-value" style="color: #10b981;" x-text="t('engine_val')">AI POWERED</div>
@@ -36,9 +46,18 @@
         <!-- Sidebar: History -->
         <div class="col-lg-3">
             <div class="aw-sidebar h-100">
-                <div class="aw-sidebar-header">
-                    <span class="aw-sidebar-title" x-text="t('saved_content')">Saved Content</span>
-                    <i class="fas fa-history" style="color: var(--aw-text-dim); font-size: 0.85rem;"></i>
+                <div class="aw-sidebar-header d-flex align-items-center justify-content-between">
+                    <div class="d-flex align-items-center gap-2">
+                        <span class="aw-sidebar-title" x-text="t('saved_content')">Saved Content</span>
+                        <i class="fas fa-history" style="color: var(--aw-text-dim); font-size: 0.85rem;"></i>
+                    </div>
+                    <button @click="openWpSettingsModal()" type="button" 
+                            class="btn p-0 border-0 d-inline-flex align-items-center gap-1" 
+                            style="background: rgba(0, 160, 210, 0.15); border: 1px solid rgba(0, 160, 210, 0.3) !important; color: #00d2ff; border-radius: 6px; font-size: 0.72rem; padding: 2px 7px; cursor: pointer;"
+                            :title="form.language === 'ar' ? 'إدارة مواقع ووردبريس' : 'Manage WordPress'">
+                        <i class="fab fa-wordpress"></i>
+                        <span x-text="form.language === 'ar' ? 'المواقع' : 'Sites'"></span>
+                    </button>
                 </div>
                 <div class="custom-scrollbar" style="max-height: 700px; overflow-y: auto;">
                     <template x-for="item in history" :key="item.id">
@@ -57,11 +76,18 @@
                                     <span x-text="item.language?.toUpperCase() || 'EN'"></span>
                                 </div>
                             </div>
+                            <!-- WordPress Quick Send Button -->
+                            <button @click.stop="openWpPublishModal(item)" 
+                                    class="wp-quick-send-btn"
+                                    :title="form.language === 'ar' ? 'إرسال إلى ووردبريس كمسودة' : 'Send to WordPress as Draft'"
+                                    style="position: absolute; top: 50%; inset-inline-end: 42px; transform: translateY(-50%); background: rgba(0, 115, 170, 0.15); border: 1px solid rgba(0, 160, 210, 0.3); color: #00a0d2; width: 28px; height: 28px; border-radius: 8px; display: flex; align-items: center; justify-content: center; cursor: pointer; transition: all 0.2s; opacity: 0.5;">
+                                <i class="fab fa-wordpress" style="font-size: 0.75rem;"></i>
+                            </button>
                             <!-- Delete Button -->
                             <button @click.stop="deleteArticle(item.id)" 
                                     class="delete-btn"
                                     :title="t('alert_del_btn')"
-                                    style="position: absolute; top: 50%; transform: translateY(-50%); background: rgba(255,75,75,0.1); border: 1px solid rgba(255,75,75,0.2); color: #ff4b4b; width: 28px; height: 28px; border-radius: 8px; display: flex; align-items: center; justify-content: center; cursor: pointer; transition: all 0.2s; opacity: 0.4;">
+                                    style="position: absolute; top: 50%; inset-inline-end: 10px; transform: translateY(-50%); background: rgba(255,75,75,0.1); border: 1px solid rgba(255,75,75,0.2); color: #ff4b4b; width: 28px; height: 28px; border-radius: 8px; display: flex; align-items: center; justify-content: center; cursor: pointer; transition: all 0.2s; opacity: 0.4;">
                                 <i class="fas fa-trash-alt" style="font-size: 0.75rem;"></i>
                             </button>
                         </div>
@@ -79,6 +105,31 @@
             <div x-show="view === 'form'" class="aw-card animate-in">
                 <div style="padding: 2rem 2.5rem;">
                     
+                    <!-- WordPress Fast Link Banner -->
+                    <div class="mb-4 p-3 d-flex align-items-center justify-content-between flex-wrap gap-2"
+                         style="background: linear-gradient(135deg, rgba(0, 115, 170, 0.15), rgba(0, 160, 210, 0.06)); border: 1px dashed rgba(0, 160, 210, 0.35); border-radius: 12px;">
+                        <div class="d-flex align-items-center gap-3">
+                            <div style="width: 36px; height: 36px; border-radius: 10px; background: rgba(0, 160, 210, 0.2); display: flex; align-items: center; justify-content: center; flex-shrink: 0;">
+                                <i class="fab fa-wordpress" style="font-size: 1.35rem; color: #00d2ff;"></i>
+                            </div>
+                            <div>
+                                <div style="font-size: 0.85rem; font-weight: 800; color: #fff;">
+                                    <span x-show="cmsConnections.length > 0" x-text="form.language === 'ar' ? ('متصل بـ ' + cmsConnections.length + ' موقع ووردبريس — سيتم إرسال المقال كمسودة بنقرة واحدة') : ('Connected to ' + cmsConnections.length + ' WordPress sites — One-click draft sending ready')"></span>
+                                    <span x-show="cmsConnections.length === 0" x-text="form.language === 'ar' ? 'ربط ووردبريس: أرسل مقالاتك تلقائياً كمسودة مع العناوين والوسوم والتصنيف' : 'Connect WordPress: Send articles directly as drafts with tags and categories'"></span>
+                                </div>
+                                <div style="font-size: 0.72rem; color: var(--aw-text-dim);" x-text="form.language === 'ar' ? 'ربط رسمي آمن بدون أي إضافات عبر WordPress Application Passwords' : 'Secure official connection without plugins via Application Passwords'"></div>
+                            </div>
+                        </div>
+                        <button @click="openWpSettingsModal()" type="button"
+                                class="btn btn-sm d-inline-flex align-items-center gap-1"
+                                style="background: rgba(0, 160, 210, 0.22); border: 1px solid rgba(0, 160, 210, 0.45); color: #00d2ff; font-weight: 700; font-size: 0.78rem; border-radius: 8px; padding: 6px 14px; cursor: pointer; transition: all 0.2s;"
+                                onmouseover="this.style.background='rgba(0, 160, 210, 0.35)';"
+                                onmouseout="this.style.background='rgba(0, 160, 210, 0.22)';">
+                            <i class="fas fa-cog"></i>
+                            <span x-text="cmsConnections.length > 0 ? (form.language === 'ar' ? 'إدارة مواقع ووردبريس' : 'Manage Sites') : (form.language === 'ar' ? 'اضغط هنا لربط موقعك الآن' : 'Connect Site Now')"></span>
+                        </button>
+                    </div>
+
                     <!-- Primary Keyword -->
                     <div style="margin-bottom: 1.5rem;">
                         <div class="aw-label">
@@ -416,9 +467,15 @@
                                 </div>
                             </div>
                         </div>
-                        <div style="display: flex; gap: 0.5rem; flex-shrink: 0;">
+                        <div style="display: flex; gap: 0.5rem; flex-shrink: 0; align-items: center; flex-wrap: wrap;">
                             <button @click="view = 'form'" style="background: var(--aw-surface); border: 1px solid var(--aw-border); color: #fff; padding: 0.5rem 1rem; border-radius: 10px; font-size: 0.78rem; font-weight: 700; cursor: pointer; transition: all 0.2s;">
                                 <i class="fas fa-plus" style="margin-right: 4px;"></i> <span x-text="t('btn_new')"></span>
+                            </button>
+                            <!-- Send to WordPress Button -->
+                            <button @click="openWpPublishModal()" 
+                                    style="background: linear-gradient(135deg, #0073aa 0%, #00a0d2 100%); border: 1px solid rgba(0, 160, 210, 0.5); color: #fff; padding: 0.5rem 1rem; border-radius: 10px; font-size: 0.78rem; font-weight: 800; cursor: pointer; transition: all 0.2s; display: inline-flex; align-items: center; gap: 6px; box-shadow: 0 4px 14px rgba(0, 115, 170, 0.35);">
+                                <i class="fab fa-wordpress" style="font-size: 0.95rem;"></i>
+                                <span x-text="t('btn_wp_send')"></span>
                             </button>
                             <button @click="copyContent()" style="background: var(--aw-cyan); border: none; color: #000; padding: 0.5rem 1rem; border-radius: 10px; font-size: 0.78rem; font-weight: 800; cursor: pointer; transition: all 0.2s;">
                                 <i class="fas fa-copy" style="margin-right: 4px;"></i> <span x-text="t('btn_copy_html')"></span>
@@ -591,6 +648,47 @@
                                     <div style="font-size: 0.85rem; font-weight: 800; color: var(--aw-cyan);" x-text="currentArticle.word_count"></div>
                                 </div>
                             </div>
+
+                            <!-- Suggested Tags & CMS Publishing Section -->
+                            <div style="margin-top: 1.5rem; padding: 1.5rem; background: var(--aw-surface); border: 1px solid var(--aw-border); border-radius: 16px;">
+                                <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 1rem; flex-wrap: wrap; gap: 0.5rem;">
+                                    <div class="aw-label" style="margin-bottom: 0;">
+                                        <i class="fas fa-tags" style="color: var(--aw-cyan);"></i> <span x-text="t('wp_tags_label')"></span>
+                                    </div>
+                                    <button type="button" @click="openWpPublishModal()" style="background: linear-gradient(135deg, #0073aa, #00a0d2); border: 1px solid rgba(0, 160, 210, 0.4); color: #fff; padding: 0.35rem 0.85rem; border-radius: 8px; font-size: 0.75rem; font-weight: 800; cursor: pointer; display: inline-flex; align-items: center; gap: 6px;">
+                                        <i class="fab fa-wordpress"></i> <span x-text="t('btn_wp_send')"></span>
+                                    </button>
+                                </div>
+                                <div style="display: flex; flex-wrap: wrap; gap: 0.5rem;">
+                                    <template x-for="tag in (currentArticle.seo_data?.tags || extractSuggestedTags(currentArticle))" :key="tag">
+                                        <span style="background: var(--aw-cyan-10); color: var(--aw-cyan); border: 1px solid var(--aw-cyan-20); padding: 0.25rem 0.75rem; border-radius: 20px; font-size: 0.78rem; font-weight: 700; display: inline-flex; align-items: center; gap: 4px;">
+                                            <i class="fas fa-hashtag" style="font-size: 0.65rem; opacity: 0.7;"></i>
+                                            <span x-text="tag"></span>
+                                        </span>
+                                    </template>
+                                </div>
+
+                                <!-- CMS Sync Badge if article was already synced -->
+                                <template x-if="currentArticle.seo_data?.cms_sync">
+                                    <div style="margin-top: 1.25rem; padding: 0.85rem 1.25rem; background: rgba(16, 185, 129, 0.1); border: 1px solid rgba(16, 185, 129, 0.25); border-radius: 12px; display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 0.75rem;">
+                                        <div style="display: flex; align-items: center; gap: 0.75rem;">
+                                            <div style="width: 32px; height: 32px; border-radius: 8px; background: rgba(16, 185, 129, 0.2); color: #10b981; display: flex; align-items: center; justify-content: center;">
+                                                <i class="fab fa-wordpress"></i>
+                                            </div>
+                                            <div>
+                                                <div style="font-size: 0.8rem; font-weight: 800; color: #fff;">
+                                                    <span x-text="form.language === 'ar' ? 'تم الحفظ كـ مسودة في ووردبريس' : 'Saved as Draft in WordPress'"></span>
+                                                    <span style="color: #10b981; font-size: 0.75rem;" x-text="' (#' + currentArticle.seo_data.cms_sync.post_id + ')'"></span>
+                                                </div>
+                                                <div style="font-size: 0.7rem; color: #94a3b8;" x-text="currentArticle.seo_data.cms_sync.connection_name + ' • ' + (currentArticle.seo_data.cms_sync.synced_at ? formatDate(currentArticle.seo_data.cms_sync.synced_at) : '')"></div>
+                                            </div>
+                                        </div>
+                                        <a :href="currentArticle.seo_data.cms_sync.edit_url" target="_blank" style="background: rgba(16, 185, 129, 0.2); color: #10b981; border: 1px solid rgba(16, 185, 129, 0.3); padding: 0.35rem 0.85rem; border-radius: 8px; font-size: 0.75rem; font-weight: 800; text-decoration: none; display: inline-flex; align-items: center; gap: 6px;">
+                                            <i class="fas fa-external-link-alt"></i> <span x-text="t('wp_open_draft')"></span>
+                                        </a>
+                                    </div>
+                                </template>
+                            </div>
                         </div>
 
                         <!-- Raw View -->
@@ -600,6 +698,342 @@
                         </div>
                     </div>
                 </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ============================================================ -->
+    <!-- 1. WORDPRESS PUBLISH MODAL (Send Article to WordPress Draft) -->
+    <!-- ============================================================ -->
+    <div x-show="isWpPublishOpen" 
+         x-transition:enter="transition ease-out duration-200"
+         x-transition:enter-start="opacity-0 transform scale-95"
+         x-transition:enter-end="opacity-100 transform scale-100"
+         x-transition:leave="transition ease-in duration-150"
+         x-transition:leave-start="opacity-100 transform scale-100"
+         x-transition:leave-end="opacity-0 transform scale-95"
+         style="position: fixed; inset: 0; z-index: 9999; background: rgba(0,0,0,0.85); backdrop-filter: blur(8px); display: flex; align-items: center; justify-content: center; padding: 1.5rem;"
+         @keydown.escape.window="closeWpPublishModal()"
+         x-cloak>
+        <div @click.away="closeWpPublishModal()" 
+             class="aw-card animate-in"
+             style="width: 100%; max-width: 640px; max-height: 90vh; overflow-y: auto; background: #0b1120; border: 1px solid rgba(0, 160, 210, 0.35); border-radius: 20px; box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.9); padding: 0; display: flex; flex-direction: column;">
+            
+            <!-- Modal Header -->
+            <div style="padding: 1.25rem 1.75rem; border-bottom: 1px solid var(--aw-border); display: flex; align-items: center; justify-content: space-between; background: rgba(0, 115, 170, 0.08);">
+                <div style="display: flex; align-items: center; gap: 0.85rem;">
+                    <div style="width: 42px; height: 42px; border-radius: 12px; background: linear-gradient(135deg, rgba(0, 115, 170, 0.3), rgba(0, 160, 210, 0.2)); border: 1px solid rgba(0, 160, 210, 0.4); display: flex; align-items: center; justify-content: center; color: #00a0d2; font-size: 1.25rem;">
+                        <i class="fab fa-wordpress"></i>
+                    </div>
+                    <div>
+                        <h3 style="font-size: 1.1rem; font-weight: 800; color: #fff; margin: 0;" x-text="t('wp_modal_title')">إرسال المقال إلى ووردبريس (مسودة)</h3>
+                        <p style="font-size: 0.75rem; color: var(--aw-text-dim); margin: 2px 0 0 0;" x-text="t('wp_modal_subtitle')">سيتم إنشاء مسودة في موقعك للمراجعة والتعديل</p>
+                    </div>
+                </div>
+                <button type="button" @click="closeWpPublishModal()" style="background: transparent; border: none; color: var(--aw-text-dim); font-size: 1.1rem; cursor: pointer; padding: 0.5rem; border-radius: 8px; transition: all 0.2s;" onmouseover="this.style.color='#fff'" onmouseout="this.style.color='var(--aw-text-dim)'">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+
+            <!-- Modal Body -->
+            <div class="custom-scrollbar" style="padding: 1.5rem 1.75rem; overflow-y: auto;">
+                
+                <!-- Notice Banner: Safe Draft Mode -->
+                <div style="padding: 0.75rem 1rem; background: rgba(0, 160, 210, 0.08); border: 1px solid rgba(0, 160, 210, 0.2); border-radius: 12px; margin-bottom: 1.25rem; display: flex; align-items: center; gap: 0.75rem;">
+                    <i class="fas fa-shield-alt" style="color: #00a0d2; font-size: 1.15rem; flex-shrink: 0;"></i>
+                    <div style="font-size: 0.78rem; color: #cbd5e1; line-height: 1.4;">
+                        <strong style="color: #00a0d2;" x-text="form.language === 'ar' ? 'حفظ آمن:' : 'Safe Draft:'">حفظ آمن:</strong>
+                        <span x-text="form.language === 'ar' ? ' يتم إرسال المقال كـ مسودة (Draft) ليظل تحت مراجعتك الكاملة في ووردبريس قبل النشر للجمهور.' : ' The article will be saved as a Draft on your WordPress site for editorial review.'"></span>
+                    </div>
+                </div>
+
+                <!-- Site Selection -->
+                <div style="margin-bottom: 1.25rem;">
+                    <div class="aw-label" style="display: flex; justify-content: space-between; align-items: center;">
+                        <span><i class="fab fa-wordpress" style="color: #00a0d2;"></i> <span x-text="t('wp_select_site')">الموقع المستهدف</span></span>
+                        <button type="button" @click="openWpSettingsModal()" style="background: transparent; border: none; color: var(--aw-cyan); font-size: 0.72rem; font-weight: 700; cursor: pointer; text-decoration: underline;">
+                            <i class="fas fa-plus"></i> <span x-text="form.language === 'ar' ? 'إضافة / إدارة المواقع' : 'Manage Sites'"></span>
+                        </button>
+                    </div>
+
+                    <template x-if="cmsConnections.length === 0">
+                        <div style="padding: 1.25rem; background: rgba(245, 158, 11, 0.08); border: 1px solid rgba(245, 158, 11, 0.25); border-radius: 12px; text-align: center;">
+                            <i class="fas fa-exclamation-triangle" style="color: #f59e0b; font-size: 1.5rem; margin-bottom: 0.5rem; display: block;"></i>
+                            <p style="font-size: 0.82rem; color: #f59e0b; margin-bottom: 0.75rem; font-weight: 700;" x-text="t('wp_no_sites')">لم تقم بربط أي موقع ووردبريس بعد.</p>
+                            <button type="button" @click="openWpSettingsModal()" style="background: #00a0d2; color: #fff; border: none; padding: 0.5rem 1.25rem; border-radius: 8px; font-size: 0.78rem; font-weight: 800; cursor: pointer;">
+                                <i class="fas fa-plug"></i> <span x-text="t('wp_connect_now')">ربط موقعك الأول الآن</span>
+                            </button>
+                        </div>
+                    </template>
+
+                    <template x-if="cmsConnections.length > 0">
+                        <div style="display: flex; gap: 0.5rem;">
+                            <select x-model="wpPublishForm.connection_id" @change="loadWpCategories($event.target.value)" class="aw-select" style="flex: 1;">
+                                <template x-for="conn in cmsConnections" :key="conn.id">
+                                    <option :value="conn.id" x-text="conn.name + ' (' + conn.site_url + ')'"></option>
+                                </template>
+                            </select>
+                            <button type="button" @click="openWpSettingsModal()" :title="t('wp_settings_title')" style="background: var(--aw-surface); border: 1px solid var(--aw-border); color: #00a0d2; width: 44px; height: 44px; border-radius: 10px; display: flex; align-items: center; justify-content: center; cursor: pointer; flex-shrink: 0;">
+                                <i class="fas fa-cog"></i>
+                            </button>
+                        </div>
+                    </template>
+                </div>
+
+                <!-- Editable Title -->
+                <div style="margin-bottom: 1rem;">
+                    <div class="aw-label">
+                        <i class="fas fa-heading"></i> <span x-text="t('wp_article_title')">عنوان المقال</span>
+                    </div>
+                    <input type="text" x-model="wpPublishForm.title" class="form-control" style="background: rgba(0,0,0,0.3); border: 1px solid var(--aw-border); color: #fff; border-radius: 10px; font-size: 0.88rem; padding: 0.65rem 1rem;">
+                </div>
+
+                <!-- Editable Excerpt / Meta Description -->
+                <div style="margin-bottom: 1rem;">
+                    <div class="aw-label">
+                        <i class="fas fa-align-left"></i> <span x-text="t('wp_article_excerpt')">المقتطف / الوصف التعريفي</span>
+                    </div>
+                    <textarea x-model="wpPublishForm.excerpt" rows="2" class="form-control" style="background: rgba(0,0,0,0.3); border: 1px solid var(--aw-border); color: #fff; border-radius: 10px; font-size: 0.82rem; padding: 0.65rem 1rem; resize: vertical; line-height: 1.5;"></textarea>
+                </div>
+
+                <!-- Category & Status Selector -->
+                <div class="row g-3" style="margin-bottom: 1rem;">
+                    <div class="col-md-7">
+                        <div class="aw-label">
+                            <i class="fas fa-folder"></i> <span x-text="t('wp_category_label')">التصنيف في ووردبريس</span>
+                        </div>
+                        <select x-model="wpPublishForm.category_id" class="aw-select" :disabled="wpCategoriesLoading">
+                            <option value="" x-text="wpCategoriesLoading ? (form.language === 'ar' ? 'جارٍ تحميل التصنيفات...' : 'Loading categories...') : t('wp_category_default')"></option>
+                            <template x-for="cat in wpCategories" :key="cat.id">
+                                <option :value="cat.id" x-text="cat.name + (cat.count ? ' (' + cat.count + ')' : '')"></option>
+                            </template>
+                        </select>
+                    </div>
+                    <div class="col-md-5">
+                        <div class="aw-label">
+                            <i class="fas fa-clipboard-check"></i> <span x-text="t('wp_status_label')">حالة المنشور</span>
+                        </div>
+                        <select x-model="wpPublishForm.status" class="aw-select">
+                            <option value="draft" x-text="form.language === 'ar' ? 'مسودة (Draft) - للمراجعة' : 'Draft (Recommended)'"></option>
+                            <option value="pending" x-text="form.language === 'ar' ? 'قيد المراجعة (Pending)' : 'Pending Review'"></option>
+                            <option value="publish" x-text="form.language === 'ar' ? 'نشر مباشر (Publish)' : 'Publish Live'"></option>
+                        </select>
+                    </div>
+                </div>
+
+                <!-- Interactive Tags Chip Editor -->
+                <div style="margin-bottom: 1rem;">
+                    <div class="aw-label" style="display: flex; justify-content: space-between; align-items: center;">
+                        <span><i class="fas fa-tags" style="color: var(--aw-cyan);"></i> <span x-text="t('wp_tags_label')">الوسوم المقترحة</span></span>
+                        <span style="font-size: 0.7rem; color: var(--aw-text-dim);" x-text="wpPublishForm.tags.length + (form.language === 'ar' ? ' وسم' : ' tags')"></span>
+                    </div>
+                    <div style="padding: 0.85rem; background: rgba(0,0,0,0.25); border: 1px solid var(--aw-border); border-radius: 12px;">
+                        <!-- Chips -->
+                        <div style="display: flex; flex-wrap: wrap; gap: 0.45rem; margin-bottom: 0.75rem; min-height: 32px; align-items: center;">
+                            <template x-for="(tag, idx) in wpPublishForm.tags" :key="idx">
+                                <span style="background: rgba(0, 160, 210, 0.15); color: #00a0d2; border: 1px solid rgba(0, 160, 210, 0.3); padding: 0.25rem 0.65rem; border-radius: 20px; font-size: 0.78rem; font-weight: 700; display: inline-flex; align-items: center; gap: 6px;">
+                                    <i class="fas fa-hashtag" style="font-size: 0.65rem; opacity: 0.6;"></i>
+                                    <span x-text="tag"></span>
+                                    <i @click="removeWpTag(idx)" class="fas fa-times" style="cursor: pointer; opacity: 0.6; font-size: 0.7rem; transition: opacity 0.2s;" onmouseover="this.style.opacity='1'" onmouseout="this.style.opacity='0.6'" :title="form.language === 'ar' ? 'حذف' : 'Remove'"></i>
+                                </span>
+                            </template>
+                            <span x-show="wpPublishForm.tags.length === 0" style="font-size: 0.75rem; color: var(--aw-text-dim); font-style: italic;" x-text="form.language === 'ar' ? 'لم تتم إضافة أي وسوم بعد.' : 'No tags added yet.'"></span>
+                        </div>
+                        <!-- Tag Input -->
+                        <div style="display: flex; gap: 0.5rem;">
+                            <input type="text" x-model="wpPublishForm.newTagInput" @keydown.enter.prevent="addWpTag()" :placeholder="t('wp_tags_placeholder')" class="form-control" style="background: rgba(255,255,255,0.05); border: 1px solid var(--aw-border); color: #fff; border-radius: 8px; font-size: 0.8rem; padding: 0.5rem 0.85rem;">
+                            <button type="button" @click="addWpTag()" style="background: rgba(0, 160, 210, 0.2); border: 1px solid rgba(0, 160, 210, 0.35); color: #00a0d2; padding: 0.5rem 1rem; border-radius: 8px; font-size: 0.78rem; font-weight: 800; cursor: pointer; white-space: nowrap; transition: all 0.2s;">
+                                <i class="fas fa-plus"></i> <span x-text="form.language === 'ar' ? 'إضافة' : 'Add'"></span>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Success Alert Card -->
+                <div x-show="wpPublishSuccessData" class="animate-in" style="margin-top: 1.25rem; padding: 1.25rem; background: rgba(16, 185, 129, 0.12); border: 1px solid rgba(16, 185, 129, 0.3); border-radius: 14px; text-align: center;">
+                    <div style="width: 44px; height: 44px; border-radius: 50%; background: rgba(16, 185, 129, 0.25); color: #10b981; display: flex; align-items: center; justify-content: center; margin: 0 auto 0.75rem; font-size: 1.3rem;">
+                        <i class="fas fa-check"></i>
+                    </div>
+                    <h4 style="font-size: 0.95rem; font-weight: 800; color: #fff; margin-bottom: 0.35rem;" x-text="t('wp_success_title')">تم حفظ المقال بنجاح في ووردبريس!</h4>
+                    <p style="font-size: 0.78rem; color: #94a3b8; margin-bottom: 1rem;" x-text="wpPublishSuccessData?.message"></p>
+                    <div style="display: flex; justify-content: center; gap: 0.75rem; flex-wrap: wrap;">
+                        <a :href="wpPublishSuccessData?.edit_url" target="_blank" style="background: linear-gradient(135deg, #0073aa, #00a0d2); color: #fff; text-decoration: none; padding: 0.6rem 1.25rem; border-radius: 10px; font-size: 0.82rem; font-weight: 800; display: inline-flex; align-items: center; gap: 8px; box-shadow: 0 4px 14px rgba(0, 115, 170, 0.4);">
+                            <i class="fas fa-external-link-alt"></i> <span x-text="t('wp_open_draft')">فتح المسودة في ووردبريس</span>
+                        </a>
+                        <button type="button" @click="closeWpPublishModal()" style="background: var(--aw-surface); border: 1px solid var(--aw-border); color: #fff; padding: 0.6rem 1.25rem; border-radius: 10px; font-size: 0.82rem; font-weight: 700; cursor: pointer;" x-text="form.language === 'ar' ? 'إغلاق' : 'Close'"></button>
+                    </div>
+                </div>
+
+            </div>
+
+            <!-- Modal Footer -->
+            <div style="padding: 1.25rem 1.75rem; border-top: 1px solid var(--aw-border); display: flex; justify-content: flex-end; gap: 0.75rem; background: rgba(0,0,0,0.2);">
+                <button type="button" @click="closeWpPublishModal()" style="background: var(--aw-surface); border: 1px solid var(--aw-border); color: #fff; padding: 0.6rem 1.25rem; border-radius: 10px; font-size: 0.82rem; font-weight: 700; cursor: pointer;" x-text="form.language === 'ar' ? 'إلغاء' : 'Cancel'"></button>
+                <button type="button" @click="submitWpPublish()" :disabled="wpPublishLoading || cmsConnections.length === 0" style="background: linear-gradient(135deg, #0073aa, #00a0d2); border: none; color: #fff; padding: 0.6rem 1.5rem; border-radius: 10px; font-size: 0.82rem; font-weight: 800; cursor: pointer; display: inline-flex; align-items: center; gap: 8px; box-shadow: 0 4px 14px rgba(0, 115, 170, 0.4);" :style="wpPublishLoading || cmsConnections.length === 0 ? 'opacity: 0.6; cursor: not-allowed;' : ''">
+                    <i x-show="wpPublishLoading" class="fas fa-spinner fa-spin"></i>
+                    <i x-show="!wpPublishLoading" class="fab fa-wordpress"></i>
+                    <span x-text="wpPublishLoading ? t('wp_btn_submitting') : t('wp_btn_submit')"></span>
+                </button>
+            </div>
+        </div>
+    </div>
+
+
+    <!-- ============================================================ -->
+    <!-- 2. WORDPRESS SETTINGS MODAL (Manage Connected Sites)         -->
+    <!-- ============================================================ -->
+    <div x-show="isWpSettingsOpen" 
+         x-transition:enter="transition ease-out duration-200"
+         x-transition:enter-start="opacity-0 transform scale-95"
+         x-transition:enter-end="opacity-100 transform scale-100"
+         x-transition:leave="transition ease-in duration-150"
+         x-transition:leave-start="opacity-100 transform scale-100"
+         x-transition:leave-end="opacity-0 transform scale-95"
+         style="position: fixed; inset: 0; z-index: 9999; background: rgba(0,0,0,0.85); backdrop-filter: blur(8px); display: flex; align-items: center; justify-content: center; padding: 1.5rem;"
+         @keydown.escape.window="closeWpSettingsModal()"
+         x-cloak>
+        <div @click.away="closeWpSettingsModal()" 
+             class="aw-card animate-in"
+             style="width: 100%; max-width: 680px; max-height: 90vh; overflow-y: auto; background: #0b1120; border: 1px solid rgba(0, 160, 210, 0.35); border-radius: 20px; box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.9); padding: 0; display: flex; flex-direction: column;">
+            
+            <!-- Modal Header -->
+            <div style="padding: 1.25rem 1.75rem; border-bottom: 1px solid var(--aw-border); display: flex; align-items: center; justify-content: space-between; background: rgba(0, 115, 170, 0.08);">
+                <div style="display: flex; align-items: center; gap: 0.85rem;">
+                    <div style="width: 42px; height: 42px; border-radius: 12px; background: linear-gradient(135deg, rgba(0, 115, 170, 0.3), rgba(0, 160, 210, 0.2)); border: 1px solid rgba(0, 160, 210, 0.4); display: flex; align-items: center; justify-content: center; color: #00a0d2; font-size: 1.25rem;">
+                        <i class="fas fa-plug"></i>
+                    </div>
+                    <div>
+                        <h3 style="font-size: 1.1rem; font-weight: 800; color: #fff; margin: 0;" x-text="t('wp_settings_title')">إدارة مواقع ووردبريس</h3>
+                        <p style="font-size: 0.75rem; color: var(--aw-text-dim); margin: 2px 0 0 0;" x-text="t('wp_settings_subtitle')">ربط المواقع عبر كلمات مرور التطبيقات (Application Passwords)</p>
+                    </div>
+                </div>
+                <button type="button" @click="closeWpSettingsModal()" style="background: transparent; border: none; color: var(--aw-text-dim); font-size: 1.1rem; cursor: pointer; padding: 0.5rem; border-radius: 8px; transition: all 0.2s;" onmouseover="this.style.color='#fff'" onmouseout="this.style.color='var(--aw-text-dim)'">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+
+            <!-- Modal Body -->
+            <div class="custom-scrollbar" style="padding: 1.5rem 1.75rem; overflow-y: auto;">
+                
+                <!-- Existing Connected Sites List -->
+                <div style="margin-bottom: 2rem;">
+                    <div class="aw-label" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.75rem;">
+                        <span><i class="fab fa-wordpress" style="color: #00a0d2;"></i> <span x-text="form.language === 'ar' ? 'المواقع المرتبطة حالياً' : 'Connected Sites'"></span></span>
+                        <span class="badge" style="background: rgba(0, 160, 210, 0.15); color: #00a0d2; border: 1px solid rgba(0, 160, 210, 0.25);" x-text="cmsConnections.length"></span>
+                    </div>
+
+                    <template x-if="cmsConnections.length === 0">
+                        <div style="padding: 1.5rem; background: var(--aw-surface); border: 1px dashed var(--aw-border); border-radius: 12px; text-align: center; color: var(--aw-text-dim); font-size: 0.85rem;">
+                            <i class="fas fa-globe" style="font-size: 1.8rem; margin-bottom: 0.5rem; opacity: 0.4; display: block;"></i>
+                            <span x-text="form.language === 'ar' ? 'لا يوجد أي موقع ووردبريس مرتبط بعد. استخدم النموذج أدناه لربط موقعك.' : 'No WordPress sites connected yet. Use the form below to connect your first site.'"></span>
+                        </div>
+                    </template>
+
+                    <div style="display: flex; flex-direction: column; gap: 0.75rem;">
+                        <template x-for="conn in cmsConnections" :key="conn.id">
+                            <div style="padding: 1rem 1.25rem; background: rgba(0,0,0,0.3); border: 1px solid var(--aw-border); border-radius: 12px; display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 0.75rem;">
+                                <div style="display: flex; align-items: center; gap: 0.85rem;">
+                                    <div style="width: 36px; height: 36px; border-radius: 10px; background: rgba(0, 115, 170, 0.2); color: #00a0d2; display: flex; align-items: center; justify-content: center; font-size: 1rem;">
+                                        <i class="fab fa-wordpress"></i>
+                                    </div>
+                                    <div>
+                                        <div style="font-weight: 800; font-size: 0.88rem; color: #fff;" x-text="conn.name"></div>
+                                        <div style="font-size: 0.72rem; color: var(--aw-text-dim); display: flex; gap: 0.5rem; align-items: center;">
+                                            <span x-text="conn.site_url"></span>
+                                            <span>•</span>
+                                            <span x-text="'@' + conn.username"></span>
+                                            <template x-if="conn.last_synced_at">
+                                                <span>• <span style="color: #10b981;" x-text="(form.language === 'ar' ? 'آخر مزامنة: ' : 'Last sync: ') + conn.last_synced_at"></span></span>
+                                            </template>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div style="display: flex; align-items: center; gap: 0.5rem;">
+                                    <button type="button" @click="testConnection(conn.id)" style="background: rgba(0, 160, 210, 0.15); border: 1px solid rgba(0, 160, 210, 0.3); color: #00a0d2; padding: 0.35rem 0.75rem; border-radius: 8px; font-size: 0.72rem; font-weight: 700; cursor: pointer;" :title="form.language === 'ar' ? 'فحص الاتصال' : 'Test Connection'">
+                                        <i class="fas fa-sync-alt"></i> <span x-text="form.language === 'ar' ? 'فحص' : 'Test'"></span>
+                                    </button>
+                                    <button type="button" @click="deleteConnection(conn.id)" style="background: rgba(255, 75, 75, 0.1); border: 1px solid rgba(255, 75, 75, 0.25); color: #ff4b4b; padding: 0.35rem 0.75rem; border-radius: 8px; font-size: 0.72rem; font-weight: 700; cursor: pointer;" :title="form.language === 'ar' ? 'حذف الموقع' : 'Delete Site'">
+                                        <i class="fas fa-trash-alt"></i>
+                                    </button>
+                                </div>
+                            </div>
+                        </template>
+                    </div>
+                </div>
+
+                <!-- Add New Site Card -->
+                <div style="padding: 1.5rem; background: var(--aw-surface); border: 1px solid var(--aw-border); border-radius: 16px;">
+                    <h4 style="font-size: 0.95rem; font-weight: 800; color: #fff; margin-bottom: 1.25rem; display: flex; align-items: center; gap: 0.5rem;">
+                        <i class="fas fa-plus-circle" style="color: var(--aw-cyan);"></i>
+                        <span x-text="t('wp_add_site_title')">ربط موقع ووردبريس جديد</span>
+                    </h4>
+
+                    <!-- How to get Application Password Guide Accordion -->
+                    <div style="margin-bottom: 1.25rem; padding: 1rem; background: rgba(0, 160, 210, 0.08); border: 1px solid rgba(0, 160, 210, 0.2); border-radius: 12px;">
+                        <div style="font-size: 0.78rem; font-weight: 800; color: #00a0d2; margin-bottom: 0.5rem; display: flex; align-items: center; gap: 6px;">
+                            <i class="fas fa-info-circle"></i> <span x-text="t('wp_guide_title')">كيفية استخراج كلمة مرور التطبيق في 3 خطوات:</span>
+                        </div>
+                        <ul style="margin: 0; padding-inline-start: 1.25rem; font-size: 0.74rem; color: #cbd5e1; line-height: 1.6;">
+                            <li x-text="t('wp_guide_step1')">1. ادخل للوحة تحكم ووردبريس لموقعك > الأعضاء > حسابك الشخصي (Users > Profile).</li>
+                            <li x-text="t('wp_guide_step2')">2. انزل لأسفل الصفحة إلى قسم كلمات مرور التطبيقات (Application Passwords).</li>
+                            <li x-text="t('wp_guide_step3')">3. اكتب اسماً للتطبيق مثل "VidaNexus" واضغط "إضافة كلمة مرور تطبيق جديدة"، ثم انسخ الكلمة الناتجة والصقها أدناه.</li>
+                        </ul>
+                    </div>
+
+                    <!-- Input Fields -->
+                    <div class="row g-3">
+                        <div class="col-md-6">
+                            <div class="aw-label">
+                                <i class="fas fa-tag"></i> <span x-text="t('wp_site_name')">اسم الموقع</span>
+                            </div>
+                            <input type="text" x-model="wpConnectForm.name" :placeholder="t('wp_site_name_ph')" class="form-control" style="background: rgba(0,0,0,0.3); border: 1px solid var(--aw-border); color: #fff; border-radius: 10px; font-size: 0.85rem; padding: 0.6rem 0.9rem;">
+                        </div>
+                        <div class="col-md-6">
+                            <div class="aw-label">
+                                <i class="fas fa-link"></i> <span x-text="t('wp_site_url')">رابط الموقع (URL)</span>
+                            </div>
+                            <input type="url" x-model="wpConnectForm.site_url" :placeholder="t('wp_site_url_ph')" class="form-control" style="background: rgba(0,0,0,0.3); border: 1px solid var(--aw-border); color: #fff; border-radius: 10px; font-size: 0.85rem; padding: 0.6rem 0.9rem;">
+                        </div>
+                        <div class="col-md-6">
+                            <div class="aw-label">
+                                <i class="fas fa-user"></i> <span x-text="t('wp_username')">اسم المستخدم في ووردبريس</span>
+                            </div>
+                            <input type="text" x-model="wpConnectForm.username" :placeholder="t('wp_username_ph')" class="form-control" style="background: rgba(0,0,0,0.3); border: 1px solid var(--aw-border); color: #fff; border-radius: 10px; font-size: 0.85rem; padding: 0.6rem 0.9rem;">
+                        </div>
+                        <div class="col-md-6">
+                            <div class="aw-label">
+                                <i class="fas fa-key"></i> <span x-text="t('wp_app_password')">كلمة مرور التطبيق</span>
+                            </div>
+                            <div style="position: relative;">
+                                <input :type="wpConnectForm.showPassword ? 'text' : 'password'" x-model="wpConnectForm.api_key" :placeholder="t('wp_app_password_ph')" class="form-control" style="background: rgba(0,0,0,0.3); border: 1px solid var(--aw-border); color: #fff; border-radius: 10px; font-size: 0.85rem; padding: 0.6rem 2.25rem 0.6rem 0.9rem;">
+                                <button type="button" @click="wpConnectForm.showPassword = !wpConnectForm.showPassword" style="position: absolute; inset-inline-end: 10px; top: 50%; transform: translateY(-50%); background: transparent; border: none; color: var(--aw-text-dim); cursor: pointer; padding: 0;">
+                                    <i :class="wpConnectForm.showPassword ? 'fas fa-eye-slash' : 'fas fa-eye'"></i>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- SSL Verification Toggle -->
+                    <div style="margin-top: 1rem; display: flex; align-items: center; gap: 0.6rem;">
+                        <input type="checkbox" id="wp_verify_ssl" x-model="wpConnectForm.verify_ssl" style="cursor: pointer;">
+                        <label for="wp_verify_ssl" style="font-size: 0.75rem; color: var(--aw-text-dim); cursor: pointer; margin: 0;" x-text="form.language === 'ar' ? 'التحقق من شهادة أمان SSL (ألغِ التحديد إذا كان الموقع تجريبياً أو محلياً)' : 'Verify SSL Certificate (uncheck for staging or localhost)'"></label>
+                    </div>
+
+                    <!-- Submit Add Button -->
+                    <div style="margin-top: 1.25rem; display: flex; justify-content: flex-end;">
+                        <button type="button" @click="submitAddConnection()" :disabled="wpConnectForm.isLoading" style="background: linear-gradient(135deg, #0073aa, #00a0d2); border: none; color: #fff; padding: 0.6rem 1.5rem; border-radius: 10px; font-size: 0.82rem; font-weight: 800; cursor: pointer; display: inline-flex; align-items: center; gap: 8px; box-shadow: 0 4px 14px rgba(0, 115, 170, 0.4);" :style="wpConnectForm.isLoading ? 'opacity: 0.6; cursor: not-allowed;' : ''">
+                            <i x-show="wpConnectForm.isLoading" class="fas fa-spinner fa-spin"></i>
+                            <i x-show="!wpConnectForm.isLoading" class="fas fa-check"></i>
+                            <span x-text="wpConnectForm.isLoading ? t('wp_btn_testing') : t('wp_btn_test_save')"></span>
+                        </button>
+                    </div>
+                </div>
+
+            </div>
+
+            <!-- Modal Footer -->
+            <div style="padding: 1.25rem 1.75rem; border-top: 1px solid var(--aw-border); display: flex; justify-content: flex-end; background: rgba(0,0,0,0.2);">
+                <button type="button" @click="closeWpSettingsModal()" style="background: var(--aw-surface); border: 1px solid var(--aw-border); color: #fff; padding: 0.6rem 1.25rem; border-radius: 10px; font-size: 0.82rem; font-weight: 700; cursor: pointer;" x-text="form.language === 'ar' ? 'إغلاق' : 'Close'"></button>
             </div>
         </div>
     </div>
@@ -1257,7 +1691,36 @@ function articleWriter() {
         isProcessing: false,
         history: @json($history),
         settings: @json($settings),
+        cmsConnections: @json($cmsConnections ?? []),
         currentArticle: null,
+
+        // WordPress Integration State
+        isWpPublishOpen: false,
+        isWpSettingsOpen: false,
+        wpPublishLoading: false,
+        wpCategoriesLoading: false,
+        wpCategories: [],
+        wpPublishSuccessData: null,
+        wpPublishForm: {
+            article_id: null,
+            connection_id: '',
+            title: '',
+            excerpt: '',
+            tags: [],
+            newTagInput: '',
+            category_id: '',
+            status: 'draft',
+            slug: ''
+        },
+        wpConnectForm: {
+            name: '',
+            site_url: '',
+            username: '',
+            api_key: '',
+            verify_ssl: true,
+            showPassword: false,
+            isLoading: false
+        },
         form: {
             keyword: '',
             language: 'en',
@@ -1356,6 +1819,41 @@ function articleWriter() {
                 words_800: '~800',
                 words_1500: '~1.5k',
                 words_2500: '~2.5k',
+                btn_wp_send: 'Send to WordPress',
+                wp_connected_sites: 'WordPress Sites',
+                wp_modal_title: 'Send Article to WordPress (Draft)',
+                wp_modal_subtitle: 'Creates a draft on your site for review & editing',
+                wp_select_site: 'Target WordPress Site',
+                wp_no_sites: 'No WordPress sites connected yet.',
+                wp_connect_now: 'Connect Your WordPress Site',
+                wp_article_title: 'Article Title',
+                wp_article_excerpt: 'Excerpt / Meta Description',
+                wp_tags_label: 'Suggested SEO Tags',
+                wp_tags_placeholder: 'Type a tag and press Enter...',
+                wp_category_label: 'WordPress Category',
+                wp_category_default: 'Default (Uncategorized)',
+                wp_status_label: 'Post Status',
+                wp_btn_submit: 'Send Draft to WordPress',
+                wp_btn_submitting: 'Pushing to WordPress...',
+                wp_success_title: 'Draft Saved to WordPress Successfully!',
+                wp_open_draft: 'Open Draft in WordPress',
+                wp_settings_title: 'WordPress Integrations',
+                wp_settings_subtitle: 'Connect and manage your WordPress websites via Application Passwords.',
+                wp_add_site_title: 'Connect New WordPress Site',
+                wp_site_name: 'Site Name',
+                wp_site_name_ph: 'e.g. My Tech Blog',
+                wp_site_url: 'WordPress Site URL',
+                wp_site_url_ph: 'https://example.com',
+                wp_username: 'WordPress Username',
+                wp_username_ph: 'e.g. admin or editor',
+                wp_app_password: 'Application Password',
+                wp_app_password_ph: 'xxxx xxxx xxxx xxxx',
+                wp_btn_test_save: 'Test & Save Connection',
+                wp_btn_testing: 'Verifying Connection...',
+                wp_guide_title: 'How to generate an Application Password in 3 steps:',
+                wp_guide_step1: '1. Log in to your WordPress admin > Users > Profile.',
+                wp_guide_step2: '2. Scroll down to the Application Passwords section.',
+                wp_guide_step3: '3. Enter an application name (e.g. VidaNexus) and click "Add New Application Password", then paste the generated key below.',
                 tones: {
                     professional: 'Professional',
                     informative: 'Informative',
@@ -1471,6 +1969,41 @@ function articleWriter() {
                 alert_del_btn: 'نعم، احذف',
                 alert_cancel: 'إلغاء',
                 alert_deleted: 'تم حذف المقال',
+                btn_wp_send: 'إرسال إلى ووردبريس',
+                wp_connected_sites: 'مواقع ووردبريس',
+                wp_modal_title: 'إرسال المقال إلى ووردبريس (مسودة)',
+                wp_modal_subtitle: 'سيتم إنشاء مسودة في موقعك للمراجعة والتعديل',
+                wp_select_site: 'الموقع المستهدف',
+                wp_no_sites: 'لم تقم بربط أي موقع ووردبريس بعد.',
+                wp_connect_now: 'ربط موقعك الأول الآن',
+                wp_article_title: 'عنوان المقال',
+                wp_article_excerpt: 'المقتطف / الوصف التعريفي',
+                wp_tags_label: 'الوسوم المقترحة للسيو',
+                wp_tags_placeholder: 'اكتب وسماً ثم اضغط Enter للإضافة...',
+                wp_category_label: 'التصنيف في ووردبريس',
+                wp_category_default: 'التصنيف الافتراضي (عام)',
+                wp_status_label: 'حالة المنشور',
+                wp_btn_submit: 'إرسال المسودة إلى ووردبريس',
+                wp_btn_submitting: 'جارٍ الإرسال إلى ووردبريس...',
+                wp_success_title: 'تم حفظ المقال بنجاح في ووردبريس!',
+                wp_open_draft: 'فتح المسودة في ووردبريس',
+                wp_settings_title: 'إدارة مواقع ووردبريس',
+                wp_settings_subtitle: 'ربط المواقع عبر كلمات مرور التطبيقات (Application Passwords)',
+                wp_add_site_title: 'ربط موقع ووردبريس جديد',
+                wp_site_name: 'اسم الموقع',
+                wp_site_name_ph: 'مثال: مدونة التقنية',
+                wp_site_url: 'رابط الموقع (URL)',
+                wp_site_url_ph: 'https://example.com',
+                wp_username: 'اسم المستخدم في ووردبريس',
+                wp_username_ph: 'مثال: admin أو editor',
+                wp_app_password: 'كلمة مرور التطبيق',
+                wp_app_password_ph: 'xxxx xxxx xxxx xxxx',
+                wp_btn_test_save: 'فحص وحفظ الاتصال',
+                wp_btn_testing: 'جارٍ التحقق من الاتصال...',
+                wp_guide_title: 'كيفية استخراج كلمة مرور التطبيق في 3 خطوات:',
+                wp_guide_step1: '1. ادخل للوحة تحكم ووردبريس لموقعك > الأعضاء > حسابك الشخصي (Users > Profile).',
+                wp_guide_step2: '2. انزل لأسفل الصفحة إلى قسم كلمات مرور التطبيقات (Application Passwords).',
+                wp_guide_step3: '3. اكتب اسماً للتطبيق مثل "VidaNexus" واضغط "إضافة كلمة مرور تطبيق جديدة"، ثم انسخ الكلمة الناتجة والصقها أدناه.',
                 tones: {
                     professional: 'احترافي وموثوق (Professional)',
                     informative: 'إخباري وتثقيفي (Informative)',
@@ -1541,6 +2074,12 @@ function articleWriter() {
                 this.form.language = 'ar';
             } else if (this.settings.languages && this.settings.languages.length > 0) {
                 this.form.language = this.settings.languages[0].value;
+            }
+
+            // Initialize active WordPress connection
+            if (this.cmsConnections && this.cmsConnections.length > 0) {
+                this.wpPublishForm.connection_id = this.cmsConnections[0].id;
+                this.loadWpCategories(this.cmsConnections[0].id);
             }
         },
 
@@ -1795,6 +2334,365 @@ function articleWriter() {
             const date = new Date(dateStr);
             const locale = this.form.language === 'ar' ? 'ar-EG' : 'en-US';
             return date.toLocaleDateString(locale, { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' });
+        },
+
+        /* ============================================================
+         * WORDPRESS & CMS INTEGRATION METHODS
+         * ============================================================ */
+        async openWpPublishModal(targetItem = null) {
+            let art = targetItem || this.currentArticle;
+            if (!art) {
+                this.showError(this.form.language === 'ar' ? 'يرجى اختيار مقال أولاً.' : 'Please select an article first.');
+                return;
+            }
+
+            // If targetItem is from history summary and content is missing or short, fetch full article
+            if (!art.content && art.id) {
+                this.isProcessing = true;
+                try {
+                    const res = await fetch(`{{ url('dashboard/article-writer') }}/${art.id}`);
+                    art = await res.json();
+                    this.currentArticle = art;
+                } catch (e) {
+                    this.showError(this.form.language === 'ar' ? 'فشل تحميل المقال' : 'Failed to load article');
+                    this.isProcessing = false;
+                    return;
+                } finally {
+                    this.isProcessing = false;
+                }
+            }
+
+            // Populate Form
+            this.wpPublishForm.article_id = art.id;
+            this.wpPublishForm.title = art.title || art.topic || '';
+            this.wpPublishForm.excerpt = art.meta_description || '';
+            this.wpPublishForm.content = art.content || '';
+            this.wpPublishForm.status = 'draft';
+            this.wpPublishForm.category_id = '';
+            this.wpPublishForm.newTagInput = '';
+
+            const seo = art.seo_data || {};
+            this.wpPublishForm.slug = seo.slug_ar || seo.slug_en || '';
+            this.wpPublishForm.tags = (seo.tags && Array.isArray(seo.tags) && seo.tags.length > 0)
+                ? [...seo.tags]
+                : this.extractSuggestedTags(art);
+
+            if (this.cmsConnections.length > 0) {
+                if (!this.wpPublishForm.connection_id || !this.cmsConnections.find(c => c.id == this.wpPublishForm.connection_id)) {
+                    this.wpPublishForm.connection_id = this.cmsConnections[0].id;
+                }
+                this.loadWpCategories(this.wpPublishForm.connection_id);
+            }
+
+            this.wpPublishSuccessData = null;
+            this.isWpPublishOpen = true;
+        },
+
+        closeWpPublishModal() {
+            this.isWpPublishOpen = false;
+        },
+
+        openWpSettingsModal() {
+            this.isWpSettingsOpen = true;
+            this.wpConnectForm = {
+                name: '',
+                site_url: '',
+                username: '',
+                api_key: '',
+                verify_ssl: true,
+                showPassword: false,
+                isLoading: false,
+            };
+        },
+
+        closeWpSettingsModal() {
+            this.isWpSettingsOpen = false;
+        },
+
+        extractSuggestedTags(art) {
+            if (!art) return [];
+            if (art.seo_data && art.seo_data.tags && Array.isArray(art.seo_data.tags) && art.seo_data.tags.length > 0) {
+                return art.seo_data.tags;
+            }
+            const seo = art.seo_data || {};
+            const seeds = [seo.focus_keyword, art.topic, art.title].filter(Boolean);
+            const tags = [];
+            seeds.forEach(s => {
+                const words = s.split(/[,،\-–—\|]/u);
+                words.forEach(w => {
+                    const clean = w.trim();
+                    if (clean.length >= 3 && !tags.includes(clean)) {
+                        tags.push(clean);
+                    }
+                });
+            });
+            return tags.slice(0, 8);
+        },
+
+        addWpTag() {
+            const val = (this.wpPublishForm.newTagInput || '').trim();
+            if (!val) return;
+            const pieces = val.split(/[,،\n]/u);
+            pieces.forEach(p => {
+                const t = p.trim();
+                if (t.length > 0 && !this.wpPublishForm.tags.includes(t)) {
+                    this.wpPublishForm.tags.push(t);
+                }
+            });
+            this.wpPublishForm.newTagInput = '';
+        },
+
+        removeWpTag(index) {
+            this.wpPublishForm.tags.splice(index, 1);
+        },
+
+        async loadWpCategories(connectionId) {
+            if (!connectionId) {
+                this.wpCategories = [];
+                return;
+            }
+            this.wpCategoriesLoading = true;
+            this.wpCategories = [];
+            try {
+                const res = await fetch(`{{ url('dashboard/article-writer/cms/connections') }}/${connectionId}/categories`, {
+                    headers: { 'Accept': 'application/json' }
+                });
+                const data = await res.json();
+                if (data.status === 'success') {
+                    this.wpCategories = data.categories || [];
+                }
+            } catch (err) {
+                console.warn('Failed to load categories:', err);
+            } finally {
+                this.wpCategoriesLoading = false;
+            }
+        },
+
+        async submitWpPublish() {
+            if (!this.wpPublishForm.connection_id) {
+                this.showError(this.form.language === 'ar' ? 'يرجى اختيار موقع ووردبريس أولاً.' : 'Please select a WordPress site first.');
+                return;
+            }
+
+            this.wpPublishLoading = true;
+            try {
+                const res = await fetch(`{{ url('dashboard/article-writer/articles') }}/${this.wpPublishForm.article_id}/publish-cms`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRF-TOKEN': '{{ csrf_token() }}',
+                        'Accept': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        connection_id: this.wpPublishForm.connection_id,
+                        title: this.wpPublishForm.title,
+                        excerpt: this.wpPublishForm.excerpt,
+                        content: this.wpPublishForm.content,
+                        tags: this.wpPublishForm.tags,
+                        category_id: this.wpPublishForm.category_id || null,
+                        status: this.wpPublishForm.status || 'draft',
+                        slug: this.wpPublishForm.slug || null,
+                    })
+                });
+
+                const data = await res.json();
+
+                if (res.ok && data.status === 'success') {
+                    this.wpPublishSuccessData = data;
+
+                    // Update article in currentArticle and history
+                    const syncData = {
+                        platform: 'wordpress',
+                        connection_id: this.wpPublishForm.connection_id,
+                        connection_name: (this.cmsConnections.find(c => c.id == this.wpPublishForm.connection_id)?.name) || 'WordPress',
+                        post_id: data.post_id,
+                        post_url: data.post_url,
+                        edit_url: data.edit_url,
+                        synced_at: new Date().toISOString()
+                    };
+
+                    if (this.currentArticle && this.currentArticle.id == this.wpPublishForm.article_id) {
+                        this.currentArticle.seo_data = this.currentArticle.seo_data || {};
+                        this.currentArticle.seo_data.cms_sync = syncData;
+                        this.currentArticle.seo_data.tags = [...this.wpPublishForm.tags];
+                    }
+
+                    const histItem = this.history.find(h => h.id == this.wpPublishForm.article_id);
+                    if (histItem) {
+                        histItem.seo_data = histItem.seo_data || {};
+                        histItem.seo_data.cms_sync = syncData;
+                        histItem.seo_data.tags = [...this.wpPublishForm.tags];
+                    }
+
+                    Swal.fire({
+                        toast: true,
+                        position: 'top-end',
+                        icon: 'success',
+                        title: data.message || (this.form.language === 'ar' ? 'تم حفظ المسودة في ووردبريس بنجاح!' : 'Draft saved to WordPress!'),
+                        showConfirmButton: false,
+                        timer: 3000,
+                        background: '#17181c',
+                        color: '#fff'
+                    });
+                } else {
+                    this.showError(data.message || (this.form.language === 'ar' ? 'فشل إرسال المقال إلى ووردبريس' : 'Failed to publish to WordPress'));
+                }
+            } catch (err) {
+                this.showError(this.form.language === 'ar' ? 'حدث خطأ في الاتصال بالخادم' : 'Server connection error: ' + err.message);
+            } finally {
+                this.wpPublishLoading = false;
+            }
+        },
+
+        async submitAddConnection() {
+            if (!this.wpConnectForm.site_url || !this.wpConnectForm.username || !this.wpConnectForm.api_key) {
+                this.showError(this.form.language === 'ar' ? 'جميع الحقول (رابط الموقع، اسم المستخدم، كلمة مرور التطبيق) مطلوبة.' : 'Site URL, username, and application password are all required.');
+                return;
+            }
+
+            this.wpConnectForm.isLoading = true;
+            try {
+                const res = await fetch(`{{ url('dashboard/article-writer/cms/connections') }}`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRF-TOKEN': '{{ csrf_token() }}',
+                        'Accept': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        name: this.wpConnectForm.name,
+                        site_url: this.wpConnectForm.site_url,
+                        username: this.wpConnectForm.username,
+                        api_key: this.wpConnectForm.api_key,
+                        platform: 'wordpress',
+                        verify_ssl: this.wpConnectForm.verify_ssl,
+                    })
+                });
+
+                const data = await res.json();
+
+                if (res.ok && data.status === 'success') {
+                    this.cmsConnections.unshift(data.connection);
+                    if (!this.wpPublishForm.connection_id) {
+                        this.wpPublishForm.connection_id = data.connection.id;
+                        this.loadWpCategories(data.connection.id);
+                    }
+
+                    // Reset form
+                    this.wpConnectForm.name = '';
+                    this.wpConnectForm.site_url = '';
+                    this.wpConnectForm.username = '';
+                    this.wpConnectForm.api_key = '';
+
+                    Swal.fire({
+                        icon: 'success',
+                        title: this.form.language === 'ar' ? 'تم الربط بنجاح!' : 'Connected Successfully!',
+                        text: data.message,
+                        background: '#17181c',
+                        color: '#fff',
+                        confirmButtonColor: '#0ea5e9'
+                    });
+                } else {
+                    this.showError(data.message || (this.form.language === 'ar' ? 'فشل فحص الاتصال بموقع ووردبريس' : 'Connection test failed'));
+                }
+            } catch (err) {
+                this.showError(this.form.language === 'ar' ? 'حدث خطأ في الاتصال' : 'Connection error: ' + err.message);
+            } finally {
+                this.wpConnectForm.isLoading = false;
+            }
+        },
+
+        async testConnection(connectionId) {
+            Swal.fire({
+                title: this.form.language === 'ar' ? 'جارٍ فحص الاتصال...' : 'Testing connection...',
+                text: this.form.language === 'ar' ? 'يتم الاتصال بـ WordPress REST API' : 'Connecting to WordPress REST API',
+                background: '#17181c',
+                color: '#fff',
+                allowOutsideClick: false,
+                didOpen: () => { Swal.showLoading(); }
+            });
+
+            try {
+                const res = await fetch(`{{ url('dashboard/article-writer/cms/connections/test') }}`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRF-TOKEN': '{{ csrf_token() }}',
+                        'Accept': 'application/json',
+                    },
+                    body: JSON.stringify({ connection_id: connectionId })
+                });
+
+                const data = await res.json();
+
+                if (res.ok && data.status === 'success') {
+                    Swal.fire({
+                        icon: 'success',
+                        title: this.form.language === 'ar' ? 'الاتصال نشط وسليم!' : 'Connection Active!',
+                        text: data.message,
+                        background: '#17181c',
+                        color: '#fff',
+                        confirmButtonColor: '#0ea5e9'
+                    });
+                } else {
+                    this.showError(data.message || (this.form.language === 'ar' ? 'فشل فحص الاتصال' : 'Connection check failed'));
+                }
+            } catch (err) {
+                this.showError(err.message);
+            }
+        },
+
+        async deleteConnection(connectionId) {
+            const isAr = this.form.language === 'ar';
+            const result = await Swal.fire({
+                title: isAr ? 'حذف ربط هذا الموقع؟' : 'Remove this connection?',
+                text: isAr ? 'لن تتمكن من إرسال المقالات إلى هذا الموقع حتى تقوم بربطه مجدداً.' : 'You will not be able to publish articles to this site until you reconnect it.',
+                icon: 'warning',
+                showCancelButton: true,
+                confirmButtonColor: '#ff4b4b',
+                cancelButtonColor: '#2b2d35',
+                confirmButtonText: isAr ? 'نعم، احذف' : 'Yes, Delete',
+                cancelButtonText: isAr ? 'إلغاء' : 'Cancel',
+                background: '#17181c',
+                color: '#fff'
+            });
+
+            if (result.isConfirmed) {
+                try {
+                    const res = await fetch(`{{ url('dashboard/article-writer/cms/connections') }}/${connectionId}`, {
+                        method: 'DELETE',
+                        headers: {
+                            'X-CSRF-TOKEN': '{{ csrf_token() }}',
+                            'Accept': 'application/json',
+                        }
+                    });
+
+                    const data = await res.json();
+
+                    if (res.ok && data.status === 'success') {
+                        this.cmsConnections = this.cmsConnections.filter(c => c.id !== connectionId);
+                        if (this.wpPublishForm.connection_id == connectionId) {
+                            this.wpPublishForm.connection_id = this.cmsConnections.length > 0 ? this.cmsConnections[0].id : '';
+                            if (this.wpPublishForm.connection_id) {
+                                this.loadWpCategories(this.wpPublishForm.connection_id);
+                            }
+                        }
+
+                        Swal.fire({
+                            toast: true,
+                            position: 'top-end',
+                            icon: 'success',
+                            title: data.message,
+                            showConfirmButton: false,
+                            timer: 1500,
+                            background: '#17181c',
+                            color: '#fff'
+                        });
+                    }
+                } catch (err) {
+                    this.showError(isAr ? 'فشل حذف الموقع' : 'Failed to delete site');
+                }
+            }
         }
     }
 }

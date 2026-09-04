@@ -49,7 +49,22 @@ class ArticleWriterController extends Controller
             'default_word_count' => (int) Setting::get('article-writer_default_word_count', 1500),
         ];
 
-        return view('articlewriter::index', compact('history', 'settings'));
+        $cmsConnections = \Modules\ArticleWriter\Models\UserCmsConnection::where('user_id', $user->id)
+            ->where('is_active', true)
+            ->get()
+            ->map(function ($c) {
+                return [
+                    'id' => $c->id,
+                    'name' => $c->name ?: parse_url($c->site_url, PHP_URL_HOST) ?: $c->site_url,
+                    'platform' => $c->platform,
+                    'site_url' => $c->site_url,
+                    'username' => $c->username,
+                    'default_status' => $c->default_status,
+                    'last_synced_at' => $c->last_synced_at?->diffForHumans(),
+                ];
+            });
+
+        return view('articlewriter::index', compact('history', 'settings', 'cmsConnections'));
     }
 
     /**
@@ -142,6 +157,7 @@ class ArticleWriterController extends Controller
                     'audience' => $request->audience,
                     'components' => $request->components ?? [],
                     'focus_keyword' => $focusKeyword,
+                    'tags' => $parsed['tags'] ?? [],
                     'slug_en' => $slugEn,
                     'slug_ar' => $slugAr,
                     'site_domain' => $this->siteDomain(),
@@ -228,10 +244,31 @@ class ArticleWriterController extends Controller
         $rawSlugEn = $this->parseTag($text, 'SLUG_EN');
         $rawSlugAr = $this->parseTag($text, 'SLUG_AR');
 
+        // Parse Tags
+        $rawTags = $this->parseTag($text, 'TAGS');
+        $tags = [];
+        if (!empty($rawTags)) {
+            $tags = array_values(array_filter(array_map('trim', explode(',', $rawTags))));
+        }
+        if (empty($tags)) {
+            $candidates = array_unique(array_filter([$focusKeyword, $request->keyword, $title]));
+            foreach ($candidates as $cand) {
+                $pieces = preg_split('/[,،\-–—\|]/u', $cand);
+                foreach ($pieces as $piece) {
+                    $p = trim(strip_tags($piece));
+                    if (mb_strlen($p) >= 3 && !in_array($p, $tags)) {
+                        $tags[] = $p;
+                    }
+                }
+            }
+        }
+        $tags = array_slice($tags, 0, 8);
+
         $cleanContent = preg_replace('/\[TITLE\]:.*?(\n|$)/i', '', $text);
         $cleanContent = preg_replace('/\[META_DESCRIPTION\]:.*?(\n|$)/i', '', $cleanContent);
         $cleanContent = preg_replace('/\[META\]:.*?(\n|$)/i', '', $cleanContent);
         $cleanContent = preg_replace('/\[FOCUS_KEYWORD\]:.*?(\n|$)/i', '', $cleanContent);
+        $cleanContent = preg_replace('/\[TAGS\]:.*?(\n|$)/i', '', $cleanContent);
         $cleanContent = preg_replace('/\[SLUG_EN\]:.*?(\n|$)/i', '', $cleanContent);
         $cleanContent = preg_replace('/\[SLUG_AR\]:.*?(\n|$)/i', '', $cleanContent);
         $cleanContent = preg_replace('/```html\s*/i', '', $cleanContent);
@@ -242,6 +279,7 @@ class ArticleWriterController extends Controller
             'title' => $title,
             'metaDesc' => $metaDesc,
             'focusKeyword' => $focusKeyword,
+            'tags' => $tags,
             'rawSlugEn' => $rawSlugEn,
             'rawSlugAr' => $rawSlugAr,
             'content' => $cleanContent,
