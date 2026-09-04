@@ -53,7 +53,7 @@ class ArticleWriterService
         $targetAudience = $clean['audience'] ?: 'general';
         $additionalInstructions = $clean['additional_instructions'] ?? '';
         $wordCount = $data['word_count'] ?? (int) Setting::get('article-writer_default_word_count', 1500);
-        $components = $data['components'] ?? ['faq', 'summary', 'takeaways', 'meta'];
+        $components = $data['components'] ?? [];
 
         // 1. Fetch Real-Time Grounding (Live Research)
         $newsContext = "";

@@ -2112,7 +2112,7 @@ function articleWriter() {
             tone: 'professional',
             audience: 'general',
             word_count: {{ $settings['default_word_count'] ?? 1500 }},
-            components: ['faq', 'summary', 'takeaways', 'meta']
+            components: []
         },
 
         i18n: {
