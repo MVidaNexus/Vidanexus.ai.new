@@ -196,11 +196,20 @@ class CmsIntegrationController extends Controller
             ->where('is_active', true)
             ->findOrFail($request->input('connection_id'));
 
+        $rawTags = $request->input('tags') ?: ($article->seo_data['tags'] ?? []);
+        $articleController = app(ArticleWriterController::class);
+        $cleanTags = $articleController->cleanAndNormalizeTags(
+            $rawTags,
+            $article->seo_data['focus_keyword'] ?? null,
+            $article->topic,
+            $article->title
+        );
+
         $options = [
             'title' => $request->input('title') ?: $article->title,
             'excerpt' => $request->input('excerpt') ?: $article->meta_description,
             'content' => $request->input('content') ?: $article->content,
-            'tags' => $request->input('tags') ?: ($article->seo_data['tags'] ?? []),
+            'tags' => $cleanTags,
             'category_id' => $request->input('category_id'),
             'status' => $request->input('status', 'draft'),
             'slug' => $request->input('slug'),

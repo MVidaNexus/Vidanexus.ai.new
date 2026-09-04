@@ -202,10 +202,10 @@ class ArticleWriterService
 
         // 4. Meta Tags Protocol (Dynamic — respect user selection)
         if (in_array('meta', $components)) {
-            $metaPrompt = Setting::get("{$slug}_prompt_meta", "After ALL article content, output these metadata tags on separate lines:\n\n[TITLE]: [Google Discover & Search optimized title — MAX 60 characters — high CTR, credible, includes focus keyword]\n[META_DESCRIPTION]: [Compelling SEO description — MAX 155 characters — includes focus keyword and a clear value hook]\n[FOCUS_KEYWORD]: [The exact primary keyword/phrase]\n[TAGS]: [5 to 8 comma-separated relevant SEO tags/keywords in {$langName} for CMS/WordPress publishing]");
+            $metaPrompt = Setting::get("{$slug}_prompt_meta", "After ALL article content, output these metadata tags on separate lines:\n\n[TITLE]: [Google Discover & Search optimized title — MAX 60 characters — high CTR, credible, includes focus keyword]\n[META_DESCRIPTION]: [Compelling SEO description — MAX 155 characters — includes focus keyword and a clear value hook]\n[FOCUS_KEYWORD]: [The exact primary keyword/phrase]\n[TAGS]: [Provide exactly 4 to 6 concise SEO tags in {$langName}. STRICT LENGTH RULE: Each tag MUST be 1 to 4 words maximum (NEVER exceed 4 words, never full sentences). Separated by commas]");
             $prompt .= "# METADATA PROTOCOL\n" . $this->replaceVars($metaPrompt, $vars) . "\n";
         } else {
-            $prompt .= "# METADATA PROTOCOL\nOutput [TITLE] and [TAGS] at the end.\n";
+            $prompt .= "# METADATA PROTOCOL\nOutput [TITLE] and [TAGS] at the end. For [TAGS], provide exactly 4 to 6 concise SEO tags (1 to 4 words each, separated by commas).\n";
         }
         $prompt .= "Additionally, ALWAYS append two slug suggestions on their own lines, in this exact format:\n";
         $prompt .= "[SLUG_EN]: short-seo-friendly-english-slug-derived-from-the-title\n";

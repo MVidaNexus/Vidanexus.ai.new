@@ -211,8 +211,10 @@ class WordPressProvider implements CmsProviderInterface
         $baseUrl = $this->getBaseUrl($connection);
         $resolvedIds = [];
 
-        foreach ($tags as $rawTag) {
-            $tag = trim(strip_tags((string) $rawTag));
+        // Clean and enforce tag rules: max 4 words, max 6 tags
+        $cleanTags = $this->cleanAndNormalizeTags($tags);
+
+        foreach ($cleanTags as $tag) {
             if (empty($tag)) {
                 continue;
             }
@@ -268,6 +270,77 @@ class WordPressProvider implements CmsProviderInterface
     }
 
     /**
+     * Clean and normalize article tags:
+     * - Strict tag length: maximum 3 to 4 words per tag.
+     * - Capped at 6 tags.
+     */
+    public function cleanAndNormalizeTags(array $tags): array
+    {
+        $cleanTags = [];
+        $seen = [];
+
+        foreach ($tags as $raw) {
+            $tag = trim(strip_tags((string) $raw));
+            // Remove leading/trailing hashes, quotes, dashes, brackets
+            $tag = preg_replace('/^[#\-"\'«»\[\]\(\)]+|[#\-"\'«»\[\]\(\)]+$/u', '', $tag);
+            $tag = trim(preg_replace('/\s+/u', ' ', $tag));
+
+            if (mb_strlen($tag) < 2) {
+                continue;
+            }
+
+            // Word count enforcement: max 4 words per tag
+            $words = preg_split('/\s+/u', $tag, -1, PREG_SPLIT_NO_EMPTY);
+            if (count($words) > 4) {
+                $words = array_slice($words, 0, 4);
+                $tag = implode(' ', $words);
+            }
+
+            $lower = mb_strtolower($tag);
+            if (!empty($tag) && !isset($seen[$lower])) {
+                $seen[$lower] = true;
+                $cleanTags[] = $tag;
+            }
+
+            if (count($cleanTags) >= 6) {
+                break;
+            }
+        }
+
+        return $cleanTags;
+    }
+
+    /**
+     * Clean and prepare HTML content for WordPress REST API.
+     * WordPress themes automatically render post_title as the primary <h1> in the theme template,
+     * so we must strip any leading <h1>...</h1> tag or duplicate title heading from post_content.
+     */
+    public function sanitizeContentForWordPress(string $content, string $title): string
+    {
+        $content = trim($content);
+        if (empty($content)) {
+            return '';
+        }
+
+        // 1. Remove leading <h1>...</h1> (including attributes, inner spans, newlines, comments)
+        $content = preg_replace('/^\s*(?:<!--.*?-->\s*)*<h1[^>]*>.*?<\/h1>\s*/isu', '', $content);
+
+        // 2. In case the title was wrapped in <h2>, <h3>, or <p> at the very beginning of the body
+        if (!empty($title)) {
+            $normalizedTitle = mb_strtolower(preg_replace('/\s+/u', ' ', trim(strip_tags($title))));
+            $content = preg_replace_callback('/^\s*(?:<!--.*?-->\s*)*<(h[1-3]|p)[^>]*>(.*?)<\/\1>\s*/isu', function ($matches) use ($normalizedTitle) {
+                $blockText = mb_strtolower(preg_replace('/\s+/u', ' ', trim(strip_tags($matches[2]))));
+                if ($blockText === $normalizedTitle) {
+                    return ''; // Strip duplicate title block
+                }
+                return $matches[0];
+            }, $content);
+        }
+
+        return trim($content);
+    }
+
+    /**
      * Publish article to WordPress as Draft.
      */
     public function publishArticle(UserCmsConnection $connection, ArticleHistory $article, array $options = []): array
@@ -275,7 +348,8 @@ class WordPressProvider implements CmsProviderInterface
         $baseUrl = $this->getBaseUrl($connection);
 
         $title = trim($options['title'] ?? $article->title ?? $article->topic ?? 'Untitled Article');
-        $content = trim($options['content'] ?? $article->content ?? '');
+        $rawContent = trim($options['content'] ?? $article->content ?? '');
+        $content = $this->sanitizeContentForWordPress($rawContent, $title);
         $excerpt = trim($options['excerpt'] ?? $article->meta_description ?? '');
         $status = trim($options['status'] ?? $connection->default_status ?? 'draft');
         

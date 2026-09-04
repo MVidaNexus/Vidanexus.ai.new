@@ -244,25 +244,9 @@ class ArticleWriterController extends Controller
         $rawSlugEn = $this->parseTag($text, 'SLUG_EN');
         $rawSlugAr = $this->parseTag($text, 'SLUG_AR');
 
-        // Parse Tags
+        // Parse Tags: enforce max 4 words per tag, and between 4 and 6 tags total per article
         $rawTags = $this->parseTag($text, 'TAGS');
-        $tags = [];
-        if (!empty($rawTags)) {
-            $tags = array_values(array_filter(array_map('trim', explode(',', $rawTags))));
-        }
-        if (empty($tags)) {
-            $candidates = array_unique(array_filter([$focusKeyword, $request->keyword, $title]));
-            foreach ($candidates as $cand) {
-                $pieces = preg_split('/[,،\-–—\|]/u', $cand);
-                foreach ($pieces as $piece) {
-                    $p = trim(strip_tags($piece));
-                    if (mb_strlen($p) >= 3 && !in_array($p, $tags)) {
-                        $tags[] = $p;
-                    }
-                }
-            }
-        }
-        $tags = array_slice($tags, 0, 8);
+        $tags = $this->cleanAndNormalizeTags($rawTags, $focusKeyword, $request->keyword, $title);
 
         $cleanContent = preg_replace('/\[TITLE\]:.*?(\n|$)/i', '', $text);
         $cleanContent = preg_replace('/\[META_DESCRIPTION\]:.*?(\n|$)/i', '', $cleanContent);
@@ -398,5 +382,92 @@ class ArticleWriterController extends Controller
             }
         }
         return $parsed;
+    }
+
+    /**
+     * Clean and normalize article tags:
+     * - Strict tag length: maximum 3 to 4 words per tag (truncated/sanitized if longer).
+     * - Strict article tag count: between 4 and 6 tags total per article.
+     */
+    public function cleanAndNormalizeTags($rawTags, ?string $focusKeyword = null, ?string $keyword = null, ?string $title = null): array
+    {
+        $inputTags = [];
+        if (is_string($rawTags)) {
+            $inputTags = preg_split('/[,،\n]/u', $rawTags);
+        } elseif (is_array($rawTags)) {
+            $inputTags = $rawTags;
+        }
+
+        $cleanTags = [];
+        $seen = [];
+
+        foreach ($inputTags as $raw) {
+            $tag = trim(strip_tags((string) $raw));
+            // Remove leading/trailing hashes, quotes, dashes, brackets
+            $tag = preg_replace('/^[#\-"\'«»\[\]\(\)]+|[#\-"\'«»\[\]\(\)]+$/u', '', $tag);
+            $tag = trim(preg_replace('/\s+/u', ' ', $tag));
+
+            if (mb_strlen($tag) < 2) {
+                continue;
+            }
+
+            // Word count enforcement: max 4 words per tag
+            $words = preg_split('/\s+/u', $tag, -1, PREG_SPLIT_NO_EMPTY);
+            if (count($words) > 4) {
+                $words = array_slice($words, 0, 4);
+                $tag = implode(' ', $words);
+            }
+
+            $lowerKey = mb_strtolower($tag);
+            if (!empty($tag) && !isset($seen[$lowerKey])) {
+                $seen[$lowerKey] = true;
+                $cleanTags[] = $tag;
+            }
+
+            if (count($cleanTags) >= 6) {
+                break;
+            }
+        }
+
+        // If fewer than 4 tags, extract supplemental 2-4 word tags from keyword/title
+        if (count($cleanTags) < 4) {
+            $candidates = array_unique(array_filter([$focusKeyword, $keyword, $title]));
+            foreach ($candidates as $cand) {
+                $parts = preg_split('/[,،\-–—\|:;]/u', $cand);
+                foreach ($parts as $part) {
+                    $cleanPart = trim(preg_replace('/^[#\-"\'«»\[\]\(\)]+|[#\-"\'«»\[\]\(\)]+$/u', '', $part));
+                    $cleanPart = trim(preg_replace('/\s+/u', ' ', $cleanPart));
+                    if (empty($cleanPart)) {
+                        continue;
+                    }
+
+                    $words = preg_split('/\s+/u', $cleanPart, -1, PREG_SPLIT_NO_EMPTY);
+                    if (count($words) >= 1 && count($words) <= 4) {
+                        $lowerKey = mb_strtolower($cleanPart);
+                        if (!isset($seen[$lowerKey]) && mb_strlen($cleanPart) >= 3) {
+                            $seen[$lowerKey] = true;
+                            $cleanTags[] = $cleanPart;
+                            if (count($cleanTags) >= 6) {
+                                break 2;
+                            }
+                        }
+                    } elseif (count($words) > 4) {
+                        // Take 3-word chunks
+                        $chunk = implode(' ', array_slice($words, 0, 3));
+                        $lowerKey = mb_strtolower($chunk);
+                        if (!isset($seen[$lowerKey]) && mb_strlen($chunk) >= 3) {
+                            $seen[$lowerKey] = true;
+                            $cleanTags[] = $chunk;
+                            if (count($cleanTags) >= 6) {
+                                break 2;
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
+        // Always return between 4 and 6 tags (maximum 6)
+        return array_slice($cleanTags, 0, 6);
     }
 }
