@@ -171,7 +171,7 @@ class ArticleWriterService
         $prompt .= "# TITLE ENGINEERING PROTOCOL\n" . $this->replaceVars($titlePrompt, $vars) . "\n\n";
 
         // 2. Content Intent & Dynamic Archetype Protocol
-        $prompt .= $this->contentArchetypeProtocol($langName);
+        $prompt .= $this->contentArchetypeProtocol($langName, $todayAnchor);
 
         // 3. Body Section (Mandatory Base)
         $bodyPrompt = Setting::get("{$slug}_prompt_body", "Write an intent-driven, highly engaging, [word_count]-word article about [keyword] in [language]. Strictly apply the archetype structure that fits the topic. Deliver immediate value without generic filler.");
@@ -243,7 +243,7 @@ class ArticleWriterService
      * Prevents monolithic generic essays by dynamically adapting article structure
      * to the user's specific content type and query intent.
      */
-    protected function contentArchetypeProtocol(string $langName): string
+    protected function contentArchetypeProtocol(string $langName, string $todayAnchor = ''): string
     {
         $isArabic = stripos($langName, 'arab') !== false;
 
