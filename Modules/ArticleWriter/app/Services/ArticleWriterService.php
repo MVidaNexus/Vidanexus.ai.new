@@ -128,7 +128,8 @@ class ArticleWriterService
         $now = now($tz);
         $currentDateEn = $now->format('l, F j, Y');
         $currentDateAr = $now->locale('ar')->translatedFormat('l d F Y');
-        $todayAnchor = ($lang === 'ar') ? $currentDateAr : $currentDateEn;
+        $currentTime = $now->format('H:i');
+        $todayAnchor = ($lang === 'ar') ? "{$currentDateAr} (الساعة {$currentTime} بتوقيت القاهرة)" : "{$currentDateEn} ({$currentTime} UTC)";
 
         // Replacements Map
         $vars = [
@@ -143,19 +144,27 @@ class ArticleWriterService
             '[news_context]' => $newsContext,
         ];
 
-        $prompt = "# TEMPORAL ANCHOR & PUBLICATION DATE (CRITICAL)\n";
-        $prompt .= "Today's EXACT local publication date is: {$todayAnchor} ({$currentDateEn}).\n";
-        $prompt .= "CRITICAL: Any market data or news headlines from previous hours must be reported under TODAY's date ({$todayAnchor}). NEVER label this live article with yesterday's date. The current day and date is strictly: {$todayAnchor}.\n\n";
+        $prompt = "# TEMPORAL ANCHOR & REAL-TIME CLOCK (CRITICAL)\n";
+        $prompt .= "The EXACT local timestamp right now is: {$todayAnchor}.\n";
+        $prompt .= "CRITICAL MANDATE: All market prices, news developments, match results, and events MUST be grounded in THIS VERY MOMENT ({$todayAnchor}). Under NO circumstances should you present outdated historical figures or treat a finished match as upcoming.\n\n";
 
         // 0. Grounding Analysis (High Priority)
         if (!empty($newsContext)) {
-            $prompt .= "# REAL-TIME RESEARCH & MARKET GROUNDING (FACTUAL INTELLIGENCE)\n";
-            $prompt .= "You have been provided with real-time market facts and latest updates for [keyword]:\n";
-            $prompt .= "MARKET DATA:\n{$newsContext}\n\n";
-            $prompt .= "COMPETITOR CITATION BAN (CRITICAL):\n";
-            $prompt .= "- NEVER mention, cite, or promote third-party news websites or competing portals (e.g. اليوم السابع، مصراوي، العربية، الأهرام، صدى البلد، الجزيرة، سكاي نيوز، آي صاغة، إلخ).\n";
-            $prompt .= "- State all facts, figures, and prices directly and natively as factual market reporting, or attribute to official primary authorities (e.g. شعبة الذهب بالغرف التجارية، البنك المركزي، بيانات البورصات الرسمية).\n\n";
+            $prompt .= "# REAL-TIME RESEARCH & LIVE MARKET INTELLIGENCE (LATEST GROUNDING)\n";
+            $prompt .= "You have been provided with real-time verified updates and latest news feeds for [keyword], sorted with the freshest news first:\n";
+            $prompt .= "LIVE NEWS & MARKET DATA:\n{$newsContext}\n\n";
+            $prompt .= "GROUNDING RULES (STRICT):\n";
+            $prompt .= "1. TEMPORAL CHRONOLOGY: The top items marked with recent timestamps (e.g. 'منذ دقائق' or 'منذ ساعة') represent the latest breaking reality. Use these exact facts, figures, and outcomes.\n";
+            $prompt .= "2. COMPETITOR CITATION BAN: NEVER cite, mention, or promote third-party news websites or competitor portals (e.g. اليوم السابع، مصراوي، العربية، الأهرام، صدى البلد، الجزيرة، سكاي نيوز، آي صاغة، بطولات، إلخ). State facts natively as factual market reporting or attribute to primary official authorities (e.g. شعبة الذهب، البنك المركزي، الاتحاد الإفريقي، رابطة الأندية، الوزارة المعنية).\n\n";
         }
+
+        // Real-Time Core Requirement
+        $prompt .= "# UP-TO-THE-MINUTE FRESHNESS & INTENT PROTOCOL (شرط المعاصرة اللحظية والبيانات الحية — إلزامي قطعي)\n";
+        $prompt .= "Depending on the topic category, you MUST adhere to the following real-time conditions:\n";
+        $prompt .= "• SPORTS & MATCHES (الرياضة ومباريات كرة القدم): If live data shows the match was played (today/yesterday/recently), report the FINAL SCORE (النتيجة النهائية المؤكدة بالأهداف) and scorers immediately in the opening section. If upcoming, give exact kickoff time, verified channels, and latest lineups.\n";
+        $prompt .= "• PRICES & CURRENCIES (الأسعار والذهب والعملات والبورصة): Give exact live numbers for THIS MOMENT of today's session ({$todayAnchor}). Gold grams 21/24/18, bullion pound, global ounce, and official banking rates.\n";
+        $prompt .= "• BREAKING NEWS & POLITICS (الأخبار العاجلة والقرارات): Lead with the newest development from the latest hours. What was officially declared or happened right now?\n";
+        $prompt .= "• RESULTS & ANNOUNCEMENTS (نتائج الامتحانات، القرعة، والبيانات الرسمية): State the official verified status and declared numbers as of today.\n\n";
 
         // 1. Title Section (Mandatory)
         $titlePrompt = Setting::get("{$slug}_prompt_title", "Generate an engaging, high-CTR, Google Discover-compliant headline for [keyword] in [language]. Title should be 8-14 words, trigger intelligent curiosity while maintaining high credibility, use a colon ':' or natural connector for sub-clauses (NEVER put periods '.' in titles), and strictly avoid sensational clickbait words (like صادم, كارثة, لن تصدق).");
@@ -241,8 +250,9 @@ class ArticleWriterService
         $protocol = "# ADAPTIVE CONTENT ARCHETYPE & SEARCH INTENT ROUTING (CRITICAL)\n";
         $protocol .= "Analyze the primary keyword, topic, and user instructions, then identify the matching CONTENT ARCHETYPE and strictly follow its structure:\n\n";
 
-        $protocol .= "### ARCHETYPE 1: GOLD & COMMODITY PRICES (أسعار الذهب والعملات والسلع في مصر والعالم العربي)\n";
+        $protocol .= "### ARCHETYPE 1: GOLD, CURRENCY & COMMODITY PRICES (أسعار الذهب والعملات والسلع في مصر والعالم العربي)\n";
         $protocol .= "- PRIMARY INTENT: The reader wants clear, accurate, structured price data right now without fluff or robotic filler.\n";
+        $protocol .= "- REAL-TIME FRESHNESS CONDITION (شرط حداثة السعر اللحظية): All prices presented in the table and text MUST be the live market numbers for TODAY'S session ({$todayAnchor}). State the live update time clearly in the text. NEVER use outdated prices from previous periods.\n";
         $protocol .= "- REQUIRED STRUCTURE:\n";
         $protocol .= "  1. Live Prices Table: Clean HTML table (<table>) displaying: عيار 24، عيار 21 (الأكثر انتشاراً)، عيار 18، الجنيه الذهب، وسعر الأوقية عالمياً.\n";
         $protocol .= "  2. Gold Prices with Workmanship (أسعار الذهب بالمصنعية والدمغة): Explain average workmanship differences (المصنعية والضريبة) بين المشغولات الذهبية والسبائك والجنيهات.\n";
@@ -253,25 +263,35 @@ class ArticleWriterService
         $protocol .= "  • Natural, polished, readable Arabic prose — NO heavy academic jargon, NO robotic AI transitions.\n";
         $protocol .= "  • Use clean HTML tables (<table>) for prices.\n\n";
 
-        $protocol .= "### ARCHETYPE 2: SPORTS EVENT, MATCH FIXTURE & FOOTBALL PREVIEWS (تغطيات ومواعيد المباريات وتشكيل الفرق والرياضة)\n";
-        $protocol .= "- PRIMARY INTENT: Football fans and readers search for immediate, comprehensive, and accurate match data. NEVER output vague phrases like 'لم يُعلن رسمياً' for well-known leagues.\n";
-        $protocol .= "- REQUIRED COMPREHENSIVE MATCH STRUCTURE:\n";
-        $protocol .= "  1. Match Overview & Quick Card: Direct kickoff time across all Arab time zones (مصر والقاهرة، السعودية ومكة المكرمة، الإمارات، المغرب العربي، توقيت غرينتش GMT)، اسم البطولة والجولة، والملعب المستضيف الفعلي للنادي صاحب الأرض (مثلاً: لويس كومبانيس الأولمبي/مونتجويك أو كامب نو لبرشلونة، سانتياغو برنابيو لريال مدريد، أنفيلد لليفربول، ستاد القاهرة للأهلي والزمالك، الأول بارك للنصر، المملكة أرينا للهلال).\n";
-        $protocol .= "  2. Broadcaster & Channel Frequency Table (القنوات الناقلة وتردداتها التفصيلية): Name the official broadcasting network for the tournament (مثال: beIN Sports 1 HD / beIN Sports 3 للدوري الإسباني والإنجليزي ودوري أبطال أوروبا، SSC للدوري السعودي، أون تايم سبورتس للدوري المصري، أبوظبي الرياضية/StarzPlay للدوري الإيطالي) مع جدول تردد القناة (القمر الصناعي نايل سات/سهيل سات، التردد، الاستقطاب، معدل الترميز 27500، معامل تصحيح الخطأ).\n";
-        $protocol .= "  3. Commentator (معلق اللقاء): Name the assigned or expected top commentators (مثل: عصام الشوالي، حفيظ دراجي، خليل البلوشي، حسن العيدروس، فارس عوض، فهد العتيبي).\n";
-        $protocol .= "  4. Expected Lineups for Both Teams (التشكيل المتوقع للفريقين): MUST provide the tactical formation (e.g. 4-3-3 أو 4-2-3-1) with real actual star players for each position:\n";
-        $protocol .= "     • حراسة المرمى (Goalkeeper)\n";
-        $protocol .= "     • خط الدفاع (Defense)\n";
-        $protocol .= "     • خط الوسط (Midfield)\n";
-        $protocol .= "     • خط الهجوم (Attack)\n";
-        $protocol .= "  5. Absences & Injuries (غيابات وإصابات الفريقين المؤكدة والجاهزية الفنية).\n";
-        $protocol .= "  6. Head-to-Head & Tournament Standings Context (موقف الفريقين في جدول الترتيب وتاريخ المواجهات المباشرة).\n";
+        $protocol .= "### ARCHETYPE 2: SPORTS EVENT, MATCH FIXTURES & RESULTS (تغطيات ونتائج ومواعيد المباريات وتشكيل الفرق)\n";
+        $protocol .= "- PRIMARY INTENT: Football fans and readers search for immediate, comprehensive, and accurate match data.\n";
+        $protocol .= "- REAL-TIME MATCH STATUS ROUTING (تقرير النتيجة vs موعد وتشكيل اللقاء):\n";
+        $protocol .= "  • CASE A: MATCH FINISHED / RESULT REPORT (إذا كانت المباراة قد لُعبت بالفعل أو انتهت نتيجتها في أحدث البيانات الحية):\n";
+        $protocol .= "    - The article MUST pivot entirely to a full Match Result Report (تقرير نتيجة المباراة).\n";
+        $protocol .= "    - Lead immediately in the opening paragraph with the EXACT FINAL SCORE (النتيجة النهائية المؤكدة بالأهداف)، البطولة والدور، والملعب.\n";
+        $protocol .= "    - Detail the goalscorers (أهداف اللقاء، من سجل، والدقائق).\n";
+        $protocol .= "    - Comprehensive Match Summary (أبرز الفرص الضائعة، أداء حراس المرمى، القرارات التحكيمية/الفار المؤثرة، والتبديلات الحاسمة).\n";
+        $protocol .= "    - Standings Impact (موقف الفريقين في جدول الترتيب والنقاط وحسابات التأهل بعد هذه النتيجة).\n";
+        $protocol .= "    - Post-match reactions and coach statements.\n";
+        $protocol .= "    - STRICT BAN: NEVER write an upcoming match preview ('سيلتقي الفريقان اليوم') or provide future kickoff times for a match that has already ended with a known final score!\n";
+        $protocol .= "  • CASE B: UPCOMING FIXTURE / PREVIEW (إذا كانت المباراة قادمة ولم تبدأ بعد):\n";
+        $protocol .= "    - 1. Match Overview & Quick Card: Direct kickoff time across all Arab time zones (مصر والقاهرة، السعودية ومكة المكرمة، الإمارات، المغرب العربي، توقيت غرينتش GMT)، اسم البطولة والجولة، والملعب المستضيف الفعلي للنادي صاحب الأرض.\n";
+        $protocol .= "    - 2. Broadcaster & Channel Frequency Table (القنوات الناقلة وتردداتها التفصيلية): Name the official broadcasting network for the tournament مع جدول تردد القناة (القمر الصناعي نايل سات/سهيل سات، التردد، الاستقطاب، معدل الترميز 27500، معامل تصحيح الخطأ).\n";
+        $protocol .= "    - 3. Commentator (معلق اللقاء): Name the assigned top commentator.\n";
+        $protocol .= "    - 4. Expected Lineups for Both Teams (التشكيل المتوقع للفريقين):\n";
+        $protocol .= "       • حراسة المرمى (Goalkeeper)\n";
+        $protocol .= "       • خط الدفاع (Defense)\n";
+        $protocol .= "       • خط الوسط (Midfield)\n";
+        $protocol .= "       • خط الهجوم (Attack)\n";
+        $protocol .= "    - 5. Absences & Injuries (غيابات وإصابات الفريقين المؤكدة حتى اليوم والجاهزية الفنية).\n";
+        $protocol .= "    - 6. Head-to-Head & Tournament Standings Context (موقف الفريقين وتاريخ المواجهات).\n";
         $protocol .= "- STRICT SPORTS INTEGRITY RULES:\n";
-        $protocol .= "  • ZERO FAKE SQUAD NAMES: NEVER invent fictional names (e.g. حمزة عبد الكريم في برشلونة). Only mention real, verified squad members and coaches.\n";
-        $protocol .= "  • NO VAGUE HAND-WAVING: Do NOT say 'لم تعلن القنوات' when the league broadcaster is globally known (beIN Sports, SSC, etc.). Provide the primary broadcast channel and frequency.\n\n";
+        $protocol .= "  • ZERO FAKE SQUAD NAMES: NEVER invent fictional names. Only mention real, verified squad members and coaches.\n";
+        $protocol .= "  • NO VAGUE HAND-WAVING: Do NOT say 'لم تعلن القنوات' when the league broadcaster is globally known (beIN Sports, SSC, OnTime Sports, etc.).\n\n";
 
         $protocol .= "### ARCHETYPE 3: BREAKING NEWS / DEVELOPING EVENT (أخبار عاجلة وأحداث جارية)\n";
         $protocol .= "- PRIMARY INTENT: What happened, who is involved, where, and what are the immediate consequences?\n";
+        $protocol .= "- REAL-TIME BREAKING MANDATE: Lead with the single newest development from the latest hours. State facts chronologically as of today.\n";
         $protocol .= "- Inverted Pyramid rule: Lead with the single most important development in the opening 2 sentences.\n";
         $protocol .= "- Follow with official statements, verified timeline, background context, and what happens next.\n\n";
 
@@ -291,8 +311,9 @@ class ArticleWriterService
         $protocol .= "- PRIMARY INTENT: Fast, step-by-step resolution without fluff.\n";
         $protocol .= "- Structure: (1) Prerequisites / Required documents, (2) Clear numbered steps (<ol><li>Step 1...</li></ol>), (3) Common pitfalls / mistakes to avoid, (4) Important fees, timeline, or FAQs.\n\n";
 
-        $protocol .= "### ARCHETYPE 8: DATA, SCHEDULES, PRICES & TIMETABLES (أسعار، مواعيد، جداول، إحصائيات)\n";
-        $protocol .= "- PRIMARY INTENT: Direct numbers, figures, and schedules.\n";
+        $protocol .= "### ARCHETYPE 8: DATA, SCHEDULES, PRICES & OFFICIAL RESULTS (أسعار، مواعيد، نتائج رسمية، جداول، إحصائيات)\n";
+        $protocol .= "- PRIMARY INTENT: Direct numbers, figures, official results, and schedules.\n";
+        $protocol .= "- REAL-TIME RESULTS & DATA: For exam scores, draws, admissions, and market schedules, provide the verified current official figures and decisions announced as of today.\n";
         $protocol .= "- Structure: Put the tables, numbers, and core figures in the FIRST SECTION. Explain the factors influencing the data in subsequent sections.\n\n";
 
         $protocol .= "### ARCHETYPE 9: HEALTH, MEDICAL, OR SCIENTIFIC TOPIC (صحة وطب وتغذية)\n";
@@ -411,7 +432,7 @@ class ArticleWriterService
     }
 
     /**
-     * Fetch Live News Context from Google News
+     * Fetch Live News Context from Google News with chronological recency and live timestamps.
      */
     protected function fetchNewsGrounding(string $keyword, string $lang): string
     {
@@ -427,47 +448,109 @@ class ArticleWriterService
         }
         $region = CountryRegistry::normalizeCode($region) ?: 'US';
         $hl = CountryRegistry::langFor($region);
+        $isArabic = ($lang === 'ar') || ($hl === 'ar');
 
-        $cacheKey = 'aw_grounding_v2_' . md5(mb_strtolower(trim($keyword)) . $lang . date('YmdH'));
+        // 10-minute cache window so users get up-to-the-minute market/sports updates
+        $cacheBucket = floor(time() / 600);
+        $cacheKey = 'aw_grounding_v5_' . md5(mb_strtolower(trim($keyword)) . $lang . $cacheBucket);
         $cached = Cache::get($cacheKey);
         if ($cached) return $cached;
 
-        $tempContext = "";
         $limit = (int) Setting::get("article-writer_live_search_limit", 15);
-        
-        // Windows to check: recent first
-        $windows = ['when:24h', 'when:7d', 'broad'];
-        
-        foreach ($windows as $window) {
-            $timeParam = ($window === 'broad') ? "" : " " . $window;
-            $url = GoogleNewsRss::searchUrl($keyword.$timeParam, $region, $hl);
-            
+        $isTimeSensitive = (bool) preg_match('/سعر|مباراة|ماتش|نتيجة|أهداف|اهداف|دوري|كأس|تشكيل|ترتيب|ذهب|دولار|عملات|بورصة|أخبار|اخبار|عاجل|قرعة|امتحانات|نتائج|price|score|match|result|today|live|news|vs\b/iu', $keyword);
+
+        $queries = [];
+        if ($isTimeSensitive) {
+            $queries[] = $keyword . " when:1d";
+            if ($isArabic && !str_contains($keyword, 'اليوم')) {
+                $queries[] = $keyword . " اليوم when:1d";
+            }
+            $queries[] = $keyword . " when:3d";
+        } else {
+            $queries[] = $keyword . " when:24h";
+            $queries[] = $keyword . " when:7d";
+            $queries[] = $keyword;
+        }
+
+        $collected = [];
+        $seen = [];
+
+        foreach ($queries as $q) {
+            $url = GoogleNewsRss::searchUrl($q, $region, $hl);
             try {
-                $response = Http::timeout(5)->get($url);
+                $response = Http::timeout(4)->get($url);
                 if ($response->successful()) {
                     $xml = @simplexml_load_string($response->body());
                     if ($xml && isset($xml->channel->item)) {
                         foreach ($xml->channel->item as $item) {
                             $rawTitle = trim((string)$item->title);
-                            // Strip competitor publisher suffixes like "- اليوم السابع" or "- Al Arabiya"
-                            $cleanTitle = preg_replace('/\s*[-–—|]\s*[^-–—|]+$/u', '', $rawTitle);
-                            if (!empty($cleanTitle)) {
-                                $tempContext .= "- " . $cleanTitle . "\n";
+                            $cleanTitle = trim(preg_replace('/\s*[-–—|]\s*[^-–—|]+$/u', '', $rawTitle));
+                            if (empty($cleanTitle) || isset($seen[$cleanTitle])) continue;
+                            $seen[$cleanTitle] = true;
+
+                            $ts = strtotime((string)$item->pubDate) ?: time();
+
+                            // Clean description snippet
+                            $rawDesc = html_entity_decode(strip_tags((string)$item->description), ENT_QUOTES, 'UTF-8');
+                            $cleanDesc = trim(preg_replace('/\s*[-–—|]\s*[^-–—|]+$/u', '', $rawDesc));
+                            $cleanDesc = trim(preg_replace('/(&nbsp;|\s)+/u', ' ', $cleanDesc));
+                            if (mb_strpos($cleanDesc, $cleanTitle) !== false) {
+                                $cleanDesc = trim(str_replace($cleanTitle, '', $cleanDesc));
                             }
-                            if (substr_count($tempContext, "\n") >= $limit) break;
+                            
+                            // Exclude snippet if it's only a competitor domain or too short
+                            $isCompetitor = (bool) preg_match('/\.(com|net|org|news|eg|sa|ae)|اليوم السابع|مصراوي|العربية|الأهرام|صدى البلد|الجزيرة|سكاي نيوز|بطولات|الوطن|المصري اليوم/iu', $cleanDesc);
+                            if (mb_strlen($cleanDesc) < 20 || $isCompetitor) {
+                                $cleanDesc = "";
+                            }
+
+                            $collected[] = [
+                                'title' => $cleanTitle,
+                                'desc' => mb_substr($cleanDesc, 0, 180),
+                                'ts' => $ts,
+                            ];
                         }
                     }
                 }
-                if (substr_count($tempContext, "\n") >= 5) break; 
             } catch (\Exception $e) {
                 Log::warning("ArticleWriter Grounding Error: " . $e->getMessage());
             }
+
+            if (count($collected) >= $limit) break;
         }
 
-        if (!empty($tempContext)) {
-            Cache::put($cacheKey, $tempContext, 1800); // 30 min cache
+        if (empty($collected)) {
+            return "";
         }
-        
+
+        // Sort by recency descending (freshest live updates first)
+        usort($collected, fn($a, $b) => $b['ts'] <=> $a['ts']);
+        $collected = array_slice($collected, 0, $limit);
+
+        $tempContext = "";
+        foreach ($collected as $it) {
+            $diffMinutes = max(0, round((time() - $it['ts']) / 60));
+            if ($isArabic) {
+                $timeAgo = ($diffMinutes < 60)
+                    ? "منذ {$diffMinutes} دقيقة"
+                    : (($diffMinutes < 1440) ? "منذ " . round($diffMinutes / 60) . " ساعة" : date('Y-m-d', $it['ts']));
+                $tempContext .= "- [تحديث حي | {$timeAgo}]: {$it['title']}\n";
+                if (!empty($it['desc'])) {
+                    $tempContext .= "  تفاصيل وبيانات حية: {$it['desc']}\n";
+                }
+            } else {
+                $timeAgo = ($diffMinutes < 60)
+                    ? "{$diffMinutes}m ago"
+                    : (($diffMinutes < 1440) ? round($diffMinutes / 60) . "h ago" : date('Y-m-d', $it['ts']));
+                $tempContext .= "- [LIVE UPDATE | {$timeAgo}]: {$it['title']}\n";
+                if (!empty($it['desc'])) {
+                    $tempContext .= "  Live details: {$it['desc']}\n";
+                }
+            }
+        }
+
+        Cache::put($cacheKey, $tempContext, 600); // 10 minutes cache
+
         return $tempContext;
     }
 
