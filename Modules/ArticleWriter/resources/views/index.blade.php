@@ -712,6 +712,7 @@
          x-transition:leave-start="opacity-100"
          x-transition:leave-end="opacity-0"
          class="wp-modal-backdrop"
+         style="display: none;"
          @keydown.escape.window="closeWpPublishModal()"
          x-cloak>
         <div @click.away="closeWpPublishModal()" 
@@ -888,6 +889,7 @@
          x-transition:leave-start="opacity-100"
          x-transition:leave-end="opacity-0"
          class="wp-modal-backdrop"
+         style="display: none;"
          @keydown.escape.window="closeWpSettingsModal()"
          x-cloak>
         <div @click.away="closeWpSettingsModal()" 
@@ -1069,7 +1071,7 @@
         width: 100vw !important;
         height: 100vh !important;
         z-index: 999999 !important;
-        display: flex !important;
+        display: flex;
         align-items: center !important;
         justify-content: center !important;
         background: rgba(3, 7, 18, 0.85) !important;
@@ -1079,6 +1081,11 @@
         margin: 0 !important;
         overflow-y: auto !important;
         overflow-x: hidden !important;
+    }
+
+    .wp-modal-backdrop[style*="display: none"],
+    .wp-modal-backdrop[x-cloak] {
+        display: none !important;
     }
 
     /* Perfectly Centered Modal Card */
