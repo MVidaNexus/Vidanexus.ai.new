@@ -19,14 +19,15 @@
             </div>
             <div class="d-flex align-items-center gap-3">
                 <button @click="openWpSettingsModal()" type="button" 
-                        class="btn d-inline-flex align-items-center gap-2 px-3 py-2 border-0" 
-                        style="background: linear-gradient(135deg, #0073aa, #00a0d2); color: #fff; font-weight: 700; font-size: 0.85rem; border-radius: 12px; cursor: pointer; transition: all 0.25s; box-shadow: 0 4px 15px rgba(0, 160, 210, 0.35);"
-                        onmouseover="this.style.transform='translateY(-2px)'; this.style.boxShadow='0 6px 20px rgba(0,160,210,0.6)';"
-                        onmouseout="this.style.transform='none'; this.style.boxShadow='0 4px 15px rgba(0,160,210,0.35)';"
+                        class="btn-wp-header"
                         :title="form.language === 'ar' ? 'إعدادات ربط ووردبريس والمواقع' : 'WordPress & CMS Integration Settings'">
-                    <i class="fab fa-wordpress" style="font-size: 1.25rem;"></i>
-                    <span x-text="form.language === 'ar' ? 'إعدادات ووردبريس' : 'WordPress Settings'"></span>
-                    <span class="badge" style="background: rgba(0,0,0,0.35); color: #fff; font-size: 0.75rem; border-radius: 6px; padding: 2px 7px;" x-text="cmsConnections.length > 0 ? (cmsConnections.length + (form.language === 'ar' ? ' موقع' : ' sites')) : (form.language === 'ar' ? 'ربط موقع' : 'Connect')"></span>
+                    <div class="wp-icon-badge">
+                        <i class="fab fa-wordpress"></i>
+                    </div>
+                    <div class="d-flex flex-column text-start">
+                        <span style="font-size: 0.85rem; font-weight: 800; color: #fff; line-height: 1.2;" x-text="form.language === 'ar' ? 'إعدادات ووردبريس' : 'WordPress Settings'"></span>
+                        <span style="font-size: 0.68rem; color: #38bdf8; font-weight: 600;" x-text="cmsConnections.length > 0 ? (cmsConnections.length + (form.language === 'ar' ? ' موقع متصل' : ' sites connected')) : (form.language === 'ar' ? 'ربط موقعك الآن' : 'Connect Site')"></span>
+                    </div>
                 </button>
                 <div class="header-stat">
                     <div class="header-stat-label" x-text="t('engine_label')">ENGINE</div>
@@ -106,27 +107,26 @@
                 <div style="padding: 2rem 2.5rem;">
                     
                     <!-- WordPress Fast Link Banner -->
-                    <div class="mb-4 p-3 d-flex align-items-center justify-content-between flex-wrap gap-2"
-                         style="background: linear-gradient(135deg, rgba(0, 115, 170, 0.15), rgba(0, 160, 210, 0.06)); border: 1px dashed rgba(0, 160, 210, 0.35); border-radius: 12px;">
+                    <!-- WordPress Fast Link Banner -->
+                    <div class="mb-4 p-3 d-flex align-items-center justify-content-between flex-wrap gap-3"
+                         style="background: radial-gradient(circle at 0% 50%, rgba(0, 160, 210, 0.15) 0%, rgba(14, 165, 233, 0.05) 100%); border: 1px solid rgba(0, 160, 210, 0.35); border-radius: 16px; box-shadow: 0 4px 20px rgba(0, 0, 0, 0.25);">
                         <div class="d-flex align-items-center gap-3">
-                            <div style="width: 36px; height: 36px; border-radius: 10px; background: rgba(0, 160, 210, 0.2); display: flex; align-items: center; justify-content: center; flex-shrink: 0;">
-                                <i class="fab fa-wordpress" style="font-size: 1.35rem; color: #00d2ff;"></i>
+                            <div class="wp-icon-badge" style="width: 42px !important; height: 42px !important; font-size: 1.3rem !important;">
+                                <i class="fab fa-wordpress"></i>
                             </div>
                             <div>
-                                <div style="font-size: 0.85rem; font-weight: 800; color: #fff;">
+                                <div style="font-size: 0.88rem; font-weight: 800; color: #ffffff;">
                                     <span x-show="cmsConnections.length > 0" x-text="form.language === 'ar' ? ('متصل بـ ' + cmsConnections.length + ' موقع ووردبريس — سيتم إرسال المقال كمسودة بنقرة واحدة') : ('Connected to ' + cmsConnections.length + ' WordPress sites — One-click draft sending ready')"></span>
                                     <span x-show="cmsConnections.length === 0" x-text="form.language === 'ar' ? 'ربط ووردبريس: أرسل مقالاتك تلقائياً كمسودة مع العناوين والوسوم والتصنيف' : 'Connect WordPress: Send articles directly as drafts with tags and categories'"></span>
                                 </div>
-                                <div style="font-size: 0.72rem; color: var(--aw-text-dim);" x-text="form.language === 'ar' ? 'ربط رسمي آمن بدون أي إضافات عبر WordPress Application Passwords' : 'Secure official connection without plugins via Application Passwords'"></div>
+                                <div style="font-size: 0.74rem; color: #94a3b8; margin-top: 2px;" x-text="form.language === 'ar' ? 'ربط رسمي آمن بدون أي إضافات عبر WordPress Application Passwords' : 'Secure official connection without plugins via Application Passwords'"></div>
                             </div>
                         </div>
                         <button @click="openWpSettingsModal()" type="button"
-                                class="btn btn-sm d-inline-flex align-items-center gap-1"
-                                style="background: rgba(0, 160, 210, 0.22); border: 1px solid rgba(0, 160, 210, 0.45); color: #00d2ff; font-weight: 700; font-size: 0.78rem; border-radius: 8px; padding: 6px 14px; cursor: pointer; transition: all 0.2s;"
-                                onmouseover="this.style.background='rgba(0, 160, 210, 0.35)';"
-                                onmouseout="this.style.background='rgba(0, 160, 210, 0.22)';">
+                                class="btn-wp-pill-test"
+                                style="font-size: 0.82rem !important; padding: 0.55rem 1.25rem !important; border-radius: 12px !important;">
                             <i class="fas fa-cog"></i>
-                            <span x-text="cmsConnections.length > 0 ? (form.language === 'ar' ? 'إدارة مواقع ووردبريس' : 'Manage Sites') : (form.language === 'ar' ? 'اضغط هنا لربط موقعك الآن' : 'Connect Site Now')"></span>
+                            <span x-text="cmsConnections.length > 0 ? (form.language === 'ar' ? 'إدارة مواقع ووردبريس' : 'Manage Sites') : (form.language === 'ar' ? 'اضغط لربط موقعك الآن' : 'Connect Site Now')"></span>
                         </button>
                     </div>
 
@@ -472,9 +472,8 @@
                                 <i class="fas fa-plus" style="margin-right: 4px;"></i> <span x-text="t('btn_new')"></span>
                             </button>
                             <!-- Send to WordPress Button -->
-                            <button @click="openWpPublishModal()" 
-                                    style="background: linear-gradient(135deg, #0073aa 0%, #00a0d2 100%); border: 1px solid rgba(0, 160, 210, 0.5); color: #fff; padding: 0.5rem 1rem; border-radius: 10px; font-size: 0.78rem; font-weight: 800; cursor: pointer; transition: all 0.2s; display: inline-flex; align-items: center; gap: 6px; box-shadow: 0 4px 14px rgba(0, 115, 170, 0.35);">
-                                <i class="fab fa-wordpress" style="font-size: 0.95rem;"></i>
+                            <button @click="openWpPublishModal()" class="btn-wp-action">
+                                <i class="fab fa-wordpress" style="font-size: 1.05rem;"></i>
                                 <span x-text="t('btn_wp_send')"></span>
                             </button>
                             <button @click="copyContent()" style="background: var(--aw-cyan); border: none; color: #000; padding: 0.5rem 1rem; border-radius: 10px; font-size: 0.78rem; font-weight: 800; cursor: pointer; transition: all 0.2s;">
@@ -706,100 +705,99 @@
     <!-- 1. WORDPRESS PUBLISH MODAL (Send Article to WordPress Draft) -->
     <!-- ============================================================ -->
     <div x-show="isWpPublishOpen" 
-         x-transition:enter="transition ease-out duration-200"
-         x-transition:enter-start="opacity-0 transform scale-95"
-         x-transition:enter-end="opacity-100 transform scale-100"
-         x-transition:leave="transition ease-in duration-150"
-         x-transition:leave-start="opacity-100 transform scale-100"
-         x-transition:leave-end="opacity-0 transform scale-95"
-         style="position: fixed; inset: 0; z-index: 9999; background: rgba(0,0,0,0.85); backdrop-filter: blur(8px); display: flex; align-items: center; justify-content: center; padding: 1.5rem;"
+         x-transition:enter="transition ease-out duration-250"
+         x-transition:enter-start="opacity-0"
+         x-transition:enter-end="opacity-100"
+         x-transition:leave="transition ease-in duration-200"
+         x-transition:leave-start="opacity-100"
+         x-transition:leave-end="opacity-0"
+         class="wp-modal-backdrop"
          @keydown.escape.window="closeWpPublishModal()"
          x-cloak>
         <div @click.away="closeWpPublishModal()" 
-             class="aw-card animate-in"
-             style="width: 100%; max-width: 640px; max-height: 90vh; overflow-y: auto; background: #0b1120; border: 1px solid rgba(0, 160, 210, 0.35); border-radius: 20px; box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.9); padding: 0; display: flex; flex-direction: column;">
+             class="wp-modal-dialog">
             
             <!-- Modal Header -->
-            <div style="padding: 1.25rem 1.75rem; border-bottom: 1px solid var(--aw-border); display: flex; align-items: center; justify-content: space-between; background: rgba(0, 115, 170, 0.08);">
-                <div style="display: flex; align-items: center; gap: 0.85rem;">
-                    <div style="width: 42px; height: 42px; border-radius: 12px; background: linear-gradient(135deg, rgba(0, 115, 170, 0.3), rgba(0, 160, 210, 0.2)); border: 1px solid rgba(0, 160, 210, 0.4); display: flex; align-items: center; justify-content: center; color: #00a0d2; font-size: 1.25rem;">
+            <div class="wp-modal-header">
+                <div class="d-flex align-items-center gap-3">
+                    <div class="wp-modal-header-icon">
                         <i class="fab fa-wordpress"></i>
                     </div>
                     <div>
-                        <h3 style="font-size: 1.1rem; font-weight: 800; color: #fff; margin: 0;" x-text="t('wp_modal_title')">إرسال المقال إلى ووردبريس (مسودة)</h3>
-                        <p style="font-size: 0.75rem; color: var(--aw-text-dim); margin: 2px 0 0 0;" x-text="t('wp_modal_subtitle')">سيتم إنشاء مسودة في موقعك للمراجعة والتعديل</p>
+                        <h3 style="font-size: 1.15rem; font-weight: 800; color: #fff; margin: 0;" x-text="t('wp_modal_title')">إرسال المقال إلى ووردبريس (مسودة)</h3>
+                        <p style="font-size: 0.78rem; color: #94a3b8; margin: 2px 0 0 0;" x-text="t('wp_modal_subtitle')">سيتم إنشاء مسودة في موقعك للمراجعة والتعديل</p>
                     </div>
                 </div>
-                <button type="button" @click="closeWpPublishModal()" style="background: transparent; border: none; color: var(--aw-text-dim); font-size: 1.1rem; cursor: pointer; padding: 0.5rem; border-radius: 8px; transition: all 0.2s;" onmouseover="this.style.color='#fff'" onmouseout="this.style.color='var(--aw-text-dim)'">
+                <button type="button" @click="closeWpPublishModal()" class="btn-wp-close" :title="form.language === 'ar' ? 'إغلاق' : 'Close'">
                     <i class="fas fa-times"></i>
                 </button>
             </div>
 
             <!-- Modal Body -->
-            <div class="custom-scrollbar" style="padding: 1.5rem 1.75rem; overflow-y: auto;">
+            <div class="wp-modal-body custom-scrollbar">
                 
                 <!-- Notice Banner: Safe Draft Mode -->
-                <div style="padding: 0.75rem 1rem; background: rgba(0, 160, 210, 0.08); border: 1px solid rgba(0, 160, 210, 0.2); border-radius: 12px; margin-bottom: 1.25rem; display: flex; align-items: center; gap: 0.75rem;">
-                    <i class="fas fa-shield-alt" style="color: #00a0d2; font-size: 1.15rem; flex-shrink: 0;"></i>
-                    <div style="font-size: 0.78rem; color: #cbd5e1; line-height: 1.4;">
-                        <strong style="color: #00a0d2;" x-text="form.language === 'ar' ? 'حفظ آمن:' : 'Safe Draft:'">حفظ آمن:</strong>
-                        <span x-text="form.language === 'ar' ? ' يتم إرسال المقال كـ مسودة (Draft) ليظل تحت مراجعتك الكاملة في ووردبريس قبل النشر للجمهور.' : ' The article will be saved as a Draft on your WordPress site for editorial review.'"></span>
+                <div style="padding: 0.85rem 1.1rem; background: rgba(0, 160, 210, 0.08); border: 1px solid rgba(0, 160, 210, 0.25); border-radius: 14px; margin-bottom: 1.25rem; display: flex; align-items: center; gap: 0.85rem;">
+                    <i class="fas fa-shield-alt" style="color: #00d2ff; font-size: 1.25rem; flex-shrink: 0;"></i>
+                    <div style="font-size: 0.8rem; color: #cbd5e1; line-height: 1.5;">
+                        <strong style="color: #00d2ff;" x-text="form.language === 'ar' ? 'حفظ آمن كمسودة:' : 'Safe Draft Mode:'">حفظ آمن كمسودة:</strong>
+                        <span x-text="form.language === 'ar' ? ' يتم إرسال المقال كمسودة (Draft) ليظل تحت مراجعتك الكاملة في ووردبريس قبل النشر للجمهور.' : ' The article will be saved as a Draft on your WordPress site for editorial review.'"></span>
                     </div>
                 </div>
 
                 <!-- Site Selection -->
                 <div style="margin-bottom: 1.25rem;">
-                    <div class="aw-label" style="display: flex; justify-content: space-between; align-items: center;">
-                        <span><i class="fab fa-wordpress" style="color: #00a0d2;"></i> <span x-text="t('wp_select_site')">الموقع المستهدف</span></span>
-                        <button type="button" @click="openWpSettingsModal()" style="background: transparent; border: none; color: var(--aw-cyan); font-size: 0.72rem; font-weight: 700; cursor: pointer; text-decoration: underline;">
-                            <i class="fas fa-plus"></i> <span x-text="form.language === 'ar' ? 'إضافة / إدارة المواقع' : 'Manage Sites'"></span>
+                    <div class="aw-label" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.5rem;">
+                        <span><i class="fab fa-wordpress" style="color: #00d2ff;"></i> <span x-text="t('wp_select_site')">الموقع المستهدف</span></span>
+                        <button type="button" @click="openWpSettingsModal()" style="background: transparent; border: none; color: #38bdf8; font-size: 0.76rem; font-weight: 700; cursor: pointer; text-decoration: underline;">
+                            <i class="fas fa-cog"></i> <span x-text="form.language === 'ar' ? 'إدارة المواقع' : 'Manage Sites'"></span>
                         </button>
                     </div>
 
                     <template x-if="cmsConnections.length === 0">
-                        <div style="padding: 1.25rem; background: rgba(245, 158, 11, 0.08); border: 1px solid rgba(245, 158, 11, 0.25); border-radius: 12px; text-align: center;">
-                            <i class="fas fa-exclamation-triangle" style="color: #f59e0b; font-size: 1.5rem; margin-bottom: 0.5rem; display: block;"></i>
-                            <p style="font-size: 0.82rem; color: #f59e0b; margin-bottom: 0.75rem; font-weight: 700;" x-text="t('wp_no_sites')">لم تقم بربط أي موقع ووردبريس بعد.</p>
-                            <button type="button" @click="openWpSettingsModal()" style="background: #00a0d2; color: #fff; border: none; padding: 0.5rem 1.25rem; border-radius: 8px; font-size: 0.78rem; font-weight: 800; cursor: pointer;">
+                        <div style="padding: 1.5rem; background: rgba(245, 158, 11, 0.08); border: 1px dashed rgba(245, 158, 11, 0.35); border-radius: 14px; text-align: center;">
+                            <i class="fas fa-exclamation-triangle" style="color: #f59e0b; font-size: 1.6rem; margin-bottom: 0.5rem; display: block;"></i>
+                            <p style="font-size: 0.85rem; color: #fbbf24; margin-bottom: 0.85rem; font-weight: 700;" x-text="t('wp_no_sites')">لم تقم بربط أي موقع ووردبريس بعد.</p>
+                            <button type="button" @click="openWpSettingsModal()" class="btn-wp-primary" style="padding: 0.55rem 1.3rem !important; font-size: 0.82rem !important;">
                                 <i class="fas fa-plug"></i> <span x-text="t('wp_connect_now')">ربط موقعك الأول الآن</span>
                             </button>
                         </div>
                     </template>
 
                     <template x-if="cmsConnections.length > 0">
-                        <div style="display: flex; gap: 0.5rem;">
+                        <div style="display: flex; gap: 0.6rem; align-items: center;">
                             <select x-model="wpPublishForm.connection_id" @change="loadWpCategories($event.target.value)" class="aw-select" style="flex: 1;">
                                 <template x-for="conn in cmsConnections" :key="conn.id">
                                     <option :value="conn.id" x-text="conn.name + ' (' + conn.site_url + ')'"></option>
                                 </template>
                             </select>
-                            <button type="button" @click="openWpSettingsModal()" :title="t('wp_settings_title')" style="background: var(--aw-surface); border: 1px solid var(--aw-border); color: #00a0d2; width: 44px; height: 44px; border-radius: 10px; display: flex; align-items: center; justify-content: center; cursor: pointer; flex-shrink: 0;">
-                                <i class="fas fa-cog"></i>
+                            <button type="button" @click="openWpSettingsModal()" :title="t('wp_settings_title')" class="btn-wp-pill-test" style="height: 48px; border-radius: 12px; flex-shrink: 0; padding: 0 1rem !important;">
+                                <i class="fas fa-cog" style="font-size: 1rem;"></i>
                             </button>
                         </div>
                     </template>
                 </div>
 
                 <!-- Editable Title -->
-                <div style="margin-bottom: 1rem;">
-                    <div class="aw-label">
+                <div style="margin-bottom: 1.15rem;">
+                    <div class="aw-label" style="margin-bottom: 0.5rem;">
                         <i class="fas fa-heading"></i> <span x-text="t('wp_article_title')">عنوان المقال</span>
                     </div>
-                    <input type="text" x-model="wpPublishForm.title" class="form-control" style="background: rgba(0,0,0,0.3); border: 1px solid var(--aw-border); color: #fff; border-radius: 10px; font-size: 0.88rem; padding: 0.65rem 1rem;">
+                    <input type="text" x-model="wpPublishForm.title" class="form-control">
                 </div>
 
                 <!-- Editable Excerpt / Meta Description -->
-                <div style="margin-bottom: 1rem;">
-                    <div class="aw-label">
+                <div style="margin-bottom: 1.15rem;">
+                    <div class="aw-label" style="margin-bottom: 0.5rem;">
                         <i class="fas fa-align-left"></i> <span x-text="t('wp_article_excerpt')">المقتطف / الوصف التعريفي</span>
                     </div>
-                    <textarea x-model="wpPublishForm.excerpt" rows="2" class="form-control" style="background: rgba(0,0,0,0.3); border: 1px solid var(--aw-border); color: #fff; border-radius: 10px; font-size: 0.82rem; padding: 0.65rem 1rem; resize: vertical; line-height: 1.5;"></textarea>
+                    <textarea x-model="wpPublishForm.excerpt" rows="2" class="form-control" style="resize: vertical; line-height: 1.5;"></textarea>
                 </div>
 
                 <!-- Category & Status Selector -->
-                <div class="row g-3" style="margin-bottom: 1rem;">
+                <div class="row g-3" style="margin-bottom: 1.15rem;">
                     <div class="col-md-7">
-                        <div class="aw-label">
+                        <div class="aw-label" style="margin-bottom: 0.5rem;">
                             <i class="fas fa-folder"></i> <span x-text="t('wp_category_label')">التصنيف في ووردبريس</span>
                         </div>
                         <select x-model="wpPublishForm.category_id" class="aw-select" :disabled="wpCategoriesLoading">
@@ -810,7 +808,7 @@
                         </select>
                     </div>
                     <div class="col-md-5">
-                        <div class="aw-label">
+                        <div class="aw-label" style="margin-bottom: 0.5rem;">
                             <i class="fas fa-clipboard-check"></i> <span x-text="t('wp_status_label')">حالة المنشور</span>
                         </div>
                         <select x-model="wpPublishForm.status" class="aw-select">
@@ -822,27 +820,27 @@
                 </div>
 
                 <!-- Interactive Tags Chip Editor -->
-                <div style="margin-bottom: 1rem;">
-                    <div class="aw-label" style="display: flex; justify-content: space-between; align-items: center;">
+                <div style="margin-bottom: 1.15rem;">
+                    <div class="aw-label" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.5rem;">
                         <span><i class="fas fa-tags" style="color: var(--aw-cyan);"></i> <span x-text="t('wp_tags_label')">الوسوم المقترحة</span></span>
-                        <span style="font-size: 0.7rem; color: var(--aw-text-dim);" x-text="wpPublishForm.tags.length + (form.language === 'ar' ? ' وسم' : ' tags')"></span>
+                        <span style="font-size: 0.72rem; color: #38bdf8; font-weight: 700;" x-text="wpPublishForm.tags.length + (form.language === 'ar' ? ' وسم' : ' tags')"></span>
                     </div>
-                    <div style="padding: 0.85rem; background: rgba(0,0,0,0.25); border: 1px solid var(--aw-border); border-radius: 12px;">
+                    <div style="padding: 0.95rem; background: rgba(0, 0, 0, 0.3); border: 1px solid rgba(255, 255, 255, 0.1); border-radius: 16px;">
                         <!-- Chips -->
-                        <div style="display: flex; flex-wrap: wrap; gap: 0.45rem; margin-bottom: 0.75rem; min-height: 32px; align-items: center;">
+                        <div style="display: flex; flex-wrap: wrap; gap: 0.5rem; margin-bottom: 0.85rem; min-height: 34px; align-items: center;">
                             <template x-for="(tag, idx) in wpPublishForm.tags" :key="idx">
-                                <span style="background: rgba(0, 160, 210, 0.15); color: #00a0d2; border: 1px solid rgba(0, 160, 210, 0.3); padding: 0.25rem 0.65rem; border-radius: 20px; font-size: 0.78rem; font-weight: 700; display: inline-flex; align-items: center; gap: 6px;">
-                                    <i class="fas fa-hashtag" style="font-size: 0.65rem; opacity: 0.6;"></i>
+                                <span style="background: rgba(0, 160, 210, 0.15); color: #00d2ff; border: 1px solid rgba(0, 160, 210, 0.35); padding: 0.3rem 0.75rem; border-radius: 20px; font-size: 0.8rem; font-weight: 700; display: inline-flex; align-items: center; gap: 7px; box-shadow: 0 2px 6px rgba(0,0,0,0.2);">
+                                    <i class="fas fa-hashtag" style="font-size: 0.7rem; opacity: 0.7;"></i>
                                     <span x-text="tag"></span>
-                                    <i @click="removeWpTag(idx)" class="fas fa-times" style="cursor: pointer; opacity: 0.6; font-size: 0.7rem; transition: opacity 0.2s;" onmouseover="this.style.opacity='1'" onmouseout="this.style.opacity='0.6'" :title="form.language === 'ar' ? 'حذف' : 'Remove'"></i>
+                                    <i @click="removeWpTag(idx)" class="fas fa-times" style="cursor: pointer; opacity: 0.6; font-size: 0.75rem; transition: opacity 0.2s;" onmouseover="this.style.opacity='1'" onmouseout="this.style.opacity='0.6'" :title="form.language === 'ar' ? 'حذف' : 'Remove'"></i>
                                 </span>
                             </template>
-                            <span x-show="wpPublishForm.tags.length === 0" style="font-size: 0.75rem; color: var(--aw-text-dim); font-style: italic;" x-text="form.language === 'ar' ? 'لم تتم إضافة أي وسوم بعد.' : 'No tags added yet.'"></span>
+                            <span x-show="wpPublishForm.tags.length === 0" style="font-size: 0.78rem; color: #94a3b8; font-style: italic;" x-text="form.language === 'ar' ? 'لم تتم إضافة أي وسوم بعد.' : 'No tags added yet.'"></span>
                         </div>
                         <!-- Tag Input -->
-                        <div style="display: flex; gap: 0.5rem;">
-                            <input type="text" x-model="wpPublishForm.newTagInput" @keydown.enter.prevent="addWpTag()" :placeholder="t('wp_tags_placeholder')" class="form-control" style="background: rgba(255,255,255,0.05); border: 1px solid var(--aw-border); color: #fff; border-radius: 8px; font-size: 0.8rem; padding: 0.5rem 0.85rem;">
-                            <button type="button" @click="addWpTag()" style="background: rgba(0, 160, 210, 0.2); border: 1px solid rgba(0, 160, 210, 0.35); color: #00a0d2; padding: 0.5rem 1rem; border-radius: 8px; font-size: 0.78rem; font-weight: 800; cursor: pointer; white-space: nowrap; transition: all 0.2s;">
+                        <div style="display: flex; gap: 0.6rem;">
+                            <input type="text" x-model="wpPublishForm.newTagInput" @keydown.enter.prevent="addWpTag()" :placeholder="t('wp_tags_placeholder')" class="form-control" style="font-size: 0.85rem !important;">
+                            <button type="button" @click="addWpTag()" class="btn-wp-add-tag">
                                 <i class="fas fa-plus"></i> <span x-text="form.language === 'ar' ? 'إضافة' : 'Add'"></span>
                             </button>
                         </div>
@@ -850,26 +848,26 @@
                 </div>
 
                 <!-- Success Alert Card -->
-                <div x-show="wpPublishSuccessData" class="animate-in" style="margin-top: 1.25rem; padding: 1.25rem; background: rgba(16, 185, 129, 0.12); border: 1px solid rgba(16, 185, 129, 0.3); border-radius: 14px; text-align: center;">
-                    <div style="width: 44px; height: 44px; border-radius: 50%; background: rgba(16, 185, 129, 0.25); color: #10b981; display: flex; align-items: center; justify-content: center; margin: 0 auto 0.75rem; font-size: 1.3rem;">
+                <div x-show="wpPublishSuccessData" class="animate-in" style="margin-top: 1.25rem; padding: 1.35rem; background: rgba(16, 185, 129, 0.12); border: 1px solid rgba(16, 185, 129, 0.35); border-radius: 16px; text-align: center;">
+                    <div style="width: 48px; height: 48px; border-radius: 50%; background: rgba(16, 185, 129, 0.25); color: #10b981; display: flex; align-items: center; justify-content: center; margin: 0 auto 0.75rem; font-size: 1.4rem; box-shadow: 0 0 20px rgba(16, 185, 129, 0.3);">
                         <i class="fas fa-check"></i>
                     </div>
-                    <h4 style="font-size: 0.95rem; font-weight: 800; color: #fff; margin-bottom: 0.35rem;" x-text="t('wp_success_title')">تم حفظ المقال بنجاح في ووردبريس!</h4>
-                    <p style="font-size: 0.78rem; color: #94a3b8; margin-bottom: 1rem;" x-text="wpPublishSuccessData?.message"></p>
-                    <div style="display: flex; justify-content: center; gap: 0.75rem; flex-wrap: wrap;">
-                        <a :href="wpPublishSuccessData?.edit_url" target="_blank" style="background: linear-gradient(135deg, #0073aa, #00a0d2); color: #fff; text-decoration: none; padding: 0.6rem 1.25rem; border-radius: 10px; font-size: 0.82rem; font-weight: 800; display: inline-flex; align-items: center; gap: 8px; box-shadow: 0 4px 14px rgba(0, 115, 170, 0.4);">
+                    <h4 style="font-size: 1rem; font-weight: 800; color: #fff; margin-bottom: 0.35rem;" x-text="t('wp_success_title')">تم حفظ المقال بنجاح في ووردبريس!</h4>
+                    <p style="font-size: 0.82rem; color: #94a3b8; margin-bottom: 1.15rem;" x-text="wpPublishSuccessData?.message"></p>
+                    <div style="display: flex; justify-content: center; gap: 0.85rem; flex-wrap: wrap;">
+                        <a :href="wpPublishSuccessData?.edit_url" target="_blank" class="btn-wp-primary" style="text-decoration: none !important;">
                             <i class="fas fa-external-link-alt"></i> <span x-text="t('wp_open_draft')">فتح المسودة في ووردبريس</span>
                         </a>
-                        <button type="button" @click="closeWpPublishModal()" style="background: var(--aw-surface); border: 1px solid var(--aw-border); color: #fff; padding: 0.6rem 1.25rem; border-radius: 10px; font-size: 0.82rem; font-weight: 700; cursor: pointer;" x-text="form.language === 'ar' ? 'إغلاق' : 'Close'"></button>
+                        <button type="button" @click="closeWpPublishModal()" class="btn-wp-secondary" x-text="form.language === 'ar' ? 'إغلاق' : 'Close'"></button>
                     </div>
                 </div>
 
             </div>
 
             <!-- Modal Footer -->
-            <div style="padding: 1.25rem 1.75rem; border-top: 1px solid var(--aw-border); display: flex; justify-content: flex-end; gap: 0.75rem; background: rgba(0,0,0,0.2);">
-                <button type="button" @click="closeWpPublishModal()" style="background: var(--aw-surface); border: 1px solid var(--aw-border); color: #fff; padding: 0.6rem 1.25rem; border-radius: 10px; font-size: 0.82rem; font-weight: 700; cursor: pointer;" x-text="form.language === 'ar' ? 'إلغاء' : 'Cancel'"></button>
-                <button type="button" @click="submitWpPublish()" :disabled="wpPublishLoading || cmsConnections.length === 0" style="background: linear-gradient(135deg, #0073aa, #00a0d2); border: none; color: #fff; padding: 0.6rem 1.5rem; border-radius: 10px; font-size: 0.82rem; font-weight: 800; cursor: pointer; display: inline-flex; align-items: center; gap: 8px; box-shadow: 0 4px 14px rgba(0, 115, 170, 0.4);" :style="wpPublishLoading || cmsConnections.length === 0 ? 'opacity: 0.6; cursor: not-allowed;' : ''">
+            <div class="wp-modal-footer">
+                <button type="button" @click="closeWpPublishModal()" class="btn-wp-secondary" x-text="form.language === 'ar' ? 'إلغاء' : 'Cancel'"></button>
+                <button type="button" @click="submitWpPublish()" :disabled="wpPublishLoading || cmsConnections.length === 0" class="btn-wp-primary">
                     <i x-show="wpPublishLoading" class="fas fa-spinner fa-spin"></i>
                     <i x-show="!wpPublishLoading" class="fab fa-wordpress"></i>
                     <span x-text="wpPublishLoading ? t('wp_btn_submitting') : t('wp_btn_submit')"></span>
@@ -883,62 +881,61 @@
     <!-- 2. WORDPRESS SETTINGS MODAL (Manage Connected Sites)         -->
     <!-- ============================================================ -->
     <div x-show="isWpSettingsOpen" 
-         x-transition:enter="transition ease-out duration-200"
-         x-transition:enter-start="opacity-0 transform scale-95"
-         x-transition:enter-end="opacity-100 transform scale-100"
-         x-transition:leave="transition ease-in duration-150"
-         x-transition:leave-start="opacity-100 transform scale-100"
-         x-transition:leave-end="opacity-0 transform scale-95"
-         style="position: fixed; inset: 0; z-index: 9999; background: rgba(0,0,0,0.85); backdrop-filter: blur(8px); display: flex; align-items: center; justify-content: center; padding: 1.5rem;"
+         x-transition:enter="transition ease-out duration-250"
+         x-transition:enter-start="opacity-0"
+         x-transition:enter-end="opacity-100"
+         x-transition:leave="transition ease-in duration-200"
+         x-transition:leave-start="opacity-100"
+         x-transition:leave-end="opacity-0"
+         class="wp-modal-backdrop"
          @keydown.escape.window="closeWpSettingsModal()"
          x-cloak>
         <div @click.away="closeWpSettingsModal()" 
-             class="aw-card animate-in"
-             style="width: 100%; max-width: 680px; max-height: 90vh; overflow-y: auto; background: #0b1120; border: 1px solid rgba(0, 160, 210, 0.35); border-radius: 20px; box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.9); padding: 0; display: flex; flex-direction: column;">
+             class="wp-modal-dialog" style="max-width: 720px !important;">
             
             <!-- Modal Header -->
-            <div style="padding: 1.25rem 1.75rem; border-bottom: 1px solid var(--aw-border); display: flex; align-items: center; justify-content: space-between; background: rgba(0, 115, 170, 0.08);">
-                <div style="display: flex; align-items: center; gap: 0.85rem;">
-                    <div style="width: 42px; height: 42px; border-radius: 12px; background: linear-gradient(135deg, rgba(0, 115, 170, 0.3), rgba(0, 160, 210, 0.2)); border: 1px solid rgba(0, 160, 210, 0.4); display: flex; align-items: center; justify-content: center; color: #00a0d2; font-size: 1.25rem;">
+            <div class="wp-modal-header">
+                <div class="d-flex align-items-center gap-3">
+                    <div class="wp-modal-header-icon">
                         <i class="fas fa-plug"></i>
                     </div>
                     <div>
-                        <h3 style="font-size: 1.1rem; font-weight: 800; color: #fff; margin: 0;" x-text="t('wp_settings_title')">إدارة مواقع ووردبريس</h3>
-                        <p style="font-size: 0.75rem; color: var(--aw-text-dim); margin: 2px 0 0 0;" x-text="t('wp_settings_subtitle')">ربط المواقع عبر كلمات مرور التطبيقات (Application Passwords)</p>
+                        <h3 style="font-size: 1.15rem; font-weight: 800; color: #fff; margin: 0;" x-text="t('wp_settings_title')">إدارة مواقع ووردبريس</h3>
+                        <p style="font-size: 0.78rem; color: #94a3b8; margin: 2px 0 0 0;" x-text="t('wp_settings_subtitle')">ربط المواقع عبر كلمات مرور التطبيقات (Application Passwords)</p>
                     </div>
                 </div>
-                <button type="button" @click="closeWpSettingsModal()" style="background: transparent; border: none; color: var(--aw-text-dim); font-size: 1.1rem; cursor: pointer; padding: 0.5rem; border-radius: 8px; transition: all 0.2s;" onmouseover="this.style.color='#fff'" onmouseout="this.style.color='var(--aw-text-dim)'">
+                <button type="button" @click="closeWpSettingsModal()" class="btn-wp-close" :title="form.language === 'ar' ? 'إغلاق' : 'Close'">
                     <i class="fas fa-times"></i>
                 </button>
             </div>
 
             <!-- Modal Body -->
-            <div class="custom-scrollbar" style="padding: 1.5rem 1.75rem; overflow-y: auto;">
+            <div class="wp-modal-body custom-scrollbar">
                 
                 <!-- Existing Connected Sites List -->
                 <div style="margin-bottom: 2rem;">
-                    <div class="aw-label" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.75rem;">
-                        <span><i class="fab fa-wordpress" style="color: #00a0d2;"></i> <span x-text="form.language === 'ar' ? 'المواقع المرتبطة حالياً' : 'Connected Sites'"></span></span>
-                        <span class="badge" style="background: rgba(0, 160, 210, 0.15); color: #00a0d2; border: 1px solid rgba(0, 160, 210, 0.25);" x-text="cmsConnections.length"></span>
+                    <div class="aw-label" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.85rem;">
+                        <span><i class="fab fa-wordpress" style="color: #00d2ff;"></i> <span x-text="form.language === 'ar' ? 'المواقع المرتبطة حالياً' : 'Connected Sites'"></span></span>
+                        <span class="badge" style="background: rgba(0, 160, 210, 0.2); color: #00d2ff; border: 1px solid rgba(0, 160, 210, 0.4); font-size: 0.75rem; border-radius: 8px; padding: 3px 8px;" x-text="cmsConnections.length + (form.language === 'ar' ? ' موقع' : ' sites')"></span>
                     </div>
 
                     <template x-if="cmsConnections.length === 0">
-                        <div style="padding: 1.5rem; background: var(--aw-surface); border: 1px dashed var(--aw-border); border-radius: 12px; text-align: center; color: var(--aw-text-dim); font-size: 0.85rem;">
-                            <i class="fas fa-globe" style="font-size: 1.8rem; margin-bottom: 0.5rem; opacity: 0.4; display: block;"></i>
+                        <div style="padding: 1.75rem 1.5rem; background: rgba(0,0,0,0.25); border: 1px dashed rgba(255, 255, 255, 0.15); border-radius: 16px; text-align: center; color: var(--aw-text-dim); font-size: 0.85rem;">
+                            <i class="fas fa-globe" style="font-size: 2rem; margin-bottom: 0.6rem; color: #38bdf8; opacity: 0.6; display: block;"></i>
                             <span x-text="form.language === 'ar' ? 'لا يوجد أي موقع ووردبريس مرتبط بعد. استخدم النموذج أدناه لربط موقعك.' : 'No WordPress sites connected yet. Use the form below to connect your first site.'"></span>
                         </div>
                     </template>
 
                     <div style="display: flex; flex-direction: column; gap: 0.75rem;">
                         <template x-for="conn in cmsConnections" :key="conn.id">
-                            <div style="padding: 1rem 1.25rem; background: rgba(0,0,0,0.3); border: 1px solid var(--aw-border); border-radius: 12px; display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 0.75rem;">
+                            <div style="padding: 1rem 1.25rem; background: rgba(0, 0, 0, 0.35); border: 1px solid rgba(255, 255, 255, 0.08); border-radius: 14px; display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 0.75rem;">
                                 <div style="display: flex; align-items: center; gap: 0.85rem;">
-                                    <div style="width: 36px; height: 36px; border-radius: 10px; background: rgba(0, 115, 170, 0.2); color: #00a0d2; display: flex; align-items: center; justify-content: center; font-size: 1rem;">
+                                    <div style="width: 40px; height: 40px; border-radius: 12px; background: rgba(0, 115, 170, 0.25); color: #00d2ff; display: flex; align-items: center; justify-content: center; font-size: 1.15rem; flex-shrink: 0; border: 1px solid rgba(0, 160, 210, 0.3);">
                                         <i class="fab fa-wordpress"></i>
                                     </div>
                                     <div>
-                                        <div style="font-weight: 800; font-size: 0.88rem; color: #fff;" x-text="conn.name"></div>
-                                        <div style="font-size: 0.72rem; color: var(--aw-text-dim); display: flex; gap: 0.5rem; align-items: center;">
+                                        <div style="font-weight: 800; font-size: 0.92rem; color: #fff;" x-text="conn.name"></div>
+                                        <div style="font-size: 0.74rem; color: #94a3b8; display: flex; gap: 0.5rem; align-items: center; margin-top: 2px;">
                                             <span x-text="conn.site_url"></span>
                                             <span>•</span>
                                             <span x-text="'@' + conn.username"></span>
@@ -948,12 +945,12 @@
                                         </div>
                                     </div>
                                 </div>
-                                <div style="display: flex; align-items: center; gap: 0.5rem;">
-                                    <button type="button" @click="testConnection(conn.id)" style="background: rgba(0, 160, 210, 0.15); border: 1px solid rgba(0, 160, 210, 0.3); color: #00a0d2; padding: 0.35rem 0.75rem; border-radius: 8px; font-size: 0.72rem; font-weight: 700; cursor: pointer;" :title="form.language === 'ar' ? 'فحص الاتصال' : 'Test Connection'">
-                                        <i class="fas fa-sync-alt"></i> <span x-text="form.language === 'ar' ? 'فحص' : 'Test'"></span>
+                                <div style="display: flex; align-items: center; gap: 0.6rem;">
+                                    <button type="button" @click="testConnection(conn.id)" class="btn-wp-pill-test" :title="form.language === 'ar' ? 'فحص الاتصال' : 'Test Connection'">
+                                        <i class="fas fa-sync-alt"></i> <span x-text="form.language === 'ar' ? 'فحص الاتصال' : 'Test'"></span>
                                     </button>
-                                    <button type="button" @click="deleteConnection(conn.id)" style="background: rgba(255, 75, 75, 0.1); border: 1px solid rgba(255, 75, 75, 0.25); color: #ff4b4b; padding: 0.35rem 0.75rem; border-radius: 8px; font-size: 0.72rem; font-weight: 700; cursor: pointer;" :title="form.language === 'ar' ? 'حذف الموقع' : 'Delete Site'">
-                                        <i class="fas fa-trash-alt"></i>
+                                    <button type="button" @click="deleteConnection(conn.id)" class="btn-wp-pill-delete" :title="form.language === 'ar' ? 'حذف الموقع' : 'Delete Site'">
+                                        <i class="fas fa-trash-alt"></i> <span x-text="form.language === 'ar' ? 'حذف' : 'Delete'"></span>
                                     </button>
                                 </div>
                             </div>
@@ -962,18 +959,18 @@
                 </div>
 
                 <!-- Add New Site Card -->
-                <div style="padding: 1.5rem; background: var(--aw-surface); border: 1px solid var(--aw-border); border-radius: 16px;">
-                    <h4 style="font-size: 0.95rem; font-weight: 800; color: #fff; margin-bottom: 1.25rem; display: flex; align-items: center; gap: 0.5rem;">
-                        <i class="fas fa-plus-circle" style="color: var(--aw-cyan);"></i>
+                <div style="padding: 1.6rem; background: rgba(0, 0, 0, 0.35); border: 1px solid rgba(0, 160, 210, 0.3); border-radius: 18px; box-shadow: 0 4px 20px rgba(0, 0, 0, 0.25);">
+                    <h4 style="font-size: 1rem; font-weight: 800; color: #fff; margin-bottom: 1.25rem; display: flex; align-items: center; gap: 0.6rem;">
+                        <i class="fas fa-plus-circle" style="color: var(--aw-cyan); font-size: 1.1rem;"></i>
                         <span x-text="t('wp_add_site_title')">ربط موقع ووردبريس جديد</span>
                     </h4>
 
                     <!-- How to get Application Password Guide Accordion -->
-                    <div style="margin-bottom: 1.25rem; padding: 1rem; background: rgba(0, 160, 210, 0.08); border: 1px solid rgba(0, 160, 210, 0.2); border-radius: 12px;">
-                        <div style="font-size: 0.78rem; font-weight: 800; color: #00a0d2; margin-bottom: 0.5rem; display: flex; align-items: center; gap: 6px;">
+                    <div style="margin-bottom: 1.35rem; padding: 1.1rem; background: rgba(0, 160, 210, 0.08); border: 1px solid rgba(0, 160, 210, 0.22); border-radius: 14px;">
+                        <div style="font-size: 0.8rem; font-weight: 800; color: #00d2ff; margin-bottom: 0.6rem; display: flex; align-items: center; gap: 8px;">
                             <i class="fas fa-info-circle"></i> <span x-text="t('wp_guide_title')">كيفية استخراج كلمة مرور التطبيق في 3 خطوات:</span>
                         </div>
-                        <ul style="margin: 0; padding-inline-start: 1.25rem; font-size: 0.74rem; color: #cbd5e1; line-height: 1.6;">
+                        <ul style="margin: 0; padding-inline-start: 1.25rem; font-size: 0.76rem; color: #cbd5e1; line-height: 1.7;">
                             <li x-text="t('wp_guide_step1')">1. ادخل للوحة تحكم ووردبريس لموقعك > الأعضاء > حسابك الشخصي (Users > Profile).</li>
                             <li x-text="t('wp_guide_step2')">2. انزل لأسفل الصفحة إلى قسم كلمات مرور التطبيقات (Application Passwords).</li>
                             <li x-text="t('wp_guide_step3')">3. اكتب اسماً للتطبيق مثل "VidaNexus" واضغط "إضافة كلمة مرور تطبيق جديدة"، ثم انسخ الكلمة الناتجة والصقها أدناه.</li>
@@ -983,30 +980,30 @@
                     <!-- Input Fields -->
                     <div class="row g-3">
                         <div class="col-md-6">
-                            <div class="aw-label">
+                            <div class="aw-label" style="margin-bottom: 0.5rem;">
                                 <i class="fas fa-tag"></i> <span x-text="t('wp_site_name')">اسم الموقع</span>
                             </div>
-                            <input type="text" x-model="wpConnectForm.name" :placeholder="t('wp_site_name_ph')" class="form-control" style="background: rgba(0,0,0,0.3); border: 1px solid var(--aw-border); color: #fff; border-radius: 10px; font-size: 0.85rem; padding: 0.6rem 0.9rem;">
+                            <input type="text" x-model="wpConnectForm.name" :placeholder="t('wp_site_name_ph')" class="form-control">
                         </div>
                         <div class="col-md-6">
-                            <div class="aw-label">
+                            <div class="aw-label" style="margin-bottom: 0.5rem;">
                                 <i class="fas fa-link"></i> <span x-text="t('wp_site_url')">رابط الموقع (URL)</span>
                             </div>
-                            <input type="url" x-model="wpConnectForm.site_url" :placeholder="t('wp_site_url_ph')" class="form-control" style="background: rgba(0,0,0,0.3); border: 1px solid var(--aw-border); color: #fff; border-radius: 10px; font-size: 0.85rem; padding: 0.6rem 0.9rem;">
+                            <input type="url" x-model="wpConnectForm.site_url" :placeholder="t('wp_site_url_ph')" class="form-control">
                         </div>
                         <div class="col-md-6">
-                            <div class="aw-label">
+                            <div class="aw-label" style="margin-bottom: 0.5rem;">
                                 <i class="fas fa-user"></i> <span x-text="t('wp_username')">اسم المستخدم في ووردبريس</span>
                             </div>
-                            <input type="text" x-model="wpConnectForm.username" :placeholder="t('wp_username_ph')" class="form-control" style="background: rgba(0,0,0,0.3); border: 1px solid var(--aw-border); color: #fff; border-radius: 10px; font-size: 0.85rem; padding: 0.6rem 0.9rem;">
+                            <input type="text" x-model="wpConnectForm.username" :placeholder="t('wp_username_ph')" class="form-control">
                         </div>
                         <div class="col-md-6">
-                            <div class="aw-label">
+                            <div class="aw-label" style="margin-bottom: 0.5rem;">
                                 <i class="fas fa-key"></i> <span x-text="t('wp_app_password')">كلمة مرور التطبيق</span>
                             </div>
-                            <div style="position: relative;">
-                                <input :type="wpConnectForm.showPassword ? 'text' : 'password'" x-model="wpConnectForm.api_key" :placeholder="t('wp_app_password_ph')" class="form-control" style="background: rgba(0,0,0,0.3); border: 1px solid var(--aw-border); color: #fff; border-radius: 10px; font-size: 0.85rem; padding: 0.6rem 2.25rem 0.6rem 0.9rem;">
-                                <button type="button" @click="wpConnectForm.showPassword = !wpConnectForm.showPassword" style="position: absolute; inset-inline-end: 10px; top: 50%; transform: translateY(-50%); background: transparent; border: none; color: var(--aw-text-dim); cursor: pointer; padding: 0;">
+                            <div class="wp-password-wrap">
+                                <input :type="wpConnectForm.showPassword ? 'text' : 'password'" x-model="wpConnectForm.api_key" :placeholder="t('wp_app_password_ph')" class="form-control">
+                                <button type="button" @click="wpConnectForm.showPassword = !wpConnectForm.showPassword" class="wp-password-toggle">
                                     <i :class="wpConnectForm.showPassword ? 'fas fa-eye-slash' : 'fas fa-eye'"></i>
                                 </button>
                             </div>
@@ -1014,16 +1011,16 @@
                     </div>
 
                     <!-- SSL Verification Toggle -->
-                    <div style="margin-top: 1rem; display: flex; align-items: center; gap: 0.6rem;">
-                        <input type="checkbox" id="wp_verify_ssl" x-model="wpConnectForm.verify_ssl" style="cursor: pointer;">
-                        <label for="wp_verify_ssl" style="font-size: 0.75rem; color: var(--aw-text-dim); cursor: pointer; margin: 0;" x-text="form.language === 'ar' ? 'التحقق من شهادة أمان SSL (ألغِ التحديد إذا كان الموقع تجريبياً أو محلياً)' : 'Verify SSL Certificate (uncheck for staging or localhost)'"></label>
+                    <div style="margin-top: 1.15rem; display: flex; align-items: center; gap: 0.75rem;">
+                        <input type="checkbox" id="wp_verify_ssl" x-model="wpConnectForm.verify_ssl" style="width: 18px; height: 18px; cursor: pointer; accent-color: #0ea5e9;">
+                        <label for="wp_verify_ssl" style="font-size: 0.78rem; color: #cbd5e1; cursor: pointer; margin: 0;" x-text="form.language === 'ar' ? 'التحقق من شهادة أمان SSL (ألغِ التحديد إذا كان الموقع تجريبياً أو محلياً)' : 'Verify SSL Certificate (uncheck for staging or localhost)'"></label>
                     </div>
 
                     <!-- Submit Add Button -->
-                    <div style="margin-top: 1.25rem; display: flex; justify-content: flex-end;">
-                        <button type="button" @click="submitAddConnection()" :disabled="wpConnectForm.isLoading" style="background: linear-gradient(135deg, #0073aa, #00a0d2); border: none; color: #fff; padding: 0.6rem 1.5rem; border-radius: 10px; font-size: 0.82rem; font-weight: 800; cursor: pointer; display: inline-flex; align-items: center; gap: 8px; box-shadow: 0 4px 14px rgba(0, 115, 170, 0.4);" :style="wpConnectForm.isLoading ? 'opacity: 0.6; cursor: not-allowed;' : ''">
+                    <div style="margin-top: 1.5rem; display: flex; justify-content: flex-end;">
+                        <button type="button" @click="submitAddConnection()" :disabled="wpConnectForm.isLoading" class="btn-wp-primary">
                             <i x-show="wpConnectForm.isLoading" class="fas fa-spinner fa-spin"></i>
-                            <i x-show="!wpConnectForm.isLoading" class="fas fa-check"></i>
+                            <i x-show="!wpConnectForm.isLoading" class="fas fa-check-circle"></i>
                             <span x-text="wpConnectForm.isLoading ? t('wp_btn_testing') : t('wp_btn_test_save')"></span>
                         </button>
                     </div>
@@ -1032,8 +1029,8 @@
             </div>
 
             <!-- Modal Footer -->
-            <div style="padding: 1.25rem 1.75rem; border-top: 1px solid var(--aw-border); display: flex; justify-content: flex-end; background: rgba(0,0,0,0.2);">
-                <button type="button" @click="closeWpSettingsModal()" style="background: var(--aw-surface); border: 1px solid var(--aw-border); color: #fff; padding: 0.6rem 1.25rem; border-radius: 10px; font-size: 0.82rem; font-weight: 700; cursor: pointer;" x-text="form.language === 'ar' ? 'إغلاق' : 'Close'"></button>
+            <div class="wp-modal-footer">
+                <button type="button" @click="closeWpSettingsModal()" class="btn-wp-secondary" x-text="form.language === 'ar' ? 'إغلاق' : 'Close'"></button>
             </div>
         </div>
     </div>
@@ -1058,6 +1055,387 @@
     }
 
     /* ===== COMPACT HEADER ===== */
+    /* ============================================================ */
+    /* ===== WORDPRESS INTEGRATION & MODALS — CYBER-PREMIUM STYLING */
+    /* ============================================================ */
+    
+    /* Zero-Drift Fullscreen Backdrop */
+    .wp-modal-backdrop {
+        position: fixed !important;
+        top: 0 !important;
+        left: 0 !important;
+        right: 0 !important;
+        bottom: 0 !important;
+        width: 100vw !important;
+        height: 100vh !important;
+        z-index: 999999 !important;
+        display: flex !important;
+        align-items: center !important;
+        justify-content: center !important;
+        background: rgba(3, 7, 18, 0.85) !important;
+        backdrop-filter: blur(14px) saturate(160%) !important;
+        -webkit-backdrop-filter: blur(14px) saturate(160%) !important;
+        padding: 1.25rem !important;
+        margin: 0 !important;
+        overflow-y: auto !important;
+        overflow-x: hidden !important;
+    }
+
+    /* Perfectly Centered Modal Card */
+    .wp-modal-dialog {
+        width: 100% !important;
+        max-width: 660px !important;
+        max-height: calc(100vh - 3rem) !important;
+        margin: auto !important;
+        position: relative !important;
+        background: radial-gradient(circle at 50% 0%, #111d38 0%, #080d1a 100%) !important;
+        border: 1px solid rgba(0, 160, 210, 0.35) !important;
+        border-radius: 24px !important;
+        box-shadow: 0 25px 60px -12px rgba(0, 0, 0, 0.95), 0 0 45px rgba(0, 160, 210, 0.15) !important;
+        display: flex !important;
+        flex-direction: column !important;
+        overflow: hidden !important;
+        transform-origin: center center !important;
+        animation: wpModalSlideIn 0.3s cubic-bezier(0.16, 1, 0.3, 1) !important;
+    }
+
+    @keyframes wpModalSlideIn {
+        from {
+            opacity: 0;
+            transform: scale(0.96) translateY(12px);
+        }
+        to {
+            opacity: 1;
+            transform: scale(1) translateY(0);
+        }
+    }
+
+    [data-theme="light"] .wp-modal-dialog {
+        background: #ffffff !important;
+        border-color: rgba(0, 160, 210, 0.3) !important;
+        box-shadow: 0 20px 50px -10px rgba(0, 0, 0, 0.25) !important;
+    }
+
+    /* Modal Header */
+    .wp-modal-header {
+        padding: 1.25rem 1.75rem !important;
+        border-bottom: 1px solid rgba(255, 255, 255, 0.08) !important;
+        display: flex !important;
+        align-items: center !important;
+        justify-content: space-between !important;
+        background: linear-gradient(135deg, rgba(0, 115, 170, 0.15), rgba(0, 160, 210, 0.05)) !important;
+    }
+
+    .wp-modal-header-icon {
+        width: 44px !important;
+        height: 44px !important;
+        border-radius: 14px !important;
+        background: linear-gradient(135deg, rgba(0, 115, 170, 0.35), rgba(0, 160, 210, 0.2)) !important;
+        border: 1px solid rgba(0, 160, 210, 0.45) !important;
+        display: flex !important;
+        align-items: center !important;
+        justify-content: center !important;
+        color: #00d2ff !important;
+        font-size: 1.35rem !important;
+        box-shadow: 0 0 15px rgba(0, 160, 210, 0.25) !important;
+        flex-shrink: 0 !important;
+    }
+
+    /* Modal Body */
+    .wp-modal-body {
+        padding: 1.5rem 1.75rem !important;
+        overflow-y: auto !important;
+        flex: 1 1 auto !important;
+    }
+
+    /* Modal Footer */
+    .wp-modal-footer {
+        padding: 1.25rem 1.75rem !important;
+        border-top: 1px solid rgba(255, 255, 255, 0.08) !important;
+        display: flex !important;
+        align-items: center !important;
+        justify-content: flex-end !important;
+        gap: 0.85rem !important;
+        background: rgba(0, 0, 0, 0.25) !important;
+    }
+
+    /* Circular Close Button */
+    .btn-wp-close {
+        width: 36px !important;
+        height: 36px !important;
+        border-radius: 50% !important;
+        background: rgba(255, 255, 255, 0.06) !important;
+        border: 1px solid rgba(255, 255, 255, 0.12) !important;
+        color: #94a3b8 !important;
+        display: flex !important;
+        align-items: center !important;
+        justify-content: center !important;
+        font-size: 0.95rem !important;
+        cursor: pointer !important;
+        transition: all 0.25s ease !important;
+    }
+    .btn-wp-close:hover {
+        background: rgba(255, 255, 255, 0.15) !important;
+        color: #ffffff !important;
+        transform: rotate(90deg) scale(1.05) !important;
+        border-color: rgba(255, 255, 255, 0.25) !important;
+    }
+
+    /* Ultra-Premium Primary Button */
+    .btn-wp-primary {
+        background: linear-gradient(135deg, #0284c7 0%, #0099e5 50%, #00c0ff 100%) !important;
+        color: #ffffff !important;
+        font-weight: 800 !important;
+        font-size: 0.88rem !important;
+        letter-spacing: 0.3px !important;
+        border: none !important;
+        border-radius: 14px !important;
+        padding: 0.75rem 1.6rem !important;
+        display: inline-flex !important;
+        align-items: center !important;
+        justify-content: center !important;
+        gap: 0.6rem !important;
+        cursor: pointer !important;
+        box-shadow: 0 4px 20px rgba(0, 160, 210, 0.45) !important;
+        transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1) !important;
+        text-shadow: 0 1px 2px rgba(0, 0, 0, 0.3) !important;
+    }
+    .btn-wp-primary:hover:not(:disabled) {
+        transform: translateY(-2px) !important;
+        box-shadow: 0 8px 30px rgba(0, 192, 255, 0.6) !important;
+        filter: brightness(1.1) !important;
+        color: #ffffff !important;
+    }
+    .btn-wp-primary:active:not(:disabled) {
+        transform: translateY(0) scale(0.98) !important;
+    }
+    .btn-wp-primary:disabled {
+        opacity: 0.55 !important;
+        cursor: not-allowed !important;
+        box-shadow: none !important;
+        transform: none !important;
+    }
+
+    /* Secondary Cancel/Close Button */
+    .btn-wp-secondary {
+        background: rgba(255, 255, 255, 0.05) !important;
+        border: 1px solid rgba(255, 255, 255, 0.12) !important;
+        color: #e2e8f0 !important;
+        font-weight: 700 !important;
+        font-size: 0.85rem !important;
+        border-radius: 14px !important;
+        padding: 0.75rem 1.5rem !important;
+        display: inline-flex !important;
+        align-items: center !important;
+        justify-content: center !important;
+        gap: 0.5rem !important;
+        cursor: pointer !important;
+        transition: all 0.2s ease !important;
+    }
+    .btn-wp-secondary:hover {
+        background: rgba(255, 255, 255, 0.1) !important;
+        border-color: rgba(255, 255, 255, 0.25) !important;
+        color: #ffffff !important;
+        transform: translateY(-1px) !important;
+    }
+
+    /* Pill Action Buttons (Test / Delete) */
+    .btn-wp-pill-test {
+        background: rgba(0, 160, 210, 0.12) !important;
+        border: 1px solid rgba(0, 160, 210, 0.35) !important;
+        color: #00d2ff !important;
+        font-weight: 700 !important;
+        font-size: 0.78rem !important;
+        border-radius: 10px !important;
+        padding: 0.45rem 1rem !important;
+        display: inline-flex !important;
+        align-items: center !important;
+        gap: 6px !important;
+        cursor: pointer !important;
+        transition: all 0.2s ease !important;
+    }
+    .btn-wp-pill-test:hover {
+        background: rgba(0, 160, 210, 0.25) !important;
+        border-color: #00d2ff !important;
+        color: #ffffff !important;
+        box-shadow: 0 0 15px rgba(0, 210, 255, 0.3) !important;
+        transform: translateY(-1px) !important;
+    }
+    .btn-wp-pill-delete {
+        background: rgba(244, 63, 94, 0.1) !important;
+        border: 1px solid rgba(244, 63, 94, 0.25) !important;
+        color: #fb7185 !important;
+        font-weight: 700 !important;
+        font-size: 0.78rem !important;
+        border-radius: 10px !important;
+        padding: 0.45rem 1rem !important;
+        display: inline-flex !important;
+        align-items: center !important;
+        gap: 6px !important;
+        cursor: pointer !important;
+        transition: all 0.2s ease !important;
+    }
+    .btn-wp-pill-delete:hover {
+        background: rgba(244, 63, 94, 0.25) !important;
+        border-color: #fb7185 !important;
+        color: #ffffff !important;
+        box-shadow: 0 0 15px rgba(244, 63, 94, 0.3) !important;
+        transform: translateY(-1px) !important;
+    }
+
+    /* Header WordPress Button */
+    .btn-wp-header {
+        background: linear-gradient(135deg, rgba(0, 115, 170, 0.25), rgba(0, 160, 210, 0.12)) !important;
+        border: 1px solid rgba(0, 160, 210, 0.45) !important;
+        color: #ffffff !important;
+        font-weight: 700 !important;
+        border-radius: 14px !important;
+        padding: 0.55rem 1.1rem !important;
+        display: inline-flex !important;
+        align-items: center !important;
+        gap: 0.75rem !important;
+        cursor: pointer !important;
+        transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1) !important;
+        box-shadow: 0 4px 15px rgba(0, 160, 210, 0.2) !important;
+    }
+    .btn-wp-header:hover {
+        background: linear-gradient(135deg, rgba(0, 115, 170, 0.45), rgba(0, 160, 210, 0.25)) !important;
+        border-color: #00d2ff !important;
+        box-shadow: 0 6px 25px rgba(0, 160, 210, 0.4) !important;
+        transform: translateY(-2px) !important;
+    }
+    .wp-icon-badge {
+        width: 34px !important;
+        height: 34px !important;
+        border-radius: 10px !important;
+        background: rgba(0, 160, 210, 0.25) !important;
+        display: flex !important;
+        align-items: center !important;
+        justify-content: center !important;
+        color: #00d2ff !important;
+        font-size: 1.15rem !important;
+    }
+
+    /* Result Action Bar WP Send Button */
+    .btn-wp-action {
+        background: linear-gradient(135deg, #0073aa 0%, #0099e5 100%) !important;
+        border: 1px solid rgba(0, 160, 210, 0.5) !important;
+        color: #ffffff !important;
+        padding: 0.55rem 1.2rem !important;
+        border-radius: 12px !important;
+        font-size: 0.82rem !important;
+        font-weight: 800 !important;
+        cursor: pointer !important;
+        transition: all 0.25s ease !important;
+        display: inline-flex !important;
+        align-items: center !important;
+        gap: 7px !important;
+        box-shadow: 0 4px 15px rgba(0, 115, 170, 0.35) !important;
+    }
+    .btn-wp-action:hover {
+        transform: translateY(-2px) !important;
+        box-shadow: 0 6px 22px rgba(0, 160, 210, 0.55) !important;
+        color: #ffffff !important;
+        border-color: #00d2ff !important;
+    }
+
+    /* Add Tag Button */
+    .btn-wp-add-tag {
+        background: linear-gradient(135deg, rgba(0, 160, 210, 0.25), rgba(0, 115, 170, 0.35)) !important;
+        border: 1px solid rgba(0, 160, 210, 0.5) !important;
+        color: #00d2ff !important;
+        padding: 0.55rem 1.15rem !important;
+        border-radius: 10px !important;
+        font-size: 0.82rem !important;
+        font-weight: 800 !important;
+        cursor: pointer !important;
+        white-space: nowrap !important;
+        transition: all 0.2s ease !important;
+    }
+    .btn-wp-add-tag:hover {
+        background: linear-gradient(135deg, #0073aa, #00a0d2) !important;
+        color: #fff !important;
+        box-shadow: 0 2px 10px rgba(0, 160, 210, 0.4) !important;
+    }
+
+    /* Quick Send Button in Sidebar */
+    .wp-quick-send-btn {
+        background: rgba(0, 115, 170, 0.2) !important;
+        border: 1px solid rgba(0, 160, 210, 0.4) !important;
+        color: #00d2ff !important;
+        width: 32px !important;
+        height: 32px !important;
+        border-radius: 10px !important;
+        display: flex !important;
+        align-items: center !important;
+        justify-content: center !important;
+        cursor: pointer !important;
+        transition: all 0.25s ease !important;
+        box-shadow: 0 2px 8px rgba(0, 115, 170, 0.2) !important;
+        opacity: 0.7 !important;
+    }
+    .wp-quick-send-btn:hover {
+        background: linear-gradient(135deg, #0073aa, #00a0d2) !important;
+        border-color: #00d2ff !important;
+        color: #ffffff !important;
+        box-shadow: 0 4px 15px rgba(0, 160, 210, 0.6) !important;
+        opacity: 1 !important;
+        transform: translateY(-50%) scale(1.1) !important;
+    }
+
+    /* Modal Inputs Strict Scoping */
+    .wp-modal-dialog .form-control,
+    .wp-modal-dialog input[type="text"],
+    .wp-modal-dialog input[type="url"],
+    .wp-modal-dialog input[type="password"],
+    .wp-modal-dialog textarea,
+    .wp-modal-dialog .aw-select {
+        background: rgba(255, 255, 255, 0.04) !important;
+        border: 1px solid rgba(255, 255, 255, 0.12) !important;
+        color: #ffffff !important;
+        border-radius: 12px !important;
+        padding: 0.75rem 1rem !important;
+        font-size: 0.9rem !important;
+        transition: all 0.2s ease !important;
+    }
+    .wp-modal-dialog .form-control:focus,
+    .wp-modal-dialog input:focus,
+    .wp-modal-dialog textarea:focus,
+    .wp-modal-dialog .aw-select:focus {
+        border-color: #00a0d2 !important;
+        box-shadow: 0 0 15px rgba(0, 160, 210, 0.25) !important;
+        background: rgba(255, 255, 255, 0.07) !important;
+    }
+
+    .wp-password-wrap {
+        position: relative;
+        display: flex;
+        align-items: center;
+        width: 100%;
+    }
+    .wp-password-wrap input {
+        padding-inline-end: 2.8rem !important;
+    }
+    .wp-password-toggle {
+        position: absolute;
+        inset-inline-end: 12px;
+        top: 50%;
+        transform: translateY(-50%);
+        background: transparent !important;
+        border: none !important;
+        color: #94a3b8 !important;
+        cursor: pointer !important;
+        padding: 6px !important;
+        font-size: 1rem !important;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        transition: color 0.2s;
+    }
+    .wp-password-toggle:hover {
+        color: #00d2ff !important;
+    }
+
     .tool-header-compact {
         background: var(--aw-surface);
         border: 1px solid var(--aw-border);
