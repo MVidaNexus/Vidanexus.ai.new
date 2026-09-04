@@ -327,7 +327,7 @@
 }
 </style>
 
-            <div style="width: 100%;">
+                    <div style="width: 100%;">
                 <div class="tools-grid">
                     @php
                         $activeToolsOnly = collect($tools)->filter(fn($t) => (bool)$t['is_available']);
@@ -356,21 +356,56 @@
                             </div>
                         </div>
                     @endforeach
-                </div>
 
-                {{-- Clean & Prestigious Pipeline Status Indicator --}}
-                @if($comingSoonCount > 0)
-                    <div style="margin: 2.5rem auto 1rem auto; text-align: center;">
-                        <div style="display: inline-flex; align-items: center; gap: 0.75rem; padding: 0.55rem 1.25rem; background: rgba(255, 255, 255, 0.03); border: 1px solid rgba(255, 255, 255, 0.08); border-radius: 99px; backdrop-filter: blur(20px); max-width: 90%; flex-wrap: wrap; justify-content: center;">
-                            <span style="display: inline-flex; align-items: center; justify-content: center; width: 22px; height: 22px; border-radius: 50%; background: rgba(0, 168, 230, 0.18); border: 1px solid rgba(0, 168, 230, 0.4); color: var(--primary-cyan, #00A8E6); font-size: 0.72rem; box-shadow: 0 0 10px rgba(0, 168, 230, 0.3);">
-                                <i class="fas fa-wand-magic-sparkles"></i>
-                            </span>
-                            <span style="font-size: 0.8rem; color: var(--text-muted); font-weight: 500;">
-                                <strong style="color: #fff; font-weight: 700;">+{{ $comingSoonCount }} More AI Tools</strong> in active pipeline for Content, Marketing & Market Intelligence.
-                            </span>
+                    {{-- 4 Coming Soon Preview Cards --}}
+                    @php
+                        $comingSoonPreview = [
+                            ['name' => 'Competitor X-Ray Engine',     'tagline' => 'Reverse-engineer any competitor strategy.',     'icon' => 'fa-crosshairs',           'color' => '#ff0055'],
+                            ['name' => 'Traffic Velocity Auditor',    'tagline' => 'Clear traffic insights, zero guesswork.',       'icon' => 'fa-magnifying-glass-chart','color' => '#10b981'],
+                            ['name' => 'EEAT Content Strategy Lab',   'tagline' => 'NLP-powered Google authority scoring.',         'icon' => 'fa-brain',                'color' => '#a855f7'],
+                            ['name' => 'AIO Optimizer',               'tagline' => 'Dominate Google AI Overviews.',                 'icon' => 'fa-robot',                'color' => '#8b5cf6'],
+                        ];
+                        $remainingCount = max(0, $comingSoonCount - count($comingSoonPreview));
+                    @endphp
+
+                    @foreach($comingSoonPreview as $cs)
+                        <div class="tool-card tool-card--coming-soon">
+                            <div class="tool-card-body" style="display: flex; flex-direction: column; height: 100%; position: relative;">
+                                {{-- Coming Soon Badge --}}
+                                <div style="position: absolute; top: 0.85rem; right: 0.85rem; background: rgba(251,191,36,0.12); backdrop-filter: blur(5px); color: #fbbf24; font-size: 0.6rem; font-weight: 800; padding: 0.28rem 0.65rem; border-radius: 20px; border: 1px solid rgba(251,191,36,0.3); letter-spacing: 1.2px; z-index: 10;">
+                                    <i class="fas fa-clock" style="margin-right:3px;"></i> COMING SOON
+                                </div>
+                                <div class="tool-icon" style="color: {{ $cs['color'] }}; opacity: 0.6;">
+                                    <i class="fas {{ $cs['icon'] }}"></i>
+                                </div>
+                                <h3 style="opacity: 0.65;">{{ $cs['name'] }}</h3>
+                                <p style="flex-grow: 1; opacity: 0.5;">{{ $cs['tagline'] }}</p>
+                                <div class="vn-btn" style="width: 100%; cursor: default; opacity: 0.35; background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.1); color: rgba(255,255,255,0.5); pointer-events: none; justify-content: center; gap: 0.4rem; display: flex; align-items: center; padding: 0.65rem 1rem; border-radius: 10px; font-size: 0.82rem; font-weight: 600;">
+                                    <i class="fas fa-lock" style="font-size: 0.75rem;"></i>
+                                    <span>Coming Soon</span>
+                                </div>
+                            </div>
                         </div>
-                    </div>
-                @endif
+                    @endforeach
+
+                    {{-- Final "More Tools" Pill Card --}}
+                    @if($remainingCount > 0)
+                        <div class="tool-card tool-card--more" style="border-style: dashed; border-color: rgba(0,168,230,0.25) !important; background: rgba(0,168,230,0.03) !important;">
+                            <div class="tool-card-body" style="display: flex; flex-direction: column; align-items: center; justify-content: center; height: 100%; text-align: center; gap: 0.75rem;">
+                                <div style="width: 48px; height: 48px; border-radius: 50%; background: rgba(0,168,230,0.12); border: 1px solid rgba(0,168,230,0.3); display: flex; align-items: center; justify-content: center; color: #00a8e6; font-size: 1.1rem; box-shadow: 0 0 20px rgba(0,168,230,0.2);">
+                                    <i class="fas fa-wand-magic-sparkles"></i>
+                                </div>
+                                <div>
+                                    <div style="font-size: 1.6rem; font-weight: 900; color: #00a8e6; line-height: 1;">+{{ $remainingCount }}</div>
+                                    <div style="font-size: 0.72rem; font-weight: 700; color: rgba(255,255,255,0.5); letter-spacing: 1px; text-transform: uppercase; margin-top: 0.2rem;">More Tools</div>
+                                </div>
+                                <p style="font-size: 0.75rem; color: rgba(255,255,255,0.4); margin: 0; line-height: 1.5;">SEO · Content · Marketing<br>& Market Intelligence</p>
+                                <div style="font-size: 0.65rem; font-weight: 700; color: #fbbf24; letter-spacing: 1px; background: rgba(251,191,36,0.08); border: 1px solid rgba(251,191,36,0.2); border-radius: 20px; padding: 0.25rem 0.7rem;">
+                                    <i class="fas fa-clock" style="margin-right:3px;"></i> IN PIPELINE
+                                </div>
+                            </div>
+                        </div>
+                    @endif
+                </div>
             </div>
-            
         </main>
