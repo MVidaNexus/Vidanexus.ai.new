@@ -404,32 +404,27 @@
                                     <span class="comp-label" x-text="getComponentLabel(comp)"></span>
                                 </button>
                             </template>
-                        </div>
-                    </div>
 
-                    <!-- AI Featured Image Toggle (16:9 Google Discover Ready) -->
-                    <div style="margin-bottom: 2rem;">
-                        <div style="padding: 1.1rem 1.25rem; background: rgba(168, 85, 247, 0.07); border: 1px solid rgba(168, 85, 247, 0.28); border-radius: 16px; display: flex; align-items: center; justify-content: space-between; gap: 1rem; cursor: pointer; transition: all 0.25s ease;" 
-                             @click="form.generate_featured_image = !form.generate_featured_image"
-                             :style="form.generate_featured_image ? 'border-color: rgba(168, 85, 247, 0.5); background: rgba(168, 85, 247, 0.1);' : 'opacity: 0.75;'">
-                            <div style="display: flex; align-items: center; gap: 0.95rem; min-width: 0;">
-                                <div style="width: 44px; height: 44px; border-radius: 12px; background: rgba(168, 85, 247, 0.18); display: flex; align-items: center; justify-content: center; color: #c084fc; font-size: 1.2rem; flex-shrink: 0; box-shadow: 0 4px 12px rgba(168, 85, 247, 0.25);">
-                                    <i class="fas fa-image"></i>
+                            <!-- AI Featured Image Option Card -->
+                            <button type="button"
+                                    class="comp-card"
+                                    :class="form.generate_featured_image ? 'comp-card-active' : ''"
+                                    @click="form.generate_featured_image = !form.generate_featured_image"
+                                    :title="form.language === 'ar' ? 'توليد صورة سينمائية 16:9 متوافقة مع Google Discover ورفعها كصورة بارزة في ووردبريس' : 'Generate 16:9 Google Discover image and set as WordPress featured media'">
+                                <div class="comp-check">
+                                    <i class="fas fa-check" x-show="form.generate_featured_image"></i>
                                 </div>
-                                <div style="min-width: 0;">
-                                    <div style="font-size: 0.92rem; font-weight: 800; color: #fff; display: flex; align-items: center; gap: 0.5rem; flex-wrap: wrap;">
-                                        <span x-text="form.language === 'ar' ? 'توليد صورة بارزة بالذكاء الاصطناعي تلقائياً' : 'Auto-Generate AI Featured Image'"></span>
-                                        <span style="background: rgba(168, 85, 247, 0.25); color: #d8b4fe; border: 1px solid rgba(168, 85, 247, 0.4); font-size: 0.65rem; padding: 0.15rem 0.55rem; border-radius: 20px; font-weight: 800;">16:9 Google Discover</span>
-                                    </div>
-                                    <div style="font-size: 0.76rem; color: #94a3b8; margin-top: 3px; line-height: 1.4;" x-text="form.language === 'ar' ? 'توليد صورة سينمائية بدون نصوص، تُرفع وتُعيّن كصورة بارزة عند النشر في ووردبريس' : 'Creates an editorial landscape image without text, auto-uploaded as featured media to WordPress'"></div>
-                                </div>
-                            </div>
-                            <!-- Switch Button -->
-                            <div style="width: 48px; height: 26px; border-radius: 20px; transition: background 0.3s; position: relative; flex-shrink: 0;"
-                                 :style="form.generate_featured_image ? 'background: #a855f7;' : 'background: rgba(255,255,255,0.15);'">
-                                <div style="width: 20px; height: 20px; border-radius: 50%; background: #fff; position: absolute; top: 3px; transition: transform 0.3s; box-shadow: 0 2px 4px rgba(0,0,0,0.3);"
-                                     :style="form.generate_featured_image ? (form.language === 'ar' ? 'transform: translateX(-24px);' : 'transform: translateX(24px);') : (form.language === 'ar' ? 'transform: translateX(-3px);' : 'transform: translateX(3px);')"></div>
-                            </div>
+                                <span class="comp-label">
+                                    <i class="fas fa-image" style="margin-inline-end: 4px;"></i>
+                                    <span x-text="form.language === 'ar' ? 'صورة بارزة للمقال (16:9 AI)' : 'Featured Image (16:9 AI)'"></span>
+                                </span>
+                            </button>
+                        </div>
+
+                        <!-- Subtle helper text when image option is active -->
+                        <div style="font-size: 0.74rem; color: #94a3b8; margin-top: 0.65rem; display: flex; align-items: center; gap: 6px;" x-show="form.generate_featured_image">
+                            <i class="fas fa-sparkles" style="color: var(--aw-cyan); font-size: 0.75rem;"></i>
+                            <span x-text="form.language === 'ar' ? 'توليد صورة سينمائية بدون نصوص تناسب Google Discover وترفع تلقائياً كصورة بارزة عند النشر في ووردبريس.' : 'Generates a 16:9 editorial image without text, optimized for Discover & auto-uploaded as featured media.'"></span>
                         </div>
                     </div>
 
