@@ -111,11 +111,6 @@ class ArticleWriterService
 
         if ($isGroundingEnabled) {
             $genOptions['web_grounding'] = true;
-            if (!$isSportsTopic) {
-                $genOptions['plugins'] = [
-                    ['id' => 'web', 'max_results' => 5],
-                ];
-            }
         }
 
         $result = $this->aiManager->generate('article-writer', $finalPrompt, $genOptions);
@@ -671,10 +666,21 @@ class ArticleWriterService
         $text = preg_replace('/\bتحديث\s+حي\s+ورد\s+منذ\s+\d+\s+دقيقة\b/u', 'توضيح حديث', $text);
         $text = preg_replace('/\bمنذ\s+\d+\s+دقيقة\b/u', 'مؤخراً', $text);
         
-        // 6. Strip bracketed domain citations or web reference links e.g. [portal.afaq-arabia.com], [site.com], [1], [2]
-        $text = preg_replace('/\s*\[\s*[a-zA-Z0-9\.\-\_\/]+\.(com|net|org|gov|edu|ai|io|me|info|sa|eg|ae|news)[^\]]*\]\s*/iu', ' ', $text);
+        // 6. Strip all external markdown links: [domain.com](https://...) -> remove; [anchor text](https://...) -> anchor text
+        $text = preg_replace('/\[([a-zA-Z0-9\.\-\_]+\.(com|net|org|gov|edu|ai|io|me|info|sa|eg|ae|sy|news))\]\([^\)]+\)/iu', '', $text);
+        $text = preg_replace('/\[([^\]]+)\]\((https?:\/\/[^\)]+)\)/iu', '$1', $text);
+
+        // 7. Strip any remaining URLs (whether inside parentheses or bare text)
+        $text = preg_replace('/\(?https?:\/\/[^\s\)\>\]]+\)?/iu', '', $text);
+
+        // 8. Strip bracketed domain citations e.g. [portal.afaq-arabia.com], [alwatan.sy], [1], [2]
+        $text = preg_replace('/\s*\[\s*[a-zA-Z0-9\.\-\_\/]+\.(com|net|org|gov|edu|ai|io|me|info|sa|eg|ae|sy|news)[^\]]*\]\s*/iu', ' ', $text);
         $text = preg_replace('/\s*\[\d+\]\s*/', ' ', $text);
-        $text = preg_replace('/\[\s*http[s]?:\/\/[^\]]+\]/iu', '', $text);
+
+        // 9. Clean dangling punctuation and empty parentheses caused by removed links
+        $text = preg_replace('/[،\s]*،\s*\./u', '.', $text);
+        $text = preg_replace('/،(?:\s*،)+/u', '،', $text);
+        $text = preg_replace('/\(\s*\)/u', '', $text);
         
         return $text;
     }

@@ -49,6 +49,8 @@ class FeaturedImageService
 
         $isSports = (bool) preg_match('/مباراة|ماتش|دوري|كأس|فريق|منتخب|أهداف|اهداف|تشكيل|ترتيب|كوفنتري|سيتي|يونايتد|ليفربول|أرسنال|تشيلسي|توتنهام|ريال|برشلونة|أتلتيكو|بايرن|دورتموند|باريس|ميلان|إنتر|يوفنتوس|الأهلي|الزمالك|الهلال|النصر|الاتحاد|match|vs|fc|football|soccer|premier league/iu', $subject);
         $isCupFinal = (bool) preg_match('/نهائي\s+كأس|تتويج\s+باللقب|رفع\s+الكأس|كأس\s+العالم|cup\s+final|trophy\s+celebration/iu', $subject);
+        $isCelebrityDeath = (bool) preg_match('/وفاة|رحيل|مصرع|موت|ينعى|وداع|جنازة|تشييع|death|passed away|tribute/iu', $subject)
+            && (bool) preg_match('/ممثل|فنان|نجم|مغني|مخرج|كاتب|شاعر|إعلامي|صحفي|بطل|مسلسل|فيلم|actor|artist|celebrity|star/iu', $subject);
 
         $prompt = "Create a breathtaking, professional editorial header image suitable for a high-end publication about: {$cleanSubject}. ";
         $prompt .= "Style: Award-winning photojournalism, authentic documentary photography, stunning cinematic natural lighting, modern depth of field, sharp focus, 8k resolution, authentic and natural atmosphere. ";
@@ -60,9 +62,20 @@ class FeaturedImageService
         if ($isSports && !$isCupFinal) {
             $prompt .= "3. FOR FOOTBALL & SPORTS MATCHES: This is a standard regular league match during the season, NOT a trophy final! Depict authentic on-pitch live action: professional football team players standing together for an authentic pre-match team photo lineup on the green grass pitch before kickoff, or players in active match gameplay under stadium lights. ";
             $prompt .= "STRICT SPORTS BAN: Under NO circumstances generate a championship trophy, cup, podium, stage, medals, or falling confetti! The team is NOT winning a tournament; NEVER depict anyone lifting a trophy or cup! ";
+        } elseif ($isCelebrityDeath) {
+            $prompt .= "3. FOR CELEBRITY / ACTOR DEATH & MEMORIAL ARTICLES: Depict an elegant, dignified, high-end studio portrait or tribute photograph of the actor/artist (or a warm, respectful cinema/theater studio atmosphere with soft golden lighting, film reels, or stage backdrop). ";
+            $prompt .= "STRICT MORBID BAN: Under NO circumstances generate coffins, dead bodies, historical funeral processions, graveyards, tombs, skeletons, or weeping crowds in ancient costumes! The image must be a respectful, modern, and dignified tribute celebrating their artistic persona, NEVER a coffin or funeral procession! ";
         }
 
-        $prompt .= "STRICT NEGATIVE CONSTRAINTS: Absolutely NO text, NO letters, NO words, NO typography, NO watermark, NO logo, NO blurry faces, NO distorted hands or bodies, NO wild animals in health articles" . ($isSports && !$isCupFinal ? ", NO trophies, NO cups, NO confetti, NO championship podiums, NO medals." : ".");
+        $negativeAdditions = '';
+        if ($isSports && !$isCupFinal) {
+            $negativeAdditions .= ', NO trophies, NO cups, NO confetti, NO championship podiums, NO medals';
+        }
+        if ($isCelebrityDeath) {
+            $negativeAdditions .= ', NO coffins, NO caskets, NO dead bodies, NO corpses, NO funeral processions, NO graveyards, NO skeletons';
+        }
+
+        $prompt .= "STRICT NEGATIVE CONSTRAINTS: Absolutely NO text, NO letters, NO words, NO typography, NO watermark, NO logo, NO blurry faces, NO distorted hands or bodies, NO wild animals in health articles{$negativeAdditions}.";
 
         return $prompt;
     }
