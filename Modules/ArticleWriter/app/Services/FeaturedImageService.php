@@ -35,12 +35,24 @@ class FeaturedImageService
 
         // Clean subject from punctuation, dates, filler words
         $cleanSubject = trim(preg_replace('/[0-9]{4}|[:\-\–—\(\)\[\]«»"\'\.\,\!\?]/u', ' ', $subject));
-        $cleanSubject = preg_replace('/\s+/u', ' ', $cleanSubject);
+
+        // Strip common journalistic clickbait verbs and source attributions that confuse image models
+        $cleanSubject = preg_replace('/\b(الدكتور\s+[^\s]+|د\.\s*[^\s]+|استشاري\s+[^\s]+)\b/u', '', $cleanSubject);
+        $cleanSubject = preg_replace('/\b(يكشف\s+(الحقيقة|السر|التفاصيل)?|يحذر\s+(من)?|يوضح\s+(حقيقة)?|يؤكد|بيان\s+عاجل|تصريح\s+جديد)\b/u', '', $cleanSubject);
+        $cleanSubject = preg_replace('/\b(النمر|الصقر|الأسد|الذئب|فهد|غزال|سيف)\b/u', '', $cleanSubject); // Common Arabic human family names often mistranslated to wild animals
+        $cleanSubject = trim(preg_replace('/\s+/u', ' ', $cleanSubject));
+
+        if (empty($cleanSubject) || mb_strlen($cleanSubject, 'UTF-8') < 5) {
+            $cleanSubject = !empty($topic) ? $topic : $title;
+        }
 
         $prompt = "Create a breathtaking, professional editorial header image suitable for a high-end publication about: {$cleanSubject}. ";
-        $prompt .= "Style: Award-winning photojournalism, stunning cinematic lighting, modern depth of field, sharp focus, 8k resolution, authentic and natural atmosphere. ";
-        $prompt .= "Format & Composition: Wide landscape 16:9 aspect ratio, perfectly balanced composition designed for digital news feeds. ";
-        $prompt .= "STRICT NEGATIVE CONSTRAINTS: Absolutely NO text, NO letters, NO words, NO typography, NO watermark, NO logo, NO blurry faces, NO distorted hands or bodies.";
+        $prompt .= "Style: Award-winning photojournalism, authentic documentary photography, stunning cinematic natural lighting, modern depth of field, sharp focus, 8k resolution, authentic and natural atmosphere. ";
+        $prompt .= "Format & Composition: Wide landscape 16:9 aspect ratio, perfectly balanced composition designed for digital news feeds and Google Discover. ";
+        $prompt .= "CRITICAL SEMANTIC CONSTRAINTS: ";
+        $prompt .= "1. If the topic mentions any Arabic family name or personal title, this is a HUMAN PERSON or DOCTOR, NOT a wild animal! Under NO circumstances generate tigers, falcons, lions, or beasts unless the topic is explicitly about wildlife zoology. ";
+        $prompt .= "2. For health, medical, wellness, or dietary topics: Focus on authentic, elegant, everyday lifestyle or clinical objects (such as a clear glass of cold water with natural water droplets on a table, fresh healthy foods, or modern medical wellness) rather than surreal fantasy or beasts. ";
+        $prompt .= "STRICT NEGATIVE CONSTRAINTS: Absolutely NO text, NO letters, NO words, NO typography, NO watermark, NO logo, NO blurry faces, NO distorted hands or bodies, NO wild animals in health articles.";
 
         return $prompt;
     }

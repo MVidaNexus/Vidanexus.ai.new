@@ -154,7 +154,7 @@ class ArticleWriterService
             $prompt .= "You have been provided with real-time verified updates and latest news feeds for [keyword], sorted with the freshest news first:\n";
             $prompt .= "LIVE NEWS & MARKET DATA:\n{$newsContext}\n\n";
             $prompt .= "GROUNDING RULES (STRICT):\n";
-            $prompt .= "1. TEMPORAL CHRONOLOGY: The top items marked with recent timestamps (e.g. 'منذ دقائق' or 'منذ ساعة') represent the latest breaking reality. Use these exact facts, figures, and outcomes.\n";
+            $prompt .= "1. FACTUAL ACCURACY OVER MECHANICAL TIMESTAMPS: The items listed below represent verified real-time sources. Extract facts, expert clarifications, and data accurately, but NEVER copy source timestamps or relative minute counters (like 'منذ 13 دقيقة' or 'في تحديث حي') into the prose. Phrase updates with natural journalistic flow (e.g. 'في أحدث تصريحاته الطبية' or 'في توضيح حديث').\n";
             $prompt .= "2. COMPETITOR CITATION BAN: NEVER cite, mention, or promote third-party news websites or competitor portals (e.g. اليوم السابع، مصراوي، العربية، الأهرام، صدى البلد، الجزيرة، سكاي نيوز، آي صاغة، بطولات، إلخ). State facts natively as factual market reporting or attribute to primary official authorities (e.g. شعبة الذهب، البنك المركزي، الاتحاد الإفريقي، رابطة الأندية، الوزارة المعنية).\n\n";
         }
 
@@ -317,8 +317,14 @@ class ArticleWriterService
         $protocol .= "- Structure: Put the tables, numbers, and core figures in the FIRST SECTION. Explain the factors influencing the data in subsequent sections.\n\n";
 
         $protocol .= "### ARCHETYPE 9: HEALTH, MEDICAL, OR SCIENTIFIC TOPIC (صحة وطب وتغذية)\n";
-        $protocol .= "- PRIMARY INTENT: Reliable, evidence-based, medically sound answers with high E-E-A-T.\n";
-        $protocol .= "- Structure: Clear direct explanation, causes/mechanisms, verified symptoms, evidence-based solutions/treatments, when to see a specialist, and medical disclaimer.\n\n";
+        $protocol .= "- PRIMARY INTENT: Reliable, evidence-based, medically sound answers with high E-E-A-T and factual scientific accuracy.\n";
+        $protocol .= "- REQUIRED MEDICAL STRUCTURE:\n";
+        $protocol .= "  1. Direct Clarification & Myth-Busting: In the very first paragraph, directly address and debunk the popular myth or inquiry (e.g., refuting that cold water freezes arterial fat, distinguishing gastrointestinal digestion from the vascular system).\n";
+        $protocol .= "  2. Authority & Expert Attribution: Clearly attribute expert advice with their full name and title (e.g. 'الدكتور خالد النمر، استشاري أمراض القلب وقسطرة الشرايين') on first mention. Never use truncated surnames without full context.\n";
+        $protocol .= "  3. Real Biological Mechanisms: Explain human physiology accurately (temperature regulation in the stomach, digestive enzymes, vagus nerve stimulation vs actual causes of coronary artery disease and atherosclerosis).\n";
+        $protocol .= "  4. Practical Evidence-Based Guidance: Healthy hydration habits, cardiovascular protection rules, and when to seek medical advice.\n";
+        $protocol .= "  5. Medical Disclaimer: Standard advisory note to consult physicians for personal health needs.\n";
+        $protocol .= "- ZERO MEDICAL HALLUCINATIONS: Do NOT invent fake medical conditions or exaggerate symptoms (e.g. do not invent bizarre claims like cold water causing heart attacks or arterial freezing). Adhere strictly to verified cardiology and physiology facts.\n\n";
 
         $protocol .= "### ARCHETYPE 10: EVERGREEN IN-DEPTH ANALYSIS / ESSAY (تحليلات ومقالات سيو شاملة)\n";
         $protocol .= "- Cover all logical angles with deep domain authority, case studies, actionable frameworks, and E-E-A-T thought leadership.\n\n";
@@ -358,6 +364,11 @@ class ArticleWriterService
         $rules .= "- ZERO RANDOM QUOTATION MARKS: DO NOT put quotation marks around ordinary words. Quotation marks are strictly reserved for verbatim direct quotes from named authorities.\n";
         $rules .= "- ZERO FORMULAIC CONNECTORS: Eliminate cliché connectors like 'حيث أن', 'مما يؤكد', 'يأتي هذا مدفوعاً بـ', 'تجدر الإشارة'. Write in clean, direct, active voice.\n";
         $rules .= "- ARABIC PARAGRAPH COHESION (قاعدة ترابط الجمل في العربية): In Arabic prose, paragraphs should flow as connected, cohesive thoughts using Arabic commas ('،') and natural conjunctions ('و', 'كما', 'في حين', 'بينما'). Do NOT chop an Arabic paragraph into multiple tiny 6-word fragments separated by mid-paragraph periods. Use a single period ('.') only at the end of the completed paragraph or full major thought.\n\n";
+
+        $rules .= "## Relative Time & Source Attributions (STRICT — حظر العبارات الزمنية اللحظية الركيكة)\n";
+        $rules .= "- ABSOLUTE BAN ON RELATIVE MINUTE/HOUR TIMESTAMPS: NEVER write phrases like 'منذ دقائق', 'منذ 13 دقيقة', 'قبل قليل', 'في تحديث حي ورد منذ...', 'منذ ساعات قليلة' in the article prose or headings.\n";
+        $rules .= "- Natural Journalistic Phrasing: Instead of robotic relative minute markers, use timeless, authoritative journalistic phrases such as: 'في أحدث تصريحاته الطبية', 'في توضيح علمي حديث', 'رداً على الاستفسارات المتداولة', 'خلال مشاركته التوعوية الأخيرة', 'في سياق تفنيد الشائعات الشائعة'.\n";
+        $rules .= "- Named Medical & Scientific Authorities: When quoting or referencing experts (e.g. Dr. Khaled Al-Nimr / د. خالد النمر), ALWAYS introduce them with their full professional title and specialty (e.g. 'الدكتور خالد النمر، استشاري أمراض القلب وقسطرة الشرايين') on first mention. Never refer to them with ambiguous truncated nicknames like 'أكد النمر' without first establishing their full identity.\n\n";
 
         $rules .= "## Tone & cadence\n";
         $rules .= "- Vary sentence length aggressively. Mix 4-word punchy sentences with 25-word flowing ones in the same paragraph.\n";
@@ -529,22 +540,16 @@ class ArticleWriterService
 
         $tempContext = "";
         foreach ($collected as $it) {
-            $diffMinutes = max(0, round((time() - $it['ts']) / 60));
+            $publishDate = date('Y-m-d', $it['ts']);
             if ($isArabic) {
-                $timeAgo = ($diffMinutes < 60)
-                    ? "منذ {$diffMinutes} دقيقة"
-                    : (($diffMinutes < 1440) ? "منذ " . round($diffMinutes / 60) . " ساعة" : date('Y-m-d', $it['ts']));
-                $tempContext .= "- [تحديث حي | {$timeAgo}]: {$it['title']}\n";
+                $tempContext .= "- [مصدر إخباري موثق | {$publishDate}]: {$it['title']}\n";
                 if (!empty($it['desc'])) {
-                    $tempContext .= "  تفاصيل وبيانات حية: {$it['desc']}\n";
+                    $tempContext .= "  بيانات وتفاصيل التقرير: {$it['desc']}\n";
                 }
             } else {
-                $timeAgo = ($diffMinutes < 60)
-                    ? "{$diffMinutes}m ago"
-                    : (($diffMinutes < 1440) ? round($diffMinutes / 60) . "h ago" : date('Y-m-d', $it['ts']));
-                $tempContext .= "- [LIVE UPDATE | {$timeAgo}]: {$it['title']}\n";
+                $tempContext .= "- [VERIFIED SOURCE | {$publishDate}]: {$it['title']}\n";
                 if (!empty($it['desc'])) {
-                    $tempContext .= "  Live details: {$it['desc']}\n";
+                    $tempContext .= "  Report details: {$it['desc']}\n";
                 }
             }
         }
@@ -611,6 +616,11 @@ class ArticleWriterService
         // 4. Remove unnecessary quotes around single ordinary Arabic words e.g. "رئيسي" or "مفاجئة"
         $text = preg_replace('/"([\x{0600}-\x{06FF}]{3,15})"/u', '$1', $text);
         $text = preg_replace('/“([\x{0600}-\x{06FF}]{3,15})”/u', '$1', $text);
+        
+        // 5. Clean accidental robotic relative timestamps
+        $text = preg_replace('/(ف?في\s+تحديث\s+حي\s+ورد\s+منذ\s+\d+\s+دقيقة\s*،?\s*)/u', 'وفي توضيح حديث، ', $text);
+        $text = preg_replace('/\bتحديث\s+حي\s+ورد\s+منذ\s+\d+\s+دقيقة\b/u', 'توضيح حديث', $text);
+        $text = preg_replace('/\bمنذ\s+\d+\s+دقيقة\b/u', 'مؤخراً', $text);
         
         return $text;
     }
