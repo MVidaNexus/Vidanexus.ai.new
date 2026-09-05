@@ -18,10 +18,21 @@
     RewriteCond %{REQUEST_URI} (.+)/$
     RewriteRule ^ %1 [L,R=301]
 
+    # Block access to internal storage directories
+    RewriteRule ^storage/(framework|logs)/ - [F,L]
+
+    # Directly serve public storage files if they exist in storage/app/public/
+    RewriteCond %{DOCUMENT_ROOT}/storage/app/public/$1 -f
+    RewriteRule ^storage/(.*)$ storage/app/public/$1 [L]
+
     # Send Requests To Front Controller...
     RewriteCond %{REQUEST_FILENAME} !-d
     RewriteCond %{REQUEST_FILENAME} !-f
     RewriteRule ^ index.php [L]
+</IfModule>
+
+<IfModule Litespeed>
+    RewriteRule .* - [E=noabort:1,E=noconntimeout:1]
 </IfModule>
 
 <IfModule mod_security.c>

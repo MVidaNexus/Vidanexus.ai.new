@@ -83,3 +83,32 @@ Route::get('/js/pwa.js', function () {
 Route::get('/media/image-proxy', [\App\Http\Controllers\Media\ImageProxyController::class, 'show'])
     ->middleware('auth')
     ->name('media.image-proxy');
+
+// Public Storage Assets Route (serves storage/app/public when web root is project root)
+Route::get('/storage/{path}', function (string $path) {
+    if (str_contains($path, '..') || str_starts_with($path, '/') || str_starts_with($path, '\\')) {
+        abort(403);
+    }
+
+    if (preg_match('#^(framework|logs)/#', $path)) {
+        abort(403);
+    }
+
+    $candidates = [
+        storage_path('app/public/' . $path),
+        public_path('storage/' . $path),
+        base_path('public/storage/' . $path),
+    ];
+
+    foreach ($candidates as $candidate) {
+        if (file_exists($candidate) && is_file($candidate)) {
+            return response()->file($candidate, [
+                'Cache-Control' => 'public, max-age=604800',
+                'Access-Control-Allow-Origin' => '*',
+            ]);
+        }
+    }
+
+    abort(404);
+})->where('path', '.*')->name('public.storage');
+
