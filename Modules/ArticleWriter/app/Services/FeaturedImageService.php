@@ -81,11 +81,180 @@ class FeaturedImageService
     }
 
     /**
-     * Generate an AI featured image for an article.
+     * Generate or fetch a featured image for an article (Hybrid: Real editorial photo first, AI fallback).
      *
-     * @return array{url: string, path: string, filename: string, prompt: string, alt_text: string}|null
+     * @return array{url: string, path: string, filename: string, prompt: string, alt_text: string, width: int, height: int, mime: string, size_bytes: int, source: string, original_source_url?: string|null}|null
      */
     public function generateForArticle(string $title, string $topic, string $slug = '', string $language = 'ar'): ?array
+    {
+        $mode = Setting::get('article-writer_image_mode', 'hybrid'); // 'hybrid', 'real_only', 'ai_only'
+
+        // 1. Try real editorial news photo first (unless mode is strictly 'ai_only')
+        if ($mode !== 'ai_only') {
+            try {
+                $realPhoto = $this->fetchRealEditorialImage($title, $topic, $language);
+                if ($realPhoto && !empty($realPhoto['binary'])) {
+                    $optimized = $this->optimizeForGoogleDiscover($realPhoto['binary']);
+                    return $this->saveOptimizedImage(
+                        $optimized,
+                        $title,
+                        $topic,
+                        $slug,
+                        'Real editorial photo: ' . ($realPhoto['query_used'] ?? ($title ?: $topic)),
+                        'editorial_real',
+                        $realPhoto['source_url'] ?? null
+                    );
+                }
+            } catch (\Throwable $e) {
+                Log::warning('[FeaturedImageService] Real editorial image fetch error: ' . $e->getMessage());
+            }
+
+            if ($mode === 'real_only') {
+                return null;
+            }
+        }
+
+        // 2. Fallback to AI generation via OpenRouter
+        return $this->generateWithAi($title, $topic, $slug, $language);
+    }
+
+    /**
+     * Search and download an authentic, high-resolution editorial/news photo for the article.
+     *
+     * @return array{binary: string, source_url: string, query_used: string, orig_width: int, orig_height: int}|null
+     */
+    public function fetchRealEditorialImage(string $title, string $topic, string $language = 'ar'): ?array
+    {
+        $candidateQueries = $this->buildEditorialSearchQueries($title, $topic);
+
+        foreach ($candidateQueries as $q) {
+            $urls = $this->searchBingImages($q);
+            if (empty($urls)) {
+                continue;
+            }
+
+            // Try downloading top 3 candidate images
+            foreach (array_slice($urls, 0, 3) as $url) {
+                try {
+                    $response = Http::timeout(7)
+                        ->withHeaders([
+                            'User-Agent' => 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+                            'Accept' => 'image/avif,image/webp,image/apng,image/*,*/*;q=0.8',
+                        ])
+                        ->withoutVerifying()
+                        ->get($url);
+
+                    if (!$response->successful()) {
+                        continue;
+                    }
+
+                    $binary = $response->body();
+                    if (empty($binary) || strlen($binary) < 15000) {
+                        continue;
+                    }
+
+                    $img = @imagecreatefromstring($binary);
+                    if ($img === false) {
+                        continue;
+                    }
+
+                    $w = imagesx($img);
+                    $h = imagesy($img);
+                    imagedestroy($img);
+
+                    // Ensure suitable high-res dimensions
+                    if ($w >= 500 && $h >= 300) {
+                        return [
+                            'binary' => $binary,
+                            'source_url' => $url,
+                            'query_used' => $q,
+                            'orig_width' => $w,
+                            'orig_height' => $h,
+                        ];
+                    }
+                } catch (\Throwable $e) {
+                    continue;
+                }
+            }
+        }
+
+        return null;
+    }
+
+    /**
+     * Search Bing Images for high-resolution original image URLs without requiring an API key.
+     */
+    protected function searchBingImages(string $query): array
+    {
+        try {
+            $url = 'https://www.bing.com/images/search?q=' . urlencode($query) . '&form=HDRSC2&first=1';
+            $response = Http::timeout(8)
+                ->withHeaders([
+                    'User-Agent' => 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+                    'Accept-Language' => 'ar,en-US;q=0.9,en;q=0.8',
+                ])
+                ->withoutVerifying()
+                ->get($url);
+
+            if (!$response->successful()) {
+                return [];
+            }
+
+            $html = $response->body();
+            $images = [];
+
+            if (preg_match_all('/murl&quot;:&quot;(https?:[^\&]+)&quot;/i', $html, $matches)) {
+                foreach ($matches[1] as $murl) {
+                    $decoded = html_entity_decode($murl, ENT_QUOTES, 'UTF-8');
+                    if (filter_var($decoded, FILTER_VALIDATE_URL) && !str_ends_with(strtolower($decoded), '.svg')) {
+                        $images[] = $decoded;
+                    }
+                }
+            }
+
+            return array_values(array_unique($images));
+        } catch (\Throwable $e) {
+            Log::warning('[FeaturedImageService] Bing image search failure: ' . $e->getMessage());
+            return [];
+        }
+    }
+
+    /**
+     * Build cleaned, targeted search queries tailored for finding authentic editorial photos.
+     */
+    public function buildEditorialSearchQueries(string $title, string $topic): array
+    {
+        $queries = [];
+
+        // 1. Cleaned topic / keyword (highest entity accuracy)
+        $cleanTopic = trim(preg_replace('/[0-9]{4}|[:\-\–—\(\)\[\]«»"\'\.\,\!\?]/u', ' ', $topic));
+        $cleanTopic = trim(preg_replace('/\s+/u', ' ', $cleanTopic));
+        if (!empty($cleanTopic) && mb_strlen($cleanTopic, 'UTF-8') >= 3) {
+            $queries[] = $cleanTopic;
+        }
+
+        // 2. Title cleaned from clickbait, verbs, times, and filler words
+        $cleanTitle = trim(preg_replace('/[0-9]{4}|[:\-\–—\(\)\[\]«»"\'\.\,\!\?]/u', ' ', $title));
+        $cleanTitle = preg_replace('/\b(يكشف\s+(الحقيقة|السر|التفاصيل)?|يحذر\s+(من)?|يوضح\s+(حقيقة)?|يؤكد|بيان\s+عاجل|تصريح\s+جديد|تفاصيل\s+(غامضة|صادمة|جديدة)?|صدمة\s+في|الوسط\s+الفني)\b/u', '', $cleanTitle);
+        $cleanTitle = preg_replace('/\b(يتصدر\s+(الدوري|الترتيب|قمة\s+الدوري)?|بالعلامة\s+الكاملة|بعد\s+فوز\s+(مثير|صعب|ساحق)(\s+على)?|صدارة\s+الترتيب|قمة\s+الترتيب|فوز\s+(مثير|صعب|ساحق)|ريمونتادا)\b/u', '', $cleanTitle);
+        $cleanTitle = trim(preg_replace('/\s+/u', ' ', $cleanTitle));
+
+        $words = explode(' ', $cleanTitle);
+        if (count($words) > 5) {
+            $cleanTitle = implode(' ', array_slice($words, 0, 5));
+        }
+
+        if (!empty($cleanTitle) && !in_array($cleanTitle, $queries)) {
+            $queries[] = $cleanTitle;
+        }
+
+        return !empty($queries) ? $queries : [trim($title ?: $topic)];
+    }
+
+    /**
+     * Generate an AI featured image via OpenRouter as a creative fallback.
+     */
+    public function generateWithAi(string $title, string $topic, string $slug = '', string $language = 'ar'): ?array
     {
         $apiKey = $this->getApiKey();
         if (empty($apiKey)) {
@@ -137,7 +306,6 @@ class FeaturedImageService
                 return null;
             }
 
-            // Extract binary data from base64 data URL
             $binaryData = null;
             if (str_starts_with($imageUrlOrBase64, 'data:image/')) {
                 $parts = explode(',', $imageUrlOrBase64, 2);
@@ -145,7 +313,6 @@ class FeaturedImageService
                     $binaryData = base64_decode($parts[1]);
                 }
             } else {
-                // If it was a direct external URL
                 $fetch = Http::timeout(15)->get($imageUrlOrBase64);
                 if ($fetch->successful()) {
                     $binaryData = $fetch->body();
@@ -157,46 +324,60 @@ class FeaturedImageService
                 return null;
             }
 
-            // Optimize and crop to Google Discover 16:9 (1200x675) in lightweight WebP format
             $optimized = $this->optimizeForGoogleDiscover($binaryData);
-            $finalData = $optimized['data'];
-            $extension = $optimized['extension'];
-
-            // Ensure public directory exists
-            $storageDir = 'article-images';
-            if (!Storage::disk('public')->exists($storageDir)) {
-                Storage::disk('public')->makeDirectory($storageDir);
-            }
-
-            // Safe SEO filename
-            $safeBase = !empty($slug) ? Str::slug($slug) : Str::slug($title ?: $topic);
-            if (empty($safeBase)) {
-                $safeBase = 'article-featured';
-            }
-            $filename = mb_substr($safeBase, 0, 50) . '-' . time() . '-' . Str::random(4) . '.' . $extension;
-            $storagePath = $storageDir . '/' . $filename;
-
-            Storage::disk('public')->put($storagePath, $finalData);
-            $publicUrl = asset('storage/' . $storagePath);
-
-            return [
-                'url' => $publicUrl,
-                'path' => $storagePath,
-                'filename' => $filename,
-                'prompt' => $prompt,
-                'alt_text' => $title ?: $topic,
-                'width' => $optimized['width'],
-                'height' => $optimized['height'],
-                'mime' => $optimized['mime'],
-                'size_bytes' => strlen($finalData),
-            ];
+            return $this->saveOptimizedImage($optimized, $title, $topic, $slug, $prompt, 'ai_generated');
 
         } catch (\Throwable $e) {
-            Log::error('[FeaturedImageService] Exception during image generation: ' . $e->getMessage(), [
+            Log::error('[FeaturedImageService] Exception during AI image generation: ' . $e->getMessage(), [
                 'trace' => $e->getTraceAsString(),
             ]);
             return null;
         }
+    }
+
+    /**
+     * Persist optimized image to disk and prepare metadata.
+     */
+    protected function saveOptimizedImage(
+        array $optimized,
+        string $title,
+        string $topic,
+        string $slug,
+        string $prompt,
+        string $source = 'editorial_real',
+        ?string $originalUrl = null
+    ): array {
+        $finalData = $optimized['data'];
+        $extension = $optimized['extension'];
+
+        $storageDir = 'article-images';
+        if (!Storage::disk('public')->exists($storageDir)) {
+            Storage::disk('public')->makeDirectory($storageDir);
+        }
+
+        $safeBase = !empty($slug) ? Str::slug($slug) : Str::slug($title ?: $topic);
+        if (empty($safeBase)) {
+            $safeBase = 'article-featured';
+        }
+        $filename = mb_substr($safeBase, 0, 50) . '-' . time() . '-' . Str::random(4) . '.' . $extension;
+        $storagePath = $storageDir . '/' . $filename;
+
+        Storage::disk('public')->put($storagePath, $finalData);
+        $publicUrl = asset('storage/' . $storagePath);
+
+        return [
+            'url' => $publicUrl,
+            'path' => $storagePath,
+            'filename' => $filename,
+            'prompt' => $prompt,
+            'alt_text' => $title ?: $topic,
+            'width' => $optimized['width'],
+            'height' => $optimized['height'],
+            'mime' => $optimized['mime'],
+            'size_bytes' => strlen($finalData),
+            'source' => $source,
+            'original_source_url' => $originalUrl,
+        ];
     }
 
     /**
@@ -260,13 +441,19 @@ class FeaturedImageService
 
             imagecopyresampled($dest, $src, 0, 0, $cropX, $cropY, $targetW, $targetH, $cropW, $cropH);
 
+            // Editorial touch: subtle contrast and clarity boost for sharp, high-impact newsroom visuals
+            if (function_exists('imagefilter')) {
+                @imagefilter($dest, IMG_FILTER_CONTRAST, -3);
+                @imagefilter($dest, IMG_FILTER_BRIGHTNESS, 2);
+            }
+
             $outputData = null;
             $extension = 'webp';
             $mime = 'image/webp';
 
             if (function_exists('imagewebp')) {
                 ob_start();
-                imagewebp($dest, null, 86);
+                imagewebp($dest, null, 88);
                 $outputData = ob_get_clean();
             } elseif (function_exists('imagejpeg')) {
                 ob_start();
