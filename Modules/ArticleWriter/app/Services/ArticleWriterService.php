@@ -467,7 +467,7 @@ class ArticleWriterService
         $cached = Cache::get($cacheKey);
         if ($cached) return $cached;
 
-        $limit = (int) Setting::get("article-writer_live_search_limit", 15);
+        $limit = (int) Setting::get("article-writer_live_search_limit", 20);
         $isTimeSensitive = (bool) preg_match('/سعر|مباراة|ماتش|نتيجة|أهداف|اهداف|دوري|كأس|تشكيل|ترتيب|ذهب|دولار|عملات|بورصة|أخبار|اخبار|عاجل|قرعة|امتحانات|نتائج|price|score|match|result|today|live|news|vs\b/iu', $keyword);
 
         $queries = [];
