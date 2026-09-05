@@ -127,14 +127,33 @@ class FeaturedImageService
     {
         $candidateQueries = $this->buildEditorialSearchQueries($title, $topic);
 
+        $blockedDomains = [
+            'wallpapers.com', 'wallpaperflare.com', 'pinterest.com',
+            'freepik.com', 'vectorstock.com', 'cleanpng.com', 'pngtree.com'
+        ];
+
         foreach ($candidateQueries as $q) {
-            $urls = $this->searchBingImages($q);
+            // 1. Try DuckDuckGo first (superior for authentic regional news/celebrity photography)
+            $urls = $this->searchDuckDuckGoImages($q);
+
+            // 2. Fallback to Bing if DDG returned no results
+            if (empty($urls)) {
+                $urls = $this->searchBingImages($q);
+            }
+
             if (empty($urls)) {
                 continue;
             }
 
-            // Try downloading top 3 candidate images
-            foreach (array_slice($urls, 0, 3) as $url) {
+            // Try downloading top 4 candidate images
+            foreach (array_slice($urls, 0, 4) as $url) {
+                $host = strtolower(parse_url($url, PHP_URL_HOST) ?? '');
+                foreach ($blockedDomains as $badDomain) {
+                    if (str_contains($host, $badDomain)) {
+                        continue 2;
+                    }
+                }
+
                 try {
                     $response = Http::timeout(7)
                         ->withHeaders([
@@ -179,6 +198,53 @@ class FeaturedImageService
         }
 
         return null;
+    }
+
+    /**
+     * Search DuckDuckGo Images for authentic news and editorial photos.
+     */
+    protected function searchDuckDuckGoImages(string $query): array
+    {
+        try {
+            $ch = curl_init('https://duckduckgo.com/?q=' . urlencode($query));
+            curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+            curl_setopt($ch, CURLOPT_USERAGENT, 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36');
+            curl_setopt($ch, CURLOPT_TIMEOUT, 6);
+            curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, false);
+            $html = curl_exec($ch);
+            curl_close($ch);
+
+            if (!preg_match('/vqd=([\x27\x22])?([0-9\-]+)/', $html, $m)) {
+                return [];
+            }
+
+            $vqd = $m[2];
+            $apiUrl = 'https://duckduckgo.com/i.js?l=wt-wt&o=json&q=' . urlencode($query) . '&vqd=' . $vqd . '&f=,,,';
+            $ch2 = curl_init($apiUrl);
+            curl_setopt($ch2, CURLOPT_RETURNTRANSFER, true);
+            curl_setopt($ch2, CURLOPT_USERAGENT, 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36');
+            curl_setopt($ch2, CURLOPT_HTTPHEADER, ['Referer: https://duckduckgo.com/']);
+            curl_setopt($ch2, CURLOPT_TIMEOUT, 6);
+            curl_setopt($ch2, CURLOPT_SSL_VERIFYPEER, false);
+            $json = curl_exec($ch2);
+            curl_close($ch2);
+
+            $data = json_decode($json, true);
+            $results = $data['results'] ?? [];
+            $images = [];
+
+            foreach ($results as $item) {
+                $imgUrl = $item['image'] ?? null;
+                if (!empty($imgUrl) && filter_var($imgUrl, FILTER_VALIDATE_URL) && !str_ends_with(strtolower($imgUrl), '.svg')) {
+                    $images[] = $imgUrl;
+                }
+            }
+
+            return array_values(array_unique($images));
+        } catch (\Throwable $e) {
+            Log::warning('[FeaturedImageService] DuckDuckGo image search failure: ' . $e->getMessage());
+            return [];
+        }
     }
 
     /**
