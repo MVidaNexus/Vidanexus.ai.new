@@ -407,6 +407,32 @@
                         </div>
                     </div>
 
+                    <!-- AI Featured Image Toggle (16:9 Google Discover Ready) -->
+                    <div style="margin-bottom: 2rem;">
+                        <div style="padding: 1.1rem 1.25rem; background: rgba(168, 85, 247, 0.07); border: 1px solid rgba(168, 85, 247, 0.28); border-radius: 16px; display: flex; align-items: center; justify-content: space-between; gap: 1rem; cursor: pointer; transition: all 0.25s ease;" 
+                             @click="form.generate_featured_image = !form.generate_featured_image"
+                             :style="form.generate_featured_image ? 'border-color: rgba(168, 85, 247, 0.5); background: rgba(168, 85, 247, 0.1);' : 'opacity: 0.75;'">
+                            <div style="display: flex; align-items: center; gap: 0.95rem; min-width: 0;">
+                                <div style="width: 44px; height: 44px; border-radius: 12px; background: rgba(168, 85, 247, 0.18); display: flex; align-items: center; justify-content: center; color: #c084fc; font-size: 1.2rem; flex-shrink: 0; box-shadow: 0 4px 12px rgba(168, 85, 247, 0.25);">
+                                    <i class="fas fa-image"></i>
+                                </div>
+                                <div style="min-width: 0;">
+                                    <div style="font-size: 0.92rem; font-weight: 800; color: #fff; display: flex; align-items: center; gap: 0.5rem; flex-wrap: wrap;">
+                                        <span x-text="form.language === 'ar' ? 'توليد صورة بارزة بالذكاء الاصطناعي تلقائياً' : 'Auto-Generate AI Featured Image'"></span>
+                                        <span style="background: rgba(168, 85, 247, 0.25); color: #d8b4fe; border: 1px solid rgba(168, 85, 247, 0.4); font-size: 0.65rem; padding: 0.15rem 0.55rem; border-radius: 20px; font-weight: 800;">16:9 Google Discover</span>
+                                    </div>
+                                    <div style="font-size: 0.76rem; color: #94a3b8; margin-top: 3px; line-height: 1.4;" x-text="form.language === 'ar' ? 'توليد صورة سينمائية بدون نصوص، تُرفع وتُعيّن كصورة بارزة عند النشر في ووردبريس' : 'Creates an editorial landscape image without text, auto-uploaded as featured media to WordPress'"></div>
+                                </div>
+                            </div>
+                            <!-- Switch Button -->
+                            <div style="width: 48px; height: 26px; border-radius: 20px; transition: background 0.3s; position: relative; flex-shrink: 0;"
+                                 :style="form.generate_featured_image ? 'background: #a855f7;' : 'background: rgba(255,255,255,0.15);'">
+                                <div style="width: 20px; height: 20px; border-radius: 50%; background: #fff; position: absolute; top: 3px; transition: transform 0.3s; box-shadow: 0 2px 4px rgba(0,0,0,0.3);"
+                                     :style="form.generate_featured_image ? (form.language === 'ar' ? 'transform: translateX(-24px);' : 'transform: translateX(24px);') : (form.language === 'ar' ? 'transform: translateX(-3px);' : 'transform: translateX(3px);')"></div>
+                            </div>
+                        </div>
+                    </div>
+
                     <!-- Generate Button -->
                     <div>
                         <button @click="generate()" 
@@ -542,6 +568,60 @@
                                 </div>
                             </div>
 
+                            <!-- 16:9 AI Featured Image Display in Read View -->
+                            <div style="margin-bottom: 2.25rem;">
+                                <!-- Image Card if image exists and not generating -->
+                                <template x-if="currentArticle?.seo_data?.featured_image?.url && !isGeneratingImage">
+                                    <div style="position: relative; border-radius: 18px; overflow: hidden; border: 1px solid rgba(255, 255, 255, 0.12); box-shadow: 0 10px 30px rgba(0,0,0,0.5); background: #0f1015;">
+                                        <img :src="currentArticle.seo_data.featured_image.url" 
+                                             :alt="currentArticle.seo_data.featured_image.alt_text || currentArticle.title"
+                                             style="width: 100%; aspect-ratio: 16 / 9; object-fit: cover; display: block;">
+                                        <!-- Overlay bar with badges and action buttons -->
+                                        <div style="position: absolute; bottom: 0; left: 0; right: 0; padding: 1.25rem 1.5rem; background: linear-gradient(to top, rgba(0,0,0,0.92) 0%, rgba(0,0,0,0.4) 70%, transparent 100%); display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 0.75rem;">
+                                            <div style="display: flex; align-items: center; gap: 0.6rem; flex-wrap: wrap;">
+                                                <span style="background: rgba(168, 85, 247, 0.25); color: #c084fc; border: 1px solid rgba(168, 85, 247, 0.4); padding: 0.3rem 0.75rem; border-radius: 20px; font-size: 0.75rem; font-weight: 800; display: inline-flex; align-items: center; gap: 5px;">
+                                                    <i class="fas fa-sparkles"></i> 16:9 Google Discover
+                                                </span>
+                                                <span style="background: rgba(0,0,0,0.6); color: #94a3b8; border: 1px solid rgba(255,255,255,0.1); padding: 0.3rem 0.65rem; border-radius: 20px; font-size: 0.72rem; font-weight: 700;" x-text="form.language === 'ar' ? 'صورة بارزة بالذكاء الاصطناعي' : 'AI Featured Image'"></span>
+                                            </div>
+                                            <div style="display: flex; align-items: center; gap: 0.5rem;">
+                                                <a :href="currentArticle.seo_data.featured_image.url" download target="_blank" style="background: rgba(255,255,255,0.15); color: #fff; border: 1px solid rgba(255,255,255,0.25); padding: 0.4rem 0.85rem; border-radius: 10px; font-size: 0.76rem; font-weight: 700; text-decoration: none; display: inline-flex; align-items: center; gap: 5px; backdrop-filter: blur(8px);">
+                                                    <i class="fas fa-download"></i> <span x-text="form.language === 'ar' ? 'تحميل' : 'Download'"></span>
+                                                </a>
+                                                <button type="button" @click="regenerateFeaturedImage()" :disabled="isGeneratingImage" style="background: rgba(168, 85, 247, 0.35); color: #fff; border: 1px solid rgba(168, 85, 247, 0.5); padding: 0.4rem 0.85rem; border-radius: 10px; font-size: 0.76rem; font-weight: 700; cursor: pointer; display: inline-flex; align-items: center; gap: 5px; backdrop-filter: blur(8px);">
+                                                    <i class="fas fa-sync-alt" :class="isGeneratingImage ? 'fa-spin' : ''"></i> <span x-text="form.language === 'ar' ? 'إعادة توليد' : 'Regenerate'"></span>
+                                                </button>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </template>
+
+                                <!-- Loading state during generation/regeneration -->
+                                <div x-show="isGeneratingImage" style="aspect-ratio: 16 / 9; border-radius: 18px; display: flex; flex-direction: column; align-items: center; justify-content: center; background: rgba(15, 16, 21, 0.95); border: 1px solid rgba(168, 85, 247, 0.3); gap: 1rem;">
+                                    <div style="width: 48px; height: 48px; border-radius: 50%; border: 3px solid rgba(168, 85, 247, 0.2); border-top-color: #a855f7; animation: fa-spin 1s linear infinite;"></div>
+                                    <div style="font-size: 0.95rem; font-weight: 700; color: #e2e8f0;" x-text="form.language === 'ar' ? 'جارٍ رسم وتوليد صورة سينمائية 16:9 فائقة الجودة...' : 'Generating 16:9 cinematic editorial image...'"></div>
+                                    <div style="font-size: 0.78rem; color: #94a3b8;" x-text="form.language === 'ar' ? 'نموذج Gemini 2.5 Flash Image عبر OpenRouter' : 'Powered by Gemini 2.5 Flash Image'"></div>
+                                </div>
+
+                                <!-- Button to generate image if none exists -->
+                                <template x-if="!currentArticle?.seo_data?.featured_image && !isGeneratingImage">
+                                    <div style="padding: 1.1rem 1.5rem; background: rgba(168, 85, 247, 0.08); border: 1px dashed rgba(168, 85, 247, 0.35); border-radius: 16px; display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 1rem;">
+                                        <div style="display: flex; align-items: center; gap: 0.85rem;">
+                                            <div style="width: 40px; height: 40px; border-radius: 12px; background: rgba(168, 85, 247, 0.2); display: flex; align-items: center; justify-content: center; color: #c084fc; font-size: 1.1rem;">
+                                                <i class="fas fa-image"></i>
+                                            </div>
+                                            <div>
+                                                <div style="font-size: 0.9rem; font-weight: 800; color: #fff;" x-text="form.language === 'ar' ? 'أضف صورة بارزة بالذكاء الاصطناعي للمقال' : 'Generate AI Featured Image'"></div>
+                                                <div style="font-size: 0.75rem; color: #94a3b8;" x-text="form.language === 'ar' ? 'صورة سينمائية 16:9 متوافقة مع Google Discover وSEO' : 'Cinematic 16:9 landscape image ready for Google Discover & SEO'"></div>
+                                            </div>
+                                        </div>
+                                        <button type="button" @click="regenerateFeaturedImage()" class="btn-wp-primary" style="background: linear-gradient(135deg, #a855f7, #6366f1) !important; border: none !important; padding: 0.55rem 1.25rem !important; font-size: 0.82rem !important;">
+                                            <i class="fas fa-magic"></i> <span x-text="form.language === 'ar' ? 'توليد الصورة الآن' : 'Generate Now'"></span>
+                                        </button>
+                                    </div>
+                                </template>
+                            </div>
+
                             <div x-html="currentArticle.content"></div>
                         </div>
 
@@ -616,6 +696,44 @@
                                 <p style="font-size: 0.7rem; color: var(--aw-text-dim); margin-top: 0.85rem; margin-bottom: 0; line-height: 1.5;" x-text="t('url_note')">
                                     Auto-generated from the article title. Both slugs are sanitized for SEO — English is lowercase ASCII, Arabic preserves native letters with hyphens.
                                 </p>
+                            </div>
+
+                            <!-- Featured Image & Alt Text in SEO View -->
+                            <div style="margin-bottom: 1.5rem; padding: 1.5rem; background: var(--aw-surface); border: 1px solid var(--aw-border); border-radius: 16px;">
+                                <div class="aw-label" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.85rem;">
+                                    <span><i class="fas fa-image" style="color: #a855f7;"></i> <span x-text="form.language === 'ar' ? 'الصورة البارزة وبيانات الـ SEO' : 'Featured Image & Alt Text'"></span></span>
+                                    <button type="button" @click="regenerateFeaturedImage()" :disabled="isGeneratingImage" style="background: rgba(168, 85, 247, 0.15); border: 1px solid rgba(168, 85, 247, 0.35); color: #c084fc; padding: 0.3rem 0.75rem; border-radius: 8px; font-size: 0.75rem; font-weight: 700; cursor: pointer; display: inline-flex; align-items: center; gap: 5px;">
+                                        <i class="fas fa-sync-alt" :class="isGeneratingImage ? 'fa-spin' : ''"></i> <span x-text="form.language === 'ar' ? 'إعادة توليد الصورة' : 'Regenerate'"></span>
+                                    </button>
+                                </div>
+                                <template x-if="currentArticle?.seo_data?.featured_image?.url">
+                                    <div style="display: flex; gap: 1.25rem; align-items: center; flex-wrap: wrap;">
+                                        <div style="width: 200px; aspect-ratio: 16 / 9; border-radius: 12px; overflow: hidden; border: 1px solid rgba(255,255,255,0.1); flex-shrink: 0; background: #000;">
+                                            <img :src="currentArticle.seo_data.featured_image.url" style="width: 100%; height: 100%; object-fit: cover; display: block;" :alt="currentArticle.seo_data.featured_image.alt_text">
+                                        </div>
+                                        <div style="flex: 1; min-width: 220px;">
+                                            <div style="margin-bottom: 0.6rem;">
+                                                <div style="font-size: 0.65rem; color: var(--aw-text-label); font-weight: 800; text-transform: uppercase;">Alt Text (النص البديل المعين في ووردبريس)</div>
+                                                <div style="font-size: 0.88rem; color: #fff; font-weight: 700; margin-top: 2px;" x-text="currentArticle.seo_data.featured_image.alt_text || currentArticle.title"></div>
+                                            </div>
+                                            <div style="margin-bottom: 0.6rem; display: flex; align-items: center; gap: 0.5rem; flex-wrap: wrap;">
+                                                <span style="background: rgba(16, 185, 129, 0.15); color: #10b981; border: 1px solid rgba(16, 185, 129, 0.3); font-size: 0.72rem; padding: 0.2rem 0.55rem; border-radius: 6px; font-weight: 700;">16:9 Landscape</span>
+                                                <span style="background: rgba(168, 85, 247, 0.15); color: #c084fc; border: 1px solid rgba(168, 85, 247, 0.3); font-size: 0.72rem; padding: 0.2rem 0.55rem; border-radius: 6px; font-weight: 700;">Google Discover Ready</span>
+                                            </div>
+                                            <div>
+                                                <a :href="currentArticle.seo_data.featured_image.url" target="_blank" download style="color: #38bdf8; font-size: 0.76rem; text-decoration: underline; font-weight: 700; display: inline-flex; align-items: center; gap: 4px;">
+                                                    <i class="fas fa-external-link-alt"></i> <span x-text="form.language === 'ar' ? 'عرض الصورة بالحجم الأصلي' : 'View Full Image'"></span>
+                                                </a>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </template>
+                                <template x-if="!currentArticle?.seo_data?.featured_image?.url">
+                                    <div style="text-align: center; padding: 1.25rem; color: #94a3b8; font-size: 0.82rem;">
+                                        <i class="fas fa-image" style="font-size: 1.5rem; margin-bottom: 0.5rem; display: block; opacity: 0.5;"></i>
+                                        <span x-text="form.language === 'ar' ? 'لم يتم توليد صورة بارزة لهذا المقال بعد. اضغط إعادة توليد لتوليدها فوراً.' : 'No featured image generated yet. Click regenerate to create one now.'"></span>
+                                    </div>
+                                </template>
                             </div>
 
                             <!-- Google Preview -->
@@ -817,6 +935,46 @@
                             <option value="pending" x-text="form.language === 'ar' ? 'قيد المراجعة (Pending)' : 'Pending Review'"></option>
                             <option value="publish" x-text="form.language === 'ar' ? 'نشر مباشر (Publish)' : 'Publish Live'"></option>
                         </select>
+                    </div>
+                </div>
+
+                <!-- Featured Image in WordPress Modal -->
+                <div style="margin-bottom: 1.15rem;" x-show="wpPublishForm.featured_image_url">
+                    <div class="aw-label" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.5rem;">
+                        <span><i class="fas fa-image" style="color: #a855f7;"></i> <span x-text="form.language === 'ar' ? 'الصورة البارزة (Featured Image)' : 'Featured Image'"></span></span>
+                        <label style="display: flex; align-items: center; gap: 7px; font-size: 0.78rem; color: #d8b4fe; cursor: pointer; margin: 0; user-select: none;">
+                            <input type="checkbox" x-model="wpPublishForm.include_featured_image" style="accent-color: #a855f7; width: 16px; height: 16px; cursor: pointer;">
+                            <span x-text="form.language === 'ar' ? 'رفع وتعيين كصورة بارزة للمقال' : 'Upload & set as featured media'"></span>
+                        </label>
+                    </div>
+                    <div style="position: relative; border-radius: 14px; overflow: hidden; border: 1px solid rgba(168, 85, 247, 0.3); background: #0b0c10;">
+                        <img :src="wpPublishForm.featured_image_url" style="width: 100%; height: 165px; object-fit: cover; display: block;" :alt="wpPublishForm.title">
+                        <div style="position: absolute; bottom: 0; left: 0; right: 0; padding: 0.5rem 0.85rem; background: linear-gradient(transparent, rgba(0,0,0,0.85)); display: flex; justify-content: space-between; align-items: center;">
+                            <span style="font-size: 0.72rem; color: #cbd5e1; font-weight: 700; display: inline-flex; align-items: center; gap: 4px;">
+                                <i class="fas fa-sparkles" style="color: #a855f7;"></i> 16:9 Google Discover Ready
+                            </span>
+                            <span style="font-size: 0.72rem; font-weight: 800;" :style="wpPublishForm.include_featured_image ? 'color: #10b981;' : 'color: #94a3b8;'">
+                                <i :class="wpPublishForm.include_featured_image ? 'fas fa-check-circle' : 'fas fa-minus-circle'"></i>
+                                <span x-text="wpPublishForm.include_featured_image ? (form.language === 'ar' ? 'سيتم رفعها للميديا' : 'Will upload to media') : (form.language === 'ar' ? 'مستثناة من الرفع' : 'Excluded from upload')"></span>
+                            </span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Fallback to generate image if article has no image yet -->
+                <div style="margin-bottom: 1.15rem;" x-show="!wpPublishForm.featured_image_url">
+                    <div style="padding: 0.85rem 1.1rem; background: rgba(168, 85, 247, 0.08); border: 1px dashed rgba(168, 85, 247, 0.35); border-radius: 14px; display: flex; align-items: center; justify-content: space-between; gap: 0.85rem; flex-wrap: wrap;">
+                        <div style="display: flex; align-items: center; gap: 0.75rem;">
+                            <i class="fas fa-image" style="color: #a855f7; font-size: 1.25rem;"></i>
+                            <div>
+                                <div style="font-size: 0.82rem; font-weight: 700; color: #fff;" x-text="form.language === 'ar' ? 'لم يتم توليد صورة بارزة بعد' : 'No featured image yet'"></div>
+                                <div style="font-size: 0.72rem; color: #94a3b8;" x-text="form.language === 'ar' ? 'يمكنك توليد صورة 16:9 سينمائية متوافقة مع Discover' : 'You can generate a 16:9 cinematic Discover image'"></div>
+                            </div>
+                        </div>
+                        <button type="button" @click="regenerateFeaturedImage()" :disabled="isGeneratingImage" class="btn-wp-pill-test" style="background: rgba(168, 85, 247, 0.2); border-color: rgba(168, 85, 247, 0.4); color: #c084fc; font-size: 0.76rem !important; padding: 0.45rem 0.9rem !important; flex-shrink: 0;">
+                            <i :class="isGeneratingImage ? 'fas fa-spinner fa-spin' : 'fas fa-magic'"></i>
+                            <span x-text="isGeneratingImage ? (form.language === 'ar' ? 'جارٍ التوليد...' : 'Generating...') : (form.language === 'ar' ? 'توليد صورة الآن' : 'Generate Now')"></span>
+                        </button>
                     </div>
                 </div>
 
@@ -2078,6 +2236,7 @@ function articleWriter() {
         settings: @json($settings),
         cmsConnections: @json($cmsConnections ?? []),
         currentArticle: null,
+        isGeneratingImage: false,
 
         // WordPress Integration State
         isWpPublishOpen: false,
@@ -2095,7 +2254,10 @@ function articleWriter() {
             newTagInput: '',
             category_id: '',
             status: 'draft',
-            slug: ''
+            slug: '',
+            include_featured_image: true,
+            featured_image_url: '',
+            featured_image_path: ''
         },
         wpConnectForm: {
             name: '',
@@ -2112,7 +2274,8 @@ function articleWriter() {
             tone: 'professional',
             audience: 'general',
             word_count: {{ $settings['default_word_count'] ?? 1500 }},
-            components: []
+            components: [],
+            generate_featured_image: true
         },
 
         i18n: {
@@ -2721,6 +2884,77 @@ function articleWriter() {
             return date.toLocaleDateString(locale, { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' });
         },
 
+        /**
+         * Regenerate or generate on-demand AI featured image for article
+         */
+        async regenerateFeaturedImage(articleTarget = null) {
+            const art = articleTarget || this.currentArticle;
+            if (!art) return;
+
+            this.isGeneratingImage = true;
+            try {
+                const endpoint = art.id
+                    ? `{{ url('dashboard/article-writer/articles') }}/${art.id}/generate-image`
+                    : `{{ url('dashboard/article-writer/generate-image') }}`;
+
+                const payload = art.id
+                    ? {}
+                    : {
+                        title: art.title || this.form.keyword,
+                        keyword: this.form.keyword,
+                        language: art.language || this.form.language
+                    };
+
+                const res = await fetch(endpoint, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRF-TOKEN': '{{ csrf_token() }}',
+                        'Accept': 'application/json'
+                    },
+                    body: JSON.stringify(payload)
+                });
+
+                const data = await res.json();
+                if (data.status === 'success' && data.featured_image) {
+                    if (this.currentArticle) {
+                        this.currentArticle.seo_data = this.currentArticle.seo_data || {};
+                        this.currentArticle.seo_data.featured_image = data.featured_image;
+                    }
+
+                    if (art.id) {
+                        const found = this.history.find(h => h.id == art.id);
+                        if (found) {
+                            found.seo_data = found.seo_data || {};
+                            found.seo_data.featured_image = data.featured_image;
+                        }
+                    }
+
+                    // Update wpPublishForm
+                    this.wpPublishForm.featured_image_url = data.featured_image.url;
+                    this.wpPublishForm.featured_image_path = data.featured_image.path;
+                    this.wpPublishForm.include_featured_image = true;
+
+                    Swal.fire({
+                        toast: true,
+                        position: 'top-end',
+                        icon: 'success',
+                        title: this.form.language === 'ar' ? 'تم توليد الصورة البارزة بنجاح' : 'Featured image generated successfully',
+                        showConfirmButton: false,
+                        timer: 3000,
+                        background: '#17181c',
+                        color: '#fff'
+                    });
+                } else {
+                    this.showError(data.message || (this.form.language === 'ar' ? 'فشل توليد الصورة' : 'Failed to generate image'));
+                }
+            } catch (err) {
+                this.showError(this.form.language === 'ar' ? 'خطأ في الاتصال أثناء توليد الصورة' : 'Network error generating image');
+            } finally {
+                this.isGeneratingImage = false;
+            }
+        },
+
         /* ============================================================
          * WORDPRESS & CMS INTEGRATION METHODS
          * ============================================================ */
@@ -2761,6 +2995,11 @@ function articleWriter() {
             this.wpPublishForm.tags = (seo.tags && Array.isArray(seo.tags) && seo.tags.length > 0)
                 ? [...seo.tags]
                 : this.extractSuggestedTags(art);
+
+            const featImg = (seo && seo.featured_image) ? seo.featured_image : null;
+            this.wpPublishForm.include_featured_image = !!featImg;
+            this.wpPublishForm.featured_image_url = featImg?.url || '';
+            this.wpPublishForm.featured_image_path = featImg?.path || '';
 
             if (this.cmsConnections.length > 0) {
                 if (!this.wpPublishForm.connection_id || !this.cmsConnections.find(c => c.id == this.wpPublishForm.connection_id)) {
@@ -2877,6 +3116,9 @@ function articleWriter() {
                         category_id: this.wpPublishForm.category_id || null,
                         status: this.wpPublishForm.status || 'draft',
                         slug: this.wpPublishForm.slug || null,
+                        include_featured_image: this.wpPublishForm.include_featured_image,
+                        featured_image_url: this.wpPublishForm.featured_image_url,
+                        featured_image_path: this.wpPublishForm.featured_image_path,
                     })
                 });
 
@@ -2893,6 +3135,7 @@ function articleWriter() {
                         post_id: data.post_id,
                         post_url: data.post_url,
                         edit_url: data.edit_url,
+                        featured_media_id: data.featured_media_id || null,
                         synced_at: new Date().toISOString()
                     };
 

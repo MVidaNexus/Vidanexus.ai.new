@@ -188,6 +188,9 @@ class CmsIntegrationController extends Controller
             'category_id' => 'nullable|integer',
             'status' => 'nullable|string|in:draft,pending,publish',
             'slug' => 'nullable|string|max:255',
+            'include_featured_image' => 'nullable|boolean',
+            'featured_image_url' => 'nullable|string',
+            'featured_image_path' => 'nullable|string',
         ]);
 
         $article = ArticleHistory::where('user_id', auth()->id())->findOrFail($id);
@@ -214,6 +217,9 @@ class CmsIntegrationController extends Controller
             'status' => $request->input('status', 'draft'),
             'slug' => $request->input('slug'),
             'focus_keyword' => $article->seo_data['focus_keyword'] ?? $article->topic,
+            'include_featured_image' => $request->boolean('include_featured_image', true),
+            'featured_image_url' => $request->input('featured_image_url'),
+            'featured_image_path' => $request->input('featured_image_path'),
         ];
 
         $result = $this->cmsManager->publishArticle($connection, $article, $options);
@@ -233,6 +239,7 @@ class CmsIntegrationController extends Controller
             'edit_url' => $result['edit_url'] ?? null,
             'status_name' => $result['status'] ?? 'draft',
             'tags_count' => $result['tags_attached'] ?? 0,
+            'featured_media_id' => $result['featured_media_id'] ?? null,
         ]);
     }
 

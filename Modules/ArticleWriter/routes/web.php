@@ -30,5 +30,9 @@ Route::prefix('dashboard/article-writer')->middleware(['auth', 'tool.access:arti
     Route::delete('/cms/connections/{id}', [\Modules\ArticleWriter\Http\Controllers\CmsIntegrationController::class, 'destroy'])->name('dashboard.article-writer.cms.destroy');
     Route::get('/cms/connections/{id}/categories', [\Modules\ArticleWriter\Http\Controllers\CmsIntegrationController::class, 'categories'])->name('dashboard.article-writer.cms.categories');
     Route::post('/articles/{id}/publish-cms', [\Modules\ArticleWriter\Http\Controllers\CmsIntegrationController::class, 'publish'])->name('dashboard.article-writer.cms.publish');
+
+    // Featured Image Generation
+    Route::post('/generate-image', [ArticleWriterController::class, 'generateFeaturedImage'])->name('dashboard.article-writer.generate-image');
+    Route::post('/articles/{id}/generate-image', [ArticleWriterController::class, 'generateFeaturedImage'])->name('dashboard.article-writer.article-image');
 });
 

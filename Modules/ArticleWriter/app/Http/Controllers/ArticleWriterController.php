@@ -9,6 +9,7 @@ use App\Http\Responses\AIResponse;
 use Illuminate\Http\Request;
 use Modules\ArticleWriter\Services\ArticleWriterService;
 use Modules\ArticleWriter\Services\SlugSuggester;
+use Modules\ArticleWriter\Services\FeaturedImageService;
 use Modules\ArticleWriter\Models\ArticleHistory;
 use App\Models\Setting;
 use Illuminate\Support\Facades\DB;
@@ -17,11 +18,13 @@ class ArticleWriterController extends Controller
 {
     protected $service;
     protected SlugSuggester $slugger;
+    protected FeaturedImageService $imageService;
 
-    public function __construct(ArticleWriterService $service, SlugSuggester $slugger)
+    public function __construct(ArticleWriterService $service, SlugSuggester $slugger, FeaturedImageService $imageService)
     {
         $this->service = $service;
         $this->slugger = $slugger;
+        $this->imageService = $imageService;
     }
 
     /**
@@ -83,6 +86,7 @@ class ArticleWriterController extends Controller
             'components' => 'nullable|array',
             'components.*' => 'string|max:32|regex:/^[a-zA-Z0-9_\-]+$/',
             'additional_instructions' => 'nullable|string|max:2000',
+            'generate_featured_image' => 'nullable|boolean',
         ]);
 
         $user = auth()->user();
@@ -139,6 +143,21 @@ class ArticleWriterController extends Controller
                 $slugAr = $this->slugger->arabic($resolvedTitle, $request->language);
             }
 
+            // Generate AI Featured Image (16:9 Google Discover optimized)
+            $featuredImage = null;
+            if ($request->boolean('generate_featured_image', true)) {
+                try {
+                    $featuredImage = $this->imageService->generateForArticle(
+                        $resolvedTitle,
+                        $request->keyword,
+                        $slugEn ?: $slugAr,
+                        $request->language
+                    );
+                } catch (\Throwable $e) {
+                    \Illuminate\Support\Facades\Log::warning('[ArticleWriter] Featured image generation failed: ' . $e->getMessage());
+                }
+            }
+
             // 4. Save to History
             $history = ArticleHistory::create([
                 'user_id' => $user->id,
@@ -160,6 +179,7 @@ class ArticleWriterController extends Controller
                     'tags' => $parsed['tags'] ?? [],
                     'slug_en' => $slugEn,
                     'slug_ar' => $slugAr,
+                    'featured_image' => $featuredImage,
                     'site_domain' => $this->siteDomain(),
                     'full_raw' => $result['text'] ?? '',
                 ],
@@ -188,6 +208,7 @@ class ArticleWriterController extends Controller
 
             return AIResponse::success([
                 'article' => $history,
+                'featured_image' => $featuredImage,
                 'balance' => $freshBalance,
                 'credits_balance' => $freshBalance,
                 'provider_used' => $result['provider_used'] ?? ($result['provider'] ?? 'unknown'),
@@ -293,6 +314,61 @@ class ArticleWriterController extends Controller
         $article = ArticleHistory::where('user_id', auth()->id())->findOrFail($id);
         $article->delete();
         return response()->json(['status' => 'success']);
+    }
+
+    /**
+     * Generate or regenerate AI featured image for an article or active draft.
+     */
+    public function generateFeaturedImage(Request $request, $id = null)
+    {
+        $articleId = $id ?: $request->input('article_id');
+        $article = null;
+
+        if ($articleId) {
+            $article = ArticleHistory::where('user_id', auth()->id())->findOrFail($articleId);
+            $title = $article->title;
+            $topic = $article->seo_data['focus_keyword'] ?? $article->keyword ?? $title;
+            $slug = $article->seo_data['slug_en'] ?? $article->seo_data['slug_ar'] ?? '';
+            $language = $article->language ?? 'ar';
+        } else {
+            $request->validate([
+                'title' => 'required|string|max:500',
+                'keyword' => 'nullable|string|max:255',
+                'language' => 'nullable|string|max:10',
+            ]);
+            $title = $request->input('title');
+            $topic = $request->input('keyword') ?: $title;
+            $slug = $request->input('slug', '');
+            $language = $request->input('language', 'ar');
+        }
+
+        try {
+            $image = $this->imageService->generateForArticle($title, $topic, $slug, $language);
+
+            if (!$image) {
+                return response()->json([
+                    'status' => 'error',
+                    'message' => 'تعذر توليد الصورة، يرجى التحقق من إعدادات الذكاء الاصطناعي والمحاولة مرة أخرى.',
+                ], 500);
+            }
+
+            if ($article) {
+                $seoData = $article->seo_data ?? [];
+                $seoData['featured_image'] = $image;
+                $article->update(['seo_data' => $seoData]);
+            }
+
+            return response()->json([
+                'status' => 'success',
+                'featured_image' => $image,
+            ]);
+        } catch (\Throwable $e) {
+            \Illuminate\Support\Facades\Log::error('[ArticleWriter] Manual image generation error: ' . $e->getMessage());
+            return response()->json([
+                'status' => 'error',
+                'message' => 'حدث خطأ أثناء توليد الصورة: ' . $e->getMessage(),
+            ], 500);
+        }
     }
 
     /**

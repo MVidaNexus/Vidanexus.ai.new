@@ -4,6 +4,8 @@ namespace Modules\ArticleWriter\Services\CMS\Providers;
 
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Str;
 use Modules\ArticleWriter\Models\ArticleHistory;
 use Modules\ArticleWriter\Models\UserCmsConnection;
 use Modules\ArticleWriter\Services\CMS\CmsProviderInterface;
@@ -196,6 +198,68 @@ class WordPressProvider implements CmsProviderInterface
         } catch (\Throwable $e) {
             Log::error('[WordPressProvider] Exception fetching categories: ' . $e->getMessage());
             return [];
+        }
+    }
+
+    /**
+     * Upload an image to the WordPress Media Library via REST API.
+     *
+     * @param UserCmsConnection $connection
+     * @param string $binaryData Raw binary image content
+     * @param string $filename Safe filename (e.g. gold-prices.png)
+     * @param string $title
+     * @param string $altText
+     * @return int|null Attachment ID in WordPress
+     */
+    public function uploadMedia(UserCmsConnection $connection, string $binaryData, string $filename, string $title, string $altText = ''): ?int
+    {
+        $baseUrl = $this->getBaseUrl($connection);
+
+        // Detect MIME type from extension
+        $ext = strtolower(pathinfo($filename, PATHINFO_EXTENSION));
+        $mime = match ($ext) {
+            'jpg', 'jpeg' => 'image/jpeg',
+            'webp' => 'image/webp',
+            default => 'image/png',
+        };
+
+        try {
+            $response = $this->client($connection)
+                ->withHeaders([
+                    'Content-Disposition' => 'attachment; filename="' . $filename . '"',
+                    'Content-Type' => $mime,
+                ])
+                ->withBody($binaryData, $mime)
+                ->post("{$baseUrl}/wp-json/wp/v2/media");
+
+            if ($response->successful()) {
+                $media = $response->json();
+                $attachmentId = (int) ($media['id'] ?? 0);
+
+                if ($attachmentId > 0 && (!empty($altText) || !empty($title))) {
+                    try {
+                        $this->client($connection)->post("{$baseUrl}/wp-json/wp/v2/media/{$attachmentId}", [
+                            'alt_text' => $altText ?: $title,
+                            'title' => $title,
+                        ]);
+                    } catch (\Throwable $e) {
+                        Log::notice('[WordPressProvider] Non-fatal: failed to set media alt_text: ' . $e->getMessage());
+                    }
+                }
+
+                return $attachmentId > 0 ? $attachmentId : null;
+            }
+
+            Log::warning('[WordPressProvider] Media upload failed', [
+                'status' => $response->status(),
+                'body' => $response->body(),
+            ]);
+
+            return null;
+
+        } catch (\Throwable $e) {
+            Log::error('[WordPressProvider] Exception uploading media to WordPress: ' . $e->getMessage());
+            return null;
         }
     }
 
@@ -411,6 +475,42 @@ class WordPressProvider implements CmsProviderInterface
             ];
         }
 
+        // Featured Image Upload to WordPress Media Library
+        $featuredMediaId = null;
+        $includeFeaturedImage = filter_var($options['include_featured_image'] ?? true, FILTER_VALIDATE_BOOLEAN);
+
+        if ($includeFeaturedImage) {
+            $imageBinary = null;
+            $safeBase = !empty($slug) ? Str::slug($slug) : Str::slug($title ?: 'article');
+            $imageFilename = "{$safeBase}.png";
+
+            $imagePath = $options['featured_image_path'] ?? ($article->seo_data['featured_image']['path'] ?? null);
+            $imageUrl = $options['featured_image_url'] ?? ($article->seo_data['featured_image']['url'] ?? null);
+
+            if (!empty($imagePath) && Storage::disk('public')->exists($imagePath)) {
+                $imageBinary = Storage::disk('public')->get($imagePath);
+                $imageFilename = basename($imagePath);
+            } elseif (!empty($imageUrl)) {
+                try {
+                    $imgFetch = Http::timeout(15)->get($imageUrl);
+                    if ($imgFetch->successful()) {
+                        $imageBinary = $imgFetch->body();
+                    }
+                } catch (\Throwable $e) {
+                    Log::warning('[WordPressProvider] Failed fetching featured image URL: ' . $e->getMessage());
+                }
+            }
+
+            if (!empty($imageBinary)) {
+                $altText = $focusKeyword ?: $title;
+                $uploadedId = $this->uploadMedia($connection, $imageBinary, $imageFilename, $title, $altText);
+                if ($uploadedId) {
+                    $featuredMediaId = $uploadedId;
+                    $payload['featured_media'] = $featuredMediaId;
+                }
+            }
+        }
+
         try {
             $response = $this->client($connection)->post("{$baseUrl}/wp-json/wp/v2/posts", $payload);
 
@@ -436,20 +536,23 @@ class WordPressProvider implements CmsProviderInterface
                     'edit_url' => $editUrl,
                     'status' => $status,
                     'tags_count' => count($tagIds),
+                    'featured_media_id' => $featuredMediaId,
                     'synced_at' => now()->toIso8601String(),
                 ];
                 $article->update(['seo_data' => $seoData]);
 
+                $hasImageNotice = $featuredMediaId ? ' مع الصورة البارزة' : '';
                 return [
                     'success' => true,
                     'message' => $status === 'draft' 
-                        ? 'تم حفظ المقال بنجاح كمسودة (Draft) في ووردبريس مع العنوان والوصف والمحتوى والوسوم!' 
-                        : 'تم إرسال المقال بنجاح إلى ووردبريس!',
+                        ? "تم حفظ المقال بنجاح كمسودة (Draft) في ووردبريس{$hasImageNotice} مع العنوان والوصف والمحتوى والوسوم!" 
+                        : "تم إرسال المقال بنجاح إلى ووردبريس{$hasImageNotice}!",
                     'post_id' => $postId,
                     'post_url' => $postLink,
                     'edit_url' => $editUrl,
                     'status' => $status,
                     'tags_attached' => count($tagIds),
+                    'featured_media_id' => $featuredMediaId,
                 ];
             }
 
