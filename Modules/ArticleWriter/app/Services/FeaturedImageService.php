@@ -40,11 +40,15 @@ class FeaturedImageService
         $cleanSubject = preg_replace('/\b(الدكتور\s+[^\s]+|د\.\s*[^\s]+|استشاري\s+[^\s]+)\b/u', '', $cleanSubject);
         $cleanSubject = preg_replace('/\b(يكشف\s+(الحقيقة|السر|التفاصيل)?|يحذر\s+(من)?|يوضح\s+(حقيقة)?|يؤكد|بيان\s+عاجل|تصريح\s+جديد)\b/u', '', $cleanSubject);
         $cleanSubject = preg_replace('/\b(النمر|الصقر|الأسد|الذئب|فهد|غزال|سيف)\b/u', '', $cleanSubject); // Common Arabic human family names often mistranslated to wild animals
+        $cleanSubject = preg_replace('/\b(يتصدر\s+(الدوري|الترتيب|قمة\s+الدوري)?|بالعلامة\s+الكاملة|بعد\s+فوز\s+(مثير|صعب|ساحق)(\s+على)?|صدارة\s+الترتيب|قمة\s+الترتيب|فوز\s+(مثير|صعب|ساحق)|ريمونتادا)\b/u', '', $cleanSubject);
         $cleanSubject = trim(preg_replace('/\s+/u', ' ', $cleanSubject));
 
         if (empty($cleanSubject) || mb_strlen($cleanSubject, 'UTF-8') < 5) {
             $cleanSubject = !empty($topic) ? $topic : $title;
         }
+
+        $isSports = (bool) preg_match('/مباراة|ماتش|دوري|كأس|فريق|منتخب|أهداف|اهداف|تشكيل|ترتيب|كوفنتري|سيتي|يونايتد|ليفربول|أرسنال|تشيلسي|توتنهام|ريال|برشلونة|أتلتيكو|بايرن|دورتموند|باريس|ميلان|إنتر|يوفنتوس|الأهلي|الزمالك|الهلال|النصر|الاتحاد|match|vs|fc|football|soccer|premier league/iu', $subject);
+        $isCupFinal = (bool) preg_match('/نهائي\s+كأس|تتويج\s+باللقب|رفع\s+الكأس|كأس\s+العالم|cup\s+final|trophy\s+celebration/iu', $subject);
 
         $prompt = "Create a breathtaking, professional editorial header image suitable for a high-end publication about: {$cleanSubject}. ";
         $prompt .= "Style: Award-winning photojournalism, authentic documentary photography, stunning cinematic natural lighting, modern depth of field, sharp focus, 8k resolution, authentic and natural atmosphere. ";
@@ -52,7 +56,13 @@ class FeaturedImageService
         $prompt .= "CRITICAL SEMANTIC CONSTRAINTS: ";
         $prompt .= "1. If the topic mentions any Arabic family name or personal title, this is a HUMAN PERSON or DOCTOR, NOT a wild animal! Under NO circumstances generate tigers, falcons, lions, or beasts unless the topic is explicitly about wildlife zoology. ";
         $prompt .= "2. For health, medical, wellness, or dietary topics: Focus on authentic, elegant, everyday lifestyle or clinical objects (such as a clear glass of cold water with natural water droplets on a table, fresh healthy foods, or modern medical wellness) rather than surreal fantasy or beasts. ";
-        $prompt .= "STRICT NEGATIVE CONSTRAINTS: Absolutely NO text, NO letters, NO words, NO typography, NO watermark, NO logo, NO blurry faces, NO distorted hands or bodies, NO wild animals in health articles.";
+
+        if ($isSports && !$isCupFinal) {
+            $prompt .= "3. FOR FOOTBALL & SPORTS MATCHES: This is a standard regular league match during the season, NOT a trophy final! Depict authentic on-pitch live action: professional football team players standing together for an authentic pre-match team photo lineup on the green grass pitch before kickoff, or players in active match gameplay under stadium lights. ";
+            $prompt .= "STRICT SPORTS BAN: Under NO circumstances generate a championship trophy, cup, podium, stage, medals, or falling confetti! The team is NOT winning a tournament; NEVER depict anyone lifting a trophy or cup! ";
+        }
+
+        $prompt .= "STRICT NEGATIVE CONSTRAINTS: Absolutely NO text, NO letters, NO words, NO typography, NO watermark, NO logo, NO blurry faces, NO distorted hands or bodies, NO wild animals in health articles" . ($isSports && !$isCupFinal ? ", NO trophies, NO cups, NO confetti, NO championship podiums, NO medals." : ".");
 
         return $prompt;
     }
