@@ -70,6 +70,14 @@ class GoogleProvider implements AIProvider
             ];
         }
 
+        if (!empty($options['web_grounding'])) {
+            $payload['tools'] = [
+                ['googleSearch' => (object)[]],
+            ];
+        } elseif (!empty($options['tools'])) {
+            $payload['tools'] = $options['tools'];
+        }
+
         try {
             $response = Http::timeout((int) ($options['timeout'] ?? 45))
                 ->withOptions(['curl' => [CURLOPT_IPRESOLVE => CURL_IPRESOLVE_V4]])
