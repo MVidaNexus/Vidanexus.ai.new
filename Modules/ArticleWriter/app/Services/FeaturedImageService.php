@@ -122,6 +122,11 @@ class FeaturedImageService
                 return null;
             }
 
+            // Optimize and crop to Google Discover 16:9 (1200x675) in lightweight WebP format
+            $optimized = $this->optimizeForGoogleDiscover($binaryData);
+            $finalData = $optimized['data'];
+            $extension = $optimized['extension'];
+
             // Ensure public directory exists
             $storageDir = 'article-images';
             if (!Storage::disk('public')->exists($storageDir)) {
@@ -133,10 +138,10 @@ class FeaturedImageService
             if (empty($safeBase)) {
                 $safeBase = 'article-featured';
             }
-            $filename = mb_substr($safeBase, 0, 50) . '-' . time() . '-' . Str::random(4) . '.png';
+            $filename = mb_substr($safeBase, 0, 50) . '-' . time() . '-' . Str::random(4) . '.' . $extension;
             $storagePath = $storageDir . '/' . $filename;
 
-            Storage::disk('public')->put($storagePath, $binaryData);
+            Storage::disk('public')->put($storagePath, $finalData);
             $publicUrl = asset('storage/' . $storagePath);
 
             return [
@@ -145,6 +150,10 @@ class FeaturedImageService
                 'filename' => $filename,
                 'prompt' => $prompt,
                 'alt_text' => $title ?: $topic,
+                'width' => $optimized['width'],
+                'height' => $optimized['height'],
+                'mime' => $optimized['mime'],
+                'size_bytes' => strlen($finalData),
             ];
 
         } catch (\Throwable $e) {
@@ -153,5 +162,107 @@ class FeaturedImageService
             ]);
             return null;
         }
+    }
+
+    /**
+     * Convert and crop image to exact Google Discover 16:9 ratio (1200x675) in lightweight WebP format.
+     *
+     * @param string $binaryData
+     * @return array{data: string, extension: string, mime: string, width: int, height: int}
+     */
+    protected function optimizeForGoogleDiscover(string $binaryData): array
+    {
+        if (!extension_loaded('gd') || !function_exists('imagecreatefromstring')) {
+            return [
+                'data' => $binaryData,
+                'extension' => 'png',
+                'mime' => 'image/png',
+                'width' => 1024,
+                'height' => 1024,
+            ];
+        }
+
+        try {
+            $src = @imagecreatefromstring($binaryData);
+            if (!$src) {
+                return [
+                    'data' => $binaryData,
+                    'extension' => 'png',
+                    'mime' => 'image/png',
+                    'width' => 1024,
+                    'height' => 1024,
+                ];
+            }
+
+            $origW = imagesx($src);
+            $origH = imagesy($src);
+
+            $targetW = 1200;
+            $targetH = 675; // Exact 16:9 ratio (1200 / (16/9) = 675)
+            $targetRatio = 16 / 9;
+            $origRatio = $origW / max(1, $origH);
+
+            if ($origRatio > $targetRatio) {
+                // Image is wider than 16:9 -> crop horizontal sides (centered)
+                $cropH = $origH;
+                $cropW = (int) round($origH * $targetRatio);
+                $cropX = (int) round(($origW - $cropW) / 2);
+                $cropY = 0;
+            } else {
+                // Image is taller or square -> crop vertical with golden-ratio focal bias (35% from top)
+                $cropW = $origW;
+                $cropH = (int) round($origW / $targetRatio);
+                $cropX = 0;
+                $maxOffset = max(0, $origH - $cropH);
+                $cropY = min($maxOffset, (int) round($maxOffset * 0.35));
+            }
+
+            $dest = imagecreatetruecolor($targetW, $targetH);
+            if (function_exists('imagealphablending') && function_exists('imagesavealpha')) {
+                imagealphablending($dest, false);
+                imagesavealpha($dest, true);
+            }
+
+            imagecopyresampled($dest, $src, 0, 0, $cropX, $cropY, $targetW, $targetH, $cropW, $cropH);
+
+            $outputData = null;
+            $extension = 'webp';
+            $mime = 'image/webp';
+
+            if (function_exists('imagewebp')) {
+                ob_start();
+                imagewebp($dest, null, 86);
+                $outputData = ob_get_clean();
+            } elseif (function_exists('imagejpeg')) {
+                ob_start();
+                imagejpeg($dest, null, 88);
+                $outputData = ob_get_clean();
+                $extension = 'jpg';
+                $mime = 'image/jpeg';
+            }
+
+            imagedestroy($dest);
+            imagedestroy($src);
+
+            if (!empty($outputData)) {
+                return [
+                    'data' => $outputData,
+                    'extension' => $extension,
+                    'mime' => $mime,
+                    'width' => $targetW,
+                    'height' => $targetH,
+                ];
+            }
+        } catch (\Throwable $e) {
+            Log::warning('[FeaturedImageService] Optimization fallback: ' . $e->getMessage());
+        }
+
+        return [
+            'data' => $binaryData,
+            'extension' => 'png',
+            'mime' => 'image/png',
+            'width' => 1024,
+            'height' => 1024,
+        ];
     }
 }
