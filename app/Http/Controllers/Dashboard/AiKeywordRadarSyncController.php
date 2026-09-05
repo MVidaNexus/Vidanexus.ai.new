@@ -20,6 +20,14 @@ class AiKeywordRadarSyncController extends Controller
         @ini_set('memory_limit', '1024M');
         @ini_set('max_execution_time', 300);
         @set_time_limit(300);
+        @ignore_user_abort(true);
+        if (function_exists('apache_setenv')) {
+            @apache_setenv('no-gzip', '1');
+        }
+        @ini_set('zlib.output_compression', '0');
+        if (!headers_sent()) {
+            header('X-Accel-Buffering: no');
+        }
 
         $user = auth()->user();
         $slug = 'ai-keyword-radar';

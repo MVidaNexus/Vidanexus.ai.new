@@ -281,9 +281,9 @@ class KeywordService
         // === STEP 2: Deep AI Semantic Keyword Extraction on Priority Batches ===
         $allKeywords = [];
         $aiExtractionStart = microtime(true);
-        $batchSize = 12;
-        $maxAiBatches = ($timeFilter === 'all' || $timeFilter === 'unlimited') ? 6 : (($timeFilter === '24h' || $timeFilter === '1d') ? 5 : 4);
-        $timeBudgetSeconds = 45;
+        $batchSize = $isMax ? 20 : 25;
+        $maxAiBatches = ($timeFilter === 'all' || $timeFilter === 'unlimited') ? 4 : (($timeFilter === '24h' || $timeFilter === '1d') ? 3 : 2);
+        $timeBudgetSeconds = 25;
 
         $batches = array_chunk($headlines, $batchSize);
         $aiBatchesToRun = array_slice($batches, 0, $maxAiBatches);
@@ -964,9 +964,9 @@ class KeywordService
             'Referer' => 'https://www.google.com/',
         ];
 
-        // === PHASE 1: LIGHTWEIGHT PARALLEL GOOGLE NEWS FETCH (IPv4 forced, 5s timeout) ===
-        $chunks = array_chunk($competitorUrls, 30);
-        $maxPhase1Budget = $isMax ? 120 : 60;
+        // === PHASE 1: LIGHTWEIGHT PARALLEL GOOGLE NEWS FETCH (IPv4 forced, 4s timeout) ===
+        $chunks = array_chunk($competitorUrls, 50);
+        $maxPhase1Budget = $isMax ? 60 : 30;
         foreach ($chunks as $chunkIndex => $chunkUrls) {
             if ((microtime(true) - $syncStart) > $maxPhase1Budget) {
                 Log::warning("[Keyword Radar] Headline fetch budget reached (" . round(microtime(true) - $syncStart) . "s). " . count($allHeadlines) . " headlines collected.");
@@ -983,8 +983,8 @@ class KeywordService
 
                     $reqs[] = $pool->as($domain)
                         ->withHeaders($googleHeaders)
-                        ->withOptions(['curl' => [CURLOPT_IPRESOLVE => CURL_IPRESOLVE_V4, CURLOPT_TIMEOUT => 5]])
-                        ->timeout(5)->get($googleNewsUrl);
+                        ->withOptions(['curl' => [CURLOPT_IPRESOLVE => CURL_IPRESOLVE_V4, CURLOPT_TIMEOUT => 4]])
+                        ->timeout(4)->get($googleNewsUrl);
                 }
                 return $reqs;
             });

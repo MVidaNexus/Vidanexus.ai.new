@@ -24,6 +24,10 @@
     RewriteRule ^ index.php [L]
 </IfModule>
 
+<IfModule Litespeed>
+    RewriteRule .* - [E=noabort:1,E=noconntimeout:1]
+</IfModule>
+
 <IfModule mod_security.c>
     SecFilterEngine Off
     SecFilterScanPOST Off
